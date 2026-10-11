@@ -18,7 +18,9 @@ export function saveRow(key: string, f: Record<string, string>, editing: Row | n
       const base = editing ? db.products.find(p => p.id === editing.id)! : null;
       let scope = base?.scope ?? 'global', status = base?.status ?? 'live';
       if (!base) { try { ({ scope, status } = newItem(role === 'owner' ? 'owner' : 'manager', db.tenant.locks)); } catch (e) { return (e as Error).message; } }
-      saveProduct({ id: base?.id ?? uidSafe('p'), name: f.name, categoryId: f.categoryId || 'coffee', basePrice: num(f.basePrice), cost: num(f.cost), sku: f.sku || 'KB-' + Date.now().toString().slice(-4), desc: f.desc ?? '', scope, status, ownerOutletId: scope === 'local' ? (base?.ownerOutletId ?? outletId) : null, hue: base?.hue ?? 30, modifierGroupIds: base?.modifierGroupIds ?? [], promoteRequested: f.promote === 'yes' }, by);
+      const refused = saveProduct({ id: base?.id ?? uidSafe('p'), name: f.name, categoryId: f.categoryId || 'coffee', basePrice: num(f.basePrice), cost: num(f.cost), sku: f.sku || 'KB-' + Date.now().toString().slice(-4), desc: f.desc ?? '', scope, status, ownerOutletId: scope === 'local' ? (base?.ownerOutletId ?? outletId) : null, hue: base?.hue ?? 30, modifierGroupIds: base?.modifierGroupIds ?? [], promoteRequested: f.promote === 'yes' }, by);
+      if (refused) return refused;
+      if (base && role !== 'owner' && num(f.basePrice) !== base.basePrice) return 'Saved · price change sent to the owner';
       return status === 'pending_owner' ? 'Saved as outlet-only item · waiting for owner OK' : 'Saved · live on POS, QR menu, kiosk and customer display';
     }
     case 'supplier': return saveSupplier({ id: editing?.id ?? uidSafe('sup'), name: f.name, category: f.category ?? '', phone: f.phone ?? '', terms: f.terms || 'COD' }, by) ? 'Sent to owner for approval' : 'Supplier saved';

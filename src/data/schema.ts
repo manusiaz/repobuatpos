@@ -28,7 +28,7 @@ export interface Order {
   tier?: 'rush' | 'standard' | 'saver'; readyBy?: number; idemKey: string; note?: string; rating?: number;
 }
 export interface Payment { id: string; orderId: string; outletId: string; method: Method; amount: IDR; tip: IDR; status: PaymentStatus; ref: string; at: number; expiresAt: number | null; sessionId: string | null }
-export interface Refund { id: string; orderId: string; paymentId: string; amount: IDR; reason: string; approvalId: string | null; at: number; toStock: boolean }
+export interface Refund { id: string; orderId: string; paymentId: string; amount: IDR; reason: string; approvalId: string | null; at: number; toStock: boolean; /** lines returned to stock by this refund */ lineIds?: string[] }
 export interface Approval { id: string; type: RequestType; title: string; subjectId: string | null; amount: IDR; pct: number; level: Level; status: 'waiting' | 'approved' | 'rejected' | 'recount'; requestedBy: string; countedBy?: string; outletId: string; note: string; at: number; decidedBy?: string; decidedAt?: number; decisionNote?: string; payload?: Record<string, unknown> }
 export interface Session { id: string; outletId: string; cashierId: string; openedAt: number; openingFloat: IDR; closedAt: number | null; counted: IDR | null; variance: IDR | null; status: 'open' | 'counting' | 'needs_approval' | 'closed'; note: string }
 export interface CashMove { id: string; sessionId: string; outletId: string; kind: 'in' | 'out' | 'drop'; amount: IDR; reason: string; by: string; at: number; status: 'done' | 'waiting' }

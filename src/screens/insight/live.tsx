@@ -56,7 +56,8 @@ export function outletsLive(db: DB, now = Date.now()): OutletLive[] {
 export const levelOf = (role: Role): Level => (role === 'owner' ? 'owner' : role === 'manager' ? 'manager' : role === 'pic' ? 'pic' : 'cashier');
 /** Approvals this person can decide: waiting at exactly their level, never their own. */
 export const myQueue = (db: DB, me: { id: string; role: Role }, outlet = 'all') =>
-  db.approvals.filter(a => a.status === 'waiting' && a.level === levelOf(me.role) && (outlet === 'all' || a.outletId === outlet) && canDecide(a, { id: me.id, level: levelOf(me.role) }));
+  db.approvals.filter(a => a.status === 'waiting' && a.level === levelOf(me.role) && (outlet === 'all' || a.outletId === outlet)
+    && (me.role === 'owner' || !!db.employees.find(e => e.id === me.id)?.outlets.includes(a.outletId)) && canDecide(a, { id: me.id, level: levelOf(me.role) }));
 
 export const isSupportAccess = (a: Approval) => a.type === 'perm' && (a.payload as { kind?: string } | undefined)?.kind === 'support_access';
 export function verbs(a: Approval): { ok: string; no: string; noDecision: 'rejected' | 'recount' } {
