@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { pagesOf, surfaceHome } from '../system/registry.ts';
+import { recordTo } from '../system/drill.ts';
 import { Avatar, Badge, Empty, Icon, Kpi, Seg, Status, ago, hhmm, toast } from '../ui/kit.tsx';
 import { idr, idrShort } from '../domain/money.ts';
 import { LIMITS } from '../domain/approval.ts';
@@ -183,7 +184,7 @@ function useFloor(c: PicCtx, live: Order[]): FloorItem[] {
 }
 
 function Sales({ c }: { c: PicCtx }) {
-  const { db, start } = c;
+  const { db, start, user, go } = c;
   const { mine, paid, live, sales } = shiftOrders(c);
   const [f, setF] = useState<'all' | 'open' | 'paid'>('all');
   const pays = db.payments.filter(p => p.status === 'settled' && paid.some(o => o.id === p.orderId));
@@ -200,8 +201,8 @@ function Sales({ c }: { c: PicCtx }) {
       <div className="row between" style={{ padding: 16 }}><h3>Orders this shift</h3><Seg value={f} onChange={setF} options={[['all', 'All'], ['open', 'Open'], ['paid', 'Paid']] as const} label="Filter" /></div>
       {rows.length === 0 ? <Empty icon="receipt" title="No orders yet this shift">Orders from the register, QR, kiosk and delivery apps show here as they come in.</Empty>
         : <div className="scroll-x"><table className="table"><thead><tr><th>Order</th><th>Where</th><th>Items</th><th>Time</th><th>Status</th><th className="r">Total</th></tr></thead>
-          <tbody>{rows.slice(0, 80).map(o => <tr key={o.id}><td className="mono">{o.no}</td><td>{o.table ?? (o.type === 'delivery' ? o.source : o.type === 'take' ? 'Takeaway' : o.source)}</td>
-            <td style={{ maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.lines.map(l => `${l.qty}× ${l.name}`).join(', ')}</td><td>{hhmm(o.createdAt)}</td><td><Status s={o.status} /></td><td className="r num">{idr(o.total)}</td></tr>)}</tbody></table></div>}
+          <tbody>{rows.slice(0, 80).map(o => { const to = recordTo('order', o.id, user.role); return <tr key={o.id} className={to ? 'click' : undefined} onClick={to ? () => go(to) : undefined}><td className="mono">{o.no}</td><td>{o.table ?? (o.type === 'delivery' ? o.source : o.type === 'take' ? 'Takeaway' : o.source)}</td>
+            <td style={{ maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.lines.map(l => `${l.qty}× ${l.name}`).join(', ')}</td><td>{hhmm(o.createdAt)}</td><td><Status s={o.status} /></td><td className="r num">{idr(o.total)}</td></tr>; })}</tbody></table></div>}
     </section>
   </>;
 }

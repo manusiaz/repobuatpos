@@ -1,6 +1,9 @@
 'use client';
 // Base components (spec: BorNiz Components). Everything else is composed from these + the CSS in app/globals.css.
-import { useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
+import { useContext, useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
+import Link from 'next/link';
+import { Ctx } from '../app/context.tsx';
+import { drillTo } from '../system/drill.ts';
 import { icons, type LucideProps } from 'lucide-react';
 
 const pascal = (s: string) => s.replace(/(^|-)([a-z0-9])/g, (_, __, c: string) => c.toUpperCase());
@@ -57,8 +60,13 @@ export function Loading({ rows = 6 }: { rows?: number }) {
 }
 export const Empty = ({ icon = 'inbox', title, children, action }: { icon?: string; title: string; children?: ReactNode; action?: ReactNode }) =>
   <div className="empty"><Icon name={icon} size={32} /><h3 style={{ color: 'var(--fg-1)' }}>{title}</h3>{children && <p style={{ maxWidth: 420 }}>{children}</p>}{action}</div>;
-export const Kpi = ({ label, value, delta, tone }: { label: string; value: ReactNode; delta?: ReactNode; tone?: 'up' | 'down' | 'warn' }) =>
-  <div className="card kpi"><span className="l">{label}</span><span className="v">{value}</span>{delta != null && <span className={tone} style={{ fontSize: 13, fontWeight: 600 }}>{delta}</span>}</div>;
+/** A KPI tile opens the list it counts (src/system/drill.ts) unless `href` says otherwise (null = static). */
+export function Kpi({ label, value, delta, tone, href }: { label: string; value: ReactNode; delta?: ReactNode; tone?: 'up' | 'down' | 'warn'; href?: string | null }) {
+  const app = useContext(Ctx);
+  const to = href !== undefined ? href : app ? drillTo(label, app.user.role, app.page.path) : null;
+  const body = <><span className="l">{label}{to && <Icon name="chevron-right" size={14} />}</span><span className="v">{value}</span>{delta != null && <span className={tone} style={{ fontSize: 13, fontWeight: 600 }}>{delta}</span>}</>;
+  return to ? <Link href={to} className="card kpi link">{body}</Link> : <div className="card kpi">{body}</div>;
+}
 export const Avatar = ({ name, color, size = 36 }: { name: string; color?: string; size?: number }) =>
   <span className="avatar" style={{ background: color, width: size, height: size, fontSize: size * .4 }}>{name.slice(0, 1).toUpperCase()}</span>;
 
