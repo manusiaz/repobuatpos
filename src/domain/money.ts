@@ -1,18 +1,22 @@
 // Money is integer rupiah everywhere. Format only at render (Design Notes: Money).
 export type IDR = number;
 
-const group = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+let style: 'idr' | 'rp' = 'idr';
+/** Set once per render from the owner's Language & currency page (src/system/settings.ts moneyStyle). */
+export const setMoneyStyle = (s: 'idr' | 'rp') => { style = s; };
+const group = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, style === 'rp' ? '.' : ',');
+const cur = () => (style === 'rp' ? 'Rp' : 'IDR ');
 
-/** "IDR 25,000" */
-export const idr = (n: IDR) => (n < 0 ? '−IDR ' : 'IDR ') + group(Math.abs(n));
+/** "IDR 25,000" or "Rp25.000" */
+export const idr = (n: IDR) => (n < 0 ? '−' : '') + cur() + group(Math.abs(n));
 
 /** Short form for charts and KPIs: "IDR 2,4 jt", "IDR 23 rb". */
 export function idrShort(n: IDR): string {
   const a = Math.abs(n), s = n < 0 ? '−' : '';
-  if (a >= 1e9) return `${s}IDR ${(a / 1e9).toFixed(1).replace('.', ',')} M`;
-  if (a >= 1e6) return `${s}IDR ${(a / 1e6).toFixed(1).replace('.', ',').replace(/,0$/, '')} jt`;
-  if (a >= 1e3) return `${s}IDR ${Math.round(a / 1e3)} rb`;
-  return `${s}IDR ${a}`;
+  if (a >= 1e9) return `${s}${cur()}${(a / 1e9).toFixed(1).replace('.', ',')} M`;
+  if (a >= 1e6) return `${s}${cur()}${(a / 1e6).toFixed(1).replace('.', ',').replace(/,0$/, '')} jt`;
+  if (a >= 1e3) return `${s}${cur()}${Math.round(a / 1e3)} rb`;
+  return `${s}${cur()}${a}`;
 }
 
 /** Cash rounding is a separate line, applied last (lg-total). */

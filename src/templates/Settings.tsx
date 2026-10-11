@@ -14,6 +14,8 @@ import { LIMITS } from '../domain/approval.ts';
 import { idr } from '../domain/money.ts';
 import { PageHead } from './common.tsx';
 import { IntegrationsPanel } from '../integrations/Panel.tsx';
+import { CANON } from '../system/settings.ts';
+import { CHANNELS, channelState, setChannel } from '../data/actions/online.ts';
 import { downloadJournalCsv } from '../integrations/server/accounting/journal.ts';
 
 type Section = { t: string; body: ReactNode };
@@ -23,7 +25,7 @@ export default function Settings() {
   const { page, db, user } = app;
   const pin = usePin();
   const gated = isGated(user.role, page) || (user.role === 'manager' && /(tax|payment method|franchise|limit|api|backup|delete|bank)/i.test(page.name));
-  const key = (id: string) => page.path + ':' + id;
+  const key = (id: string) => (CANON[id] ?? page.path) + ':' + id; // one switch, one key, whichever page shows it
   const get = (id: string, d: boolean | string | number) => db.settings[key(id)] ?? d;
   const set = (id: string, v: boolean | string | number, label: string) => {
     if (gated) { requestApproval({ type: 'perm', title: `${page.title} · ${label} → ${typeof v === 'boolean' ? (v ? 'on' : 'off') : v}`, requestedBy: user.id, outletId: app.outletId, payload: { settingKey: key(id), settingValue: v } }); toast('Sent to owner for approval'); return; }
@@ -76,13 +78,15 @@ export default function Settings() {
     if (/devices|kiosk management/.test(n)) return [{ t: 'Printers', body: <IntegrationsPanel kinds={['printer']} /> }, { t: 'Card terminals (EDC)', body: <IntegrationsPanel kinds={['edc']} /> },
       { t: 'Cash drawers', body: <IntegrationsPanel kinds={['drawer']} /> }, { t: 'Scanners & scales', body: <IntegrationsPanel kinds={['scanner', 'scale']} /> }, { t: 'Customer displays', body: <IntegrationsPanel kinds={['display']} /> }, { t: 'Paired devices', body: <div className="stack">{db.devices.map(d => <div key={d.id} className="row between"><span className="row"><Icon name={d.kind === 'printer' ? 'printer' : d.kind === 'kds' ? 'chef-hat' : d.kind === 'display' ? 'monitor' : d.kind === 'edc' ? 'credit-card' : 'tablet'} size={18} />{d.name} · {db.outlets.find(o => o.id === d.outletId)?.name}</span><Badge tone={d.status === 'online' ? 'success' : 'danger'} dot>{d.status}</Badge></div>)}
       <PairCode /></div> }];
-    if (/api key|webhook/.test(n)) return [{ t: 'API keys', body: <ApiKeys /> }, { t: 'Webhook endpoints', body: <IntegrationsPanel kinds={['webhook']} /> }, { t: 'Events', body: <>{['order.paid', 'payment.settled', 'item.86', 'approval.decided', 'publish.done'].map(e => T('wh-' + e, e, 'POST to your endpoint with HMAC signature', false))}</> }];
+    if (/api key|webhook/.test(n)) return [{ t: 'API keys', body: <ApiKeys /> }, { t: 'Webhook endpoints', body: <IntegrationsPanel kinds={['webhook']} /> }];
     if (/backup|delete account/.test(n)) return [{ t: 'Export', body: <button className="btn" onClick={() => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(snapshot(), null, 1)], { type: 'application/json' })); a.download = 'borniz-backup.json'; a.click(); }}><Icon name="download" size={18} />Download full backup (JSON)</button> },
       { t: 'Danger zone', body: <Danger /> }];
-    if (/language|currency|number/.test(n)) return [{ t: 'Language & currency', body: <div className="stack"><Field label="Staff app language"><select className="input" value={String(get('lang', 'en'))} onChange={e => set('lang', e.target.value, 'Language')}><option value="en">English</option><option value="id">Bahasa Indonesia</option></select></Field>
+    if (/language|currency|number/.test(n)) return [{ t: 'Language & currency', body: <div className="stack"><Field label="Language guests see first" hint="QR menu and kiosk open in this language; guests can still switch."><select className="input" value={String(get('lang', 'en'))} onChange={e => set('lang', e.target.value, 'Language')}><option value="en">English</option><option value="id">Bahasa Indonesia</option></select></Field>
       <Field label="Money format"><select className="input" value={String(get('fmt', 'idr'))} onChange={e => set('fmt', e.target.value, 'Money format')}><option value="idr">IDR 25,000 · charts IDR 2,4 jt</option><option value="rp">Rp25.000</option></select></Field></div> }];
     if (/(integration|channel|ride-hailing|online order link)/.test(n)) return [{ t: 'Delivery apps', body: <IntegrationsPanel kinds={['delivery']} /> },
-      { t: 'Orders & menu', body: <>{T('to-pos', 'Send orders to POS inbox and KDS', 'Staff accept or reject in the POS')}{T('auto-accept', 'Auto-accept orders', 'Off: a person checks each order', false)}{T('sync', 'Sync prices, photos and sold-out', 'From Menu Studio to every app; 86 pushes instantly')}</> }];
+      { t: 'Auto-accept per outlet', body: <div className="stack">{db.outlets.map(o => <div key={o.id} className="stack sm"><b style={{ fontSize: 14 }}>{o.name}</b>
+        <div className="row wrap">{CHANNELS.map(ch => { const st = channelState(db, o.id, ch); return <label key={ch} className="row" style={{ gap: 8 }}><Toggle on={st.auto} onChange={v => { setChannel(o.id, ch, 'auto', v, user.id); toast(`${ch} ${v ? 'auto-accepts' : 'waits for a person'} at ${o.name}`); }} label={`Auto-accept ${ch} at ${o.name}`} /><span style={{ fontSize: 14 }}>{ch}</span></label>; })}</div></div>)}
+        <span className="muted" style={{ fontSize: 13 }}>Same switches as the online orders screen at each outlet. Accepted orders go to the POS inbox and the KDS; prices, photos and sold-out sync from Menu Studio.</span></div> }];
     const words = page.title.replace(/^settings · /i, '');
     return [{ t: 'General', body: <>{T('on', `Use ${words}`, 'Applies to ' + db.outlets.map(o => o.name).join(', '))}{T('wa', 'Notify on WhatsApp', 'Owner and manager')}{T('pin', 'Require approval PIN for changes', 'Logged in the store audit log', true, true)}</> },
       { t: 'Rules', body: <>{T('override', 'Allow manager overrides', 'Within the limits set in Roles')}{T('sync-dev', 'Auto-sync to devices', 'POS, KDS, displays and kiosks')}</> }];

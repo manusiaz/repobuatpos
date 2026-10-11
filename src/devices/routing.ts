@@ -1,4 +1,5 @@
 // Which device am I, which printer prints what. Pure: the print agent, the Device page and the tests share it.
+import { ticketsOnPaper } from '../system/settings.ts';
 import type { Category, DB, Integration, Order, OrderLine } from '../data/schema.ts';
 import type { Paper } from './escpos.ts';
 
@@ -38,8 +39,9 @@ export const receiptKey = (o: Order) => `r:${o.id}`;
 export function pendingJobs(db: DB, deviceId: string | null, done: Record<string, number>, since: number): Job[] {
   const outletId = outletOfDevice(db, deviceId), jobs: Job[] = [];
   const mine = (i: Integration | undefined): i is Integration => !!i && ownerOf(db, i) === deviceId;
+  const paper = outletId ? ticketsOnPaper(db, outletId) : false; // the KDS is the ticket; paper when no KDS is online or as the owner's backup
   for (const o of db.orders) {
-    if (o.outletId !== outletId) continue;
+    if (o.outletId !== outletId || !paper) continue;
     const groups = new Map<string, Job>();
     for (const l of o.lines) {
       if (!l.fired || (l.firedAt ?? 0) < since || done[lineKey(o, l)]) continue;

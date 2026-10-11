@@ -2,6 +2,7 @@
 // Kitchen display (spec: BorNiz Kitchen Display). Dark, readable from 2 m, tickets from the live order stream at this outlet.
 // Every KDS page is one view of this screen; station is per device, layout / sound / colors / targets are KDS settings.
 import { DeviceChrome } from '../app/chrome.tsx';
+import { expoOn } from '../system/settings.ts';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useApp } from '../app/context.tsx';
@@ -88,7 +89,7 @@ export default function Screen() {
         <b style={{ fontSize: fs(22) }}>{hhmm(now)}</b>
       </div>
       <nav className="row" aria-label="KDS views" style={{ gap: 6, padding: '0 16px 10px', overflowX: 'auto' }}>
-        {NAV.map(([v, l]) => <Link key={v} href={kdsPath(v)} aria-current={view === v || (v === 'recall' && view === 'done') ? 'page' : undefined} className="btn" style={{ height: 48, fontSize: fs(15), flex: 'none',
+        {NAV.filter(([v]) => v !== 'expo' || expoOn(db)).map(([v, l]) => <Link key={v} href={kdsPath(v)} aria-current={view === v || (v === 'recall' && view === 'done') ? 'page' : undefined} className="btn" style={{ height: 48, fontSize: fs(15), flex: 'none',
           background: view === v ? 'var(--bg-raised)' : 'transparent', borderColor: view === v ? 'var(--fg-3)' : 'var(--border)' }}>{l}</Link>)}
         <button type="button" className="btn" style={{ height: 48, fontSize: fs(15), flex: 'none' }} onClick={() => setMore(true)}><Icon name="ellipsis" />More</button>
       </nav>

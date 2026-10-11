@@ -58,8 +58,8 @@ const ID: Record<string, string> = {
   'People also add': 'Sering ditambah', 'Already ordered': 'Sudah dipesan', 'Tap to start': 'Sentuh untuk mulai', 'Where will you eat?': 'Makan di mana?', 'Eat here': 'Makan di sini', 'Take away': 'Bawa pulang',
   'Waiting for payment': 'Menunggu pembayaran', Back: 'Kembali', 'Join rewards': 'Gabung member', Closed: 'Tutup', 'Popular right now': 'Populer sekarang', 'No results': 'Tidak ditemukan',
 };
-export function useLang() {
-  const [lang, setLang] = useLocal<Lang>('bn-lang', 'en');
+export function useLang(first: Lang = 'en') {
+  const [lang, setLang] = useLocal<Lang>('bn-lang', first);
   const t = useCallback((s: string) => (lang === 'id' ? ID[s] ?? s : s), [lang]);
   return { lang, setLang, t };
 }

@@ -8,6 +8,8 @@ import { canOpen } from '../system/access.ts';
 import { useDB } from '../data/store.ts';
 import { escalateDue, watchKitchen } from '../data/actions.ts';
 import { sweepAlerts } from '../data/alerts/index.ts';
+import { setMoneyStyle } from '../domain/money.ts';
+import { moneyStyle } from '../system/settings.ts';
 import { useDispatcher } from '../data/actions/dispatch.ts';
 import { usePrintAgent } from '../devices/agent.ts';
 import { setSession, useSession } from '../session.ts';
@@ -43,6 +45,7 @@ export default function App({ path }: { path: string }) {
   const go = useCallback((p: string) => router.push(p), [router]);
   const ctx = useMemo<AppCtx | null>(() => db && user ? { page, db, user, me: db.employees.find(e => e.id === user.id), outletId: outlet ?? user.outletId, setOutlet, go } : null, [page, db, user, outlet, go]);
   if (!ctx) return <div style={{ padding: 24 }}><Loading /></div>;
+  setMoneyStyle(moneyStyle(ctx.db));
   const Surface = SURFACES[page.surface];
   const allowed = canOpen(ctx.user.role, page);
   const body = allowed ? <Surface /> : <Denied />;

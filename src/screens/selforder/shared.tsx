@@ -1,4 +1,5 @@
 'use client';
+import { guestLang } from '../../system/settings.ts';
 import { productImage } from '../../ui/kit.tsx';
 // Self-order plumbing: table from the URL, the table's open bill (a real store order, source 'qr'), the remembered
 // member, language, and the small building blocks every QR-menu and customer-link view shares.
@@ -30,7 +31,7 @@ export function useGuest() {
   const qt = sp.get('t') ?? routeQuery().t ?? null; // order.bornis.id/<tenant>/t/07 carries the table in the path
   const table = qt ? 'T-' + qt.replace(/^T-?/i, '').padStart(2, '0') : saved;
   useEffect(() => { if (qt && table !== saved) setSaved(table); }, [qt, table, saved, setSaved]);
-  const L = useLang();
+  const L = useLang(guestLang(db));
   const [meId, setMe] = useLocal<string | null>('bn-guest-customer', null);
   const me = db.customers.find(c => c.id === meId) ?? null;
   const out = db.outlets.find(o => o.id === outletId)!;

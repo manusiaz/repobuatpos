@@ -1,4 +1,5 @@
 'use client';
+import { guestLang } from '../system/settings.ts';
 import { payOn } from '../system/settings.ts';
 import { gatewayResult } from '../data/actions/dispatch.ts';
 import { productImage } from '../ui/kit.tsx';
@@ -31,7 +32,7 @@ export default function Screen() {
   const [orderId, setOrderId] = useLocal<string | null>('bn-kiosk-order:' + outletId, null);
   const [type, setType] = useLocal<'dine' | 'take' | null>('bn-kiosk-type', null);
   const order = db.orders.find(o => o.id === orderId) ?? null;
-  const L = useLang();
+  const L = useLang(guestLang(db));
   const to = (v: View) => go(pathOf(v));
   const reset = () => { if (order && !placed(order) && order.status === 'open' && order.lines.length) clearOrder(order.id, 'kiosk'); setOrderId(null); setType(null); to('attract'); };
 

@@ -11,7 +11,7 @@ import { flashPrice, resolve } from '../domain/promo.ts';
 import { closeCheck } from '../domain/shift.ts';
 import { idr, roundCash } from '../domain/money.ts';
 import { approvalAlert, decidedAlert } from './alerts/names.ts';
-import { payOn, type PayId } from '../system/settings.ts';
+import { escalationOn, payOn, type PayId } from '../system/settings.ts';
 import alertsCatalog from '../system/alerts.json' with { type: 'json' };
 import { perm } from '../system/perms.ts';
 
@@ -573,6 +573,7 @@ export function watchKitchen(at = now()) {
   if (late.length) commit('kitchen.late', 'system', d => late.forEach(o => notify(d, 'Order late', 'warn', ['kitchen', 'pic'], o.outletId, `${o.no} · ${o.table ?? o.source} · over 12 min`, '/kds')));
 }
 export function escalateDue(at = now()) {
+  if (!escalationOn(snapshot())) return; // owner switched 'Escalate when unanswered' off
   const due = snapshot().approvals.filter(a => a.status === 'waiting' && ((a.level === 'pic' && at - a.at > 5 * 60e3) || (a.level === 'manager' && at - a.at > 35 * 60e3)));
   if (!due.length) return;
   commit('approval.escalated', 'system', d => due.forEach(x => { const r = d.approvals.find(y => y.id === x.id)!; r.level = r.level === 'pic' ? 'manager' : 'owner'; notify(d, 'Approval not answered', 'warn', [r.level], r.outletId, `${r.title} unanswered · now with the ${r.level}`); }));

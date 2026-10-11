@@ -11,6 +11,7 @@ import { ascii, CMD, code128, poleBytes, qr } from '../devices/escpos.ts';
 import { toEscPos, toText, wrap } from '../devices/layout.ts';
 import { kitchenDoc, receiptDoc } from '../devices/receipt.ts';
 import { keysOf, pendingJobs, stationPrinter } from '../devices/routing.ts';
+import { ROUTING_PAGE } from '../system/settings.ts';
 import { checkEntry, edcDriver, edcRef, EdcPending, manualDriver } from '../devices/edc.ts';
 import { parseWeight } from '../devices/scale.ts';
 import { createWedge, findByCode } from '../devices/scanner.ts';
@@ -94,6 +95,8 @@ test('routing: each fired line goes once to its station printer on the device th
   db.orders = [o];
   db.integrations.push(P('bar', 'printer-usb', 'bar', 'd1'), P('front', 'printer-browser', 'receipt', 'd1', { autoPrint: true }), P('kit', 'printer-lan', 'kitchen', null));
   assert.equal(stationPrinter(db, 'sen', 'pastry'), undefined, 'no pastry printer: KDS only');
+  assert.equal(pendingJobs(db, 'd1', {}, T - 1).filter(j => j.kind === 'ticket').length, 0, 'KDS online and no paper backup: the KDS is the ticket');
+  db.settings[ROUTING_PAGE + ':print-ticket'] = true; // owner wants paper as a backup
   const jobs = pendingJobs(db, 'd1', {}, T - 1);
   assert.deepEqual(jobs.map(j => [j.kind, j.integrationId, j.station ?? '', (j.lineIds ?? []).join()]),
     [['ticket', 'bar', 'bar', 'l1'], ['ticket', 'kit', 'kitchen', 'l2'], ['receipt', 'front', '', '']], 'kitchen printer set up in the back office is driven by the outlet’s first register');
