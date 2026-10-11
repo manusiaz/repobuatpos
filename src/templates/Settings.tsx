@@ -13,6 +13,7 @@ import { resetDemo, snapshot } from '../data/store.ts';
 import { LIMITS } from '../domain/approval.ts';
 import { idr } from '../domain/money.ts';
 import { PageHead } from './common.tsx';
+import { IntegrationsPanel } from '../integrations/Panel.tsx';
 
 type Section = { t: string; body: ReactNode };
 
@@ -47,9 +48,11 @@ export default function Settings() {
 
   function build(): Section[] {
     const n = page.name.toLowerCase();
+    if (/accounting/.test(n)) return [{ t: 'Accounting', body: <IntegrationsPanel kinds={['accounting']} /> }];
+    if (/bank account/.test(n)) return [{ t: 'Bank & payouts', body: <IntegrationsPanel kinds={['bank']} /> }];
     if (/tax|fees/.test(n)) return db.outlets.map(o => ({ t: o.name, body: <OutletTax o={o} /> }));
     if (/opening hours/.test(n)) return [{ t: 'Opening hours', body: <div className="stack">{db.outlets.map(o => <OutletHours key={o.id} o={o} />)}</div> }];
-    if (/payment method/.test(n)) return [{ t: 'QR & e-wallet', body: <>{T('qris', 'QRIS', 'All banks & e-wallets · dynamic QR, expires in 5 min')}{T('ewallet', 'GoPay / OVO / DANA / ShopeePay', 'Push to customer app')}{T('va', 'Virtual account', 'BCA · BNI · Mandiri · BRI', false)}</> },
+    if (/payment method/.test(n)) return [{ t: 'Payment gateway', body: <IntegrationsPanel kinds={['payment']} /> }, { t: 'Card terminals (EDC)', body: <IntegrationsPanel kinds={['edc']} /> }, { t: 'QR & e-wallet', body: <>{T('qris', 'QRIS', 'All banks & e-wallets · dynamic QR, expires in 5 min')}{T('ewallet', 'GoPay / OVO / DANA / ShopeePay', 'Push to customer app')}{T('va', 'Virtual account', 'BCA · BNI · Mandiri · BRI', false)}</> },
       { t: 'Card & cash', body: <>{T('card', 'Card via EDC', 'BCA EDC · Terminal 01')}{T('cash', 'Cash', 'Numpad, quick notes and change', true, true)}{T('rounding', 'Cash rounding', 'Round to IDR 100 as a separate line', false)}{T('split', 'Split bill', 'Evenly, by item or custom amounts')}</> },
       { t: 'Credit & deposits', body: <>{T('kasbon', 'Customer credit (kasbon)', 'Over limit goes to the manager', false)}{T('deposit', 'Deposits & gift cards', 'Pay from balance')}</> }];
     if (/franchise|brand lock|lock \(/.test(n)) return [{ t: 'Franchise lock', body: <>
@@ -65,16 +68,18 @@ export default function Settings() {
       {T('timeouts', 'Escalate when unanswered', 'PIC 5 min → manager 30 min → owner')}</div> }];
     if (/routing/.test(n)) return [{ t: 'Kitchen stations', body: <div className="stack">{db.categories.map(c => <div key={c.id} className="row between"><b style={{ fontSize: 14 }}>{c.name}</b>
       <select className="input" style={{ width: 180 }} value={c.station} onChange={e => { setStation(c.id, e.target.value as typeof c.station, user.id); toast(`${c.name} → ${e.target.value} station`); }}><option value="bar">Bar</option><option value="kitchen">Kitchen</option><option value="pastry">Pastry</option></select></div>)}
-      {T('expo', 'Expo / pass screen sees the whole order', 'Runner checks every station before serving')}{T('print-ticket', 'Print kitchen ticket as backup', 'When the KDS is offline', false)}</div> }];
-    if (/notification/.test(n)) return (alerts.groups as [string, string, [string, string, unknown, string, string][]][]).slice(0, 8).map(([g, , list]) => ({ t: g.charAt(0) + g.slice(1).toLowerCase(), body: <>{list.slice(0, 12).map(a => T('al-' + a[0], a[0], a[1] + ' · ' + a[3], true, /fraud|audit|pin locked|cash variance/i.test(a[0] + g)))}</> }));
-    if (/devices|kiosk management/.test(n)) return [{ t: 'Paired devices', body: <div className="stack">{db.devices.map(d => <div key={d.id} className="row between"><span className="row"><Icon name={d.kind === 'printer' ? 'printer' : d.kind === 'kds' ? 'chef-hat' : d.kind === 'display' ? 'monitor' : d.kind === 'edc' ? 'credit-card' : 'tablet'} size={18} />{d.name} · {db.outlets.find(o => o.id === d.outletId)?.name}</span><Badge tone={d.status === 'online' ? 'success' : 'danger'} dot>{d.status}</Badge></div>)}
+      {T('expo', 'Expo / pass screen sees the whole order', 'Runner checks every station before serving')}{T('print-ticket', 'Print kitchen ticket as backup', 'When the KDS is offline', false)}</div> },
+      { t: 'Kitchen & receipt printers', body: <IntegrationsPanel kinds={['printer']} /> }];
+    if (/notification/.test(n)) return (alerts.groups as [string, string, [string, string, unknown, string, string][]][]).map(([g, , list]) => ({ t: g.charAt(0) + g.slice(1).toLowerCase(), body: <>{list.map(a => T('al-' + a[0], a[0], a[1] + ' · ' + a[3], true, /fraud|audit|pin locked|cash variance/i.test(a[0] + g)))}</> }));
+    if (/devices|kiosk management/.test(n)) return [{ t: 'Printers', body: <IntegrationsPanel kinds={['printer']} /> }, { t: 'Card terminals (EDC)', body: <IntegrationsPanel kinds={['edc']} /> },
+      { t: 'Cash drawers', body: <IntegrationsPanel kinds={['drawer']} /> }, { t: 'Scanners & scales', body: <IntegrationsPanel kinds={['scanner', 'scale']} /> }, { t: 'Customer displays', body: <IntegrationsPanel kinds={['display']} /> }, { t: 'Paired devices', body: <div className="stack">{db.devices.map(d => <div key={d.id} className="row between"><span className="row"><Icon name={d.kind === 'printer' ? 'printer' : d.kind === 'kds' ? 'chef-hat' : d.kind === 'display' ? 'monitor' : d.kind === 'edc' ? 'credit-card' : 'tablet'} size={18} />{d.name} · {db.outlets.find(o => o.id === d.outletId)?.name}</span><Badge tone={d.status === 'online' ? 'success' : 'danger'} dot>{d.status}</Badge></div>)}
       <PairCode /></div> }];
-    if (/api key|webhook/.test(n)) return [{ t: 'API keys', body: <ApiKeys /> }, { t: 'Webhooks', body: <>{['order.paid', 'payment.settled', 'item.86', 'approval.decided', 'publish.done'].map(e => T('wh-' + e, e, 'POST to your endpoint with HMAC signature', false))}</> }];
+    if (/api key|webhook/.test(n)) return [{ t: 'API keys', body: <ApiKeys /> }, { t: 'Webhook endpoints', body: <IntegrationsPanel kinds={['webhook']} /> }, { t: 'Events', body: <>{['order.paid', 'payment.settled', 'item.86', 'approval.decided', 'publish.done'].map(e => T('wh-' + e, e, 'POST to your endpoint with HMAC signature', false))}</> }];
     if (/backup|delete account/.test(n)) return [{ t: 'Export', body: <button className="btn" onClick={() => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(snapshot(), null, 1)], { type: 'application/json' })); a.download = 'borniz-backup.json'; a.click(); }}><Icon name="download" size={18} />Download full backup (JSON)</button> },
       { t: 'Danger zone', body: <Danger /> }];
     if (/language|currency|number/.test(n)) return [{ t: 'Language & currency', body: <div className="stack"><Field label="Staff app language"><select className="input" value={String(get('lang', 'en'))} onChange={e => set('lang', e.target.value, 'Language')}><option value="en">English</option><option value="id">Bahasa Indonesia</option></select></Field>
       <Field label="Money format"><select className="input" value={String(get('fmt', 'idr'))} onChange={e => set('fmt', e.target.value, 'Money format')}><option value="idr">IDR 25,000 · charts IDR 2,4 jt</option><option value="rp">Rp25.000</option></select></Field></div> }];
-    if (/(integration|channel|ride-hailing|online order link)/.test(n)) return [{ t: 'Delivery apps', body: <>{T('gofood', 'GoFood', 'Connected · menu synced')}{T('grab', 'GrabFood', 'Connected · menu synced')}{T('shopee', 'ShopeeFood', 'Not connected · link store ID', false)}</> },
+    if (/(integration|channel|ride-hailing|online order link)/.test(n)) return [{ t: 'Delivery apps', body: <IntegrationsPanel kinds={['delivery']} /> },
       { t: 'Orders & menu', body: <>{T('to-pos', 'Send orders to POS inbox and KDS', 'Staff accept or reject in the POS')}{T('auto-accept', 'Auto-accept orders', 'Off: a person checks each order', false)}{T('sync', 'Sync prices, photos and sold-out', 'From Menu Studio to every app; 86 pushes instantly')}</> }];
     const words = page.title.replace(/^settings · /i, '');
     return [{ t: 'General', body: <>{T('on', `Use ${words}`, 'Applies to ' + db.outlets.map(o => o.name).join(', '))}{T('wa', 'Notify on WhatsApp', 'Owner and manager')}{T('pin', 'Require approval PIN for changes', 'Logged in the store audit log', true, true)}</> },

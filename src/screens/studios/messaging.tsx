@@ -8,6 +8,7 @@ import type { DB, Message, Rec } from '../../data/schema.ts';
 import { idr, idrShort } from '../../domain/money.ts';
 import { Badge, Empty, Icon, Kpi, Seg, Status, Toggle, ago, dateShort, hhmm, toast, useNow } from '../../ui/kit.tsx';
 import { LineChart } from '../../ui/Chart.tsx';
+import { IntegrationsPanel } from '../../integrations/Panel.tsx';
 import { Caption, CopyRow, F, fillVars, orderVars, outletName, pct, Phone, Stage, type Ctx, type PP, type Tool, type V } from './core.tsx';
 
 // ── Templates ────────────────────────────────────────────────────────────────────────────
@@ -134,34 +135,16 @@ function TemplatesList({ v, x }: PP) {
 
 // ── WABA connection ──────────────────────────────────────────────────────────────────────
 function quality(db: DB) { const wa = db.messages.filter(m => m.channel === 'wa' && Date.now() - m.at < 7 * 864e5); const f = pct(wa.filter(m => m.status === 'failed').length, wa.length); return f < 5 ? ['High', 'success'] as const : f < 15 ? ['Medium', 'warning'] as const : ['Low', 'danger'] as const; }
-function WabaPanel({ v, set, x }: PP) {
-  const status = v.status ?? 'verified';
-  const [code, setCode] = useState('');
-  if (status === 'verified') return <div className="stack">
-    <div className="banner" style={{ background: 'var(--success-soft)', color: 'var(--success-fg)' }}><Icon name="badge-check" size={18} /><span><b>Connected</b> · {v.number ?? '+62 811 1888 2048'}</span></div>
-    <div className="field"><label>Display name</label><input className="input" value={v.name ?? x.db.tenant.name} onChange={e => set('name', e.target.value)} /></div>
-    <p className="faint" style={{ fontSize: 13 }}>Changing the display name sends it to Meta for review again.</p>
-    <button className="btn btn-danger" onClick={() => { set('status', 'none'); toast('WhatsApp number disconnected'); }}>Disconnect number</button>
-  </div>;
-  if (status === 'otp') return <div className="stack">
-    <p style={{ fontSize: 14 }}>Enter the 6-digit code Meta sent by SMS to <b>{v.number}</b>.</p>
-    <input className="input mono" inputMode="numeric" maxLength={6} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} aria-label="Verification code" style={{ letterSpacing: '.4em', fontSize: 20 }} />
-    <button className="btn btn-primary" disabled={code.length !== 6} onClick={() => { set('status', 'verified'); toast('Number verified'); }}>Verify number</button>
-    <button className="btn btn-ghost" onClick={() => set('status', 'none')}>Use another number</button>
-  </div>;
-  return <div className="stack">
-    <p style={{ fontSize: 14 }}>Connect a phone number that is not used in the WhatsApp app. Guests see your display name after Meta approves it.</p>
-    <div className="field"><label>Business phone number</label><input className="input" inputMode="tel" placeholder="+62 811 …" value={v.number ?? ''} onChange={e => set('number', e.target.value)} /></div>
-    <div className="field"><label>Display name</label><input className="input" value={v.name ?? x.db.tenant.name} onChange={e => set('name', e.target.value)} /></div>
-    <button className="btn btn-primary" disabled={(v.number ?? '').replace(/\D/g, '').length < 9} onClick={() => { set('status', 'otp'); toast('Code sent by SMS'); }}>Send verification code</button>
-  </div>;
-}
-function WabaPreview({ v, x }: PP) {
-  const status = v.status ?? 'verified', [q, tone] = quality(x.db);
+// The number, token and provider live in the one integrations panel (secrets server-side, status from real sends).
+const WabaPanel = () => <IntegrationsPanel kinds={['whatsapp', 'sms']} />;
+
+function WabaPreview({ x }: PP) {
+  const wa = x.db.integrations.find(i => i.kind === 'whatsapp' && i.enabled);
+  const status = !wa ? 'none' : wa.status === 'ok' ? 'verified' : 'otp', [q, tone] = quality(x.db);
   const day = x.db.messages.filter(m => m.channel === 'wa' && Date.now() - m.at < 864e5);
   return <Stage>
     <div className="grid" style={{ ['--min' as string]: '150px', width: '100%', maxWidth: 640 }}>
-      <Kpi label="Status" value={status === 'verified' ? 'Connected' : status === 'otp' ? 'Verifying' : 'Not connected'} />
+      <Kpi label="Status" value={status === 'verified' ? 'Connected' : status === 'otp' ? (wa?.status === 'error' ? 'Error' : 'Saved · not tested') : 'Not connected'} delta={wa?.lastError ?? undefined} />
       <Kpi label="Quality rating" value={<Badge tone={tone}>{q}</Badge>} />
       <Kpi label="Sent last 24 h" value={day.length} delta="Limit 1,000 / day" />
     </div>
@@ -372,6 +355,7 @@ function EmailDomainPanel({ v, set }: PP) {
     }
   };
   return <div className="stack">
+    <IntegrationsPanel kinds={['email']} />
     <div className="field"><label>From name</label><input className="input" value={v.from} onChange={e => set('from', e.target.value)} /></div>
     <div className="field"><label>From address</label><input className="input" value={v.addr} onChange={e => set('addr', e.target.value)} type="email" /></div>
     <span className="cap">DNS records to add at your domain provider</span>

@@ -5,6 +5,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useApp } from '../app/context.tsx';
+import { IntegrationsPanel } from '../integrations/Panel.tsx';
 import { OutletPicker } from '../app/chrome.tsx';
 import { Badge, Empty, Field, Icon, Kpi, Seg, Sheet, Toggle, ago, hhmm, toast, useNow } from '../ui/kit.tsx';
 import { usePin } from '../ui/PinSheet.tsx';
@@ -306,11 +307,12 @@ function Integrations({ c, title }: { c: Ctx; title: string | null }) {
   return <>
     <Head title={title} sub={`Connection and order settings per platform at ${c.db.outlets.find(o => o.id === c.outletId)?.name}. Prep time sent to the platform is calculated from the tier, the channel and the kitchen load, never typed.`} />
     <Banners c={c} />
-    <div className="grid" style={{ ['--min' as string]: '300px' }}>{CHANNELS.map(ch => { const s = channelState(c.db, c.outletId, ch, c.now);
+    <IntegrationsPanel kinds={['delivery']} outletId={c.outletId} title="Platform connection" />
+    <div className="grid" style={{ ['--min' as string]: '300px' }}>{CHANNELS.map(ch => { const s = channelState(c.db, c.outletId, ch, c.now), link = c.db.integrations.find(i => i.connector === ch && i.outletId === c.outletId);
       const today = c.db.orders.filter(o => o.outletId === c.outletId && o.source === ch && o.createdAt >= t0);
       return <section key={ch} className="card stack">
         <div className="row"><ChPill s={ch} /><h3 className="grow">{CHANNEL[ch].name}</h3>{!s.connected ? <Badge tone="danger" dot>Disconnected</Badge> : s.paused ? <Badge tone="warning" dot>Paused until {hhmm(s.pausedUntil)}</Badge> : <Badge tone="success" dot>Connected</Badge>}</div>
-        <span className="muted" style={{ fontSize: 13 }}>{LOGIN[ch]} · webhooks verified, duplicate orders ignored</span>
+        <span className="muted" style={{ fontSize: 13 }}>{LOGIN[ch]} · {!link ? 'API not connected yet: orders come in only after the platform connection above is set' : link.status === 'ok' ? 'API connected · duplicate orders ignored' : link.status === 'error' ? 'API error: ' + link.lastError : 'API saved · not tested'}</span>
         <div className="row between"><span>Connected<br /><span className="faint" style={{ fontSize: 12 }}>Off stops new orders from this platform</span></span><Toggle on={s.connected} onChange={v => { setChannel(c.outletId, ch, 'connected', v, c.by); toast(`${CHANNEL[ch].name} ${v ? 'connected' : 'disconnected'}`); }} label={`${CHANNEL[ch].name} connected`} /></div>
         <div className="row between"><span>Auto-accept<br /><span className="faint" style={{ fontSize: 12 }}>Fire to the kitchen without a tap</span></span><Toggle on={s.auto} onChange={v => setChannel(c.outletId, ch, 'auto', v, c.by)} label={`${CHANNEL[ch].name} auto-accept`} /></div>
         <div className="sunken" style={{ fontSize: 13 }}><b>Prep sent to the platform</b><br />{(['rush', 'standard', 'saver'] as const).map(t => `${TIER[t].l} ${Math.round(readyBy(t, ch, 0, 0) / 60e3) + busy.extra} min`).join(' · ')} <span className="faint">+ 1 min per open ticket{busy.on ? ` · busy +${busy.extra}` : ''}</span></div>
