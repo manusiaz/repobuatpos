@@ -41,6 +41,12 @@ export interface Reservation { id: string; outletId: string; name: string; phone
 export interface Review { id: string; outletId: string; customerId: string | null; name: string; stars: number; text: string; at: number; reply: string | null; orderId: string | null }
 export interface Message { id: string; channel: 'wa' | 'email' | 'sms' | 'push'; template: string; to: string; status: 'queued' | 'sent' | 'delivered' | 'read' | 'failed'; at: number; customerId: string | null; orderId?: string }
 export interface Device { id: string; outletId: string; kind: 'pos' | 'kds' | 'display' | 'kiosk' | 'pic' | 'printer' | 'edc' | 'waiter'; name: string; lastSeen: number; pairCode: string | null; status: 'online' | 'offline' }
+/** A configured connection to a third-party system (src/integrations). Secrets never live here: only which keys are set. */
+export interface Integration {
+  id: string; connector: string; kind: import('../integrations/types.ts').Kind; outletId: string | null; deviceId: string | null; name: string;
+  enabled: boolean; config: Record<string, string | number | boolean>; secrets: string[];
+  status: 'off' | 'ok' | 'error'; lastOk: number | null; lastError: string | null; updatedBy: string; updatedAt: number;
+}
 export interface Audit { id: string; actor: string; action: string; subject: string; before?: unknown; after?: unknown; at: number; outletId?: string }
 export interface Notice { id: string; alert: string; level: 'info' | 'warn' | 'high'; to: Role[]; outletId: string | null; text: string; href: string | null; at: number; read: boolean }
 export interface Theme { name: string; p: string; acc: string; ink: string; paper: string; font: string; banner: string; img: string }
@@ -55,7 +61,7 @@ export interface DB {
   stockItems: StockItem[]; recipes: Recipe[]; movements: Movement[]; customers: Customer[]; ledger: LedgerRow[];
   orders: Order[]; payments: Payment[]; refunds: Refund[]; approvals: Approval[]; sessions: Session[]; cashMoves: CashMove[];
   roster: ShiftDay[]; clock: ClockEvent[]; suppliers: Supplier[]; pos: PurchaseOrder[]; opnames: Opname[]; promos: Promo[];
-  reservations: Reservation[]; reviews: Review[]; messages: Message[]; devices: Device[]; audit: Audit[]; notices: Notice[];
+  reservations: Reservation[]; reviews: Review[]; messages: Message[]; devices: Device[]; integrations: Integration[]; audit: Audit[]; notices: Notice[];
   theme: Theme; staffBrand: { accent: string; logo: string; workspace: string; density: 'compact' | 'comfy' }; versions: Version[];
   perms: Record<string, string>; records: Record<string, Rec[]>; counters: Record<string, number>;
   /** Settings pages: key = page path + ':' + setting id. */

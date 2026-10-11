@@ -3,7 +3,7 @@ import type { DB, Order, OrderLine, Payment, Product } from './schema.ts';
 import { orderTotals } from '../domain/order.ts';
 import type { Method, Source } from '../domain/order.ts';
 
-export const DB_VERSION = 4;
+export const DB_VERSION = 5;
 export const DAY = 864e5;
 
 export function rng(seed: number) {
@@ -127,6 +127,7 @@ export function seed(now = Date.now()): DB {
       { id: 'd5', outletId: 'kem', kind: 'pos', name: 'Register 1', lastSeen: now, pairCode: null, status: 'online' }, { id: 'd6', outletId: 'sen', kind: 'kiosk', name: 'Kiosk 1', lastSeen: now, pairCode: null, status: 'online' },
       { id: 'd7', outletId: 'sen', kind: 'edc', name: 'BCA EDC · Terminal 01', lastSeen: now, pairCode: null, status: 'online' },
     ],
+    integrations: [],
     audit: [], notices: [
       { id: 'n1', alert: 'Low stock', level: 'warn', to: ['pic', 'manager'], outletId: 'kem', text: 'Oat milk below par at Kemang', href: '/owner/inventory/low-stock-alerts-and-reorder-rules', at: now - 34 * 60e3, read: false },
       { id: 'n2', alert: 'Printer offline', level: 'warn', to: ['pic', 'cashier'], outletId: 'sen', text: 'Epson TM-m30 at Senayan offline for 9 min', href: '/owner/account/devices', at: now - 9 * 60e3, read: false },
