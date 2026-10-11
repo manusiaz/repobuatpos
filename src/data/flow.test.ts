@@ -8,7 +8,8 @@ import { menuDesign } from './actions/studio.ts';
 import { badgesOf } from '../system/studio.ts';
 import { receiptDoc } from '../devices/receipt.ts';
 import { toText } from '../devices/layout.ts';
-import { PAYMENT_PAGE, payOn, referral, roundStep } from '../system/settings.ts';
+import { PAYMENT_PAGE, payOn, referral, roundStep, screenMode } from '../system/settings.ts';
+import { pickupLanes } from '../domain/order.ts';
 import { payCash } from './actions/pos.ts';
 import { findOrJoin } from './actions/selforder.ts';
 import { level } from '../domain/stock.ts';
@@ -158,4 +159,19 @@ test('One system: delivery apps are billed at the channel price, and diet badges
   }
   assert.deepEqual(badgesOf(snapshot(), 'p1').map(b => b[0]), ['spicy', 'veg']);
   assert.deepEqual(badgesOf(snapshot(), 'p2'), []);
+});
+
+test('Pickup board: a paid QR order shows as preparing while it cooks, then ready, then drops off', () => {
+  const id = newOrder('kem', 'guest', 'qr', { table: 'T-05' });
+  addLine(id, 'p5', [], 1, '', 'guest');
+  gatewayWebhook(startPayment(id, 'qris', order(id).total, 'guest'), 'settled');
+  const lanes = (at = Date.now()) => pickupLanes(snapshot().orders.filter(o => o.outletId === 'kem'), at);
+  assert.ok(lanes().prep.some(o => o.id === id) && !lanes().ready.some(o => o.id === id));
+  bumpDone(id, 'hadi');
+  assert.equal(order(id).status, 'paid', 'money state stays paid');
+  assert.ok(lanes().ready.some(o => o.id === id) && !lanes().prep.some(o => o.id === id), 'number moves to Ready');
+  assert.ok(!lanes(Date.now() + 11 * 60e3).ready.some(o => o.id === id), 'off the board after 10 minutes');
+  assert.equal(screenMode(snapshot(), 'kem'), 'customer');
+  setSetting('/display:mode.kem', 'pickup', 'device');
+  assert.equal(screenMode(snapshot(), 'kem'), 'pickup', 'the Kemang display TV turns into the pickup board');
 });

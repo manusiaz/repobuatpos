@@ -327,6 +327,7 @@ export function waGuest(d: DB, o: Order, template: 'e_receipt' | 'order_ready') 
 }
 /** Order ready → floor team + the guest's phone. */
 export function orderReady(d: DB, o: Order, roles: Role[] = ['waiter', 'cashier'], suffix = '') {
+  o.readyAt = Date.now();
   notify(d, 'Order ready', 'info', roles, o.outletId, `${o.no}${o.table ? ' · ' + o.table : ''} ready${suffix}`);
   waGuest(d, o, 'order_ready');
 }

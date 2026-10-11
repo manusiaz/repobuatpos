@@ -27,7 +27,7 @@ export interface Order {
   id: string; no: string; outletId: string; sessionId: string | null; source: Source; type: 'dine' | 'take' | 'delivery'; status: OrderStatus;
   table: string | null; customerId: string | null; lines: OrderLine[]; discountPct: number; promoIds: string[]; guests: number;
   subtotal: IDR; discount: IDR; service: IDR; tax: IDR; total: IDR; createdAt: number; paidAt: number | null; cashierId: string | null;
-  tier?: 'rush' | 'standard' | 'saver'; readyBy?: number; idemKey: string; note?: string; rating?: number;
+  tier?: 'rush' | 'standard' | 'saver'; readyBy?: number; readyAt?: number; idemKey: string; note?: string; rating?: number;
 }
 export interface Payment { id: string; orderId: string; outletId: string; method: Method; amount: IDR; tip: IDR; status: PaymentStatus; ref: string; at: number; expiresAt: number | null; sessionId: string | null; /** set by the payment gateway */ provider?: string; qr?: string; va?: string; deeplink?: string }
 export interface Refund { id: string; orderId: string; paymentId: string; amount: IDR; reason: string; approvalId: string | null; at: number; toStock: boolean; /** drawer the cash went out of (cash refunds) */ sessionId?: string | null; /** lines returned to stock by this refund */ lineIds?: string[] }

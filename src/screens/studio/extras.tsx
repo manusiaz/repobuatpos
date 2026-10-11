@@ -6,7 +6,7 @@ import { linkTo } from '../../system/hosts.ts';
 import type { ReactNode } from 'react';
 import type { Group, Val } from '../../data/actions/studio.ts';
 import { idr } from '../../domain/money.ts';
-import { orderTotals } from '../../domain/order.ts';
+import { orderTotals, pickupLanes } from '../../domain/order.ts';
 import { Icon } from '../../ui/kit.tsx';
 import { Block, f, type Device, type F } from './Frame.tsx';
 import { Guest, GBtn, Tag, gh, guestProducts, photoOf, type GuestCtx } from './guest.tsx';
@@ -111,8 +111,8 @@ export const EXTRAS: Extra[] = [
 
   { key: 'queue-pickup-screen', label: 'Queue & pickup screen', icon: 'list-ordered', device: 'desktop', defaults: STUDIO_DEFAULTS['queue-pickup-screen'],
     fields: () => [f.text('head', 'Title'), f.text('prep', 'Preparing column'), f.text('ready', 'Ready column'), f.range('show', 'Numbers per column', 4, 16, 1), f.tog('sound', 'Chime when ready')],
-    preview: (g, ctx) => { const os = ctx.db.orders.filter(o => o.outletId === ctx.outletId && !o.id.startsWith('h')), prep = os.filter(o => ['sent', 'preparing'].includes(o.status)), ready = os.filter(o => o.status === 'ready');
-      const col = (t: string, list: typeof os, hi: boolean) => <div style={{ flex: 1, padding: 24, display: 'flex', flexDirection: 'column', gap: 12, background: hi ? 'var(--bn-p)' : 'transparent', color: hi ? 'var(--bn-on-p)' : 'inherit' }}><b style={{ fontSize: 28 }}>{t}</b>
+    preview: (g, ctx) => { const { prep, ready } = pickupLanes(ctx.db.orders.filter(o => o.outletId === ctx.outletId), Date.now());
+      const col = (t: string, list: typeof prep, hi: boolean) => <div style={{ flex: 1, padding: 24, display: 'flex', flexDirection: 'column', gap: 12, background: hi ? 'var(--bn-p)' : 'transparent', color: hi ? 'var(--bn-on-p)' : 'inherit' }}><b style={{ fontSize: 28 }}>{t}</b>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12 }}>{list.slice(0, Number(g.show)).map(o => <b key={o.id} className="num" style={{ fontSize: 44, fontFamily: 'var(--bn-font)' }}>{o.no.replace(/\D/g, '').slice(-3)}</b>)}</div>{!list.length && <span style={{ opacity: .6, fontSize: 20 }}>None right now</span>}</div>;
       return <Guest d={ctx.d} dark style={{ height: '100%', display: 'flex', flexDirection: 'column' }}><div style={{ padding: '18px 24px', display: 'flex', justifyContent: 'space-between' }}><H ctx={ctx} size={30}>{String(g.head)}</H><b>{ctx.d.name}</b></div>
         <div style={{ flex: 1, display: 'flex' }}>{col(String(g.prep), prep, false)}{col(String(g.ready), ready, true)}</div></Guest>; } },

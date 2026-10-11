@@ -35,3 +35,7 @@ export const guestLang = (db: DB) => (setting<string>(db, LANG_PAGE, 'lang', 'en
 export const REFERRAL_PAGE = '/owner/customers/referral-program';
 /** Invite-a-friend: both get beans when the friend joins from the member's link. */
 export const referral = (db: DB) => ({ on: Boolean(setting(db, REFERRAL_PAGE, 'ref-on', true)), referrer: Number(setting(db, REFERRAL_PAGE, 'ref-referrer', 100)), friend: Number(setting(db, REFERRAL_PAGE, 'ref-friend', 50)) });
+
+/** What a display.<root> screen shows at an outlet: the customer screen of a register, the pickup board, or the menu board. */
+export type ScreenMode = 'customer' | 'pickup' | 'menu';
+export const screenMode = (db: DB, outletId: string) => setting<string>(db, '/display', 'mode.' + outletId, 'customer') as ScreenMode;

@@ -48,6 +48,14 @@ const ORDER_FLOW: Record<OrderStatus, OrderStatus[]> = {
 };
 export const canMove = (from: OrderStatus, to: OrderStatus) => ORDER_FLOW[from].includes(to);
 
+/** Pickup board lanes from kitchen line state, so a paid-first QR / kiosk order shows too. Ready numbers stay `readyMin` minutes. */
+type Ticket = { id: string; createdAt: number; status: OrderStatus; readyAt?: number; lines: { fired: boolean; kds: 'new' | 'cooking' | 'done' }[] };
+export function pickupLanes<T extends Ticket>(orders: T[], now: number, readyMin = 10) {
+  const live = orders.filter(o => !o.id.startsWith('h') && now - o.createdAt < 3 * 3600e3 && !['served', 'voided', 'refunded'].includes(o.status) && o.lines.some(l => l.fired));
+  const done = (o: T) => o.lines.every(l => !l.fired || l.kds === 'done');
+  return { prep: live.filter(o => !done(o)), ready: live.filter(o => done(o) && now - (o.readyAt ?? now) < readyMin * 60e3) };
+}
+
 // st-pay: only the gateway webhook settles a QRIS / VA payment.
 export type PaymentStatus = 'created' | 'pending' | 'settled' | 'expired' | 'failed' | 'refund_requested' | 'refunded';
 export type Method = 'cash' | 'qris' | 'card' | 'ewallet' | 'va' | 'deposit' | 'kasbon';

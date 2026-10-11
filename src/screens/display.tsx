@@ -1,4 +1,8 @@
 'use client';
+import { menuDesign } from '../data/actions/studio.ts';
+import { EXTRAS } from './studio/extras.tsx';
+import { studioValue } from '../system/studio.ts';
+import { screenMode, type ScreenMode } from '../system/settings.ts';
 import { productImage } from '../ui/kit.tsx';
 // Customer display (spec: BorNiz Customer Display). A fixed 16:9 canvas in cqw units that never scrolls, worn in the
 // merchant brand. It mirrors the outlet's open POS order and follows it on its own: cart → QRIS → paid → receipt →
@@ -11,7 +15,7 @@ import { idr } from '../domain/money.ts';
 import { lineTotal } from '../domain/order.ts';
 import { balance, earn, tierOf, TIERS } from '../domain/loyalty.ts';
 import { usable } from '../domain/promo.ts';
-import { patchOrder, rateOrder } from '../data/actions.ts';
+import { patchOrder, rateOrder, setSetting } from '../data/actions.ts';
 import { chooseTip, newPairCode, pairByCode, sendReceipt, tipOf, unpairDisplay } from '../data/actions/display.ts';
 import { digits, findCustomer, findOrJoin } from '../data/actions/selforder.ts';
 import type { DB, Order, Payment } from '../data/schema.ts';
@@ -71,6 +75,7 @@ export default function Screen() {
   const reg = disp && db.device.paired[disp.id] ? db.devices.find(d => d.id === db.device.paired[disp.id]) : undefined;
   // Surface root (/display): pairing until paired, then whatever the order is doing.
   const view: View = VIEW_OF[page.slug] ?? (disp && !reg ? 'pair' : phase);
+  const mode = screenMode(db, outletId); // a display at the pickup counter or on the wall runs a board instead of following a register
   const to = useCallback((v: View) => { navTarget = v; go(pathOf(v)); }, [go]);
   // Opened by URL (not moved here by the display itself): show the state as is, no timed steps.
   useEffect(() => { if (view !== navTarget) following = false; }, [view]);
@@ -111,7 +116,7 @@ export default function Screen() {
   return <div data-guest style={{ ...brandVars(db.theme), height: '100dvh', display: 'grid', placeItems: 'center', background: 'var(--ink-950)', overflow: 'hidden' }}>
     <style>{CSS}</style>
     <div key={view} style={{ width: 'min(100vw, calc(100dvh * 16 / 9))', aspectRatio: '16 / 9', position: 'relative', overflow: 'hidden', containerType: 'inline-size', background: 'var(--bn-ink)', color: 'var(--ink-0)', userSelect: 'none' }}>
-      {body[view]}
+      {page.slug === 'display' && mode !== 'customer' ? <Board db={db} outletId={outletId} mode={mode} /> : body[view]}
       {view !== 'pair' && (!reg || !db.device.online) && <button onClick={() => to('pair')} style={{ position: 'absolute', top: '1.4cqw', right: '1.4cqw', zIndex: 5, border: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '.6cqw', height: '3cqw', padding: '0 1.2cqw', borderRadius: 99, background: 'color-mix(in srgb,var(--ink-950) 70%,transparent)', color: 'var(--ink-0)', fontSize: '1.1cqw', fontWeight: 600 }}>
         <Icon name={db.device.online ? 'link-2-off' : 'wifi-off'} style={{ width: '1.4cqw', height: '1.4cqw' }} />{!db.device.online ? 'Offline · QRIS paused' : 'Not paired with a register'}</button>}
     </div>
@@ -272,12 +277,16 @@ function Pair({ db, outletId, to }: P) {
   const out = db.outlets.find(o => o.id === outletId);
   if (!disp) return <Waiting icon="monitor-off" title="No customer display set up" sub={`Add a customer display for ${out?.name} under Devices in the back office.`} />;
   const btn: CSSProperties = { height: '5.4cqw', padding: '0 2.4cqw', borderRadius: '1.4cqw', border: 0, cursor: 'pointer', fontSize: '1.7cqw', fontWeight: 700 };
+  const mode = screenMode(db, outletId);
+  const modes = <div style={{ display: 'flex', gap: '1cqw' }} role="group" aria-label="Screen mode">{([['customer', 'Customer screen'], ['pickup', 'Pickup board'], ['menu', 'Menu board']] as const).map(([m, l]) =>
+    <button key={m} aria-pressed={mode === m} style={{ ...btn, background: mode === m ? 'var(--bn-ink)' : 'var(--ink-0)', color: mode === m ? 'var(--ink-0)' : 'var(--bn-ink)', border: `1px solid ${LINE}` }} onClick={() => setSetting('/display:mode.' + outletId, m, 'device')}>{l}</button>)}</div>;
   if (paired) return <div style={{ ...PAPER, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2.4cqw', textAlign: 'center' }}>
     <span style={{ width: '12cqw', height: '12cqw', borderRadius: 999, background: 'var(--success)', color: 'var(--ink-0)', display: 'grid', placeItems: 'center' }}><Icon name="link-2" style={{ width: '6cqw', height: '6cqw' }} /></span>
     <b style={{ ...HEAD, fontSize: '4.4cqw' }}>Paired with {paired.name}</b>
     <span style={{ fontSize: '1.8cqw', color: MUTED }}>{disp.name} · {out?.name} · shows this register’s cart and QRIS</span>
+    {modes}
     <div style={{ display: 'flex', gap: '1.4cqw' }}>
-      <button style={{ ...btn, background: 'var(--bn-p)', color: 'var(--ink-0)' }} onClick={() => to('idle')}>Start showing promos</button>
+      <button style={{ ...btn, background: 'var(--bn-p)', color: 'var(--ink-0)' }} onClick={() => to('idle')}>{mode === 'customer' ? 'Start showing promos' : 'Start the board'}</button>
       <button style={{ ...btn, background: 'var(--ink-0)', color: 'var(--bn-ink)', border: `1px solid ${LINE}` }} onClick={() => unpairDisplay(disp.id, 'device')}>Unpair</button>
     </div>
   </div>;
@@ -289,6 +298,8 @@ function Pair({ db, outletId, to }: P) {
       <span style={{ fontSize: '1.8cqw', color: MUTED, lineHeight: 1.5 }}>On the register, open Settings → Customer display and enter this code. It changes every time you open this screen.</span>
       <div style={{ display: 'flex', gap: '1cqw' }} aria-label={`Pairing code ${code}`}>{code.split('').map((c, i) => <span key={i} style={{ width: '6.4cqw', height: '8cqw', borderRadius: '1.4cqw', background: 'var(--ink-0)', border: `2px solid var(--bn-p)`, display: 'grid', placeItems: 'center', fontFamily: 'var(--font-display)', fontSize: '4.4cqw', fontWeight: 700 }}>{c}</span>)}</div>
       <button style={{ ...btn, alignSelf: 'flex-start', background: 'transparent', color: 'var(--bn-p)', padding: 0 }} onClick={() => newPairCode(disp.id)}>Get a new code</button>
+      <span style={{ fontSize: '1.4cqw', color: MUTED }}>Or use this screen on its own, without a register:</span>
+      {modes}
     </div>
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2cqw', padding: '2.4cqw', borderRadius: '2cqw', background: 'var(--ink-0)', border: `1px solid ${LINE}` }}>
       <b style={{ fontSize: '2cqw' }}>Staff: confirm on this screen</b>
@@ -468,4 +479,11 @@ function Waiting({ icon, title, sub, paper }: { icon: string; title: string; sub
     <b style={{ ...HEAD, fontSize: '3.6cqw' }}>{title}</b>
     <span style={{ fontSize: '1.8cqw', opacity: .8 }}>{sub}</span>
   </div>;
+}
+
+/** Pickup board (preparing / ready numbers, live from the kitchen) or menu board, drawn by the same layout Menu Studio edits. */
+function Board({ db, outletId, mode }: { db: DB; outletId: string; mode: ScreenMode }) {
+  const key = mode === 'pickup' ? 'queue-pickup-screen' : 'menu-board-tv-digital-signage';
+  const x = EXTRAS.find(e => e.key === key)!, v = mode === 'pickup' ? studioValue(db, 'queue-pickup-screen') : studioValue(db, 'menu-board-tv-digital-signage');
+  return <div style={{ position: 'absolute', inset: 0 }}>{x.preview(v as never, { d: menuDesign(db), db, outletId, lang: 'en' })}</div>;
 }
