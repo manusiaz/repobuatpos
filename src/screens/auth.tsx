@@ -41,30 +41,32 @@ export default function Screen() {
   const { page } = useApp();
   const slug = page.slug, ob = OB.indexOf(slug);
   return <div className="au">
-    <style>{`.au{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);min-height:100dvh}.au-bar{display:none}
-      @media (max-width:767px){.au{grid-template-columns:minmax(0,1fr)}.au-side{display:none!important}.au-bar{display:flex}}`}</style>
-    <Side slug={slug} ob={ob} />
+    <style>{`.au{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:100dvh}
+      @media (max-width:767px){.au{grid-template-columns:minmax(0,1fr)}.au-side{display:none!important}}`}</style>
     <main className="stack" style={{ padding: '24px var(--margin) 48px', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-surface)' }}>
-      <div className="au-bar row between" style={{ width: 'min(460px,100%)' }}><Link href="/" style={{ font: '700 22px var(--font-display)', color: 'var(--fg-1)', letterSpacing: '-.03em' }}>BorNiz</Link>{ob >= 0 && <span className="cap">Step {ob + 1} of 5</span>}</div>
+      <div className="au-bar row between" style={{ width: 'min(460px,100%)' }}><Link href="/" className="row" style={{ gap: 8, font: '700 22px var(--font-display)', color: 'var(--fg-1)', letterSpacing: '-.02em', textDecoration: 'none' }}><span aria-hidden style={{ width: 32, height: 32, borderRadius: 9, background: 'var(--accent)', color: '#fff', display: 'grid', placeItems: 'center', fontSize: 20 }}>b</span>BorNiz</Link>{ob >= 0 && <span className="cap">Step {ob + 1} of 5</span>}</div>
       <div className="stack" style={{ width: 'min(460px,100%)', gap: 16 }}>
         {ob >= 0 && <Progress i={ob} />}
         <View slug={slug} />
       </div>
     </main>
+    <Side slug={slug} ob={ob} />
   </div>;
 }
 
+const POINTS: [string, string][] = [['store', 'Easy setup for any outlet'], ['shield-check', 'Secure and reliable system'], ['layers', 'Built for every business']];
 function Side({ slug, ob }: { slug: string; ob: number }) {
   const done = slug === 'plan-activated';
   const at = STEPS.findIndex(s => s[0] === slug);
-  return <aside className="au-side stack" style={{ background: 'var(--ink-950)', color: 'var(--ink-0)', padding: 40, justifyContent: 'space-between', gap: 24, position: 'sticky', top: 0, height: '100dvh', overflowY: 'auto' }}>
-    <Link href="/" style={{ font: '700 24px var(--font-display)', letterSpacing: '-.03em', color: 'var(--ink-0)' }}>BorNiz</Link>
+  // design v1.0: dark brand panel on the right, orange glow, headline and three points; the step list only while setting up
+  return <aside className="au-side stack" style={{ background: 'radial-gradient(circle at 85% 8%, color-mix(in srgb, var(--accent) 55%, transparent), transparent 55%), linear-gradient(165deg, var(--ink-800), var(--ink-950))', color: 'var(--ink-0)', padding: 48, justifyContent: 'flex-end', gap: 28, position: 'sticky', top: 0, height: '100dvh', overflowY: 'auto' }}>
     <div className="stack">
-      <b style={{ fontSize: 44, lineHeight: 1, letterSpacing: '-.04em' }}>{ob >= 0 ? 'Set up in 5 steps.' : done ? 'You’re ready to sell.' : 'Sell fast. See everything.'}</b>
+      <b style={{ fontSize: 48, lineHeight: 1, letterSpacing: '-.02em' }}>{ob >= 0 ? 'Set up in 5 steps.' : done ? 'You’re ready to sell.' : 'Powering modern commerce.'}</b>
       <span style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--ink-300)', maxWidth: 420 }}>{ob >= 0 ? 'Everything here can be changed later in Settings. Skip anything you’re not sure about.' : 'Cloud POS for cafés, restaurants, shops and services. QRIS, cash, card and e-wallet in one register.'}</span>
     </div>
-    <nav className="stack" style={{ gap: 4 }} aria-label="Steps">{STEPS.map(([s, l], i) => <Link key={s} href={A + s} className="row" style={{ height: 34, padding: '0 10px', borderRadius: 9, background: s === slug ? 'var(--ink-800)' : 'transparent', color: s === slug ? 'var(--ink-0)' : 'var(--ink-400)', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
-      <span style={{ width: 20, height: 20, borderRadius: 99, background: at > i ? 'var(--success)' : s === slug ? 'var(--accent)' : 'var(--ink-700)', color: 'var(--ink-0)', display: 'grid', placeItems: 'center', fontSize: 10, fontWeight: 800 }}>{at > i ? <Icon name="check" size={12} /> : i + 1}</span>{l}</Link>)}</nav>
+    {ob < 0 && !done && <div className="stack" style={{ gap: 12 }}>{POINTS.map(([ic, t]) => <span key={t} className="row" style={{ gap: 12, fontSize: 16, fontWeight: 600 }}><span style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--accent)', display: 'grid', placeItems: 'center' }}><Icon name={ic} size={18} /></span>{t}</span>)}</div>}
+    {(ob >= 0 || done) && <nav className="stack" style={{ gap: 4 }} aria-label="Steps">{STEPS.map(([s, l], i) => <Link key={s} href={A + s} className="row" style={{ height: 34, padding: '0 10px', borderRadius: 9, background: s === slug ? 'var(--ink-800)' : 'transparent', color: s === slug ? 'var(--ink-0)' : 'var(--ink-400)', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+      <span style={{ width: 20, height: 20, borderRadius: 99, background: at > i ? 'var(--success)' : s === slug ? 'var(--accent)' : 'var(--ink-700)', color: 'var(--ink-0)', display: 'grid', placeItems: 'center', fontSize: 10, fontWeight: 800 }}>{at > i ? <Icon name="check" size={12} /> : i + 1}</span>{l}</Link>)}</nav>}
   </aside>;
 }
 

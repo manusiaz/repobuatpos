@@ -19,13 +19,13 @@ const OPEN = ['open', 'held', 'sent', 'preparing', 'ready', 'served', 'paying'];
 const tableName = (i: number) => 'T-' + String(i).padStart(2, '0');
 
 function tableState(db: DB, o: Order | undefined, billed: Set<string>, now: number, resv?: DB['reservations'][0]): { s: string; tone: Tone } {
-  if (!o) return resv?.status === 'seated' ? { s: 'Seated', tone: 'info' } : resv ? { s: 'Reserved ' + hhmm(resv.at), tone: 'neutral' } : { s: 'Free', tone: 'neutral' };
+  if (!o) return resv?.status === 'seated' ? { s: 'Seated', tone: 'info' } : resv ? { s: 'Reserved ' + hhmm(resv.at), tone: 'neutral' } : { s: 'Available', tone: 'success' };
   if (o.status === 'paying') return { s: 'Paying', tone: 'violet' };
   if (billed.has(o.id)) return { s: 'Wants bill', tone: 'danger' };
   if (o.status === 'ready') return { s: 'Food ready', tone: 'success' };
-  if (o.lines.some(l => !l.fired)) return { s: 'Ordering', tone: 'info' };
-  if (o.lines.some(l => l.fired && l.kds !== 'done')) return { s: 'Cooking', tone: 'warning' };
-  return { s: 'Eating', tone: 'neutral' };
+  if (o.lines.some(l => !l.fired)) return { s: 'Ordering', tone: 'warning' };
+  if (o.lines.some(l => l.fired && l.kds !== 'done')) return { s: 'Cooking', tone: 'accent' };
+  return { s: 'Occupied', tone: 'accent' };
 }
 
 export default function Screen() {
@@ -46,7 +46,9 @@ export default function Screen() {
   const title = tab === 'table' ? 'Table ' + sel : { tables: 'Tables · ' + outlet?.name, ready: 'Ready to serve', calls: 'Guest calls', me: 'My shift' }[tab];
   const TABS: [Tab, string, string, number][] = [['tables', 'Tables', 'armchair', 0], ['ready', 'Ready', 'bell', ready.length], ['calls', 'Calls', 'hand', unread], ['me', 'Me', 'user', 0]];
 
-  return <div style={{ ['--role' as string]: 'var(--success)', ['--role-soft' as string]: 'var(--success-soft)', ['--role-fg' as string]: 'var(--success-fg)', maxWidth: 520, margin: '0 auto', minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--bg-canvas)' }}>
+  // design v1.0: phone = one pane with tabs; tablet and up = tables left, the picked table right
+  const pick = (t: string) => { setSel(t); if (!matchMedia('(min-width: 900px)').matches) setTab('table'); };
+  return <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--bg-canvas)' }}>
     <header className="row" style={{ position: 'sticky', top: 0, zIndex: 10, padding: '12px 16px', background: 'var(--bg-canvas)', borderBottom: '1px solid var(--border)' }}>
       {tab === 'table' ? <button type="button" className="btn icon-btn" aria-label="Back to tables" onClick={() => setTab('tables')}><Icon name="arrow-left" /></button>
         : <span className="avatar" style={{ background: 'var(--role)' }}>{(me?.name ?? 'W')[0]}</span>}
@@ -55,12 +57,16 @@ export default function Screen() {
     </header>
     {!db.device.online && <div className="banner" role="alert" style={{ margin: '10px 14px 0', background: 'var(--danger-soft)', color: 'var(--danger-fg)' }}><Icon name="wifi-off" /><span>Offline. New orders are kept on this phone and sent to the kitchen when the connection is back.</span></div>}
     <main className="stack" style={{ flex: 1, padding: '12px 14px 160px' }}>
-      {tab === 'tables' && <Tables tables={outlet?.tables ?? 0} {...{ db, open, billed, now, ready: ready.length, outletId }} onReady={() => setTab('ready')} onPick={t => { setSel(t); setTab('table'); }} />}
+      {tab === 'tables' && <div className="wt">
+        <div className="stack"><Tables tables={outlet?.tables ?? 0} {...{ db, open, billed, now, ready: ready.length, outletId, sel }} onReady={() => setTab('ready')} onPick={pick} /></div>
+        <aside className="wt-side card stack" aria-label={sel ? 'Table ' + sel : 'Table detail'}>{sel ? <TableView table={sel} o={open.find(o => o.table === sel)} {...{ db, by, outletId, billed, canOrder }} />
+          : <Empty icon="armchair" title="Pick a table">Its order, kitchen status and bill show here.</Empty>}</aside>
+      </div>}
       {tab === 'table' && sel && <TableView table={sel} o={open.find(o => o.table === sel)} {...{ db, by, outletId, billed, canOrder }} />}
       {tab === 'ready' && <Ready list={ready} db={db} by={by} now={now} />}
       {tab === 'calls' && (!calls.length ? <Empty icon="hand" title="No calls">Guest calls, kitchen runner calls and ready dishes show up here.</Empty>
         : calls.map(n => <div key={n.id} className="card tight row" style={{ background: n.read ? 'var(--success-soft)' : undefined, alignItems: 'center' }}>
-          <span style={{ width: 44, height: 44, flex: 'none', borderRadius: 12, background: 'var(--success-soft)', color: 'var(--success-fg)', display: 'grid', placeItems: 'center' }}><Icon name={n.alert === 'Runner call' ? 'chef-hat' : n.alert === 'Order ready' ? 'bell' : n.alert === 'Sold out' ? 'ban' : 'hand'} /></span>
+          <span style={{ width: 44, height: 44, flex: 'none', borderRadius: 12, background: 'var(--accent-soft)', color: 'var(--accent-fg)', display: 'grid', placeItems: 'center' }}><Icon name={n.alert === 'Runner call' ? 'chef-hat' : n.alert === 'Order ready' ? 'bell' : n.alert === 'Sold out' ? 'ban' : 'hand'} /></span>
           <span className="grow" style={{ fontSize: 14 }}><b>{n.alert}</b> · {n.text}<br /><span className="muted" style={{ fontSize: 12 }}>{n.read ? 'Acknowledged' : ago(n.at, now)}</span></span>
           {!n.read && <button type="button" className="btn btn-dark" style={{ height: 48 }} onClick={() => { markRead(n.id, by); toast('On your way'); }}>On my way</button>}
         </div>))}
@@ -71,25 +77,36 @@ export default function Screen() {
       </div>}
     </main>
     <nav style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 30, background: 'var(--bg-surface)', borderTop: '1px solid var(--border)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
-      <div style={{ maxWidth: 520, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', paddingRight: 'max(0px, calc(160px - (100vw - 520px) / 2))' }}>
+      <div style={{ maxWidth: 520, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)' }}>
         {TABS.map(([k, l, ic, b]) => { const on = tab === k || (k === 'tables' && tab === 'table');
-          return <button key={k} type="button" onClick={() => setTab(k)} aria-current={on ? 'page' : undefined} style={{ position: 'relative', height: 64, border: 0, background: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, color: on ? 'var(--success-fg)' : 'var(--fg-3)', fontSize: 12, fontWeight: 700 }}>
+          return <button key={k} type="button" onClick={() => setTab(k)} aria-current={on ? 'page' : undefined} style={{ position: 'relative', height: 64, border: 0, background: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, color: on ? 'var(--accent-fg)' : 'var(--fg-3)', fontSize: 12, fontWeight: 700 }}>
             <Icon name={ic} size={22} />{l}{b > 0 && <span className="badge b-danger" style={{ position: 'absolute', top: 6, left: 'calc(50% + 6px)', height: 18, padding: '0 6px', fontSize: 11 }}>{b}</span>}</button>; })}
       </div>
     </nav>
   </div>;
 }
 
-function Tables({ db, open, billed, now, tables, ready, outletId, onReady, onPick }: { db: DB; open: Order[]; billed: Set<string>; now: number; tables: number; ready: number; outletId: string; onReady: () => void; onPick: (t: string) => void }) {
+type Filter = 'all' | 'free' | 'busy' | 'needs';
+function Tables({ db, open, billed, now, tables, ready, outletId, sel, onReady, onPick }: { db: DB; open: Order[]; billed: Set<string>; now: number; tables: number; ready: number; outletId: string; sel: string | null; onReady: () => void; onPick: (t: string) => void }) {
+  const [f, setF] = useState<Filter>('all');
   const resv = db.reservations.filter(r => r.outletId === outletId && (r.status === 'seated' || (r.status === 'booked' && r.at > now - 30 * 60e3 && r.at < now + 3 * 3600e3)));
   if (!tables) return <Empty icon="armchair" title="No tables at this outlet">Tables are set in the outlet settings.</Empty>;
   return <>
     {ready > 0 && <div className="row between" style={{ padding: '12px 14px', borderRadius: 16, background: 'var(--success)', color: '#fff' }}><span style={{ fontSize: 14 }}><b>{ready} {ready === 1 ? 'order' : 'orders'} ready</b> at the pass</span><button type="button" className="btn btn-sm" style={{ background: '#fff', color: 'var(--success-fg)', borderColor: 'transparent' }} onClick={onReady}>Pick up</button></div>}
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>{Array.from({ length: tables }, (_, i) => { const t = tableName(i + 1), o = open.find(x => x.table === t), st = tableState(db, o, billed, now, resv.find(r => r.table === t));
-      const col = st.tone === 'neutral' ? 'var(--border)' : `var(--${st.tone === 'accent' ? 'accent' : st.tone})`;
-      return <button key={t} type="button" onClick={() => onPick(t)} style={{ height: 96, borderRadius: 18, border: `2px solid ${col}`, background: st.s === 'Free' ? 'var(--bg-sunken)' : 'var(--bg-surface)', color: 'var(--fg-1)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, padding: 4 }}>
-        <b style={{ fontSize: 20 }}>{t}</b><span style={{ fontSize: 12, fontWeight: 700, color: st.tone === 'neutral' ? 'var(--fg-2)' : `var(--${st.tone}-fg)` }}>{st.s}</span>
-        {o && <span className="muted" style={{ fontSize: 11 }}>{o.guests} pax · {Math.round((now - o.createdAt) / 60e3)} min</span>}</button>; })}</div>
+    {(() => {
+      const all = Array.from({ length: tables }, (_, i) => { const t = tableName(i + 1), o = open.find(x => x.table === t); return { t, o, st: tableState(db, o, billed, now, resv.find(r => r.table === t)) }; });
+      const of = (k: Filter) => all.filter(x => k === 'all' || (k === 'free' ? !x.o : k === 'busy' ? !!x.o : ['danger', 'success', 'violet'].includes(x.st.tone) && !!x.o));
+      return <>
+        <div className="seg" role="group" aria-label="Filter tables" style={{ alignSelf: 'flex-start', overflowX: 'auto', maxWidth: '100%' }}>{([['all', 'All'], ['free', 'Available'], ['busy', 'Occupied'], ['needs', 'Needs you']] as const).map(([k, l]) =>
+          <button key={k} type="button" aria-pressed={f === k} onClick={() => setF(k)}>{l} · {of(k).length}</button>)}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 10 }}>{of(f).map(({ t, o, st }) => {
+          const col = `var(--${st.tone === 'neutral' ? 'border' : st.tone})`;
+          return <button key={t} type="button" onClick={() => onPick(t)} aria-pressed={sel === t} className="wt-table" style={{ borderLeft: `4px solid ${o || st.tone !== 'success' ? col : 'var(--border)'}`, background: o ? 'var(--bg-surface)' : 'var(--bg-sunken)' }}>
+            <span className="row between"><b style={{ fontSize: 18 }}>{t}</b>{o && <span className="muted" style={{ fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>{String(Math.floor((now - o.createdAt) / 3600e3)).padStart(2, '0')}:{String(Math.floor((now - o.createdAt) / 60e3) % 60).padStart(2, '0')}</span>}</span>
+            <span className="muted row" style={{ fontSize: 12, gap: 4 }}><Icon name="users" size={14} />{o ? o.guests + ' pax' : '—'}</span>
+            <Badge tone={st.tone}>{st.s}</Badge></button>; })}</div>
+      </>;
+    })()}
   </>;
 }
 

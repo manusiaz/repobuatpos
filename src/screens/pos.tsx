@@ -19,13 +19,13 @@ import { DeviceView } from './pos/Device.tsx';
 
 const CSS = `
 .pos{display:grid;grid-template-columns:88px minmax(0,1fr);height:100dvh;background:var(--bg-canvas);overflow:hidden}
-.pos-rail{background:var(--ink-950);color:var(--ink-0);display:flex;flex-direction:column;gap:4px;padding:12px 8px;overflow-y:auto}
-.pos-rail .logo{width:44px;height:44px;border-radius:12px;background:var(--accent);display:grid;place-items:center;font:700 20px var(--font-display);margin:0 auto 8px}
-.pos-rail button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:60px;border:0;border-radius:14px;background:transparent;color:var(--ink-400);font:600 13px/1.1 var(--font-body);cursor:pointer;text-align:center;padding:6px 2px;transition:transform var(--dur-instant)}
+.pos-rail{background:var(--bg-surface);color:var(--fg-1);border-right:1px solid var(--border);display:flex;flex-direction:column;gap:4px;padding:12px 8px;overflow-y:auto}
+.pos-rail .logo{width:44px;height:44px;border-radius:12px;background:var(--accent);color:#fff;display:grid;place-items:center;font:700 20px var(--font-display);margin:0 auto 8px}
+.pos-rail button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:60px;border:0;border-radius:14px;background:transparent;color:var(--fg-2);font:600 13px/1.1 var(--font-body);cursor:pointer;text-align:center;padding:6px 2px;transition:transform var(--dur-instant)}
 .pos-rail button:active{transform:scale(var(--press-scale))}
-.pos-rail button[aria-current=page]{background:var(--ink-800);color:var(--ink-0)}
+.pos-rail button:hover{background:var(--bg-sunken)}.pos-rail button[aria-current=page]{background:var(--accent-soft);color:var(--accent-fg)}
 .pos-tabs{display:flex;flex-direction:column;gap:4px;flex:1;min-height:0;overflow-y:auto}.pos-tabs .pos-lock{margin-top:auto}
-.pos-rail .dev-chrome{flex-direction:column;padding-top:8px;border-top:1px solid var(--ink-800)}.pos-rail .dev-chrome .btn{color:var(--ink-400)}
+.pos-rail .dev-chrome{flex-direction:column;padding-top:8px;border-top:1px solid var(--border)}.pos-rail .dev-chrome .btn{color:var(--fg-2)}
 .pos-rail .n{position:absolute;top:4px;right:8px;min-width:20px;height:20px;padding:0 6px;border-radius:99px;background:var(--accent);color:var(--ink-0);font:700 12px/20px var(--font-display)}
 .pos-main{min-width:0;height:100dvh;overflow:auto;display:flex;flex-direction:column}
 .pos-reg{display:grid;grid-template-columns:minmax(0,1fr) clamp(340px,30vw,380px);flex:1;min-height:0}
@@ -45,9 +45,9 @@ const CSS = `
  .pos-bar{display:flex;gap:8px;position:fixed;left:72px;right:0;bottom:0;z-index:5;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--bg-canvas);border-top:1px solid var(--border)}
  .pos-menu{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
  .pos-bar .pos-view{flex:1 1 0;min-width:0}.pos-bar .pos-view>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pos-bar .btn-pay{flex:1.4 1 0;min-width:0}}
-@media (max-width:767px){.pos{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}.pos-rail{flex-direction:row;overflow-x:auto;padding:6px 8px}
+@media (max-width:767px){.pos{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}.pos-rail{flex-direction:row;overflow-x:auto;padding:6px 8px;border-right:0;border-bottom:1px solid var(--border)}
  .pos-rail .logo{display:none}.pos-rail{align-items:center}.pos-tabs{flex-direction:row;overflow-x:auto;overflow-y:hidden}.pos-tabs .pos-lock{margin-top:0}
- .pos-rail .dev-chrome{flex-direction:row;padding:0 0 0 6px;border-top:0;border-left:1px solid var(--ink-800)}
+ .pos-rail .dev-chrome{flex-direction:row;padding:0 0 0 6px;border-top:0;border-left:1px solid var(--border)}
  .pos-rail button{min-width:72px;min-height:56px;flex:none}.pos-rail .dev-chrome .btn{min-width:44px}.pos-main{height:auto;min-height:0}
  .pos-pay{grid-template-columns:minmax(0,1fr)}.pos-bar{left:0}.pos-bar .btn-pay{min-width:0!important}}
 `;

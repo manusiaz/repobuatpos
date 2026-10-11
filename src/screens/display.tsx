@@ -2,6 +2,7 @@
 import { menuDesign } from '../data/actions/studio.ts';
 import { EXTRAS } from './studio/extras.tsx';
 import { studioValue } from '../system/studio.ts';
+import { pickupLanes } from '../domain/order.ts';
 import { screenMode, type ScreenMode } from '../system/settings.ts';
 import { productImage } from '../ui/kit.tsx';
 // Customer display (spec: BorNiz Customer Display). A fixed 16:9 canvas in cqw units that never scrolls, worn in the
@@ -126,8 +127,8 @@ export default function Screen() {
 type P = { db: DB; L: Live; now: number; to: (v: View) => void; outletId: string };
 
 // ── Idle / promo slideshow ─────────────────────────────────────────────────────────────
-function Idle({ db, now, outletId }: P) {
-  const slides = useMemo(() => {
+function useSlides(db: DB, outletId: string, now: number) {
+  return useMemo(() => {
     const menu = menuOf(db, outletId);
     const s: { head: string; sub: string; bg: string }[] = [];
     for (const p of db.promos.filter(x => usable(x, now))) {
@@ -140,6 +141,9 @@ function Idle({ db, now, outletId }: P) {
     return s;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [db.promos, db.products, db.outletProducts, outletId, Math.floor(now / 60e3)]);
+}
+function Idle({ db, now, outletId }: P) {
+  const slides = useSlides(db, outletId, now);
   const i = Math.floor(now / 5000) % slides.length, out = db.outlets.find(o => o.id === outletId);
   return <>
     {slides.map((s, k) => <div key={k} style={{ position: 'absolute', inset: 0, background: s.bg, opacity: k === i ? 1 : 0, transition: 'opacity 600ms var(--ease-out)' }} />)}
@@ -223,18 +227,41 @@ function Qris(p: P) {
 }
 
 // ── Paid / failed ──────────────────────────────────────────────────────────────────────
-function Paid({ db, L }: P) {
+function Paid({ db, L, now, outletId }: P) {
   const o = L.lastPaid;
+  const slides = useSlides(db, outletId, now);
   if (!o) return <Waiting icon="check" title="No payment yet today" sub="Paid orders show here." />;
   const cust = db.customers.find(c => c.id === o.customerId);
   const pts = db.ledger.filter(r => r.orderId === o.id && r.points > 0).reduce((a, r) => a + r.points, 0);
   const pay = db.payments.filter(p => p.orderId === o.id && p.status === 'settled');
   const methods = [...new Set(pay.map(p => METHOD[p.method]))].join(' + ');
-  return <div style={{ position: 'absolute', inset: 0, background: 'var(--success)', color: 'var(--ink-0)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2cqw', textAlign: 'center', padding: '4cqw' }}>
-    <span style={{ width: '16cqw', height: '16cqw', borderRadius: 999, background: 'var(--ink-0)', display: 'grid', placeItems: 'center', color: 'var(--success)', animation: 'cdPop 480ms var(--ease-spring)' }}><Icon name="check" strokeWidth={3} style={{ width: '8cqw', height: '8cqw' }} /></span>
-    <b style={{ ...HEAD, fontSize: '5.4cqw' }}>Terima kasih{cust ? ', ' + firstName(cust.name) : ''}!</b>
-    <span style={{ fontSize: '2.2cqw' }}>{idr(o.total)} paid{methods ? ' via ' + methods : ''}{pts > 0 ? ` · +${pts} beans` : ''}</span>
-    <span style={{ fontSize: '1.8cqw', opacity: .9 }}>Your order number is <b>{o.no}</b>{o.type === 'take' ? '. We’ll call it when it’s ready.' : '.'}</span>
+  // design v1.0: confirmation and this order's live progress | now serving and up next | a promo
+  const lanes = pickupLanes(db.orders.filter(x => x.outletId === outletId), now);
+  const fired = o.lines.filter(l => l.fired), stage = fired.length && fired.every(l => l.kds === 'done') ? 2 : fired.length ? 1 : 0;
+  const serving = [...lanes.ready].sort((a, b) => (b.readyAt ?? 0) - (a.readyAt ?? 0))[0];
+  const card: CSSProperties = { background: 'var(--ink-0)', borderRadius: '2cqw', border: `1px solid ${LINE}`, padding: '2.4cqw', display: 'flex', flexDirection: 'column', gap: '1.4cqw' };
+  const promo = slides[0];
+  return <div style={{ ...PAPER, display: 'grid', gridTemplateColumns: '1.15fr .8fr 1fr', gap: '2cqw', padding: '3cqw' }}>
+    <div style={{ ...card, alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
+      <span style={{ width: '9cqw', height: '9cqw', borderRadius: 999, background: 'var(--success)', display: 'grid', placeItems: 'center', color: 'var(--ink-0)', animation: 'cdPop 480ms var(--ease-spring)' }}><Icon name="check" strokeWidth={3} style={{ width: '5cqw', height: '5cqw' }} /></span>
+      <b style={{ ...HEAD, fontSize: '3.6cqw' }}>Terima kasih{cust ? ', ' + firstName(cust.name) : ''}!</b>
+      <span style={{ fontSize: '1.6cqw', color: MUTED }}>{idr(o.total)} paid{methods ? ' via ' + methods : ''}{pts > 0 ? ` · +${pts} beans` : ''}</span>
+      <div style={{ width: '100%', borderRadius: '1.6cqw', border: `1px solid ${LINE}`, padding: '1.6cqw' }}><span style={{ fontSize: '1.5cqw', color: MUTED }}>Your order number</span><b style={{ ...HEAD, display: 'block', fontSize: '7cqw' }}>{o.no}</b></div>
+      <div style={{ width: '100%', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '.6cqw' }} aria-label="Order progress">{['Received', 'Preparing', 'Ready'].map((l, i) =>
+        <span key={l} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.6cqw', fontSize: '1.4cqw', fontWeight: i === stage ? 800 : 600, color: i <= stage ? 'var(--bn-p)' : MUTED }}>
+          <span style={{ width: '100%', height: '.6cqw', borderRadius: 99, background: i <= stage ? 'var(--bn-p)' : LINE }} />{l}</span>)}</div>
+    </div>
+    <div style={card}>
+      <span style={{ fontSize: '1.7cqw', fontWeight: 700 }}>Now serving</span>
+      <b style={{ ...HEAD, fontSize: '5.4cqw', textAlign: 'center', padding: '1.6cqw', borderRadius: '1.6cqw', background: TINT, color: 'var(--bn-p)' }}>{serving?.no ?? '—'}</b>
+      <span style={{ fontSize: '1.7cqw', fontWeight: 700 }}>Preparing next</span>
+      {lanes.prep.slice(0, 4).map(x => <b key={x.id} style={{ ...HEAD, fontSize: '2.6cqw', padding: '.9cqw 1.4cqw', borderRadius: '1.2cqw', background: x.id === o.id ? TINT : 'var(--bn-paper)', color: x.id === o.id ? 'var(--bn-p)' : 'inherit' }}>{x.no}</b>)}
+      {!lanes.prep.length && <span style={{ fontSize: '1.5cqw', color: MUTED }}>Nothing waiting</span>}
+    </div>
+    <div style={{ borderRadius: '2cqw', overflow: 'hidden', position: 'relative', background: promo.bg, color: 'var(--ink-0)', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '2.4cqw', gap: '1cqw' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(0deg,color-mix(in srgb,var(--ink-950) 75%,transparent),transparent 60%)' }} />
+      <b style={{ ...HEAD, position: 'relative', fontSize: '3cqw' }}>{promo.head}</b><span style={{ position: 'relative', fontSize: '1.5cqw', opacity: .92 }}>{promo.sub}</span>
+    </div>
   </div>;
 }
 function Fail({ db, L, now }: P) {
