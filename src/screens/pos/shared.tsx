@@ -4,7 +4,8 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { pagesOf } from '../../system/registry.ts';
 import { perm, type PermCode } from '../../system/perms.ts';
-import { decide, requestApproval, verifyPin } from '../../data/actions.ts';
+import { decide, requestApproval } from '../../data/actions.ts';
+import { checkApprovalPin, whenChecked } from '../../data/actions/auth.ts';
 import { applyPosApproval } from '../../data/actions/pos.ts';
 import { snapshot } from '../../data/store.ts';
 import type { DB, Employee, Order, Session } from '../../data/schema.ts';
@@ -144,11 +145,13 @@ export function ApproverPad({ approvalId, level, title, detail, onOk, onClose }:
     if (!/^\d$/.test(k)) return;
     const p = (pin + k).slice(0, PIN_LEN); setPin(p); setErr('');
     if (p.length < PIN_LEN) return;
-    const bad = verifyPin(who, p) ?? (approvalId ? decide(approvalId, who, decision) : null);
-    if (bad) { setErr(bad); setShake(true); setTimeout(() => { setShake(false); setPin(''); }, 320); return; }
-    const name = db.employees.find(e => e.id === who)?.name;
-    toast(decision === 'approved' ? `Approved by ${name}` : `Rejected by ${name}`);
-    onClose(); if (decision === 'approved') onOk(who);
+    whenChecked(checkApprovalPin(who, p), e => {
+      const bad = e ?? (approvalId ? decide(approvalId, who, decision) : null);
+      if (bad) { setErr(bad); setShake(true); setTimeout(() => { setShake(false); setPin(''); }, 320); return; }
+      const name = db.employees.find(x => x.id === who)?.name;
+      toast(decision === 'approved' ? `Approved by ${name}` : `Rejected by ${name}`);
+      onClose(); if (decision === 'approved') onOk(who);
+    });
   };
   if (row && row.status !== 'waiting') {
     const by = db.employees.find(e => e.id === row.decidedBy)?.name ?? 'approver';

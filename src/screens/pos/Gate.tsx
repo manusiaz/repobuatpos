@@ -2,7 +2,9 @@
 // Before selling: staff PIN sign-in (lock screen) and the blind opening-float count that opens the drawer session.
 import { useEffect, useState } from 'react';
 import { openSession, patchOrder, requestApproval, setSetting } from '../../data/actions.ts';
-import { setSession } from '../../session.ts';
+import { grantSession, setSession } from '../../session.ts';
+import { REMOTE } from '../../data/remote.ts';
+import { checkLoginPin, whenChecked } from '../../data/actions/auth.ts';
 import { idr } from '../../domain/money.ts';
 import { Avatar, Icon, Numpad, hhmm, toast, useNow } from '../../ui/kit.tsx';
 import { DenomCount, P, REG, picNow, rosterSlot, sumDenoms, usePos } from './shared.tsx';
@@ -30,10 +32,10 @@ export function PinGate({ next }: { next?: boolean }) {
     if (!/^\d$/.test(k) || !emp) return;
     const p = (pin + k).slice(0, 4); setPin(p); setErr('');
     if (p.length < 4) return;
-    setTimeout(() => {
-      if (p === emp.pin) { setSession({ id: emp.id, role: emp.role, outletId }); setPin(''); if (!next) go(REG); }
-      else { setErr('Wrong PIN. Try again.'); setShake(true); setTimeout(() => { setShake(false); setPin(''); }, 320); }
-    }, 120);
+    setTimeout(() => whenChecked(REMOTE ? checkLoginPin(emp.id, p) : p === emp.pin ? null : 'Wrong PIN. Try again.', e => {
+      if (!e) { if (REMOTE) grantSession(emp.id, true); setSession({ id: emp.id, role: emp.role, outletId }); setPin(''); if (!next) go(REG); }
+      else { setErr(e); setShake(true); setTimeout(() => { setShake(false); setPin(''); }, 320); }
+    }), 120);
   };
   useEffect(() => { const k = (e: KeyboardEvent) => key(e.key === 'Backspace' ? 'del' : e.key); addEventListener('keydown', k); return () => removeEventListener('keydown', k); });
   return <div data-theme="dark" className="pos-gate">
@@ -57,7 +59,7 @@ export function PinGate({ next }: { next?: boolean }) {
       <div className={'pin-dots' + (shake ? ' shake' : '')} aria-label={`${pin.length} of 4 digits`} style={err ? { ['--fg-1' as string]: 'var(--danger-fg)' } : undefined}>{[0, 1, 2, 3].map(i => <i key={i} className={i < pin.length ? 'on' : ''} />)}</div>
       <span role="alert" style={{ minHeight: 20, color: 'var(--danger-fg)', fontSize: 14 }}>{err}</span>
       <div style={{ width: '100%' }}><Numpad onKey={key} extra="" /></div>
-      <span className="faint" style={{ fontSize: 13 }}>Demo PIN: 1234</span>
+      {!REMOTE && <span className="faint" style={{ fontSize: 13 }}>Demo PIN: 1234</span>}
     </div>
   </div>;
 }

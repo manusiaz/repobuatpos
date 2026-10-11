@@ -140,8 +140,8 @@ export function gatewayWebhook(paymentId: string, status: 'settled' | 'failed' |
   }, paymentId);
 }
 /** A failed or cancelled payment never un-sends a ticket: fired orders go back to their kitchen state. */
-const backFromPaying = (o: Order): Order['status'] => !o.lines.some(l => l.fired) ? 'open' : o.lines.every(l => l.kds === 'done') ? 'ready' : 'sent';
-function settleIfDone(d: DB, o: Order, by: string) {
+export const backFromPaying = (o: Order): Order['status'] => !o.lines.some(l => l.fired) ? 'open' : o.lines.every(l => l.kds === 'done') ? 'ready' : 'sent';
+export function settleIfDone(d: DB, o: Order, by: string) {
   const paid = d.payments.filter(p => p.orderId === o.id && p.status === 'settled').reduce((a, p) => a + p.amount, 0);
   // cash rounding (lg-total) is a separate line applied last: a cash bill is settled at the rounded amount
   const cash = d.payments.some(p => p.orderId === o.id && p.method === 'cash' && p.status === 'settled');

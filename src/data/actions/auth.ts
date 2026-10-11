@@ -2,6 +2,11 @@
 // Account & device services used by sign-up, onboarding, plans and register pairing (Auth surface).
 import { commit, snapshot, uid } from '../store.ts';
 import type { DB, Role } from '../schema.ts';
+import { REMOTE } from '../remote.ts';
+import { seed } from '../seed.ts';
+import { verifyPin } from '../actions.ts';
+import { remoteInfo, remoteReady, remoteRestart } from '../supabaseStore.ts';
+import { allOps, emptyDB, humanError, pinChanges, wire } from '../supabaseDocs.ts';
 
 export const PAIR_TTL_MS = 10 * 60e3;
 const pairKey = (deviceId: string) => 'pair:' + deviceId;
@@ -56,4 +61,96 @@ export function pairDevice(deviceId: string, code: string): string | null {
     d.device.paired[y.kind] = y.id; d.device.outletId = y.outletId;
   }, x.name, x.outletId);
   return null;
+}
+
+// ── Supabase accounts, PINs and starter data (REMOTE) ──────────────────────────────────────
+export type Check = string | null | Promise<string | null>;
+/** Approval PIN: on Supabase the server checks it (and opens a 2-minute window for this approver's decisions); locally verifyPin. */
+export function checkApprovalPin(employeeId: string, pin: string): Check { return REMOTE ? serverPin('bn_check_approval_pin', employeeId, pin) : verifyPin(employeeId, pin); }
+/** Staff login PIN on a shared device (the device stays signed in with the owner / manager account). */
+export function checkLoginPin(employeeId: string, pin: string): Check {
+  if (REMOTE) return serverPin('bn_check_login_pin', employeeId, pin);
+  return snapshot().employees.find(e => e.id === employeeId)?.pin === pin ? null : 'Wrong PIN.';
+}
+async function serverPin(fn: string, employeeId: string, pin: string) {
+  const t = remoteInfo().tenant;
+  if (!t) return 'This device is not signed in to a business. Log in first.';
+  const { sb } = await import('../supabase.ts');
+  const { data, error } = await sb().rpc(fn, { p_tenant: t.id, p_employee: employeeId, p_pin: pin });
+  return error ? humanError(error.message).text : (data as string | null);
+}
+/** Run `then` with a PIN check result, synchronously when the check is local. */
+export const whenChecked = (r: Check, then: (err: string | null) => void) => { if (r instanceof Promise) r.then(then, () => then('No connection. Try again.')); else then(r); };
+
+const site = () => (typeof location !== 'undefined' ? location.origin : '');
+const msg = (e: { message?: string } | null) => e?.message ? humanError(e.message).text : null;
+export async function accountSignIn(email: string, password: string): Promise<{ error: string | null; unconfirmed?: boolean }> {
+  const { sb } = await import('../supabase.ts');
+  const { data, error } = await sb().auth.signInWithPassword({ email: email.trim(), password });
+  if (error) return /confirm/i.test(error.message) ? { error: 'Confirm your email first: open the link we sent you.', unconfirmed: true } : { error: /invalid/i.test(error.message) ? 'Wrong email or password.' : error.message };
+  await remoteReady(data.user?.id ?? null);
+  return { error: null };
+}
+export async function accountSignUp(p: { email: string; password: string; name: string; phone: string }): Promise<{ error: string | null; confirm: boolean }> {
+  const { sb } = await import('../supabase.ts');
+  const { data, error } = await sb().auth.signUp({ email: p.email.trim(), password: p.password, options: { data: { name: p.name, phone: p.phone }, emailRedirectTo: site() + '/account/login' } });
+  if (error) return { error: error.message, confirm: false };
+  if (data.session) await remoteReady(data.user?.id ?? null);
+  return { error: null, confirm: !data.session };
+}
+export async function resendConfirmation(email: string) { const { sb } = await import('../supabase.ts'); return msg((await sb().auth.resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo: site() + '/account/login' } })).error); }
+export async function sendPasswordReset(email: string) { const { sb } = await import('../supabase.ts'); return msg((await sb().auth.resetPasswordForEmail(email.trim(), { redirectTo: site() + '/account/reset-password' })).error); }
+export async function newPassword(password: string) { const { sb } = await import('../supabase.ts'); return msg((await sb().auth.updateUser({ password })).error); }
+export async function accountUser() { const { sb } = await import('../supabase.ts'); return (await sb().auth.getUser()).data.user; }
+export async function accountSignOut() {
+  const { sb } = await import('../supabase.ts');
+  try { sessionStorage.removeItem('borniz-session'); localStorage.removeItem('borniz-shared-device'); } catch { /* blocked */ }
+  await sb().auth.signOut();
+  await remoteReady(null);
+}
+
+export interface NewBusiness { name: string; owner: string; phone: string; outlet: string; pin: string; approvalPin: string; demo: boolean }
+const slugify = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30).replace(/-$/, '') || 'toko';
+/** The data a new business starts with: the Kopi Biru demo (owner = you; demo staff keep PIN 1234 / 246810) or one empty outlet. */
+export function starterData(p: NewBusiness, slug: string): DB {
+  const s = seed();
+  if (p.demo) {
+    Object.assign(s.employees.find(e => e.id === 'budi')!, { name: p.owner, phone: p.phone || '', pin: p.pin, approvalPin: p.approvalPin });
+    return { ...s, tenant: { ...s.tenant, id: slug, name: p.name }, staffBrand: { ...s.staffBrand, workspace: p.name } };
+  }
+  const e = emptyDB(s), outlet = { ...s.outlets[0], id: 'main', name: p.outlet || 'Main outlet', city: '', tables: 10 };
+  const slot = () => ({ pic: '', crew: [] as string[] });
+  return { ...e, tenant: { ...s.tenant, id: slug, name: p.name, plan: 'free' }, theme: { ...s.theme, name: p.name }, staffBrand: { ...s.staffBrand, workspace: p.name },
+    outlets: [outlet], categories: s.categories, modifierGroups: s.modifierGroups, device: { ...s.device, outletId: 'main' },
+    employees: [{ id: 'owner', name: p.owner, role: 'owner', outlets: ['main'], pin: p.pin, approvalPin: p.approvalPin, phone: p.phone, color: '#F26B1D', active: true, wage: 0 }],
+    roster: Array.from({ length: 7 }, (_, day) => ({ outletId: 'main', day, slots: { pagi: slot(), siang: slot(), malam: slot() } })) };
+}
+/** Owner sign-up, step 2: bn_bootstrap creates the business and the owner's membership, then the starter data goes up (bn_import). */
+export async function createBusiness(p: NewBusiness, onProgress: (pct: number) => void = () => {}): Promise<string | null> {
+  if (!/^\d{4}$/.test(p.pin)) return 'Your staff PIN is 4 digits.';
+  if (!/^\d{6}$/.test(p.approvalPin)) return 'Your approval PIN is 6 digits.';
+  const { sb, membership, pickTenant } = await import('../supabase.ts');
+  let m = await membership().catch(() => null), tid = m?.tenantId ?? '', slug = m?.slug ?? '';
+  for (let i = 0; !tid && i < 4; i++) {
+    slug = slugify(p.name) + (i ? '-' + Math.random().toString(36).slice(2, 6) : '');
+    const { data, error } = await sb().rpc('bn_bootstrap', { p_name: p.name.trim(), p_slug: slug, p_employee_id: p.demo ? 'budi' : 'owner' });
+    if (!error) tid = data as string;
+    else if (error.code !== '23505') return humanError(error.message).text;
+  }
+  if (!tid) return 'That business name is taken. Try another.';
+  pickTenant(tid);
+  const d = starterData(p, slug), ops = wire(allOps(d)), size = 300;
+  for (let i = 0; i < ops.length; i += size) {
+    const { error } = await sb().rpc('bn_import', { p_tenant: tid, p_ops: ops.slice(i, i + size) });
+    if (error) return humanError(error.message).text;
+    onProgress(Math.min(90, Math.round(((i + size) / ops.length) * 90)));
+  }
+  for (const x of pinChanges(emptyDB(d), d)) {
+    const { error } = await sb().rpc('bn_set_pins', { p_tenant: tid, p_employee: x.id, p_pin: x.pin, p_approval_pin: x.approvalPin });
+    if (error) return humanError(error.message).text;
+  }
+  onProgress(100);
+  await remoteRestart();
+  m = (await remoteReady((await accountUser())?.id ?? null)).member;
+  return m ? null : 'The business was created but could not be opened. Log in again.';
 }

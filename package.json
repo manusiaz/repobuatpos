@@ -13,7 +13,7 @@
     "graph": "node --experimental-strip-types scripts/graph.ts",
     "paths": "node --experimental-strip-types scripts/paths.ts",
     "links": "node --experimental-strip-types scripts/check-links.ts",
-    "test:db": "psql \"postgres://postgres@localhost:5433/postgres\" -v ON_ERROR_STOP=1 -q -f supabase/tests/core.sql",
+    "test:db": "sh supabase/tests/run.sh",
     "check:system": "node --experimental-strip-types scripts/check-system.ts",
     "check:deploy": "node --experimental-strip-types scripts/check-deploy.ts"
   },

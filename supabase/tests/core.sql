@@ -1,5 +1,5 @@
 -- Behaviour tests for the BorNiz Supabase backend. Run on a scratch Postgres after supabase/tests/stub.sql + the migration:
---   psql -f supabase/tests/stub.sql -f supabase/migrations/*.sql -f supabase/tests/core.sql
+--   npm run test:db (supabase/tests/run.sh: stub + every migration + core.sql + server.sql on a fresh database)
 -- Every block raises if a rule does not hold. Runs inside a transaction and rolls back.
 \set ON_ERROR_STOP 1
 begin;
