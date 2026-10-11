@@ -48,3 +48,18 @@ test('subfolder mode and unknown hosts change nothing', () => {
   assert.equal(resolve('borniz-git-main.vercel.app', '/owner', sub).type, 'next');
   assert.equal(PAGES.length > 600, true);
 });
+
+test('host map: every surface on its own hostname (free vercel.app aliases now, separate servers later)', () => {
+  const H = { '': 'pos-soft-ajie.vercel.app', app: 'pos-soft-ajie-app.vercel.app', pos: 'pos-soft-ajie-pos.vercel.app', kds: 'pos-soft-ajie-kds.vercel.app', display: 'pos-soft-ajie-display.vercel.app', order: 'pos-soft-ajie-order.vercel.app', admin: 'pos-soft-ajie-admin.vercel.app' };
+  const m = config({ NEXT_PUBLIC_BORNIZ_HOSTS: JSON.stringify(H) });
+  assert.equal(m.routing, 'subdomain');
+  assert.equal(publicUrl('/pos/selling/register-order', m), 'https://pos-soft-ajie-pos.vercel.app/selling/register-order');
+  assert.equal(publicUrl('/order?t=07', m), 'https://pos-soft-ajie-order.vercel.app/kopibiru/t/07');
+  assert.deepEqual(resolve('pos-soft-ajie-kds.vercel.app', '/', m), { type: 'rewrite', path: '/kds', query: {} });
+  assert.deepEqual(resolve('pos-soft-ajie-pos.vercel.app', '/owner', m), { type: 'redirect', url: 'https://pos-soft-ajie-app.vercel.app/owner' });
+  for (const { path: p, url } of allPublicUrls(m)) {
+    const u = new URL(url), r = resolve(u.host, u.pathname, m);
+    const got = r.type === 'rewrite' ? r.path : r.type === 'next' ? u.pathname : 'REDIRECT ' + r.url;
+    assert.equal(got.replace(/\/$/, '') || '/', p, `${url} → ${got}`);
+  }
+});
