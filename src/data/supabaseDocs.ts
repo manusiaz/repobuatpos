@@ -201,7 +201,7 @@ export function guestOps(ops: Op[]): Op[] {
 export const wire = (ops: Op[]) => ops.map(({ fresh: _f, ...o }) => o);
 
 const MESSAGES: Record<string, string> = {
-  '001': 'Sales records are never deleted. Make a correction instead.', '002': 'Stock and beans history can’t be edited.', '003': 'Not enough beans.',
+  '050': 'This business moved to its own server. Reconnecting…',   '001': 'Sales records are never deleted. Make a correction instead.', '002': 'Stock and beans history can’t be edited.', '003': 'Not enough beans.',
   '004': 'QRIS, VA and e-wallet payments are confirmed by the payment gateway, not on this device.', '006': 'This request was already decided on another device.',
   '007': 'Nobody approves their own request.', '008': 'Approval PIN expired. Enter it again.', '011': 'This device is not signed in to this business. Log in again.',
   '012': 'Log in first.', '021': 'This order is already closed.', '023': 'A price just changed. Refresh the menu.', '024': 'The flash sale ended. Refresh the menu.',

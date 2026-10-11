@@ -2,7 +2,7 @@
 // Tenant = X-BorNiz-Tenant header, else the body's tenantId, else the caller's only membership.
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { HttpError, UUID } from './http.ts';
-import { supa } from './supabase.ts';
+import { cellFor, supa } from './supabase.ts';
 
 export type MemberRole = 'owner' | 'manager' | 'device' | 'admin';
 export interface Member { tenantId: string; userId: string; role: MemberRole; db: SupabaseClient }
@@ -12,10 +12,11 @@ export const bearer = (req: Request) => /^Bearer\s+(.+)$/i.exec(req.headers.get(
 export async function member(req: Request, roles: MemberRole[] | null = null, tenantHint?: unknown): Promise<Member> {
   const token = bearer(req);
   if (!token) throw new HttpError(401, 'Sign in first');
-  const db = supa(token);
+  let tenantId = req.headers.get('x-borniz-tenant') ?? (typeof tenantHint === 'string' ? tenantHint : '');
+  // a merchant on its own database signs in there: check the token against that database
+  const db = supa(token, UUID.test(tenantId) ? await cellFor(tenantId) : null);
   const { data: u, error } = await db.auth.getUser(token);
   if (error || !u.user) throw new HttpError(401, 'Session expired: sign in again');
-  let tenantId = req.headers.get('x-borniz-tenant') ?? (typeof tenantHint === 'string' ? tenantHint : '');
   if (!tenantId) {
     const { data } = await db.from('members').select('tenant_id').eq('user_id', u.user.id);
     if (data?.length !== 1) throw new HttpError(400, 'Which business? Send X-BorNiz-Tenant');

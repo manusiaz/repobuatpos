@@ -5,7 +5,7 @@ export const REMOTE = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
 /** Authorization for our own API routes (Supabase access token of the signed-in user). */
 export async function authHeaders(): Promise<Record<string, string>> {
   if (!REMOTE || typeof window === 'undefined') return {};
-  const { accessToken } = await import('./supabase.ts');
-  const t = await accessToken();
-  return t ? { Authorization: 'Bearer ' + t } : {};
+  const [{ accessToken }, { remoteInfo }] = await Promise.all([import('./supabase.ts'), import('./supabaseStore.ts')]);
+  const t = await accessToken(), tenant = remoteInfo().tenant?.id; // the server finds this business's database from it
+  return t ? { Authorization: 'Bearer ' + t, ...(tenant ? { 'X-BorNiz-Tenant': tenant } : {}) } : {};
 }

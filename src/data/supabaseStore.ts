@@ -120,6 +120,7 @@ async function flush() {
       backoff = 2000;
       const done = p;
       queue = queue.filter(x => x !== done);
+      if (error && /BN050/.test(error.message)) { queue = [done, ...queue]; saveQueue(); moved(); break; } // kept: replays once in the new database
       if (error) { const h = humanError(error.message); if (!done.quiet) toast(h.text); rejectSubs.forEach(f => f(done, h)); }
       else if (base) {
         // our own realtime echo (or a newer change) may already be in: only fill in what realtime has not delivered since sending
@@ -221,7 +222,10 @@ function guestBase(snap: Any, slug: string, prev: DB | null): DB {
     recipes: [...new Set(portions.map(p => p.productId))].map(p => ({ productId: p, stockItemId: SYNTHETIC + p, qty: 1 })),
     movements: portions.map(p => ({ outletId: p.outletId, stockItemId: SYNTHETIC + p.productId, qty: Number(p.n), type: 'adjust' as const, sourceId: SYNTHETIC + 'portions', by: 'system', at: 0 })) };
 }
-async function snapshotOf(slug: string) { const { sb } = await lib(), { data, error } = await sb().rpc('bn_public_snapshot', { p_slug: slug }); if (error) throw error; return data as Any | null; }
+async function snapshotOf(slug: string) {
+  const { sb, cellOf, goHome } = await lib();
+  goHome(await cellOf({ slug }), true); // a merchant with its own database serves its guests from there (null = shared)
+  const { data, error } = await sb().rpc('bn_public_snapshot', { p_slug: slug }); if (error) throw error; return data as Any | null; }
 async function enterGuest(slug: string): Promise<boolean> {
   const snap = await snapshotOf(slug);
   if (!snap) return false;
@@ -254,9 +258,20 @@ async function guestSlug(): Promise<string | null> {
   const { routeQuery, config } = await import('../system/hosts.ts');
   return routeQuery().tenant || config().tenant || null;
 }
+/** BN050: the business moved to its own database. Guests follow it now; staff sign in again there (same password). */
+async function moved() {
+  const { cellOf, goHome, sb } = await lib();
+  if (!tenant) return;
+  const c = await cellOf({ tenant: tenant.id }).catch(() => null);
+  toast(humanError('BN050').text);
+  if (mode === 'guest') goHome(c, true);
+  else { await sb().auth.signOut().catch(() => {}); goHome(c); }
+  remoteRestart();
+}
 async function enter() {
   try {
-    const { membership } = await lib();
+    const { membership, goHome } = await lib();
+    goHome(undefined, true); // staff use this browser's home; a guest page resolves its own below
     const m = userId ? await membership() : null;
     if (m) return await enterMember(m);
     if (await guestSlug().then(s => s ? enterGuest(s) : false)) return;

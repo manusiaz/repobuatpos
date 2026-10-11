@@ -85,9 +85,17 @@ export const whenChecked = (r: Check, then: (err: string | null) => void) => { i
 const site = () => (typeof location !== 'undefined' ? location.origin : '');
 const msg = (e: { message?: string } | null) => e?.message ? humanError(e.message).text : null;
 export async function accountSignIn(email: string, password: string): Promise<{ error: string | null; unconfirmed?: boolean }> {
-  const { sb } = await import('../supabase.ts');
-  const { data, error } = await sb().auth.signInWithPassword({ email: email.trim(), password });
+  const { sb, membership, cellOf, goHome, home } = await import('../supabase.ts');
+  if (home()) { await sb().auth.signOut().catch(() => {}); goHome(null); } // every sign-in starts at the platform registry
+  let { data, error } = await sb().auth.signInWithPassword({ email: email.trim(), password });
   if (error) return /confirm/i.test(error.message) ? { error: 'Confirm your email first: open the link we sent you.', unconfirmed: true } : { error: /invalid/i.test(error.message) ? 'Wrong email or password.' : error.message };
+  // the business lives in its own database: sign in there too (accounts moved with it, same password)
+  const m = await membership(), cell = m && await cellOf({ tenant: m.tenantId });
+  if (cell) {
+    await sb().auth.signOut().catch(() => {}); goHome(cell);
+    ({ data, error } = await sb().auth.signInWithPassword({ email: email.trim(), password }));
+    if (error) { goHome(null); return { error: 'Your business moved to its own server and this account is not there yet. Ask BorNiz support.' }; }
+  }
   await remoteReady(data.user?.id ?? null);
   return { error: null };
 }

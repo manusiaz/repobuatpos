@@ -3,7 +3,12 @@
 Cloud POS for Indonesian F&B / retail / UMKM. Every surface (marketing, owner, manager, PIC, cashier POS, kitchen, customer display, self-order, kiosk, waiter, super admin) is **one Next.js app, one route, one store**. Never fork a surface into its own app or its own data.
 
 ## Owner notes (decisions, keep)
-- **One system.** One app, one database, one store. Subdomains are doors into the same app and the same data, never separate apps or separate data.
+- **One system.** One app, one store. Subdomains are doors into the same app and the same merchant data, never separate apps or separate data per subdomain.
+- **Hybrid tenancy (owner decision, Oct 2026).** The env Supabase project is the platform: `bornis.id`, `app.` sign-up/sign-in, `admin.`, the merchant registry, and the shared database every new merchant starts in (isolated per merchant by RLS).
+  - A merchant can move to its own database ("cell") with `scripts/tenant-move.sh`. `tenants.cell` + `public.cells` say where it lives; `bn_tenant_cell` resolves it.
+  - After a move, all of that merchant's `app.`/`pos.`/`kds.`/`display.`/`order.` traffic goes there. The shared database keeps the old rows read-only and refuses writes (BN050).
+  - Server routes find the cell per tenant; each cell's server secret goes in `BORNIZ_CELLS` (`{"<cell>":"<secret>"}`).
+  - One database per subdomain was rejected: POS, KDS, display and back office must see the same sale.
 - **Host structure** (spec Sitemap hosts, `src/system/hosts.ts` HOSTS):
   | Host | Serves |
   |---|---|
