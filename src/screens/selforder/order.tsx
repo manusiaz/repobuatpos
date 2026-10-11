@@ -1,4 +1,5 @@
 'use client';
+import { gatewayResult } from '../../data/actions/dispatch.ts';
 import { productImage } from '../../ui/kit.tsx';
 // QR menu views (spec: BorNiz Self Order, layout A: list rows + cart bar). The cart is the table's open order in the
 // store (source 'qr'); the kitchen sees it once sent, and the status page follows the KDS line states live.
@@ -7,7 +8,7 @@ import { Icon, Empty, ago, toast } from '../../ui/kit.tsx';
 import { idr } from '../../domain/money.ts';
 import { balance, tierOf, TIERS } from '../../domain/loyalty.ts';
 import { usable } from '../../domain/promo.ts';
-import { addLine, applyVoucher, cancelPayment, gatewayWebhook, patchOrder, sendToKitchen, setQty, startPayment } from '../../data/actions.ts';
+import { addLine, applyVoucher, cancelPayment, patchOrder, sendToKitchen, setQty, startPayment } from '../../data/actions.ts';
 import { findOrJoin, guestCall, orderPlaced } from '../../data/actions/selforder.ts';
 import { menuDesign } from '../../data/actions/studio.ts';
 import { firstName, groupsOf, LINE, missingGroup, mmss, modsFrom, modsText, MUTED, OptionPicker, progress, QR, SURFACE, TINT, unit, useMenu, Wordmark, type Sel } from '../guest/kit.tsx';
@@ -356,7 +357,7 @@ export function Qris({ g }: { g: G }) {
         <button className="btn grow" style={{ height: 52, borderRadius: 16 }} onClick={save}><Icon name="download" />Save QR</button>
         <button className="btn grow" style={{ height: 52, borderRadius: 16 }} onClick={atCashier}>Pay at cashier</button>
       </div>
-      <button className="btn btn-ghost btn-sm" onClick={() => gatewayWebhook(pend.id, 'settled')}>Simulate payment (demo)</button>
+      <button className="btn btn-ghost btn-sm" onClick={() => gatewayResult(pend.id, 'settled').catch(e => toast((e as Error).message))}>Simulate payment (demo)</button>
     </>}
   </div>;
 }

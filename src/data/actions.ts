@@ -355,7 +355,7 @@ export function toggle86(outletId: string, productId: string, by: string) {
 
 // ── Shifts & cash ───────────────────────────────────────────────────────────────────────
 export function openSession(outletId: string, cashierId: string, float: number) {
-  const id = 'S-' + (1043 + snapshot().sessions.length);
+  const id = uid('S-'); // unique across registers and devices
   commit('drawer.opened', cashierId, d => {
     d.sessions.forEach(s => { if (s.outletId === outletId && s.cashierId === cashierId && s.status === 'open') s.status = 'counting'; });
     d.sessions.unshift({ id, outletId, cashierId, openedAt: now(), openingFloat: float, closedAt: null, counted: null, variance: null, status: 'open', note: '' });

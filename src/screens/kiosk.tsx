@@ -1,4 +1,5 @@
 'use client';
+import { gatewayResult } from '../data/actions/dispatch.ts';
 import { productImage } from '../ui/kit.tsx';
 // Self-order kiosk (spec: BorNiz Kiosk). Portrait 9:16 canvas in cqw units, 64px+ touch targets, actions in the
 // bottom half, merchant brand. The order is a real store order (source 'kiosk', K-number) and reaches the KDS once
@@ -6,9 +7,9 @@ import { productImage } from '../ui/kit.tsx';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useApp } from '../app/context.tsx';
 import { pagesOf } from '../system/registry.ts';
-import { Icon, useNow } from '../ui/kit.tsx';
+import { Icon, toast, useNow } from '../ui/kit.tsx';
 import { idr } from '../domain/money.ts';
-import { addLine, cancelPayment, clearOrder, gatewayWebhook, holdOrder, newOrder, patchOrder, sendToKitchen, setQty, startPayment } from '../data/actions.ts';
+import { addLine, cancelPayment, clearOrder, holdOrder, newOrder, patchOrder, sendToKitchen, setQty, startPayment } from '../data/actions.ts';
 import { orderPlaced } from '../data/actions/selforder.ts';
 import type { Order } from '../data/schema.ts';
 import { brandVars, groupsOf, LINE, missingGroup, mmss, modsFrom, modsText, MUTED, OptionPicker, QR, unit, useLang, useLocal, useMenu, Wordmark, type MenuItem, type Sel } from './guest/kit.tsx';
@@ -180,7 +181,7 @@ function Pay({ L, order, back, reset }: { L: LangT; order: Order | null; back: (
       <span style={{ fontSize: '4cqw', color: MUTED, lineHeight: 1.4 }}>Scan with any bank or e-wallet app. Your number appears as soon as it’s paid.</span>
       <span className="mono" style={{ color: MUTED }}>{pend.ref}</span>
       <div style={{ marginTop: 'auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '3cqw' }}>
-        {ms > 0 && <button onClick={() => gatewayWebhook(pend.id, 'settled')} style={{ ...CARD, height: 'max(48px, 10cqw)', fontSize: '3.6cqw', fontWeight: 700, color: MUTED }}>Simulate payment (demo)</button>}
+        {ms > 0 && <button onClick={() => gatewayResult(pend.id, 'settled').catch(e => toast((e as Error).message))} style={{ ...CARD, height: 'max(48px, 10cqw)', fontSize: '3.6cqw', fontWeight: 700, color: MUTED }}>Simulate payment (demo)</button>}
         <button onClick={() => cancelPayment(pend.id, 'kiosk')} style={{ ...CARD, height: TOUCH, fontSize: '4.4cqw', fontWeight: 800 }}>{ms > 0 ? 'Cancel and choose another way' : 'Try again'}</button>
       </div>
     </div>;

@@ -2,6 +2,7 @@
 // The outbox runner: sends queued db.messages (WhatsApp, email, SMS) and outgoing webhook events, with retries and backoff.
 // One tab per browser runs it (Web Lock, else a localStorage lease); across devices the server dedups on the message /
 // event id, so several open registers never double-send. Demo mode (no Supabase) uses the simulator: queued → sent → delivered.
+import { gatewayWebhook } from '../actions.ts';
 import { useEffect } from 'react';
 import { commit, snapshot } from '../store.ts';
 import { REMOTE, authHeaders } from '../remote.ts';
@@ -141,3 +142,7 @@ export async function simulatePayment(paymentId: string, status: 'settled' | 'fa
   const r = await post('/api/payments/simulate', { paymentId, status, tenantId: snapshot().tenant.id });
   if (!r.ok) throw new Error(r.message ?? 'Simulation failed');
 }
+
+/** A gateway result for the simulator: applied here on the local adapter, sent through the server (like a real webhook) in remote mode. */
+export const gatewayResult = (paymentId: string, status: 'settled' | 'failed' | 'expired') =>
+  REMOTE ? simulatePayment(paymentId, status) : Promise.resolve(gatewayWebhook(paymentId, status));

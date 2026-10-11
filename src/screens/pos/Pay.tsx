@@ -1,9 +1,10 @@
 'use client';
+import { gatewayResult } from '../../data/actions/dispatch.ts';
 import { QR } from '../../ui/qr.tsx';
 // Payment: one sheet, no stacked modals. Left = amount due, tip and methods (F1–F6); right = the method's panel.
 // QRIS / VA / e-wallet only settle through gatewayWebhook; the "simulate" buttons stand in for the bank.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { cancelPayment, gatewayWebhook, holdOrder, patchOrder, startPayment } from '../../data/actions.ts';
+import { cancelPayment, holdOrder, patchOrder, startPayment } from '../../data/actions.ts';
 import { enqueue, payCash, sendReceipt } from '../../data/actions/pos.ts';
 import { lineTotal, methodAvailable, type Method } from '../../domain/order.ts';
 import { roundCash, idr } from '../../domain/money.ts';
@@ -146,7 +147,7 @@ function GatewayPanel({ o, remaining, tip, m }: PanelProps & { m: 'qris' | 'ewal
   const p = db.payments.filter(x => x.orderId === o.id && x.method === m && x.status === 'pending').at(-1);
   const left = p?.expiresAt ? Math.max(0, Math.ceil((p.expiresAt - now) / 1000)) : null;
   const expired = useRef(false);
-  useEffect(() => { if (p && left === 0 && !expired.current) { expired.current = true; gatewayWebhook(p.id, 'expired'); go(P('payment-failed', { m })); } }, [left, p, go, m]);
+  useEffect(() => { if (p && left === 0 && !expired.current) { expired.current = true; gatewayResult(p.id, 'expired').catch(e => toast((e as Error).message)); go(P('payment-failed', { m })); } }, [left, p, go, m]);
   if (!db.device.online) return <Blocked />;
   const title = m === 'qris' ? 'QRIS' : m === 'ewallet' ? 'E-wallet' : 'Virtual account';
   if (!p) return <div className="stack">
@@ -155,7 +156,7 @@ function GatewayPanel({ o, remaining, tip, m }: PanelProps & { m: 'qris' | 'ewal
       <b className="num" style={{ fontSize: 24 }}>{idr(remaining + tip)}</b></div>
     <button className="btn btn-primary btn-pay" onClick={() => charge(m, remaining, tip)}>{m === 'qris' ? 'Show QR' : m === 'ewallet' ? 'Send request' : 'Create VA number'} · {idr(remaining + tip)}</button>
   </div>;
-  const failMethod = () => { gatewayWebhook(p.id, 'failed'); go(P('payment-failed', { m })); };
+  const failMethod = () => { gatewayResult(p.id, 'failed').catch(e => toast((e as Error).message)); go(P('payment-failed', { m })); };
   return <div className="stack" style={{ alignItems: 'center', textAlign: 'center' }}>
     <div className="row between" style={{ alignSelf: 'stretch' }}><h3>{title}</h3>{left != null ? <Badge tone={left < 60 ? 'danger' : 'warning'} dot>Waiting · {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}</Badge> : <Badge tone="warning" dot>Waiting for the bank</Badge>}</div>
     {m === 'qris' ? <QrArt seed={p.ref} /> : <div className="sunken stack sm" style={{ alignSelf: 'stretch' }}><Icon name={m === 'va' ? 'landmark' : 'wallet'} size={32} style={{ alignSelf: 'center' }} />
@@ -164,7 +165,7 @@ function GatewayPanel({ o, remaining, tip, m }: PanelProps & { m: 'qris' | 'ewal
     <b className="num" style={{ fontSize: 24 }}>{idr(p.amount + p.tip)}</b>
     <span className="muted" style={{ fontSize: 14, maxWidth: 420 }}>{m === 'qris' ? 'Also showing on the customer display. Ask the guest to scan with any bank or e-wallet.' : ''} It settles only when the bank confirms.</span>
     <div className="banner b-info" style={{ alignSelf: 'stretch', textAlign: 'left' }}><Icon name="flask-conical" /><span className="grow">Demo: stand in for the bank app.</span>
-      <button className="btn btn-sm btn-success" onClick={() => gatewayWebhook(p.id, 'settled')}>Simulate bank app paid</button>
+      <button className="btn btn-sm btn-success" onClick={() => gatewayResult(p.id, 'settled').catch(e => toast((e as Error).message))}>Simulate bank app paid</button>
       <button className="btn btn-sm" onClick={failMethod}>{m === 'qris' ? 'Expire now' : 'Simulate failed'}</button></div>
     <div className="row"><button className="btn" onClick={() => { cancelPayment(p.id, me.id); toast('Request cancelled'); }}>Cancel request</button><button className="btn" onClick={() => go(P('manual-payment-confirmation'))}>Guest shows proof</button></div>
   </div>;
@@ -296,7 +297,7 @@ function ManualPanel({ o, remaining }: PanelProps) {
     {pend.length === 0 ? <><p>No payment is waiting on this bill.</p><button className="btn btn-pos" disabled={!db.device.online} onClick={() => charge('va', remaining)}>Create a bank transfer (VA) for {idr(remaining)}</button></> : <>
       <Field label="Proof reference (bank, time, last 4 digits)"><input className="input" value={ref} onChange={e => setRef(e.target.value)} placeholder="BCA 14:32 · ****7890" /></Field>
       {pend.map(p => <div key={p.id} className="row card tight"><span className="grow">{NAME[p.method]} · <span className="mono">{p.ref}</span></span><b className="num">{idr(p.amount)}</b>
-        <button className="btn btn-primary" disabled={!ref.trim()} onClick={() => flow.run({ action: 'Take orders & charge', type: 'manual_payment', amount: p.amount, subjectId: null, note: ref, payload: { pos: 'manual_payment', paymentId: p.id }, title: `Manual confirm ${NAME[p.method]} ${idr(p.amount)} · ${o.no}`, direct: () => gatewayWebhook(p.id, 'settled') })}>Confirm</button></div>)}
+        <button className="btn btn-primary" disabled={!ref.trim()} onClick={() => flow.run({ action: 'Take orders & charge', type: 'manual_payment', amount: p.amount, subjectId: null, note: ref, payload: { pos: 'manual_payment', paymentId: p.id }, title: `Manual confirm ${NAME[p.method]} ${idr(p.amount)} · ${o.no}`, direct: () => gatewayResult(p.id, 'settled').catch(e => toast((e as Error).message)) })}>Confirm</button></div>)}
     </>}
     {pend.length > 0 && <span className="faint" style={{ fontSize: 13 }}>Requested by {me.name}. Nobody confirms their own request.</span>}
   </div>;
