@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+/*bn-type*/h1,h2,h3,b{font-family:'Space Grotesk',system-ui,sans-serif}body{font-variant-numeric:tabular-nums}
+html,body{margin:0;height:100%;background:#E9E6E1;color:#141210;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#D9560B;text-decoration:none}
+a:hover{color:#B04408;text-decoration:underline}
+input,button,select,textarea{font-family:inherit}
+</style>
+<script src="./bn-launcher.js?role=owner"></script>
+<script src="./bn-embed.js"></script>
+<script src="./bn-queue.js"></script>
+<script src="./bn-pin.js?role=owner"></script>
+</helmet>
+
+<div style="height:100vh;display:flex;flex-direction:column;min-width:0">
+
+<header style="height:64px;flex:none;background:#FFFFFF;border-bottom:1px solid #E6E2DC;display:flex;align-items:center;gap:14px;padding:0 16px">
+  <a href="BorNiz Brand Studio.dc.html" style="font-size:20px;font-weight:700;letter-spacing:-.03em;color:#141210">BorNiz</a>
+  <span style="width:1px;height:28px;background:#E6E2DC"></span>
+  <div style="display:flex;flex-direction:column;gap:2px;min-width:0;flex-shrink:1"><span style="font-size:14px;font-weight:700;white-space:nowrap">Menu studio</span><span style="font-size:12px;color:#625C55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">QR menu · store · kiosk</span></div>
+  <span style="height:32px;padding:0 12px;border-radius:999px;background:#F2EFEA;font:500 12px/32px 'JetBrains Mono',ui-monospace,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 280px">{{ urlText }}</span>
+  <div style="margin-left:auto;flex:none;display:flex;padding:4px;border-radius:12px;background:#F2EFEA;gap:2px">
+    <sc-for list="{{ devices }}" as="d" hint-placeholder-count="2"><button onClick="{{ d.onClick }}" style="height:34px;padding:0 12px;border:0;border-radius:9px;background:{{ d.bg }};box-shadow:{{ d.shadow }};font-size:13px;font-weight:600;cursor:pointer">{{ d.label }}</button></sc-for>
+  </div>
+  <span style="font-size:12px;color:#625C55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto">{{ saveText }}</span>
+  <div style="flex:none;display:flex;gap:2px;padding:3px;border-radius:10px;background:#F2EFEA"><sc-for list="{{ asRole }}" as="r" hint-placeholder-count="2"><button onClick="{{ r.onClick }}" style="height:32px;padding:0 10px;border:0;border-radius:8px;background:{{ r.bg }};box-shadow:{{ r.sh }};font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">{{ r.l }}</button></sc-for></div>
+  <button onClick="{{ publish }}" style="flex:none;height:40px;padding:0 16px;border:0;border-radius:12px;background:{{ pubBg }};color:#FFFFFF;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap" style-active="transform:scale(.96)">{{ pubLabel }}</button>
+</header>
+
+<div style="flex:1;min-height:0;display:flex">
+
+  <nav style="width:80px;flex:none;background:#141210;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;overflow:auto">
+    <sc-for list="{{ rail }}" as="r" hint-placeholder-count="8">
+      <button onClick="{{ r.onClick }}" style="width:68px;min-height:58px;border:0;border-radius:14px;background:{{ r.bg }};color:{{ r.fg }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer">
+        <span style="width:20px;height:20px;background:currentColor;-webkit-mask:{{ r.mask }};mask:{{ r.mask }}"></span>
+        <span style="font-size:10px;font-weight:600;line-height:1.1">{{ r.label }}</span>
+      </button>
+    </sc-for>
+  </nav>
+
+  <sc-if value="{{ notPages }}" hint-placeholder-val="{{ true }}">
+  <aside style="width:320px;flex:none;background:#FFFFFF;border-right:1px solid #E6E2DC;display:flex;flex-direction:column;min-height:0">
+    <div style="padding:18px 20px 14px;display:flex;flex-direction:column;gap:4px;border-bottom:1px solid #F2EFEA"><span style="font-size:19px;font-weight:700">{{ panelTitle }}</span><span style="font-size:12px;line-height:1.45;color:#625C55">{{ panelSub }}</span></div>
+    <div style="flex:1;overflow:auto;padding:16px 20px 32px;display:flex;flex-direction:column;gap:22px">
+
+      <sc-for list="{{ groups }}" as="g" hint-placeholder-count="2">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <span style="font-size:11px;font-weight:700;letter-spacing:.04em;color:#45403A">{{ g.label }}</span>
+          <div style="display:grid;grid-template-columns:repeat({{ g.cols }},minmax(0,1fr));gap:6px">
+            <sc-for list="{{ g.opts }}" as="o" hint-placeholder-count="3">
+              <button onClick="{{ o.onClick }}" style="min-height:{{ g.h }};padding:7px;border:2px solid {{ o.border }};border-radius:12px;background:{{ o.bg }};cursor:pointer;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;gap:4px;text-align:left" style-active="transform:scale(.96)">
+                <span style="flex:1;min-height:{{ g.swH }};border-radius:7px;background:{{ o.sw }};display:{{ g.swD }}"></span>
+                <span style="font-size:12px;font-weight:700;color:#141210;font-family:{{ o.font }}">{{ o.label }}</span>
+                <span style="font-size:10px;line-height:1.25;color:#625C55;display:{{ g.subD }}">{{ o.sub }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <span style="font-size:11px;color:#625C55;line-height:1.4;display:{{ g.hintD }}">{{ g.hint }}</span>
+        </div>
+      </sc-for>
+
+      <sc-for list="{{ colorRows }}" as="c" hint-placeholder-count="0">
+        <div style="display:flex;align-items:center;gap:10px">
+          <label style="width:42px;height:42px;flex:none;border-radius:11px;background:{{ c.value }};position:relative;overflow:hidden;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)"><input type="color" value="{{ c.value }}" onChange="{{ c.onChange }}" style="position:absolute;inset:0;opacity:0;cursor:pointer"></label>
+          <span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;font-weight:600">{{ c.label }}</span><span style="font:400 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ c.value }}</span></span>
+          <span style="height:22px;padding:0 8px;border-radius:999px;background:{{ c.okBg }};color:{{ c.okFg }};font-size:10px;font-weight:700;line-height:22px">{{ c.ok }}</span>
+        </div>
+      </sc-for>
+
+      <sc-for list="{{ uploads }}" as="u" hint-placeholder-count="0">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;font-weight:700;letter-spacing:.04em;color:#45403A">{{ u.label }}</span><span style="font-size:10px;color:#857E76">{{ u.spec }}</span></div>
+          <div style="display:grid;grid-template-columns:repeat({{ u.cols }},minmax(0,1fr));gap:6px">
+            <sc-for list="{{ u.slots }}" as="s" hint-placeholder-count="2">
+              <div style="position:relative;aspect-ratio:{{ u.ratio }};border-radius:12px;background:{{ s.bg }};box-shadow:inset 0 0 0 {{ s.ring }} #CFCAC3;overflow:hidden;display:grid;place-items:center">
+                <span style="font-size:10px;font-weight:600;color:#857E76;text-align:center;line-height:1.2;padding:4px;display:{{ s.phD }}">{{ s.ph }}</span>
+                <input type="file" accept="image/*" onChange="{{ s.onUp }}" title="Upload" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+                <button onClick="{{ s.onDel }}" aria-label="Remove" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border:0;border-radius:999px;background:rgba(20,18,16,.75);color:#FFFFFF;font-size:12px;cursor:pointer;display:{{ s.delD }}">×</button>
+              </div>
+            </sc-for>
+          </div>
+          <span style="font-size:11px;color:#625C55;line-height:1.4">{{ u.hint }}</span>
+        </div>
+      </sc-for>
+
+      <sc-for list="{{ fields }}" as="f" hint-placeholder-count="0">
+        <label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:11px;font-weight:700;letter-spacing:.04em;color:#45403A">{{ f.label }}</span><input value="{{ f.value }}" onChange="{{ f.onChange }}" style="height:44px;padding:0 12px;border:1.5px solid #CFCAC3;border-radius:12px;font-size:14px;outline:none" style-focus="border-color:#F26B1D;box-shadow:0 0 0 4px #FFE2CF"></label>
+      </sc-for>
+
+      <sc-for list="{{ toggles }}" as="s" hint-placeholder-count="0">
+        <button onClick="{{ s.onClick }}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;border:0;background:none;padding:6px 0;cursor:pointer;text-align:left;border-top:1px solid #F2EFEA">
+          <span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:600">{{ s.label }}</span><span style="font-size:11px;color:#857E76">{{ s.sub }}</span></span>
+          <span style="flex:none;width:44px;height:26px;border-radius:999px;background:{{ s.track }};position:relative"><span style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:999px;background:#FFFFFF;transform:translateX({{ s.x }});transition:transform 180ms"></span></span>
+        </button>
+      </sc-for>
+
+      <sc-if value="{{ pSections }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <sc-for list="{{ sectionRows }}" as="r" hint-placeholder-count="8">
+            <div style="min-height:56px;padding:8px 10px;border-radius:14px;background:{{ r.bg }};box-shadow:inset 0 0 0 1px #E6E2DC;display:flex;align-items:center;gap:8px;opacity:{{ r.op }}">
+              <span style="font:600 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76;width:16px">{{ r.n }}</span>
+              <span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:14px;font-weight:600">{{ r.label }}</span><span style="font-size:11px;color:#625C55">{{ r.sub }}</span></span>
+              <button onClick="{{ r.up }}" aria-label="Move up" style="width:30px;height:30px;border:0;border-radius:8px;background:#F2EFEA;cursor:pointer">↑</button>
+              <button onClick="{{ r.down }}" aria-label="Move down" style="width:30px;height:30px;border:0;border-radius:8px;background:#F2EFEA;cursor:pointer">↓</button>
+              <button onClick="{{ r.toggle }}" aria-label="Show or hide" style="width:40px;height:24px;flex:none;border:0;border-radius:999px;background:{{ r.track }};position:relative;cursor:pointer"><span style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:999px;background:#FFFFFF;transform:translateX({{ r.x }});transition:transform 180ms"></span></button>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ pMenu }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <span style="font-size:11px;font-weight:700;letter-spacing:.04em;color:#45403A">CATEGORIES</span>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <sc-for list="{{ catChips }}" as="c" hint-placeholder-count="4"><span style="height:34px;padding:0 6px 0 12px;border-radius:999px;background:#F2EFEA;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600">{{ c.label }}<span style="font-size:11px;color:#857E76">{{ c.n }}</span><button onClick="{{ c.remove }}" aria-label="Remove category" style="width:22px;height:22px;border:0;border-radius:999px;background:#FFFFFF;cursor:pointer;font-size:12px">×</button></span></sc-for>
+          </div>
+          <div style="display:flex;gap:6px"><input value="{{ newCat }}" onChange="{{ onNewCat }}" placeholder="New category" style="flex:1;min-width:0;height:40px;padding:0 12px;border:1.5px solid #CFCAC3;border-radius:10px;font-size:14px;outline:none"><button onClick="{{ addCat }}" style="height:40px;padding:0 14px;border:0;border-radius:10px;background:#141210;color:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer">Add</button></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;font-weight:700;letter-spacing:.04em;color:#45403A">PRODUCTS · {{ prodCount }}</span><span style="font-size:10px;color:#857E76">photo 1200×1200</span></div>
+          <sc-for list="{{ prodRows }}" as="p" hint-placeholder-count="4">
+            <div style="padding:10px;border-radius:16px;background:#FFFFFF;box-shadow:inset 0 0 0 1px #E6E2DC;display:grid;grid-template-columns:76px minmax(0,1fr);gap:10px;opacity:{{ p.op }}">
+              <div style="position:relative;width:76px;height:76px;border-radius:12px;background:{{ p.photoBg }};box-shadow:inset 0 0 0 {{ p.ring }} #CFCAC3;overflow:hidden;display:grid;place-items:center">
+                <span style="font-size:10px;font-weight:600;color:#857E76;text-align:center;line-height:1.2;display:{{ p.phD }}">+ Photo</span>
+                <input type="file" accept="image/*" onChange="{{ p.onPhoto }}" title="Upload photo" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+                <button onClick="{{ p.delPhoto }}" aria-label="Remove photo" style="position:absolute;top:3px;right:3px;width:20px;height:20px;border:0;border-radius:999px;background:rgba(20,18,16,.75);color:#FFFFFF;font-size:11px;cursor:pointer;display:{{ p.delPhD }}">×</button>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+                <div style="display:flex;gap:6px;align-items:center"><button onClick="{{ p.onScope }}" title="{{ p.scopeTip }}" style="height:24px;padding:0 9px;border:0;border-radius:999px;background:{{ p.scBg }};color:{{ p.scFg }};font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap">{{ p.scope }}</button><span style="font-size:11px;color:#857E76;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.scopeSub }}</span></div>
+                <input value="{{ p.n }}" onChange="{{ p.onN }}" aria-label="Product name" style="height:34px;padding:0 10px;border:1.5px solid #E6E2DC;border-radius:9px;font-size:14px;font-weight:700;outline:none" style-focus="border-color:#F26B1D">
+                <div style="display:flex;gap:6px"><span style="height:34px;padding:0 8px;border-radius:9px;background:#F2EFEA;font-size:12px;font-weight:600;line-height:34px">IDR</span><input value="{{ p.price }}" onChange="{{ p.onPrice }}" aria-label="Price" style="flex:1;min-width:0;height:34px;padding:0 10px;border:1.5px solid #E6E2DC;border-radius:9px;font-size:14px;font-weight:600;outline:none;font-variant-numeric:tabular-nums" style-focus="border-color:#F26B1D"></div>
+              </div>
+              <input value="{{ p.d }}" onChange="{{ p.onD }}" aria-label="Description" style="grid-column:1 / -1;height:34px;padding:0 10px;border:1.5px solid #E6E2DC;border-radius:9px;font-size:13px;outline:none" style-focus="border-color:#F26B1D">
+              <div style="grid-column:1 / -1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px">
+                <select value="{{ p.cat }}" onChange="{{ p.onCat }}" aria-label="Category" style="flex:1;min-width:0;height:34px;padding:0 6px;border:1.5px solid #E6E2DC;border-radius:9px;font-size:12px;background:#FFFFFF"><sc-for list="{{ p.catOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.v }}</option></sc-for></select>
+                <select value="{{ p.tag }}" onChange="{{ p.onTag }}" aria-label="Badge" style="flex:1;min-width:0;height:34px;padding:0 6px;border:1.5px solid #E6E2DC;border-radius:9px;font-size:12px;background:#FFFFFF"><option value="">No badge</option><option value="Best seller">Best seller</option><option value="New">New</option><option value="Spicy">Spicy</option><option value="Sold out">Sold out</option></select>
+              </div>
+              <div style="grid-column:1 / -1;display:flex;gap:6px;align-items:center;justify-content:flex-end">
+                <span style="margin-right:auto;font-size:11px;color:#625C55">Show on menu</span>
+                <button onClick="{{ p.toggle }}" aria-label="Show on menu" title="Show on menu" style="width:40px;height:24px;flex:none;border:0;border-radius:999px;background:{{ p.track }};position:relative;cursor:pointer"><span style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:999px;background:#FFFFFF;transform:translateX({{ p.x }});transition:transform 180ms"></span></button>
+                <button onClick="{{ p.preview }}" aria-label="Preview" title="Preview" style="width:30px;height:30px;flex:none;border:0;border-radius:8px;background:#F2EFEA;cursor:pointer;display:grid;place-items:center"><span style="width:14px;height:14px;background:#141210;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/eye.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/eye.svg) center/contain no-repeat"></span></button>
+                <button onClick="{{ p.remove }}" aria-label="Delete product" title="Delete" style="width:30px;height:30px;flex:none;border:0;border-radius:8px;background:#FDE8E8;color:#B3261E;cursor:pointer;font-size:14px">×</button>
+              </div>
+            </div>
+          </sc-for>
+          <button onClick="{{ addProd }}" style="height:48px;border:1.5px dashed #CFCAC3;border-radius:14px;background:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer">+ Add product</button>
+          <span style="font-size:11px;color:#625C55;line-height:1.4">Products sync with Owner → Products &amp; menu and with the POS. Photos you upload here appear on the QR menu, online store, kiosk, customer display and POS tiles.</span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ pPublish }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:11px;font-weight:700;letter-spacing:.04em;color:#45403A">VERSION HISTORY</span>
+          <sc-for list="{{ versions }}" as="v" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #F2EFEA"><span style="width:38px;height:24px;border-radius:7px;background:{{ v.bg }};color:{{ v.fg }};font:600 11px/24px 'JetBrains Mono',ui-monospace,monospace;text-align:center">{{ v.v }}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.note }}</span><span style="font-size:11px;color:#857E76">{{ v.when }} · {{ v.who }}</span></span><span style="font-size:12px;font-weight:600;color:#D9560B;display:{{ v.restoreD }}">Restore</span></div></sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ pAdvanced }}" hint-placeholder-val="{{ false }}">
+        <label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:11px;font-weight:700;letter-spacing:.04em;color:#45403A">CUSTOM CSS · ENTERPRISE</span><textarea value="{{ css }}" onChange="{{ onCss }}" rows="7" style="padding:12px;border:1.5px solid #CFCAC3;border-radius:12px;font:400 12px/1.5 'JetBrains Mono',ui-monospace,monospace;resize:vertical;outline:none;background:#141210;color:#E6E2DC"></textarea><span style="font-size:11px;color:#625C55;line-height:1.4">Scoped to your menu (.bn-menu). Checkout, payment and QRIS screens ignore custom CSS so payments always work.</span></label>
+      </sc-if>
+    </div>
+  </aside>
+
+  <section style="flex:1;min-width:0;overflow:auto;display:flex;flex-direction:column;align-items:center;gap:14px;padding:22px 20px 40px;background-color:#E9E6E1;background-image:radial-gradient(#D6D1CA 1px,transparent 1px);background-size:18px 18px">
+    <div style="display:flex;gap:4px;padding:4px;border-radius:14px;background:#141210;flex-wrap:wrap;justify-content:center">
+      <sc-for list="{{ surfTabs }}" as="s" hint-placeholder-count="6"><button onClick="{{ s.onClick }}" style="height:34px;padding:0 12px;border:0;border-radius:10px;background:{{ s.bg }};color:{{ s.fg }};font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">{{ s.label }}</button></sc-for>
+    </div>
+    <sc-if value="{{ surfPhone }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;gap:6px;padding:4px;border-radius:14px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC;flex-wrap:wrap;justify-content:center">
+      <sc-for list="{{ screens }}" as="s" hint-placeholder-count="5"><button onClick="{{ s.onClick }}" style="height:34px;padding:0 12px;border:0;border-radius:10px;background:{{ s.bg }};color:{{ s.fg }};font-size:12px;font-weight:600;cursor:pointer">{{ s.n }} {{ s.label }}</button></sc-for>
+    </div>
+
+    <div style="width:{{ devW }};height:{{ devH }};flex:none;border-radius:46px;background:#141210;padding:10px;box-shadow:0 30px 60px -20px rgba(20,18,16,.45)">
+      <div style="height:100%;border-radius:37px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:{{ bgFill }};color:{{ cText }};font-family:{{ bodyCss }}">
+
+        <sc-if value="{{ scLanding }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;overflow:auto;display:flex;flex-direction:column">
+            <div style="position:relative;flex:none;height:{{ heroH }};margin:{{ heroM }};border-radius:{{ heroR }};background:{{ heroBg }};overflow:hidden;display:{{ heroD }}">
+              <span style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(0,0,0,.6));display:{{ heroShadeD }}"></span>
+              <span style="position:absolute;left:14px;top:14px;height:24px;padding:0 10px;border-radius:999px;background:rgba(0,0,0,.5);color:#FFFFFF;font-size:11px;font-weight:600;line-height:24px;display:{{ videoD }}">▶ video loop</span>
+              <span style="position:absolute;left:0;right:0;bottom:16px;text-align:center;color:#FFFFFF;font-family:{{ headCss }};font-size:30px;font-weight:{{ headW }};text-transform:{{ hCase }};letter-spacing:{{ hLs }};display:{{ heroTitleD }}">{{ name }}</span>
+            </div>
+            <div style="padding:20px 22px 28px;display:flex;flex-direction:column;align-items:{{ landAlign }};text-align:{{ landTA }};gap:12px;margin-top:{{ logoUp }}">
+              <span style="width:84px;height:84px;flex:none;border-radius:{{ logoR }};background:{{ logoBg }};box-shadow:0 0 0 4px {{ bgSolid }};display:grid;place-items:center;font-family:{{ headCss }};font-size:28px;font-weight:800;color:{{ cPrimary }};display:{{ logoD }}">{{ logoTxt }}</span>
+              <span style="font-family:{{ headCss }};font-size:{{ landTitle }};line-height:1.05;font-weight:{{ headW }};text-transform:{{ hCase }};letter-spacing:{{ hLs }};display:{{ landNameD }}">{{ name }}</span>
+              <span style="font-size:14px;opacity:.75">{{ tagline }}</span>
+              <span style="height:32px;padding:0 14px;border-radius:999px;background:{{ chipBg }};color:{{ cText }};font-size:13px;font-weight:600;line-height:32px">{{ tableChip }}</span>
+              <span style="font-size:15px;line-height:1.5;max-width:300px">{{ welcome }}</span>
+              <button onClick="{{ goMenu }}" style="align-self:stretch;height:56px;border:{{ btnBorder }};border-radius:{{ btnR }};background:{{ btnBg }};color:{{ btnFg }};font-family:{{ headCss }};font-size:16px;font-weight:700;text-transform:{{ hCase }};letter-spacing:{{ hLs }};cursor:pointer" style-active="transform:scale(.97)">{{ ctaMenu }}</button>
+              <div style="display:flex;gap:6px;font-size:12px;font-weight:600"><span style="padding:4px 10px;border-radius:999px;background:{{ chipBg }}">EN</span><span style="padding:4px 10px;opacity:.6">ID</span></div>
+              <span style="font-size:10px;opacity:.5;display:{{ poweredD }}">Powered by BorNiz</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ scMenu }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:none;padding:40px 16px 10px;display:flex;align-items:center;gap:10px;background:{{ headBarBg }};color:{{ headBarFg }}">
+            <span style="width:36px;height:36px;flex:none;border-radius:{{ logoRs }};background:{{ logoBg }};display:grid;place-items:center;font-family:{{ headCss }};font-size:13px;font-weight:800;color:{{ cPrimary }}">{{ logoTxt }}</span>
+            <span style="flex:1;display:flex;flex-direction:column;gap:1px;min-width:0"><span style="font-family:{{ headCss }};font-size:16px;font-weight:{{ headW }};text-transform:{{ hCase }};letter-spacing:{{ hLs }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ name }}</span><span style="font-size:11px;opacity:.75">{{ tableChip }}</span></span>
+            <span style="width:36px;height:36px;border-radius:999px;background:{{ chipBg }};display:grid;place-items:center"><span style="width:16px;height:16px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/search.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/search.svg) center/contain no-repeat"></span></span>
+          </div>
+          <div style="flex:1;overflow:auto;display:flex;flex-direction:column;gap:18px;padding:12px 0 100px">
+            <sc-for list="{{ blocks }}" as="b" hint-placeholder-count="4">
+              <sc-if value="{{ b.announce }}" hint-placeholder-val="{{ false }}"><div style="margin:0 16px;padding:12px 14px;border-radius:{{ rSm }};background:{{ cSecondary }};color:{{ onSecondary }};font-size:13px;font-weight:600;line-height:1.35">{{ announce }}</div></sc-if>
+              <sc-if value="{{ b.promo }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:10px;overflow-x:auto;padding:0 16px"><sc-for list="{{ pbPromos }}" as="p" hint-placeholder-count="2"><button onClick="{{ p.open }}" style="flex:none;width:78%;aspect-ratio:16/9;border:0;padding:0;border-radius:{{ rMd }};background:{{ p.bg }};position:relative;overflow:hidden;cursor:pointer;text-align:left"><span style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(0,0,0,.6))"></span><span style="position:absolute;top:10px;left:10px;height:22px;padding:0 8px;border-radius:999px;background:{{ p.tagBg }};color:{{ p.tagFg }};font:800 10px/22px 'Space Grotesk',sans-serif;display:{{ p.tagD }}">{{ p.tag }}</span><span style="position:absolute;left:12px;bottom:12px;right:12px;color:#FFFFFF;display:flex;flex-direction:column;gap:2px"><span style="font-family:{{ headCss }};font-size:18px;font-weight:{{ headW }};text-transform:{{ hCase }};text-shadow:0 1px 8px rgba(0,0,0,.5);line-height:1.1">{{ p.t }}</span><span style="font-size:11px;opacity:.9">{{ p.sub }}</span></span></button></sc-for></div></sc-if>
+              <sc-if value="{{ b.best }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:10px"><span style="padding:0 16px;font-family:{{ headCss }};font-size:19px;font-weight:{{ headW }};text-transform:{{ hCase }};letter-spacing:{{ hLs }}">{{ bestTitle }}</span>
+                  <div style="display:flex;gap:10px;overflow-x:auto;padding:0 16px"><sc-for list="{{ bestItems }}" as="p" hint-placeholder-count="3"><button onClick="{{ p.open }}" style="flex:none;width:132px;padding:0;border:0;background:none;text-align:left;cursor:pointer;color:inherit;font-family:inherit;display:flex;flex-direction:column;gap:6px"><span style="aspect-ratio:1;border-radius:{{ rMd }};background:{{ p.img }};position:relative"><span style="position:absolute;top:6px;left:6px;height:20px;padding:0 7px;border-radius:999px;background:{{ cSecondary }};color:{{ onSecondary }};font-size:10px;font-weight:700;line-height:20px">#{{ p.rank }}</span></span><span style="font-size:13px;font-weight:600;line-height:1.25">{{ p.n }}</span><span style="font-family:{{ priceCss }};font-size:13px;font-weight:700;color:{{ priceColor }}">{{ p.p }}</span></button></sc-for></div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ b.menu }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:12px">
+                  <div style="display:flex;gap:{{ catGap }};overflow-x:auto;padding:0 16px;border-bottom:{{ catLine }}">
+                    <sc-for list="{{ cats }}" as="c" hint-placeholder-count="4"><button onClick="{{ c.onClick }}" style="flex:none;height:{{ catH }};padding:{{ catPad }};border:{{ c.border }};border-radius:{{ catR }};background:{{ c.bg }};color:{{ c.fg }};font-family:{{ catFont }};font-size:14px;font-weight:700;text-transform:{{ catCase }};cursor:pointer;border-bottom:{{ c.under }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:{{ catW }}"><span style="width:56px;height:56px;border-radius:{{ rSm }};background:{{ c.img }};display:{{ catImgD }}"></span>{{ c.label }}</button></sc-for>
+                  </div>
+                  <span style="padding:0 16px;font-family:{{ headCss }};font-size:22px;font-weight:{{ headW }};text-transform:{{ hCase }};letter-spacing:{{ hLs }};text-align:{{ menuTA }}">{{ catTitle }}</span>
+                  <div style="display:grid;grid-template-columns:repeat({{ prodCols }},minmax(0,1fr));gap:{{ prodGap }};padding:0 16px">
+                    <sc-for list="{{ prods }}" as="p" hint-placeholder-count="4">
+                      <button onClick="{{ p.open }}" style="padding:{{ cardPad }};border:0;border-bottom:{{ cardLine }};border-radius:{{ cardR }};background:{{ cardBg }};box-shadow:{{ cardRing }};display:flex;flex-direction:{{ cardDir }};gap:12px;text-align:left;cursor:pointer;color:inherit;font-family:inherit;opacity:{{ p.op }};align-items:stretch">
+                        <span style="flex:none;width:{{ imgW }};aspect-ratio:{{ imgRatio }};border-radius:{{ imgR }};background:{{ p.img }};position:relative;display:{{ imgD }}"><span style="position:absolute;top:6px;left:6px;height:20px;padding:0 7px;border-radius:999px;background:{{ cSecondary }};color:{{ onSecondary }};font-size:10px;font-weight:700;line-height:20px;display:{{ p.tagD }}">{{ p.tag }}</span></span>
+                        <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+                          <span style="display:flex;align-items:baseline;gap:6px"><span style="font-family:{{ nameCss }};font-size:{{ nameSize }};font-weight:700;line-height:1.2;text-transform:{{ nameCase }}">{{ p.n }}</span><span style="flex:1;border-bottom:1.5px dotted currentColor;opacity:.35;transform:translateY(-3px);display:{{ leaderD }}"></span><span style="font-family:{{ priceCss }};font-size:15px;font-weight:700;color:{{ priceColor }};display:{{ leaderD }}">{{ p.pShort }}</span></span>
+                          <span style="font-size:12px;line-height:1.35;opacity:.72;font-style:{{ descStyle }}">{{ p.d }}</span>
+                          <span style="margin-top:auto;display:{{ priceRowD }};justify-content:space-between;align-items:center;padding-top:4px"><span style="font-family:{{ priceCss }};font-size:15px;font-weight:700;color:{{ priceColor }}">{{ p.p }}</span><span style="width:32px;height:32px;border-radius:{{ addR }};background:{{ btnBg }};border:{{ btnBorder }};color:{{ btnFg }};display:grid;place-items:center;font-size:18px;font-weight:600">{{ p.addLabel }}</span></span>
+                        </span>
+                      </button>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ b.about }}" hint-placeholder-val="{{ false }}"><div style="margin:0 16px;border-radius:{{ rMd }};background:{{ cSurface }};box-shadow:{{ cardRing }};overflow:hidden"><div style="aspect-ratio:16/8;background:{{ aboutImg }}"></div><div style="padding:14px;display:flex;flex-direction:column;gap:6px"><span style="font-family:{{ headCss }};font-size:18px;font-weight:{{ headW }};text-transform:{{ hCase }}">{{ aboutTitle }}</span><span style="font-size:13px;line-height:1.5;opacity:.8">{{ about }}</span></div></div></sc-if>
+              <sc-if value="{{ b.hours }}" hint-placeholder-val="{{ false }}"><div style="margin:0 16px;padding:14px;border-radius:{{ rMd }};background:{{ cSurface }};box-shadow:{{ cardRing }};display:flex;flex-direction:column;gap:8px"><span style="font-family:{{ headCss }};font-size:18px;font-weight:{{ headW }};text-transform:{{ hCase }}">{{ hoursTitle }}</span><span style="font-size:13px;line-height:1.5;opacity:.85">{{ hours }}</span><span style="font-size:13px;line-height:1.5;opacity:.85">{{ address }}</span><span style="align-self:flex-start;height:40px;padding:0 14px;border-radius:{{ btnR }};border:2px solid {{ cPrimaryText }};color:{{ cPrimaryText }};font-size:13px;font-weight:700;line-height:36px">Get directions</span></div></sc-if>
+              <sc-if value="{{ b.social }}" hint-placeholder-val="{{ false }}"><div style="margin:0 16px;display:flex;flex-direction:column;gap:8px"><span style="font-family:{{ headCss }};font-size:18px;font-weight:{{ headW }};text-transform:{{ hCase }}">{{ insta }}</span><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px"><sc-for list="{{ socialImgs }}" as="s" hint-placeholder-count="3"><span style="aspect-ratio:1;border-radius:{{ rXs }};background:{{ s }}"></span></sc-for></div></div></sc-if>
+              <sc-if value="{{ b.reviews }}" hint-placeholder-val="{{ false }}"><div style="margin:0 16px;padding:14px;border-radius:{{ rMd }};background:{{ cSurface }};box-shadow:{{ cardRing }};display:flex;flex-direction:column;gap:8px"><span style="display:flex;align-items:baseline;gap:8px"><span style="font-family:{{ headCss }};font-size:28px;font-weight:800">4.8</span><span style="color:{{ cSecondary }};font-size:16px;letter-spacing:2px">★★★★★</span><span style="font-size:12px;opacity:.7">312 reviews</span></span><span style="font-size:13px;line-height:1.5;opacity:.85">"Kopi Biru Signature-nya juara, tempatnya adem buat kerja."</span><span style="font-size:12px;opacity:.6">Sari L. · 2 days ago</span></div></sc-if>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ scItem }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;overflow:auto;padding-bottom:110px">
+            <div style="aspect-ratio:{{ itemRatio }};background:{{ item.img }};position:relative"><button onClick="{{ goMenu }}" aria-label="Back" style="position:absolute;top:44px;left:14px;width:40px;height:40px;border:0;border-radius:999px;background:rgba(255,255,255,.92);color:#141210;font-size:18px;cursor:pointer">←</button></div>
+            <div style="padding:18px 18px 0;display:flex;flex-direction:column;gap:8px">
+              <span style="font-family:{{ headCss }};font-size:26px;line-height:1.1;font-weight:{{ headW }};text-transform:{{ hCase }};letter-spacing:{{ hLs }}">{{ item.n }}</span>
+              <span style="font-size:14px;line-height:1.5;opacity:.75">{{ item.d }}</span>
+              <span style="font-family:{{ priceCss }};font-size:20px;font-weight:700;color:{{ priceColor }}">{{ item.p }}</span>
+            </div>
+            <sc-for list="{{ itemGroups }}" as="g" hint-placeholder-count="2">
+              <div style="padding:16px 18px 0;display:flex;flex-direction:column;gap:8px">
+                <span style="display:flex;justify-content:space-between;font-size:14px;font-weight:700">{{ g.name }}<span style="font-size:11px;font-weight:600;opacity:.6">{{ g.req }}</span></span>
+                <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ g.opts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.onClick }}" style="height:42px;padding:0 14px;border:2px solid {{ o.border }};border-radius:{{ chipR }};background:{{ o.bg }};color:{{ o.fg }};font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">{{ o.label }}</button></sc-for></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;padding:12px 16px 26px;background:{{ bgSolid }};display:flex;gap:10px;align-items:center;box-shadow:0 -1px 0 {{ cBorder }}">
+            <div style="display:flex;align-items:center;border-radius:{{ btnR }};background:{{ chipBg }};padding:4px"><button onClick="{{ qtyDec }}" style="width:40px;height:40px;border:0;border-radius:{{ btnR }};background:transparent;color:inherit;font-size:18px;cursor:pointer">−</button><span style="width:28px;text-align:center;font-weight:700">{{ qty }}</span><button onClick="{{ qtyInc }}" style="width:40px;height:40px;border:0;border-radius:{{ btnR }};background:transparent;color:inherit;font-size:18px;cursor:pointer">+</button></div>
+            <button onClick="{{ addToCart }}" style="flex:1;height:52px;border:{{ btnBorder }};border-radius:{{ btnR }};background:{{ btnBg }};color:{{ btnFg }};font-size:15px;font-weight:700;cursor:pointer;font-family:{{ headCss }};text-transform:{{ hCase }}">{{ addLabel }}</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ scCart }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:none;padding:44px 16px 12px;display:flex;align-items:center;gap:10px"><button onClick="{{ goMenu }}" aria-label="Back" style="width:40px;height:40px;border:0;border-radius:999px;background:{{ chipBg }};color:inherit;font-size:18px;cursor:pointer">←</button><span style="font-family:{{ headCss }};font-size:20px;font-weight:{{ headW }};text-transform:{{ hCase }}">{{ cartTitle }}</span></div>
+          <div style="flex:1;overflow:auto;padding:0 16px 120px;display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ cartLines }}" as="l" hint-placeholder-count="2"><div style="display:flex;gap:12px;padding:12px;border-radius:{{ rMd }};background:{{ cSurface }};box-shadow:{{ cardRing }}"><span style="width:56px;height:56px;flex:none;border-radius:{{ rSm }};background:{{ l.img }}"></span><span style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:14px;font-weight:700">{{ l.q }}× {{ l.n }}</span><span style="font-size:12px;opacity:.65">{{ l.mods }}</span></span><span style="font-family:{{ priceCss }};font-size:14px;font-weight:700">{{ l.t }}</span></div></sc-for>
+            <sc-if value="{{ cartEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:40px 10px;text-align:center;opacity:.7;font-size:14px">Your cart is empty.</div></sc-if>
+            <div style="padding:12px;border-radius:{{ rMd }};background:{{ cSurface }};box-shadow:{{ cardRing }};display:flex;flex-direction:column;gap:6px;font-size:13px"><span style="display:flex;justify-content:space-between"><span>Subtotal</span><span>{{ cSub }}</span></span><span style="display:flex;justify-content:space-between;opacity:.7"><span>PB1 10%</span><span>{{ cTax }}</span></span><span style="display:flex;justify-content:space-between;font-size:16px;font-weight:800;font-family:{{ priceCss }}"><span>Total</span><span>{{ cTotal }}</span></span></div>
+            <span style="font-size:13px;font-weight:700;margin-top:4px">Pay with</span>
+            <sc-for list="{{ payOpts }}" as="p" hint-placeholder-count="2"><button onClick="{{ p.onClick }}" style="height:52px;padding:0 14px;border:2px solid {{ p.border }};border-radius:{{ rMd }};background:{{ cSurface }};color:inherit;display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">{{ p.label }}<span style="font-size:11px;opacity:.65">{{ p.sub }}</span></button></sc-for>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;padding:12px 16px 26px;background:{{ bgSolid }};box-shadow:0 -1px 0 {{ cBorder }}"><button onClick="{{ placeOrder }}" style="width:100%;height:56px;border:{{ btnBorder }};border-radius:{{ btnR }};background:{{ btnBg }};color:{{ btnFg }};font-size:16px;font-weight:700;cursor:pointer;font-family:{{ headCss }};text-transform:{{ hCase }};display:flex;justify-content:space-between;align-items:center;padding:0 18px"><span>{{ ctaOrder }}</span><span>{{ cTotal }}</span></button></div>
+        </sc-if>
+
+        <sc-if value="{{ scStatus }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;overflow:auto;padding:56px 22px 28px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center">
+            <span style="width:64px;height:64px;border-radius:{{ logoR }};background:{{ logoBg }};display:grid;place-items:center;font-family:{{ headCss }};font-size:22px;font-weight:800;color:{{ cPrimary }}">{{ logoTxt }}</span>
+            <span style="font-size:14px;opacity:.7">Order number</span>
+            <span style="font-family:{{ headCss }};font-size:64px;font-weight:800;line-height:1;color:{{ cPrimaryText }}">#047</span>
+            <span style="font-size:14px;line-height:1.5;opacity:.85">{{ statusMsg }}</span>
+            <div style="align-self:stretch;display:flex;flex-direction:column;gap:0;margin-top:8px;text-align:left">
+              <sc-for list="{{ steps }}" as="s" hint-placeholder-count="4"><div style="display:flex;gap:12px;align-items:flex-start"><span style="display:flex;flex-direction:column;align-items:center"><span style="width:22px;height:22px;border-radius:999px;background:{{ s.dot }};color:{{ onPrimary }};font-size:12px;font-weight:700;display:grid;place-items:center">{{ s.mark }}</span><span style="width:2px;height:28px;background:{{ s.line }};display:{{ s.lineD }}"></span></span><span style="font-size:14px;font-weight:{{ s.w }};opacity:{{ s.op }};padding-top:2px">{{ s.label }}</span></div></sc-for>
+            </div>
+            <div style="align-self:stretch;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:auto">
+              <span style="height:48px;border-radius:{{ btnR }};background:{{ chipBg }};font-size:13px;font-weight:700;line-height:48px">Call waiter</span>
+              <span style="height:48px;border-radius:{{ btnR }};background:{{ chipBg }};font-size:13px;font-weight:700;line-height:48px">Request bill</span>
+            </div>
+            <button onClick="{{ goLanding }}" style="border:0;background:none;color:{{ cPrimaryText }};font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Order more</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showCartBar }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ goCart }}" style="position:absolute;left:{{ cbL }};right:16px;bottom:24px;height:{{ cbH }};border:{{ btnBorder }};border-radius:{{ cbR }};background:{{ btnBg }};color:{{ btnFg }};display:flex;align-items:center;justify-content:{{ cbJ }};gap:10px;padding:0 18px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 12px 24px -8px rgba(0,0,0,.35);font-family:{{ headCss }}"><span style="min-width:24px;height:24px;border-radius:999px;background:{{ onPrimaryAlpha }};font-size:12px;line-height:24px;text-align:center">{{ cartCount }}</span><span style="display:{{ cbTextD }}">{{ ctaCart }}</span><span style="display:{{ cbTextD }}">{{ cTotal }}</span></button>
+        </sc-if>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ surfReceipt }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;gap:28px;flex-wrap:wrap;justify-content:center;align-items:flex-start;padding-top:8px">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#45403A">THERMAL · {{ rPaper }}</span>
+          <div style="width:{{ rW }};filter:drop-shadow(0 10px 18px rgba(20,18,16,.18))">
+            <div style="background:#FFFFFF;padding:18px 14px 12px;font:400 {{ rFs }}/1.45 'JetBrains Mono',ui-monospace,monospace;color:#141210;display:flex;flex-direction:column;gap:6px">
+              <span style="align-self:center;width:56px;height:56px;border-radius:8px;background:{{ rLogoBg }};filter:grayscale(1) contrast(1.6);color:#FFFFFF;display:{{ rLogoD }};place-items:center;font-size:18px;font-weight:800">{{ logoTxt }}</span>
+              <b style="text-align:center;font-size:14px;text-transform:uppercase">{{ name }}</b>
+              <sc-for list="{{ rHeader }}" as="l" hint-placeholder-count="2"><span style="text-align:center">{{ l }}</span></sc-for>
+              <span style="border-top:1px dashed #141210"></span>
+              <div style="display:flex;justify-content:space-between"><span>#TRX-2048</span><span>10/10/26 14:32</span></div>
+              <div style="display:flex;justify-content:space-between"><span>Kasir: Rina</span><span>T-07 · 2 pax</span></div>
+              <span style="border-top:1px dashed #141210"></span>
+              <sc-for list="{{ rItems }}" as="l" hint-placeholder-count="2"><div style="display:flex;justify-content:space-between;gap:8px"><span>{{ l.q }} {{ l.n }}</span><span>{{ l.t }}</span></div></sc-for>
+              <span style="border-top:1px dashed #141210"></span>
+              <div style="display:flex;justify-content:space-between"><span>PB1 10%</span><span>{{ rTax }}</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:14px"><b>TOTAL</b><b>{{ rTotal }}</b></div>
+              <div style="display:flex;justify-content:space-between"><span>QRIS</span><span>{{ rTotal }}</span></div>
+              <div style="display:{{ rPointsD }};justify-content:space-between"><span>Member Dewi A.</span><span>+{{ rPts }} pts</span></div>
+              <span style="border-top:1px dashed #141210"></span>
+              <div style="align-self:center;width:84px;height:84px;background:repeating-linear-gradient(45deg,#141210 0 4px,#FFFFFF 4px 8px)"></div>
+              <span style="text-align:center">{{ rQrCap }}</span>
+              <sc-for list="{{ rFooter }}" as="l" hint-placeholder-count="2"><span style="text-align:center">{{ l }}</span></sc-for>
+              <span style="text-align:center;display:{{ rWifiD }}">Wi-Fi {{ rWifi }}</span>
+              <span style="text-align:center;display:{{ rSocialD }}">{{ insta }}</span>
+              <span style="text-align:center;font-size:9px;display:{{ poweredD }}">Powered by BorNiz</span>
+            </div>
+            <div style="height:10px;background:radial-gradient(circle at 6px 0,transparent 6px,#FFFFFF 6.5px) 0 0/12px 10px repeat-x"></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#45403A">E-RECEIPT · {{ rChannel }}</span>
+          <div style="width:340px;border-radius:{{ rMd }};background:{{ cSurface }};color:{{ cText }};font-family:{{ bodyCss }};overflow:hidden;box-shadow:0 10px 24px -8px rgba(20,18,16,.25)">
+            <div style="padding:22px;background:{{ cPrimary }};color:{{ onPrimary }};display:flex;align-items:center;gap:12px"><span style="width:44px;height:44px;border-radius:{{ rSm }};background:{{ logoBg }};color:{{ cPrimary }};display:grid;place-items:center;font-family:{{ headCss }};font-weight:800">{{ logoTxt }}</span><span style="font-family:{{ headCss }};font-size:18px;font-weight:{{ headW }};text-transform:{{ hCase }}">{{ name }}</span></div>
+            <div style="padding:20px 22px;display:flex;flex-direction:column;gap:10px">
+              <span style="font-family:{{ headCss }};font-size:22px;font-weight:{{ headW }};text-transform:{{ hCase }}">{{ rThanks }}</span>
+              <span style="font-size:13px;line-height:1.5;opacity:.8">{{ rTotal }} via QRIS · 10 Oct 2026, 14:32 · Table 7</span>
+              <span style="display:{{ rPointsD }};font-size:13px;font-weight:700;color:{{ cPrimaryText }}">You earned +{{ rPts }} points</span>
+              <div style="display:flex;gap:8px;margin-top:4px"><span style="flex:1;height:44px;border-radius:{{ btnR }};background:{{ btnBg }};border:{{ btnBorder }};color:{{ btnFg }};font-size:13px;font-weight:700;display:grid;place-items:center">Rate your visit</span><span style="flex:1;height:44px;border-radius:{{ btnR }};background:{{ chipBg }};font-size:13px;font-weight:700;display:grid;place-items:center">View receipt</span></div>
+              <span style="font-size:11px;opacity:.6">{{ insta }} · {{ address }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ surfDisplay }}" hint-placeholder-val="{{ false }}">
+      <div style="width:100%;max-width:780px;display:flex;flex-direction:column;gap:10px;align-items:center">
+        <div style="display:flex;gap:4px;padding:4px;border-radius:12px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC"><sc-for list="{{ dViews }}" as="v" hint-placeholder-count="2"><button onClick="{{ v.onClick }}" style="height:32px;padding:0 14px;border:0;border-radius:9px;background:{{ v.bg }};color:{{ v.fg }};font-size:12px;font-weight:600;cursor:pointer">{{ v.label }}</button></sc-for></div>
+        <div style="width:100%;aspect-ratio:16/9;border-radius:20px;background:#141210;padding:9px">
+          <div style="height:100%;border-radius:13px;overflow:hidden;position:relative;background:{{ dBg }};color:{{ dFg }};font-family:{{ bodyCss }};display:flex;flex-direction:{{ dDir }}">
+            <sc-if value="{{ dIdle }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;inset:0;background:{{ dIdleBg }}"></div>
+              <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.6),rgba(0,0,0,0) 65%)"></div>
+              <div style="position:absolute;left:6%;top:0;bottom:0;width:50%;display:flex;flex-direction:column;justify-content:center;gap:12px;color:#FFFFFF">
+                <span style="width:52px;height:52px;border-radius:{{ rSm }};background:{{ logoBg }};color:{{ cPrimary }};display:grid;place-items:center;font-family:{{ headCss }};font-weight:800">{{ logoTxt }}</span>
+                <span style="font-family:{{ headCss }};font-size:clamp(22px,3.2vw,40px);line-height:1.05;font-weight:{{ headW }};text-transform:{{ hCase }}">{{ dIdleHead }}</span>
+                <span style="font-size:14px;opacity:.85">{{ dWelcome }}</span>
+              </div>
+              <span style="position:absolute;left:14px;top:12px;height:22px;padding:0 9px;border-radius:999px;background:rgba(0,0,0,.5);color:#FFFFFF;font-size:10px;font-weight:600;line-height:22px;display:{{ dVideoD }}">▶ video loop</span>
+              <div style="position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:6px"><span style="width:18px;height:5px;border-radius:9px;background:#FFFFFF"></span><span style="width:5px;height:5px;border-radius:9px;background:rgba(255,255,255,.5)"></span><span style="width:5px;height:5px;border-radius:9px;background:rgba(255,255,255,.5)"></span></div>
+            </sc-if>
+            <sc-if value="{{ dCart }}" hint-placeholder-val="{{ true }}">
+              <div style="flex:1;padding:4%;display:flex;flex-direction:column;gap:8px;min-width:0;min-height:0;overflow:hidden">
+                <span style="display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;opacity:.8"><span style="width:30px;height:30px;border-radius:{{ rSm }};background:{{ logoBg }};color:{{ cPrimary }};display:grid;place-items:center;font-family:{{ headCss }};font-size:11px;font-weight:800">{{ logoTxt }}</span>{{ name }} · Table 7</span>
+                <sc-for list="{{ rItems }}" as="l" hint-placeholder-count="2"><div style="display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid {{ dLine }};font-size:clamp(13px,1.6vw,19px)"><span>{{ l.q }} {{ l.n }}</span><b>{{ l.t }}</b></div></sc-for>
+                <div style="margin-top:auto;padding:10px 12px;border-radius:{{ rSm }};background:{{ cSecondary }};color:{{ onSecondary }};font-size:13px;font-weight:600;display:{{ dPromoD }}">{{ announce }}</div>
+              </div>
+              <div style="flex:none;width:{{ dPanelW }};height:{{ dPanelH }};background:{{ cPrimary }};color:{{ onPrimary }};padding:4%;display:flex;flex-direction:{{ dPanelDir }};justify-content:{{ dPanelJ }};align-items:{{ dPanelA }};gap:12px">
+                <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;opacity:.85">Total</span><span style="font-family:{{ priceCss }};font-size:clamp(28px,4.4vw,56px);font-weight:800;line-height:1">{{ rTotal }}</span><span style="font-size:12px;font-weight:600;display:{{ dPtsD }}">Dewi earns +{{ rPts }} pts</span></div>
+                <span style="width:96px;height:96px;flex:none;border-radius:{{ rSm }};background:#FFFFFF;padding:8px;display:{{ dQrisD }}"><span style="display:block;width:100%;height:100%;background:repeating-linear-gradient(45deg,#141210 0 4px,#FFFFFF 4px 8px)"></span></span>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ surfKiosk }}" hint-placeholder-val="{{ false }}">
+      <div style="width:360px;flex:none;border-radius:30px;background:#141210;padding:9px">
+        <div style="aspect-ratio:9/16;border-radius:22px;overflow:hidden;display:flex;flex-direction:column;font-family:{{ bodyCss }}">
+          <div style="flex:{{ kTopFlex }};background:{{ kTopBg }};position:relative"><span style="position:absolute;top:18px;left:18px;width:52px;height:52px;border-radius:{{ rSm }};background:{{ logoBg }};color:{{ cPrimary }};display:grid;place-items:center;font-family:{{ headCss }};font-weight:800">{{ logoTxt }}</span></div>
+          <div style="flex:1;background:{{ kBotBg }};color:{{ kFg }};padding:24px 22px;display:flex;flex-direction:column;justify-content:flex-end;gap:14px">
+            <span style="font-family:{{ headCss }};font-size:34px;line-height:1;font-weight:{{ headW }};text-transform:{{ hCase }};letter-spacing:{{ hLs }}">{{ kHead }}</span>
+            <span style="font-size:13px;opacity:.85">{{ tagline }}</span>
+            <span style="height:64px;border-radius:{{ btnR }};background:{{ kBtnBg }};color:{{ kBtnFg }};display:grid;place-items:center;font-family:{{ headCss }};font-size:18px;font-weight:800;text-transform:{{ hCase }}">{{ kCta }}</span>
+            <span style="text-align:center;font-size:12px;opacity:.8;display:{{ kLangD }}">English · Bahasa Indonesia</span>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ surfQr }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding-top:8px">
+        <div style="width:{{ qW }};height:{{ qH }};border-radius:{{ qR }};background:{{ qBg }};color:{{ qFg }};font-family:{{ bodyCss }};box-shadow:0 18px 36px -14px rgba(20,18,16,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:{{ qGap }};padding:28px;text-align:center">
+          <span style="width:56px;height:56px;border-radius:{{ rSm }};background:{{ logoBg }};color:{{ cPrimary }};display:{{ qLogoD }};place-items:center;font-family:{{ headCss }};font-weight:800">{{ logoTxt }}</span>
+          <span style="font-family:{{ headCss }};font-size:{{ qHeadSize }};line-height:1.05;font-weight:{{ headW }};text-transform:{{ hCase }};letter-spacing:{{ hLs }}">{{ qHead }}</span>
+          <div style="width:{{ qQrSize }};height:{{ qQrSize }};border-radius:{{ rSm }};background:#FFFFFF;padding:10px;position:relative"><span style="display:block;width:100%;height:100%;background:repeating-linear-gradient(45deg,#141210 0 5px,#FFFFFF 5px 10px)"></span><span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:4px 8px;border-radius:6px;background:#FFFFFF;color:#141210;font-family:{{ headCss }};font-size:15px;font-weight:800">T-07</span></div>
+          <span style="font-size:12px;line-height:1.4;opacity:.85;max-width:240px">{{ qSub }}</span>
+          <span style="height:24px;padding:0 10px;border-radius:999px;background:#FFFFFF;color:#141210;font-size:11px;font-weight:700;line-height:24px;display:{{ qQrisD }}">QRIS accepted</span>
+          <span style="font-size:11px;opacity:.75;display:{{ qWifiD }}">Wi-Fi {{ rWifi }}</span>
+          <span style="font:500 10px/1 'JetBrains Mono',ui-monospace,monospace;opacity:.6">{{ urlShort }}</span>
+        </div>
+        <span style="height:44px;padding:0 18px;border-radius:12px;background:#141210;color:#FFFFFF;font-size:13px;font-weight:700;line-height:44px">Download print-ready PDF · {{ qRange }}</span>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ surfMember }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px;padding-top:8px">
+        <div style="width:360px;aspect-ratio:1.586;border-radius:{{ mcR }};background:{{ mcBg }};color:#FFFFFF;font-family:{{ bodyCss }};padding:22px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 18px 36px -14px rgba(20,18,16,.45);position:relative;overflow:hidden">
+          <span style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.45));display:{{ mcShadeD }}"></span>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative"><span style="display:flex;align-items:center;gap:10px"><span style="width:36px;height:36px;border-radius:{{ rSm }};background:{{ logoBg }};color:{{ cPrimary }};display:grid;place-items:center;font-family:{{ headCss }};font-size:12px;font-weight:800">{{ logoTxt }}</span><span style="font-family:{{ headCss }};font-size:17px;font-weight:{{ headW }};text-transform:{{ hCase }}">{{ mcProg }}</span></span><span style="height:24px;padding:0 10px;border-radius:999px;background:#FFFFFF;color:#141210;font-size:11px;font-weight:800;line-height:24px">{{ mcTier }}</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;position:relative;gap:12px">
+            <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:16px;font-weight:700">Dewi Anggraini</span><span style="font-size:12px;opacity:.85">1,240 {{ mcPts }} · {{ mcNext }}</span><span style="width:160px;height:5px;border-radius:9px;background:rgba(255,255,255,.3);overflow:hidden;display:{{ mcProgD }}"><span style="display:block;width:62%;height:100%;background:#FFFFFF"></span></span></div>
+            <span style="width:72px;height:36px;flex:none;border-radius:6px;background:repeating-linear-gradient(90deg,#FFFFFF 0 2px,transparent 2px 4px,#FFFFFF 4px 5px,transparent 5px 8px);display:{{ mcBarD }}"></span>
+          </div>
+        </div>
+        <div style="width:360px;padding:16px;border-radius:{{ rMd }};background:{{ cSurface }};color:{{ cText }};font-family:{{ bodyCss }};box-shadow:0 0 0 1px {{ cBorder }};display:flex;flex-direction:column;gap:8px"><span style="font-family:{{ headCss }};font-size:16px;font-weight:{{ headW }};text-transform:{{ hCase }}">Tiers</span><sc-for list="{{ mcTiers }}" as="t" hint-placeholder-count="3"><div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-top:1px solid {{ cBorder }}"><b>{{ t.n }}</b><span style="opacity:.75">{{ t.d }}</span></div></sc-for></div>
+      </div>
+    </sc-if>
+
+    <span style="font-size:12px;color:#625C55;text-align:center;max-width:560px">{{ previewNote }}</span>
+  </section>
+  </sc-if>
+  <sc-if value="{{ isPages }}" hint-placeholder-val="{{ false }}"><iframe src="BorNiz Page Builder.dc.html?in=menustudio" title="Pages &amp; promos" style="flex:1;min-width:0;border:0;background:#FAF8F5"></iframe></sc-if>
+</div>
+</div>
+<div data-bn-links="1" style="position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:60;max-width:calc(100vw - 24px)"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:18px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#141210;color:#FFFFFF"><span style="width:8px;height:8px;border-radius:9px;background:#F26B1D"></span>Linked pages · 23<span style="font-weight:500;color:#A9A39B">▴</span></summary><div style="width:min(460px,calc(100vw - 24px));padding:6px 16px 12px;display:flex;flex-direction:column;max-height:50vh;overflow:auto"><a href="BorNiz Operations Guide.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Operations guide</b><span style="color:#45403A">Menu scope and pricing rules</span></a><a href="BorNiz Back Office.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Back office (all modules)</b><span style="color:#45403A">Catalog pages share products and their scope (All outlets / one outlet)</span></a><a href="BorNiz Brand Studio.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Brand Studio</b><span style="color:#45403A">Merchant theme tokens</span></a><a href="BorNiz Components.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Components</b><span style="color:#45403A">Merchant theme tokens</span></a><a href="BorNiz Customer Display.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Customer display</b><span style="color:#45403A">Brand &amp; slides</span></a><a href="BorNiz Kiosk.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Kiosk</b><span style="color:#45403A">Kiosk shows only items active at its outlet</span></a><a href="BorNiz Kitchen Display.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Kitchen display</b><span style="color:#45403A">86 / sold out is per outlet and syncs to every channel</span></a><a href="BorNiz Loyalty.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Loyalty</b><span style="color:#45403A">Member card and brand</span></a><a href="BorNiz Manager Dashboard.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Manager</b><span style="color:#45403A">Manager drafts menu, theme and outlet-only items; publish and promote go to owner</span></a><a href="BorNiz POS Register.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>POS Register</b><span style="color:#45403A">Products, prices and sold-out status</span></a><a href="BorNiz Studios.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Studios</b><span style="color:#45403A">Receipt, display, waiting and ready screens</span></a><a href="BorNiz Self Order.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Self-order</b><span style="color:#45403A">Theme &amp; products</span></a><a href="BorNiz Theming.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Theming &amp; language</b><span style="color:#45403A">Merchant brand tokens</span></a><a href="BorNiz Responsive.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Responsive</b><span style="color:#45403A">Device previews follow breakpoints</span></a><a href="BorNiz PIC.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Shift lead (PIC)</b><span style="color:#45403A">PIC can mark items sold out at their outlet</span></a><a href="BorNiz Roles.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Roles</b><span style="color:#45403A">Who can add global vs outlet-only items</span></a><a href="BorNiz Super Admin.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Super admin</b><span style="color:#45403A">Plan decides if outlet-only items and local prices are allowed</span></a><a href="BorNiz Owner Dashboard.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Owner dashboard</b><span style="color:#45403A">Owner adds global items and approves outlet items</span></a><a href="BorNiz Owner Mobile.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Owner mobile</b><span style="color:#45403A">Approve “Promote to all outlets” on the phone</span></a><a href="BorNiz POS Patterns.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>POS patterns</b><span style="color:#45403A">Merchant theme tokens</span></a><a href="BorNiz System.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>System</b><span style="color:#45403A">Merchant theme tokens</span></a><a href="BorNiz Motion.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Motion</b><span style="color:#45403A">Merchant theme tokens</span></a><a href="BorNiz Online Orders.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Online orders</b><span style="color:#45403A">Channel price lists and delivery menu</span></a><a href="BorNiz Connections.dc.html" style="margin-top:8px;height:40px;border-radius:12px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:13px;font-weight:700">Open the full connection map →</a></div></details></div>
+<div data-bn-spec="1" style="position:fixed;left:12px;bottom:10px;z-index:61"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:16px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#F26B1D;color:#FFFFFF">◆ Design spec · this page</summary><div style="width:min(420px,calc(100vw - 24px));max-height:65vh;overflow:auto;padding:10px 16px 14px;display:flex;flex-direction:column"><div style="font-size:12px;color:#625C55">Theme: <b style="color:#141210">Editor chrome light · preview = merchant theme</b></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">COLOR</b><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px"><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:#FFFFFF;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Chrome</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">#FFFFFF</span></div><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:#F26B1D;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Active</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">#F26B1D</span></div><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:#141210;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Preview frame</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">#141210</span></div></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">TYPE</b><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Panel label</span><b style="text-align:right">11 / 700 caps</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Field</span><b style="text-align:right">14 / 400</b></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">SIZE & LAYOUT</b><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Settings aside</span><b style="text-align:right">320px</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Phone preview</span><b style="text-align:right">375px</b></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">COMPONENTS</b><div style="display:flex;flex-wrap:wrap;gap:4px"><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Surface tabs</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Settings groups</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Phone / receipt / display / kiosk / QR / card previews</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Version history</span></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">STATES</b><div style="display:flex;flex-wrap:wrap;gap:4px"><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Contrast warning</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Saving / saved / published</span></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">MOTION</b><div style="display:flex;flex-wrap:wrap;gap:4px"><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Theme changes apply live</span></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">RESPONSIVE</b><div style="font-size:12px;line-height:1.45">lg+</div><a href="BorNiz Design System.dc.html" style="margin-top:12px;height:38px;border-radius:10px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:12px;font-weight:700">Global foundations →</a></div></details></div>
+<div data-bn-mgr="1" style="position:fixed;bottom:54px;left:50%;transform:translateX(-50%);z-index:59;max-width:calc(100vw - 24px);padding:7px 12px;border-radius:999px;background:#E6EEFD;color:#1F4FB5;font:600 11px/1.3 'Instrument Sans',system-ui,sans-serif;box-shadow:0 6px 16px -8px rgba(20,18,16,.3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none">Owner &amp; manager can edit · manager’s Publish sends to owner for approval</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const IC = n => `url(https://unpkg.com/lucide-static@0.452.0/icons/${n}.svg) center/contain no-repeat`;
+const fmt = v => 'IDR ' + Math.round(v).toLocaleString('en-US');
+const hx = h => { h = (h || '#000000').replace('#', ''); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) || 0); };
+const toHex = a => '#' + a.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('').toUpperCase();
+const mix = (a, b, t) => toHex(hx(a).map((v, i) => v + (hx(b)[i] - v) * t));
+const lum = h => { const c = hx(h).map(v => v / 255).map(v => v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4)); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
+const cr = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+const on = c => cr('#FFFFFF', c) >= 3 ? '#FFFFFF' : '#141210';
+const FONTS = { sf: ['SF Pro', "'Instrument Sans',system-ui,sans-serif", null], jakarta: ['Plus Jakarta Sans', "'Plus Jakarta Sans',sans-serif", 'Plus+Jakarta+Sans'], dm: ['DM Sans', "'DM Sans',sans-serif", 'DM+Sans'], poppins: ['Poppins', "'Poppins',sans-serif", 'Poppins'], nunito: ['Nunito', "'Nunito',sans-serif", 'Nunito'], outfit: ['Outfit', "'Outfit',sans-serif", 'Outfit'], space: ['Space Grotesk', "'Space Grotesk',sans-serif", 'Space+Grotesk'], playfair: ['Playfair Display', "'Playfair Display',serif", 'Playfair+Display'], lora: ['Lora', "'Lora',serif", 'Lora'], cormorant: ['Cormorant', "'Cormorant Garamond',serif", 'Cormorant+Garamond'], bebas: ['Bebas Neue', "'Bebas Neue',sans-serif", 'Bebas+Neue'], caveat: ['Caveat (script)', "'Caveat',cursive", 'Caveat'] };
+const P = {
+  biru: { label: 'Kopi Biru', sub: 'Cool · grid · cover', primary: '#1F5FBF', secondary: '#F2B705', bg: '#F6F8FB', surface: '#FFFFFF', text: '#0F172A', head: 'jakarta', body: 'jakarta', price: 'jakarta', hcase: 'none', radius: 16, hero: 'cover', layout: 'grid', cat: 'pills', ratio: '1/1', btn: 'filled', cart: 'bar', header: 'surface', name: 'Kopi Biru Senayan', tagline: 'Coffee & slow mornings' },
+  nenek: { label: 'Warung Nenek', sub: 'Printed menu · serif', primary: '#A3241B', secondary: '#D99A2B', bg: '#F5ECD9', surface: '#FBF5E8', text: '#2B1A10', head: 'playfair', body: 'lora', price: 'playfair', hcase: 'uppercase', radius: 4, hero: 'minimal', layout: 'text', cat: 'tabs', ratio: '4/3', btn: 'outline', cart: 'bar', header: 'bg', name: 'Warung Nenek', tagline: 'Masakan rumah sejak 1987' },
+  matcha: { label: 'Matcha House', sub: 'Minimal · list', primary: '#3E7D4F', secondary: '#E8C15A', bg: '#FAF8F5', surface: '#FFFFFF', text: '#1B2A1F', head: 'dm', body: 'dm', price: 'dm', hcase: 'none', radius: 12, hero: 'split', layout: 'list', cat: 'tabs', ratio: '1/1', btn: 'pill', cart: 'fab', header: 'surface', name: 'Matcha House', tagline: 'Stone-ground in Uji, whisked here' },
+  neon: { label: 'Neon Bar', sub: 'Dark · big cards', primary: '#FF3D7F', secondary: '#3DF2FF', bg: '#0E0E12', surface: '#1A1A22', text: '#F5F5F7', head: 'bebas', body: 'outfit', price: 'bebas', hcase: 'uppercase', radius: 6, hero: 'video', layout: 'big', cat: 'pills', ratio: '16/9', btn: 'filled', cart: 'bar', header: 'brand', name: 'NEON 88', tagline: 'Cocktails · late kitchen · DJ Fri–Sat' },
+  bakery: { label: 'Rosé Bakery', sub: 'Soft · round · tiles', primary: '#D94F7A', secondary: '#7A4BD9', bg: '#FFF5F7', surface: '#FFFFFF', text: '#3A1626', head: 'nunito', body: 'nunito', price: 'nunito', hcase: 'none', radius: 24, hero: 'split', layout: 'grid', cat: 'tiles', ratio: '1/1', btn: 'pill', cart: 'fab', header: 'bg', name: 'Rosé Bakery', tagline: 'Fresh from the oven at 7am' },
+  borniz: { label: 'BorNiz default', sub: 'Ember · system font', primary: '#F26B1D', secondary: '#141210', bg: '#FAF8F5', surface: '#FFFFFF', text: '#141210', head: 'sf', body: 'sf', price: 'sf', hcase: 'none', radius: 16, hero: 'cover', layout: 'list', cat: 'pills', ratio: '1/1', btn: 'filled', cart: 'bar', header: 'surface', name: 'Kopi Kenangan Senja', tagline: 'Kemang · since 2019' },
+};
+const PRODS = [['Es Kopi Susu Aren', 'Espresso, fresh milk, palm sugar', 25000, 'Coffee', 'Best seller'], ['Kopi Signature', 'Butterfly pea, cold brew, sweet cream', 32000, 'Coffee', 'New'], ['Americano', 'Double shot, hot or iced', 22000, 'Coffee', ''], ['Matcha Latte', 'Uji matcha, oat milk', 30000, 'Non-coffee', 'Best seller'], ['Teh Tarik', 'Pulled black tea, condensed milk', 22000, 'Non-coffee', ''], ['Croissant Almond', 'Baked every morning, almond cream', 32000, 'Pastry', ''], ['Banana Bread', 'Walnut, brown butter', 28000, 'Pastry', 'Sold out'], ['Nasi Goreng Kampung', 'Fried rice, fried egg, crackers', 38000, 'Food', '']];
+const CATS = ['All', 'Coffee', 'Non-coffee', 'Pastry', 'Food'];
+const SECTIONS = [['announce', 'Announcement bar', 'One line, secondary color'], ['promo', 'Promos (from Pages)', 'Banners, carousel, flash sale and combos you build in Pages'], ['best', 'Best sellers', 'Top 5 by sales, auto'], ['menu', 'Full menu', 'Categories + products'], ['about', 'Our story', 'Photo + paragraph'], ['hours', 'Hours & location', 'Opening hours, map link'], ['social', 'Instagram', 'Handle + 3 photos'], ['reviews', 'Reviews', 'Rating from BorNiz feedback']];
+const TABS = [['brand', 'Brand', 'store', 'Brand & colors', 'Your name, logo and every color. Themes are optional shortcuts; change anything after picking one, or skip them.'], ['menu', 'Menu', 'utensils', 'Menu & products', 'Your categories and products, each with its own photo, price, description and badge. Changes show in the preview immediately.'], ['colors', 'Colors', 'palette', 'Colors', 'Set every color on the menu. Contrast is checked live; unreadable combinations are blocked from publishing.'], ['type', 'Type', 'type', 'Typography', 'Pick fonts for headings, body and prices, then set the case.'], ['layout', 'Layout', 'layout-template', 'Layout', 'Choose the landing hero, menu layout, category navigation, product cards, buttons and cart.'], ['sections', 'Sections', 'rows-3', 'Sections', 'Reorder and toggle the blocks on your menu home page.'], ['pages', 'Pages', 'badge-percent', 'Pages & promos', 'Build Home, Promos and any page: banners with photos, carousels, flash sales, vouchers, bundles and pop-ups. They show in the same customer app as the menu.'], ['media', 'Media', 'image', 'Brand media', 'Brand imagery outside the product list: cover photos, story photo and background texture. Product photos live in the Menu tab; promo banners live in Pages.'], ['copy', 'Copy', 'pencil', 'Copy & labels', 'Write every customer-facing word in your own voice, in EN and ID.'], ['receipt', 'Receipt', 'receipt', 'Receipts & e-receipts', 'Thermal receipt and WhatsApp/email e-receipt. Legal lines (NPWP, tax) are added automatically.'], ['display', 'Display', 'monitor', 'Customer display', 'The screen facing the customer at the counter: idle loop and live cart.'], ['kiosk', 'Kiosk', 'tablet', 'Kiosk', 'Self-order kiosk attract screen and flow.'], ['qr', 'QR stand', 'qr-code', 'QR table stand', 'Printable table tents, stickers and posters with each table\'s QR code.'], ['member', 'Member', 'credit-card', 'Member card', 'Loyalty card design, program name, points name and tiers.'], ['publish', 'Publish', 'send', 'Publish & versions', 'Schedule changes, allow outlet overrides and roll back to any version.'], ['adv', 'Advanced', 'code', 'Advanced', 'Display options, custom CSS (Enterprise) and your domain.']];
+
+class Component extends DCLogic {
+  constructor(p) { super(p); const t = { ...P.biru }; this.state = { t, preset: 'biru', tab: 'brand', surf: 'phone', dcView: 'cart', rc: { paper: '80', qr: 'feedback', ch: 'wa', h1: 'Jl. Asia Afrika 8, Senayan, Jakarta', h2: 'NPWP 01.234.567.8-901.000', f1: 'Terima kasih sudah mampir!', f2: 'Kritik & saran: 0812-3456-7890', wifi: 'KOPIBIRU-GUEST · senayan8', thanks: 'Thanks for visiting, Dewi!', logo: true, points: true, social: true, wifiOn: true }, dc: { idle: 'slides', cart: 'right', theme: 'dark', welcome: 'Your order will appear here.', idleHead: 'Payday week: 20% off all coffee', points: true, promo: true, qris: true }, ki: { bg: 'split', step: 'ask', head: 'Order here, skip the line', cta: 'Tap to start', timeout: '60', lang: true }, qr: { layout: 'tent', color: 'brand', head: 'Scan to order', sub: 'No app needed. Pay with QRIS or at the cashier.', range: 'T-01 – T-38', wifi: true, logo: true, qris: true }, mc: { style: 'brand', prog: 'Biru Rewards', pts: 'beans', tiers: 'Silver, Gold, Platinum', barcode: true, progress: true }, pub: { when: 'now', ov0: false, ov1: true, ov2: false }, screen: 'landing', item: 0, qty: 1, opt: { 0: 0, 1: 0 }, cart: [[0, 2, 'Iced · Normal'], [5, 1, 'Warm']], cat: 0, prods: PRODS.map(([n, d, price, cat, tag]) => ({ n, d, price, cat, tag, photo: null, hidden: false })), cats: ['Coffee', 'Non-coffee', 'Pastry', 'Food'], newCat: '', dev: 'phone', sections: SECTIONS.map(s => ({ k: s[0], on: s[0] !== 'reviews' })), media: { logo: null, covers: [null, null, null], promos: [null, null], prods: {}, bgTex: null, about: null }, copy: { welcome: 'Order from your table, we bring it to you. Pay by QRIS or at the cashier.', ctaMenu: 'See the menu', ctaCart: 'View cart', ctaOrder: 'Place order', addLabel: 'Add to order', bestTitle: 'Most loved', announce: 'Payday week: 20% off all coffee until Sunday', about: 'We roast beans from Gayo and Kintamani every Tuesday and brew them slow. Stay as long as you like.', aboutTitle: 'Our story', hours: 'Mon–Fri 07:00–22:00 · Sat–Sun 08:00–23:00', address: 'Jl. Asia Afrika 8, Senayan, Jakarta', insta: '@kopibiru.id', hoursTitle: 'Visit us' }, opts: { powered: true, prices: true, sold: true, desc: true, bgTex: false, lang: true }, css: '.bn-menu .product-card:hover {\n  transform: translateY(-2px);\n}\n.bn-menu h1 { letter-spacing: .02em; }', pay: 0, step: 1, saved: true, published: false, outlet: 0 }; }
+  componentDidMount() { ['jakarta'].forEach(k => this.lf(k)); this.readPB(); this.pbt = setInterval(() => this.readPB(), 1500); }
+  readPB() { try { const q = window.BN_Q && window.BN_Q.get('ms-publish'); if (q && this.state.pending && q.st !== 'waiting') this.setState(q.st === 'approved' ? { pending: false, published: true } : { pending: false, rejected: true }); } catch (e) {} try { const raw = localStorage.getItem('bn-pages-v1') || ''; if (raw !== this._pbRaw) { this._pbRaw = raw; this.setState({ pb: raw ? JSON.parse(raw) : null }); } } catch (e) {} }
+  componentWillUnmount() { clearInterval(this.st); clearInterval(this.pbt); }
+  lf(k) { const g = FONTS[k] && FONTS[k][2]; if (!g || document.getElementById('mf-' + k)) return; const l = document.createElement('link'); l.id = 'mf-' + k; l.rel = 'stylesheet'; l.href = `https://fonts.googleapis.com/css2?family=${g}:wght@400;500;600;700;800&display=swap`; document.head.appendChild(l); }
+  setT(patch) { Object.values(patch).forEach(v => typeof v === 'string' && FONTS[v] && this.lf(v)); this.setState(s => ({ t: { ...s.t, ...patch }, preset: null, saved: false, published: false })); }
+  setM(fn) { this.setState(s => ({ media: fn(s.media), saved: false, published: false })); }
+  setP(i, patch) { this.setState(st => ({ prods: st.prods.map((p, j) => j === i ? { ...p, ...patch } : p), saved: false, published: false })); }
+  setC(k, v) { this.setState(s => ({ copy: { ...s.copy, [k]: v }, saved: false, published: false })); }
+  file(e, cb) { const f = e.target.files && e.target.files[0]; if (f) cb(URL.createObjectURL(f)); e.target.value = ''; }
+  renderVals() {
+    const s = this.state, t = s.t, m = s.media, c = s.copy, R = t.radius;
+    const PRODS = s.prods.map(p => [p.n, p.d, p.price, p.cat, p.tag, p.photo, p.hidden]);
+    const CATS = ['All', ...s.cats];
+    const dark = lum(t.bg) < .2;
+    const ph = (i) => (PRODS[i] && PRODS[i][5]) ? `url(${PRODS[i][5]}) center/cover` : `repeating-linear-gradient(135deg,${mix(t.surface, t.text, .06)} 0 8px,${mix(t.surface, t.text, .12)} 8px 9px)`;
+    const imgOf = u => u ? `url(${u}) center/cover` : null;
+    const cover0 = imgOf(m.covers[0]) || `linear-gradient(135deg,${t.primary},${mix(t.primary, '#000000', .45)})`;
+    const onP = on(t.primary), onS = on(t.secondary);
+    const priText = cr(t.primary, t.bg) >= 4.5 ? t.primary : (dark ? mix(t.primary, '#FFFFFF', .35) : mix(t.primary, '#000000', .35));
+    const btn = { filled: [t.primary, onP, '0', R + 'px'], outline: ['transparent', priText, `2px solid ${priText}`, R + 'px'], pill: [t.primary, onP, '0', '999px'] }[t.btn];
+    const L = t.layout;
+    const lay = { list: { cols: 1, dir: 'row', imgW: '96px', imgD: 'block', pad: '10px', bg: t.surface, ring: `0 0 0 1px ${mix(t.surface, t.text, .1)}`, line: '0', leader: 'none', priceRow: 'flex', nameSize: '15px', gap: '10px', cardR: R + 'px' }, grid: { cols: 2, dir: 'column', imgW: '100%', imgD: 'block', pad: '8px', bg: t.surface, ring: `0 0 0 1px ${mix(t.surface, t.text, .1)}`, line: '0', leader: 'none', priceRow: 'flex', nameSize: '14px', gap: '10px', cardR: R + 'px' }, big: { cols: 1, dir: 'column', imgW: '100%', imgD: 'block', pad: '0 0 12px', bg: t.surface, ring: 'none', line: '0', leader: 'none', priceRow: 'flex', nameSize: '18px', gap: '16px', cardR: R + 'px' }, text: { cols: 1, dir: 'row', imgW: '0', imgD: 'none', pad: '10px 0', bg: 'transparent', ring: 'none', line: `1px solid ${mix(t.bg, t.text, .15)}`, leader: 'block', priceRow: 'none', nameSize: '16px', gap: '0px', cardR: '0' } }[L];
+    const cat = t.cat;
+    const filtered = PRODS.map((p, i) => ({ p, i })).filter(({ p }) => s.cat === 0 || p[3] === CATS[s.cat]).filter(({ p }) => s.opts.sold || p[4] !== 'Sold out').filter(({ p }) => !p[6]);
+    const open = i => () => this.setState({ screen: 'item', item: i, qty: 1, opt: { 0: 0, 1: 0 } });
+    const it = PRODS[s.item] || ['—', '', 0, '', '', null, false];
+    const cartSub = s.cart.reduce((a, [i, q]) => a + PRODS[i][2] * q, 0);
+    const cartCount = s.cart.reduce((a, l) => a + l[1], 0);
+    const blocks = s.sections.filter(x => x.on).map(x => ({ announce: x.k === 'announce', promo: x.k === 'promo', best: x.k === 'best', menu: x.k === 'menu', about: x.k === 'about', hours: x.k === 'hours', social: x.k === 'social', reviews: x.k === 'reviews' }));
+    const bgFill = s.opts.bgTex && m.bgTex ? `${t.bg} url(${m.bgTex}) center/400px repeat` : t.bg;
+    const tab = TABS.find(x => x[0] === s.tab);
+    const opt = (cur, setter) => ([v, label, sub, sw, font]) => ({ label, sub: sub || '', sw: sw || 'transparent', font: font || 'inherit', border: cur === v ? '#141210' : '#E6E2DC', bg: cur === v ? '#FAF8F5' : '#FFFFFF', onClick: () => setter(v) });
+    const G = (label, cols, h, list, extra = {}) => ({ label, cols, h, swH: extra.swH || '0px', swD: extra.swD || 'none', subD: extra.subD || 'none', hint: extra.hint || '', hintD: extra.hint ? 'block' : 'none', opts: list });
+    let groups = [], colorRows = [], uploads = [], fields = [], toggles = [];
+    const slot = (u, ph2, onUp, onDel) => ({ bg: u ? `url(${u}) center/cover` : '#FAF8F5', ring: u ? '0px' : '1.5px', phD: u ? 'none' : 'block', ph: ph2, delD: u ? 'grid' : 'none', onUp, onDel });
+    if (s.tab === 'brand') {
+      groups = [G('START FROM A THEME · OPTIONAL', 2, '92px', Object.entries(P).map(([k, p]) => ({ label: p.label, sub: p.sub, sw: `linear-gradient(90deg,${p.primary} 0 55%,${p.bg} 55% 80%,${p.secondary} 80%)`, font: FONTS[p.head][1], border: s.preset === k ? '#141210' : '#E6E2DC', bg: '#FFFFFF', onClick: () => { this.lf(p.head); this.lf(p.body); this.setState({ t: { ...p }, preset: k, saved: false, published: false }); } })), { swH: '34px', swD: 'block', subD: 'block', hint: 'A theme only fills in a starting point. Every color, font, layout and image stays editable below and in the other tabs.' })];
+      fields = [['STORE NAME', t.name, v => this.setT({ name: v.slice(0, 28) })], ['TAGLINE', t.tagline, v => this.setT({ tagline: v.slice(0, 48) })]].map(([label, value, f]) => ({ label, value, onChange: e => f(e.target.value) }));
+      uploads = [{ label: 'LOGO', spec: 'SVG / PNG · 512px+', cols: 3, ratio: '1/1', hint: 'Shown on the landing page, menu header, order status, receipts and kiosk.', slots: [slot(m.logo, '+ Logo', e => this.file(e, u => this.setM(x => ({ ...x, logo: u }))), () => this.setM(x => ({ ...x, logo: null })))] }];
+    }
+    if (s.tab === 'colors' || s.tab === 'brand') {
+      const rows = [['primary', 'Primary', 'Buttons, links, active tab'], ['secondary', 'Secondary accent', 'Badges, announcement, stars'], ['bg', 'Page background', 'Behind everything'], ['surface', 'Cards & sheets', 'Product cards, panels'], ['text', 'Text', 'Names, descriptions']];
+      colorRows = rows.map(([k, label]) => { let ok = 'OK', bad = false; if (k === 'text') { const r = cr(t.text, t.bg); ok = r.toFixed(1) + ':1'; bad = r < 4.5; } if (k === 'primary') { const r = cr(onP, t.primary); ok = 'on ' + r.toFixed(1); bad = r < 3; } if (k === 'surface') { const r = cr(t.text, t.surface); ok = r.toFixed(1) + ':1'; bad = r < 4.5; }
+        return { label, value: t[k].toUpperCase(), ok: bad ? 'Low contrast' : ok, okBg: bad ? '#FDE8E8' : '#E3F5EA', okFg: bad ? '#B3261E' : '#156B3A', onChange: e => this.setT({ [k]: e.target.value.toUpperCase() }) }; });
+      groups = [...(s.tab === 'brand' ? groups : []), G('HEADER BAR', 3, '64px', [['surface', 'Card', '', t.surface], ['bg', 'Page', '', t.bg], ['brand', 'Brand', '', t.primary]].map(opt(t.header, v => this.setT({ header: v }))), { swH: '22px', swD: 'block' })];
+      toggles = [{ label: 'Use background texture', sub: 'From Media → Background', on: s.opts.bgTex, k: 'bgTex' }].map(x => ({ ...x, track: x.on ? '#F26B1D' : '#CFCAC3', x: x.on ? '18px' : '0px', onClick: () => this.setState(st => ({ opts: { ...st.opts, [x.k]: !st.opts[x.k] } })) }));
+    }
+    if (s.tab === 'type') {
+      const fl = Object.entries(FONTS).map(([v, f]) => [v, f[0], '', '', f[1]]);
+      groups = [G('HEADINGS', 2, '44px', fl.map(opt(t.head, v => this.setT({ head: v })))), G('BODY TEXT', 2, '44px', fl.filter(f => !['bebas', 'caveat'].includes(f[0])).map(opt(t.body, v => this.setT({ body: v })))), G('PRICES', 3, '44px', [[t.head, 'Like headings'], [t.body, 'Like body'], ['sf', 'System']].map(opt(t.price, v => this.setT({ price: v })))), G('HEADING CASE', 3, '44px', [['none', 'Aa Normal'], ['uppercase', 'AA Upper'], ['lowercase', 'aa lower']].map(opt(t.hcase, v => this.setT({ hcase: v }))))];
+    }
+    if (s.tab === 'layout') {
+      groups = [
+        G('LANDING HERO', 2, '86px', [['cover', 'Full cover', 'Photo edge to edge'], ['split', 'Card + logo', 'Photo card, logo overlaps'], ['minimal', 'Logo only', 'Clean, no photo'], ['video', 'Video loop', 'MP4 up to 15s']].map(opt(t.hero, v => this.setT({ hero: v }))).map(o => ({ ...o, sw: mix(t.primary, '#FFFFFF', .6) })), { swH: '28px', swD: 'block', subD: 'block' }),
+        G('MENU LAYOUT', 2, '86px', [['list', 'List', 'Photo left, text right'], ['grid', 'Grid', '2 columns'], ['big', 'Big photo', 'Full-width cards'], ['text', 'Printed menu', 'No photos, dotted leaders']].map(opt(t.layout, v => this.setT({ layout: v }))).map(o => ({ ...o, sw: mix(t.primary, '#FFFFFF', .75) })), { swH: '28px', swD: 'block', subD: 'block' }),
+        G('CATEGORY NAVIGATION', 3, '48px', [['pills', 'Pills'], ['tabs', 'Underline'], ['tiles', 'Photo tiles']].map(opt(t.cat, v => this.setT({ cat: v })))),
+        G('PRODUCT PHOTO RATIO', 3, '44px', [['1/1', '1:1'], ['4/3', '4:3'], ['16/9', '16:9']].map(opt(t.ratio, v => this.setT({ ratio: v })))),
+        G('CORNERS', 4, '44px', [[0, 'Square'], [6, 'Sharp'], [16, 'Soft'], [24, 'Round']].map(opt(t.radius, v => this.setT({ radius: v })))),
+        G('BUTTON STYLE', 3, '44px', [['filled', 'Filled'], ['outline', 'Outline'], ['pill', 'Pill']].map(opt(t.btn, v => this.setT({ btn: v })))),
+        G('CART', 2, '44px', [['bar', 'Bottom bar'], ['fab', 'Floating button']].map(opt(t.cart, v => this.setT({ cart: v })))),
+      ];
+    }
+    if (s.tab === 'media') {
+      const up = (key, i) => e => this.file(e, u => this.setM(x => { const n = { ...x }; if (i == null) n[key] = u; else if (key === 'prods') n.prods = { ...x.prods, [i]: u }; else { n[key] = x[key].slice(); n[key][i] = u; } return n; }));
+      const del = (key, i) => () => this.setM(x => { const n = { ...x }; if (i == null) n[key] = null; else if (key === 'prods') { n.prods = { ...x.prods }; delete n.prods[i]; } else { n[key] = x[key].slice(); n[key][i] = null; } return n; });
+      uploads = [
+        { label: 'COVER PHOTOS', spec: '1920×1080 · JPG', cols: 3, ratio: '16/9', hint: 'Cover 1 is the landing hero. Covers 2–3 feed the Instagram grid and the customer display idle loop.', slots: m.covers.map((u, i) => slot(u, 'Cover ' + (i + 1), up('covers', i), del('covers', i))) },
+        { label: 'STORY PHOTO & BACKGROUND TEXTURE', spec: 'seamless PNG for texture', cols: 2, ratio: '4/3', hint: 'Turn the texture on in Colors. It tiles behind every page at 400px.', slots: [slot(m.about, 'Story photo', up('about'), del('about')), slot(m.bgTex, 'Texture', up('bgTex'), del('bgTex'))] },
+      ];
+    }
+    if (s.tab === 'copy') {
+      fields = [['welcome', 'WELCOME MESSAGE'], ['ctaMenu', 'LANDING BUTTON'], ['announce', 'ANNOUNCEMENT'], ['bestTitle', 'BEST SELLERS TITLE'], ['addLabel', 'ADD BUTTON'], ['ctaCart', 'CART BUTTON'], ['ctaOrder', 'ORDER BUTTON'], ['aboutTitle', 'STORY TITLE'], ['about', 'STORY TEXT'], ['hoursTitle', 'HOURS TITLE'], ['hours', 'OPENING HOURS'], ['address', 'ADDRESS'], ['insta', 'INSTAGRAM']].map(([k, label]) => ({ label, value: c[k], onChange: e => this.setC(k, e.target.value) }));
+    }
+    if (s.tab === 'adv') {
+      toggles = [['prices', 'Show prices incl. tax', 'Displays PB1-inclusive prices'], ['desc', 'Show descriptions', 'Hide for a tighter menu'], ['sold', 'Show sold-out items', 'Greyed out instead of hidden'], ['lang', 'Language switch', 'EN / ID on the landing page'], ['powered', 'Show "Powered by BorNiz"', 'Can be removed on Pro and up']].map(([k, label, sub]) => ({ label, sub, track: s.opts[k] ? '#F26B1D' : '#CFCAC3', x: s.opts[k] ? '18px' : '0px', onClick: () => this.setState(st => ({ opts: { ...st.opts, [k]: !st.opts[k] } })) }));
+      fields = [{ label: 'CUSTOM DOMAIN', value: 'menu.' + t.name.toLowerCase().replace(/[^a-z0-9]+/g, '') + '.id', onChange: () => {} }, { label: 'SEO TITLE', value: t.name + ' · Order online', onChange: () => {} }];
+    }
+    const SO = (g, k) => v => this.setState(st => ({ [g]: { ...st[g], [k]: v }, saved: false, published: false }));
+    const TG = (g, k, label, sub) => ({ label, sub, track: s[g][k] ? '#F26B1D' : '#CFCAC3', x: s[g][k] ? '18px' : '0px', onClick: () => SO(g, k)(!s[g][k]) });
+    const FD = (g, k, label) => ({ label, value: s[g][k], onChange: e => SO(g, k)(e.target.value) });
+    if (s.tab === 'receipt') { groups = [G('PAPER', 2, '44px', [['58', '58 mm · 32 col'], ['80', '80 mm · 48 col']].map(opt(s.rc.paper, SO('rc', 'paper')))), G('QR CODE LINKS TO', 3, '44px', [['feedback', 'Feedback'], ['menu', 'Reorder'], ['member', 'Join member']].map(opt(s.rc.qr, SO('rc', 'qr')))), G('E-RECEIPT VIA', 3, '44px', [['wa', 'WhatsApp'], ['email', 'Email'], ['both', 'Both']].map(opt(s.rc.ch, SO('rc', 'ch'))))]; fields = [FD('rc', 'h1', 'HEADER LINE 1'), FD('rc', 'h2', 'HEADER LINE 2'), FD('rc', 'f1', 'FOOTER LINE 1'), FD('rc', 'f2', 'FOOTER LINE 2'), FD('rc', 'wifi', 'WI-FI · PASSWORD'), FD('rc', 'thanks', 'E-RECEIPT GREETING')]; toggles = [TG('rc', 'logo', 'Print logo', 'Mono, dithered for thermal'), TG('rc', 'points', 'Show points earned', 'Members only'), TG('rc', 'social', 'Show Instagram', 'From Copy tab'), TG('rc', 'wifiOn', 'Print Wi-Fi', 'Dine-in only')]; }
+    if (s.tab === 'display') { groups = [G('IDLE SCREEN', 2, '44px', [['slides', 'Photo slideshow'], ['promo', 'Promo banners'], ['video', 'Video loop'], ['brand', 'Brand color']].map(opt(s.dc.idle, SO('dc', 'idle')))), G('CART LAYOUT', 2, '44px', [['right', 'Total on right'], ['bottom', 'Total at bottom']].map(opt(s.dc.cart, SO('dc', 'cart')))), G('BACKGROUND', 3, '44px', [['dark', 'Dark'], ['brand', 'Brand'], ['light', 'Light']].map(opt(s.dc.theme, SO('dc', 'theme'))))]; fields = [FD('dc', 'idleHead', 'IDLE HEADLINE'), FD('dc', 'welcome', 'IDLE SUBTEXT')]; toggles = [TG('dc', 'points', 'Show member points', 'When a member is attached'), TG('dc', 'promo', 'Show announcement under cart', 'From Copy tab'), TG('dc', 'qris', 'Show QRIS on display', 'Customer scans here')]; }
+    if (s.tab === 'kiosk') { groups = [G('ATTRACT BACKGROUND', 3, '44px', [['brand', 'Brand color'], ['photo', 'Cover photo'], ['split', 'Photo + color']].map(opt(s.ki.bg, SO('ki', 'bg')))), G('FIRST STEP', 2, '44px', [['ask', 'Ask dine-in / takeaway'], ['skip', 'Takeaway only']].map(opt(s.ki.step, SO('ki', 'step'))))]; fields = [FD('ki', 'head', 'HEADLINE'), FD('ki', 'cta', 'START BUTTON'), FD('ki', 'timeout', 'RESET AFTER (SECONDS IDLE)')]; toggles = [TG('ki', 'lang', 'Language switch', 'On the attract screen')]; }
+    if (s.tab === 'qr') { groups = [G('FORMAT', 3, '44px', [['tent', 'Table tent'], ['sticker', 'Round sticker'], ['poster', 'A5 poster']].map(opt(s.qr.layout, SO('qr', 'layout')))), G('COLOR', 3, '44px', [['brand', 'Brand'], ['light', 'Light'], ['dark', 'Dark']].map(opt(s.qr.color, SO('qr', 'color'))))]; fields = [FD('qr', 'head', 'HEADLINE'), FD('qr', 'sub', 'INSTRUCTIONS'), FD('qr', 'range', 'TABLES TO PRINT')]; toggles = [TG('qr', 'logo', 'Show logo', ''), TG('qr', 'wifi', 'Show Wi-Fi', 'From Receipt tab'), TG('qr', 'qris', 'Show "QRIS accepted"', '')]; }
+    if (s.tab === 'member') { groups = [G('CARD STYLE', 3, '44px', [['brand', 'Brand gradient'], ['dark', 'Dark'], ['photo', 'Cover photo']].map(opt(s.mc.style, SO('mc', 'style'))))]; fields = [FD('mc', 'prog', 'PROGRAM NAME'), FD('mc', 'pts', 'POINTS NAME'), FD('mc', 'tiers', 'TIER NAMES (COMMA SEPARATED)')]; toggles = [TG('mc', 'barcode', 'Show barcode', 'Scannable at the POS'), TG('mc', 'progress', 'Show tier progress', '')]; }
+    if (s.tab === 'publish') { groups = [G('WHEN', 3, '44px', [['now', 'Now'], ['schedule', 'Schedule'], ['season', 'Seasonal']].map(opt(s.pub.when, SO('pub', 'when'))), { hint: s.pub.when === 'schedule' ? 'Goes live Mon 13 Oct, 06:00 WIB.' : s.pub.when === 'season' ? 'Ramadan theme: 18 Feb – 19 Mar, then reverts automatically.' : 'Changes go live on every outlet as soon as you publish.' })]; toggles = [TG('pub', 'ov0', 'Senayan can override', 'Photos, prices, sections'), TG('pub', 'ov1', 'Kemang can override', 'Photos, prices, sections'), TG('pub', 'ov2', 'BSD City can override', 'Photos, prices, sections')]; }
+    const steps = ['Order received', 'Preparing', 'Ready', 'Served'];
+    const slug = t.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const promoImgs = [m.promos[0] || m.covers[1], m.promos[1] || m.covers[2]];
+    return {
+      urlText: `order.bornis.id/${slug}?table=7`,
+      devices: [['phone', 'Phone'], ['tablet', 'Tablet / kiosk']].map(([k, label]) => ({ label, bg: s.dev === k ? '#FFFFFF' : 'transparent', shadow: s.dev === k ? '0 1px 3px rgba(20,18,16,.12)' : 'none', onClick: () => this.setState({ dev: k }) })),
+      saveText: s.pending ? 'Sent to owner · waiting for approval' : s.rejected ? 'Owner rejected · edit and send again' : s.published ? 'Live on 4 outlets' : (s.saved ? 'All changes saved' : 'Draft · unsaved'), publish: () => { if (s.asRole === 'manager') { window.BN_Q && window.BN_Q.add({ id: 'ms-publish', type: 'Publish', what: 'Menu Studio · publish customer app changes', who: 'Andi (Manager)', src: 'BorNiz Menu Studio.dc.html' }); this.setState({ pending: true, saved: true }); } else this.setState({ published: true, pending: false, saved: true }); },
+      asRole: [['owner', 'Owner'], ['manager', 'Manager']].map(([k, l]) => ({ l: 'As ' + l, bg: (s.asRole || 'owner') === k ? '#FFFFFF' : 'transparent', sh: (s.asRole || 'owner') === k ? '0 1px 3px rgba(20,18,16,.15)' : 'none', onClick: () => this.setState({ asRole: k, pending: false }) })), pubBg: s.pending ? '#E5A000' : s.published ? '#1F9D55' : '#F26B1D', pubLabel: s.pending ? 'Waiting for owner' : s.published ? 'Published ✓' : (s.asRole === 'manager' ? 'Send to owner' : 'Publish'),
+      rail: TABS.map(([k, label, ic]) => ({ label, mask: IC(ic), bg: s.tab === k ? '#F26B1D' : 'transparent', fg: s.tab === k ? '#FFFFFF' : '#CFCAC3', onClick: () => this.setState(st => ({ tab: k, surf: ({ receipt: 'receipt', display: 'display', kiosk: 'kiosk', qr: 'qr', member: 'member' })[k] || (['menu', 'sections', 'media', 'copy'].includes(k) ? 'phone' : st.surf) })) })),
+      panelTitle: tab[3], panelSub: tab[4], groups, colorRows, uploads, fields, toggles,
+      pSections: s.tab === 'sections', pMenu: s.tab === 'menu', prodCount: s.prods.length,
+      catChips: s.cats.map(cn => ({ label: cn, n: s.prods.filter(p => p.cat === cn).length, remove: () => this.setState(st => { const rest = st.cats.filter(x => x !== cn); return { cats: rest, cat: 0, prods: st.prods.map(p => p.cat === cn ? { ...p, cat: rest[0] || '' } : p) }; }) })),
+      newCat: s.newCat, onNewCat: e => this.setState({ newCat: e.target.value }), addCat: () => { const v = s.newCat.trim(); if (v && !s.cats.includes(v)) this.setState(st => ({ cats: [...st.cats, v], newCat: '' })); },
+      prodRows: s.prods.map((p, i) => ({ photoBg: p.photo ? `url(${p.photo}) center/cover` : '#FAF8F5', ring: p.photo ? '0px' : '1.5px', phD: p.photo ? 'none' : 'block', delPhD: p.photo ? 'grid' : 'none', onPhoto: e => this.file(e, u => this.setP(i, { photo: u })), delPhoto: () => this.setP(i, { photo: null }),
+        n: p.n, price: p.price.toLocaleString('en-US'), d: p.d, cat: p.cat, tag: p.tag || '', catOpts: s.cats.map(v => ({ v })), op: p.hidden ? .55 : 1, track: p.hidden ? '#CFCAC3' : '#F26B1D', x: p.hidden ? '0px' : '16px',
+        ...(() => { const own = s.asRole === 'manager', sc = p.scope || (i === s.prods.length - 1 && i > 3 ? 'local' : 'global'); return { scope: sc === 'global' ? 'All outlets' : 'Senayan only', scBg: sc === 'global' ? '#E6EEFD' : '#FFF4D6', scFg: sc === 'global' ? '#1F4FB5' : '#8A5A00', scopeSub: sc === 'global' ? (own ? 'From owner · you can hide it at Senayan' : 'Shows on every outlet') : (own ? 'Your outlet item · owner approves' : 'Outlet item · tap to promote to all'), scopeTip: sc === 'global' ? 'Global item' : 'Outlet-only item', onScope: () => { if (own) { if (sc === 'local' && window.BN_Q) { window.BN_Q.add({ id: 'promote-' + i, type: 'Promote to all outlets', what: p.n + ' · from Senayan', who: 'Andi (Manager)' }); this.setState({ pending: true }); } return; } this.setP(i, { scope: sc === 'global' ? 'local' : 'global' }); } }; })(),
+        onN: e => this.setP(i, { n: e.target.value }), onPrice: e => this.setP(i, { price: parseInt(e.target.value.replace(/\D/g, ''), 10) || 0 }), onD: e => this.setP(i, { d: e.target.value }), onCat: e => this.setP(i, { cat: e.target.value }), onTag: e => this.setP(i, { tag: e.target.value }),
+        toggle: () => this.setP(i, { hidden: !p.hidden }), preview: () => this.setState({ screen: 'item', item: i, qty: 1, opt: { 0: 0, 1: 0 } }),
+        remove: () => this.setState(st => ({ prods: st.prods.filter((_, j) => j !== i), item: 0, cart: st.cart.filter(l => l[0] !== i).map(l => [l[0] > i ? l[0] - 1 : l[0], l[1], l[2]]) })) })),
+      addProd: () => this.setState(st => ({ prods: [...st.prods, { n: 'New product', d: 'Short description', price: 25000, cat: st.cats[0] || '', tag: 'New', photo: null, hidden: false }], saved: false })), pAdvanced: s.tab === 'adv', css: s.css, onCss: e => this.setState({ css: e.target.value }),
+      sectionRows: s.sections.map((x, i) => { const d = SECTIONS.find(y => y[0] === x.k); const mv = dir => () => this.setState(st => { const a = st.sections.slice(), j = i + dir; if (j < 0 || j >= a.length) return null; [a[i], a[j]] = [a[j], a[i]]; return { sections: a, saved: false }; }); return { n: i + 1, label: d[1], sub: d[2], bg: x.on ? '#FFFFFF' : '#FAF8F5', op: x.on ? 1 : .55, track: x.on ? '#F26B1D' : '#CFCAC3', x: x.on ? '16px' : '0px', up: mv(-1), down: mv(1), toggle: () => this.setState(st => ({ sections: st.sections.map((y, j) => j === i ? { ...y, on: !y.on } : y), saved: false })) }; }),
+      screens: [['landing', 'Landing'], ['menu', 'Menu'], ['item', 'Item'], ['cart', 'Cart'], ['status', 'Status']].map(([k, label], i) => ({ n: i + 1, label, bg: s.screen === k ? '#141210' : 'transparent', fg: s.screen === k ? '#FFFFFF' : '#141210', onClick: () => this.setState({ screen: k }) })),
+      devW: s.dev === 'phone' ? '390px' : '620px', devH: s.dev === 'phone' ? '800px' : '880px',
+      bgFill, bgSolid: t.bg, cText: t.text, cPrimary: t.primary, cPrimaryText: priText, cSecondary: t.secondary, onSecondary: onS, onPrimary: onP, onPrimaryAlpha: onP === '#FFFFFF' ? 'rgba(255,255,255,.22)' : 'rgba(20,18,16,.12)', cSurface: t.surface, cBorder: mix(t.bg, t.text, .12),
+      headCss: FONTS[t.head][1], bodyCss: FONTS[t.body][1], priceCss: FONTS[t.price][1], nameCss: L === 'text' ? FONTS[t.head][1] : FONTS[t.body][1], headW: t.head === 'bebas' ? 400 : 700, hCase: t.hcase, hLs: t.hcase === 'uppercase' ? '.04em' : '-.01em', nameCase: L === 'text' ? t.hcase : 'none', descStyle: L === 'text' ? 'italic' : 'normal',
+      rXs: Math.round(R * .4) + 'px', rSm: Math.round(R * .7) + 'px', rMd: R + 'px', chipR: t.btn === 'pill' ? '999px' : Math.round(R * .7) + 'px', btnBg: btn[0], btnFg: btn[1], btnBorder: btn[2], btnR: btn[3], addR: t.btn === 'pill' ? '999px' : Math.round(R * .6) + 'px', chipBg: mix(t.bg, t.text, .08),
+      name: t.name, tagline: t.tagline, logoTxt: m.logo ? '' : t.name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase(), logoBg: m.logo ? `#FFFFFF url(${m.logo}) center/70% no-repeat` : t.surface, logoR: Math.max(12, R * 1.2) + 'px', logoRs: Math.round(R * .6) + 'px',
+      heroD: t.hero === 'minimal' ? 'none' : 'block', heroH: t.hero === 'split' ? '210px' : '320px', heroM: t.hero === 'split' ? '44px 14px 0' : '0', heroR: t.hero === 'split' ? R + 'px' : '0', heroBg: cover0, heroShadeD: t.hero === 'split' ? 'none' : 'block', videoD: t.hero === 'video' ? 'block' : 'none', heroTitleD: t.hero === 'cover' || t.hero === 'video' ? 'block' : 'none',
+      logoUp: t.hero === 'split' ? '-56px' : (t.hero === 'minimal' ? '60px' : '0'), logoD: t.hero === 'cover' || t.hero === 'video' ? 'none' : 'grid', landNameD: t.hero === 'cover' || t.hero === 'video' ? 'none' : 'block', landTitle: t.head === 'bebas' ? '44px' : '32px', landAlign: 'center', landTA: 'center',
+      tableChip: 'Table 7 · Dine-in', welcome: c.welcome, ctaMenu: c.ctaMenu, poweredD: s.opts.powered ? 'block' : 'none',
+      goMenu: () => this.setState({ screen: 'menu' }), goCart: () => this.setState({ screen: 'cart' }), goLanding: () => this.setState({ screen: 'landing', step: 1 }),
+      scLanding: s.screen === 'landing', scMenu: s.screen === 'menu', scItem: s.screen === 'item', scCart: s.screen === 'cart', scStatus: s.screen === 'status',
+      headBarBg: t.header === 'brand' ? t.primary : (t.header === 'bg' ? t.bg : t.surface), headBarFg: t.header === 'brand' ? onP : t.text,
+      notPages: s.tab !== 'pages', isPages: s.tab === 'pages',
+      pbPromos: (() => { const pg = s.pb ? Object.values(s.pb) : []; const out = []; pg.forEach(p2 => (p2.sections || []).forEach(x => { if (x.hidden) return; const q = x.props || {}; const bgOf = img => img ? `url(${img}) center/cover no-repeat` : `linear-gradient(135deg,${t.primary},${mix(t.primary, '#000000', .45)})`; const open = () => this.setState({ tab: 'pages' });
+          if (x.type === 'banner') out.push({ t: q.title, sub: q.sub, bg: bgOf(q.img), tag: q.badge || 'Promo', tagD: 'block', tagBg: t.secondary, tagFg: on(t.secondary), open });
+          if (x.type === 'carousel') (q.slides || []).forEach(sl => out.push({ t: sl.title, sub: sl.sub, bg: bgOf(sl.img), tag: sl.badge, tagD: sl.badge ? 'block' : 'none', tagBg: t.secondary, tagFg: on(t.secondary), open }));
+          if (x.type === 'flash') out.push({ t: q.title + ' · up to ' + q.disc + '% off', sub: 'Ends in ' + Math.floor(q.endsIn / 60) + 'h ' + (q.endsIn % 60) + 'm', bg: q.img ? bgOf(q.img) : 'linear-gradient(135deg,#E5383B,#F26B1D)', tag: 'FLASH SALE', tagD: 'block', tagBg: '#FFFFFF', tagFg: '#E5383B', open });
+          if (x.type === 'bundle') out.push({ t: q.title, sub: 'IDR ' + (+q.price || 0).toLocaleString('en-US'), bg: bgOf(q.img), tag: 'Combo', tagD: 'block', tagBg: t.secondary, tagFg: on(t.secondary), open }); })); return out.length ? out.slice(0, 8) : [['Payday 20% off', promoImgs[0]], ['New: Kopi Signature', promoImgs[1]]].map(([tt, u], i) => ({ t: tt, sub: '', bg: u ? `url(${u}) center/cover` : `linear-gradient(135deg,${i ? t.secondary : t.primary},${mix(i ? t.secondary : t.primary, '#000000', .4)})`, tag: '', tagD: 'none', tagBg: '#FFF', tagFg: '#000', open: () => this.setState({ tab: 'pages' }) })); })(),
+      blocks, announce: c.announce, bestTitle: c.bestTitle,
+      promos: [['Payday 20% off', promoImgs[0]], ['New: Kopi Signature', promoImgs[1]]].map(([tt, u], i) => ({ t: tt, bg: u ? `url(${u}) center/cover` : `linear-gradient(135deg,${i ? t.secondary : t.primary},${mix(i ? t.secondary : t.primary, '#000000', .4)})` })),
+      bestItems: [0, 3, 1, 5].filter(i => PRODS[i] && !PRODS[i][6]).map((i, r) => ({ rank: r + 1, n: PRODS[i][0], p: fmt(PRODS[i][2]), img: ph(i), open: open(i) })),
+      cats: CATS.map((label, i) => { const a = s.cat === i; return { label, bg: cat === 'pills' ? (a ? t.primary : mix(t.bg, t.text, .07)) : 'transparent', fg: cat === 'pills' ? (a ? onP : t.text) : (a ? priText : mix(t.text, t.bg, .35)), border: cat === 'tiles' ? `2px solid ${a ? t.primary : 'transparent'}` : '0', under: cat === 'tabs' ? `3px solid ${a ? t.primary : 'transparent'}` : (cat === 'tiles' ? `2px solid ${a ? t.primary : 'transparent'}` : '0'), img: i === 0 ? mix(t.primary, '#FFFFFF', .7) : ph([0, 0, 3, 5, 7][i]), onClick: () => this.setState({ cat: i }) }; }),
+      catGap: cat === 'tabs' ? '18px' : '8px', catLine: cat === 'tabs' ? `1px solid ${mix(t.bg, t.text, .12)}` : '0', catH: cat === 'tiles' ? '96px' : (cat === 'tabs' ? '44px' : '40px'), catPad: cat === 'pills' ? '0 16px' : (cat === 'tiles' ? '6px' : '0'), catR: cat === 'pills' ? (t.btn === 'pill' ? '999px' : Math.round(R * .7) + 'px') : Math.round(R * .7) + 'px', catFont: FONTS[t.body][1], catCase: t.hcase === 'uppercase' && cat !== 'tiles' ? 'uppercase' : 'none', catImgD: cat === 'tiles' ? 'block' : 'none', catW: cat === 'tiles' ? '80px' : 'auto',
+      catTitle: CATS[s.cat] === 'All' ? 'Menu' : CATS[s.cat], menuTA: L === 'text' ? 'center' : 'left',
+      prodCols: lay.cols, prodGap: lay.gap, cardPad: lay.pad, cardBg: lay.bg, cardRing: lay.ring, cardLine: lay.line, cardDir: lay.dir, cardR: L === 'big' ? R + 'px' : lay.cardR, imgW: lay.imgW, imgD: lay.imgD, imgRatio: L === 'big' ? '16/9' : t.ratio, imgR: L === 'big' ? `${R}px ${R}px 0 0` : Math.round(R * .7) + 'px', leaderD: lay.leader, priceRowD: lay.priceRow, nameSize: lay.nameSize,
+      prods: filtered.map(({ p, i }) => ({ n: p[0], d: s.opts.desc ? p[1] : '', p: fmt(p[2]), pShort: (p[2] / 1000) + 'k', img: ph(i), tag: p[4], tagD: p[4] ? 'block' : 'none', op: p[4] === 'Sold out' ? .45 : 1, addLabel: '+', open: p[4] === 'Sold out' ? () => {} : open(i) })),
+      aboutTitle: c.aboutTitle, about: c.about, aboutImg: imgOf(m.about) || imgOf(m.covers[1]) || `repeating-linear-gradient(135deg,${mix(t.surface, t.text, .06)} 0 8px,${mix(t.surface, t.text, .12)} 8px 9px)`, hoursTitle: c.hoursTitle, hours: c.hours, address: c.address, insta: c.insta,
+      socialImgs: [m.covers[0], m.covers[1], m.covers[2]].map((u, i) => u ? `url(${u}) center/cover` : ph(i * 2)),
+      item: { n: it[0], d: it[1], p: fmt(it[2]), img: ph(s.item) }, itemRatio: t.ratio === '16/9' ? '4/3' : t.ratio,
+      itemGroups: [['Size', 'Required', ['Regular', 'Large +5k']], ['Sugar', 'Optional', ['Normal', 'Less', 'None']]].map(([name, req, os], gi) => ({ name, req, opts: os.map((label, oi) => { const a = s.opt[gi] === oi; return { label, border: a ? t.primary : mix(t.bg, t.text, .15), bg: a ? mix(t.primary, t.bg, .88) : 'transparent', fg: a ? priText : t.text, onClick: () => this.setState(st => ({ opt: { ...st.opt, [gi]: oi } })) }; }) })),
+      qty: s.qty, qtyDec: () => this.setState({ qty: Math.max(1, s.qty - 1) }), qtyInc: () => this.setState({ qty: s.qty + 1 }), addLabel: `${c.addLabel} · ${fmt(it[2] * s.qty)}`,
+      addToCart: () => this.setState(st => ({ cart: [...st.cart, [st.item, st.qty, ['Regular', 'Large'][st.opt[0]] + ' · ' + ['Normal', 'Less sugar', 'No sugar'][st.opt[1]]]], screen: 'menu' })),
+      cartTitle: 'Your order', cartLines: s.cart.map(([i, q, mods]) => ({ q, n: PRODS[i][0], mods, t: fmt(PRODS[i][2] * q), img: ph(i) })), cartEmpty: s.cart.length === 0,
+      cSub: fmt(cartSub), cTax: fmt(cartSub * .1), cTotal: fmt(cartSub * 1.1),
+      payOpts: [['QRIS', 'Any bank or e-wallet'], ['Pay at cashier', 'Cash or card']].map(([label, sub], i) => ({ label, sub, border: s.pay === i ? t.primary : mix(t.bg, t.text, .12), onClick: () => this.setState({ pay: i }) })),
+      ctaOrder: c.ctaOrder, placeOrder: () => { clearInterval(this.st); this.setState({ screen: 'status', step: 1, cart: [] }); this.st = setInterval(() => this.setState(st => st.step >= 3 ? (clearInterval(this.st), null) : { step: st.step + 1 }), 2500); },
+      statusMsg: ['', 'The kitchen has your order.', 'Your order is being prepared. About 8 minutes.', 'Ready! We are bringing it to Table 7.', 'Enjoy!'][s.step],
+      steps: steps.map((label, i) => ({ label, dot: i < s.step ? t.primary : mix(t.bg, t.text, .15), mark: i < s.step ? '✓' : '', line: i < s.step - 1 ? t.primary : mix(t.bg, t.text, .15), lineD: i < 3 ? 'block' : 'none', w: i === s.step - 1 ? 800 : 500, op: i < s.step ? 1 : .5 })),
+      showCartBar: s.screen === 'menu' && cartCount > 0, cartCount, ctaCart: c.ctaCart, cbL: t.cart === 'fab' ? 'auto' : '16px', cbH: t.cart === 'fab' ? '60px' : '56px', cbR: t.cart === 'fab' ? '999px' : btn[3], cbJ: t.cart === 'fab' ? 'center' : 'space-between', cbTextD: t.cart === 'fab' ? 'none' : 'inline',
+      surfTabs: [['phone', 'QR menu'], ['receipt', 'Receipt'], ['display', 'Customer display'], ['kiosk', 'Kiosk'], ['qr', 'QR stand'], ['member', 'Member card']].map(([k, label]) => ({ label, bg: s.surf === k ? '#F26B1D' : 'transparent', fg: s.surf === k ? '#FFFFFF' : '#CFCAC3', onClick: () => this.setState({ surf: k }) })),
+      surfPhone: s.surf === 'phone', surfReceipt: s.surf === 'receipt', surfDisplay: s.surf === 'display', surfKiosk: s.surf === 'kiosk', surfQr: s.surf === 'qr', surfMember: s.surf === 'member',
+      previewNote: { phone: 'The preview is fully clickable: landing → menu → item → cart → order status.', receipt: 'Receipts use your logo (mono), header and footer lines, and the QR link you choose.', display: 'Switch between Idle and Live cart above. The display follows the register in real time.', kiosk: 'Kiosk uses your fonts, colors and cover photo. Resets after the idle timeout.', qr: 'Each table gets its own QR code. Print on A6 card, 8 cm stickers or A5.', member: 'Members see this card in the self-order app and on their e-receipts.' }[s.surf],
+      rPaper: s.rc.paper + ' MM', rW: s.rc.paper === '58' ? '236px' : '316px', rFs: s.rc.paper === '58' ? '11px' : '12px', rLogoD: s.rc.logo ? 'grid' : 'none', rLogoBg: m.logo ? `#FFFFFF url(${m.logo}) center/80% no-repeat` : '#141210',
+      rHeader: [s.rc.h1, s.rc.h2].filter(Boolean), rFooter: [s.rc.f1, s.rc.f2].filter(Boolean), rItems: [[0, 2], [5, 1]].filter(([i]) => PRODS[i]).map(([i, q]) => ({ q: q + '×', n: PRODS[i][0], t: (PRODS[i][2] * q).toLocaleString('en-US') })),
+      rTax: (cartSub ? cartSub * .1 : 8200).toLocaleString('en-US'), rTotal: fmt(90200), rPts: 90, rPointsD: s.rc.points ? 'flex' : 'none', rQrCap: { feedback: 'Scan to rate your visit', menu: 'Scan to reorder from your table', member: 'Scan to join and earn points' }[s.rc.qr], rWifiD: s.rc.wifiOn ? 'block' : 'none', rWifi: s.rc.wifi, rSocialD: s.rc.social ? 'block' : 'none', rThanks: s.rc.thanks, rChannel: { wa: 'WHATSAPP', email: 'EMAIL', both: 'WHATSAPP + EMAIL' }[s.rc.ch],
+      dViews: [['idle', 'Idle'], ['cart', 'Live cart']].map(([k, label]) => ({ label, bg: s.dcView === k ? '#141210' : 'transparent', fg: s.dcView === k ? '#FFFFFF' : '#141210', onClick: () => this.setState({ dcView: k }) })),
+      dIdle: s.dcView === 'idle', dCart: s.dcView === 'cart', dBg: { dark: '#121110', brand: mix(t.primary, '#000000', .45), light: t.bg }[s.dc.theme], dFg: on({ dark: '#121110', brand: mix(t.primary, '#000000', .45), light: t.bg }[s.dc.theme]) === '#FFFFFF' ? '#F5F2EE' : t.text, dLine: s.dc.theme === 'light' ? mix(t.bg, t.text, .12) : 'rgba(255,255,255,.12)',
+      dIdleBg: { slides: cover0, promo: promoImgs[0] ? `url(${promoImgs[0]}) center/cover` : `linear-gradient(135deg,${t.secondary},${mix(t.secondary, '#000000', .4)})`, video: cover0, brand: t.primary }[s.dc.idle], dVideoD: s.dc.idle === 'video' ? 'block' : 'none', dIdleHead: s.dc.idleHead, dWelcome: s.dc.welcome,
+      dDir: s.dc.cart === 'right' ? 'row' : 'column', dPanelW: s.dc.cart === 'right' ? '38%' : 'auto', dPanelH: s.dc.cart === 'right' ? 'auto' : '34%', dPanelDir: s.dc.cart === 'right' ? 'column' : 'row', dPanelJ: s.dc.cart === 'right' ? 'flex-end' : 'space-between', dPanelA: s.dc.cart === 'right' ? 'flex-start' : 'center', dPtsD: s.dc.points ? 'block' : 'none', dQrisD: s.dc.qris ? 'block' : 'none', dPromoD: s.dc.promo ? 'block' : 'none',
+      kTopFlex: s.ki.bg === 'split' ? '1.1' : '0', kTopBg: cover0, kBotBg: s.ki.bg === 'photo' ? `linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.65)),${cover0}` : t.primary, kFg: s.ki.bg === 'photo' ? '#FFFFFF' : onP, kBtnBg: s.ki.bg === 'photo' ? t.primary : (onP === '#FFFFFF' ? '#FFFFFF' : '#141210'), kBtnFg: s.ki.bg === 'photo' ? onP : t.primary, kHead: s.ki.head, kCta: s.ki.cta, kLangD: s.ki.lang ? 'block' : 'none',
+      qW: s.qr.layout === 'sticker' ? '320px' : '300px', qH: { tent: '400px', sticker: '320px', poster: '424px' }[s.qr.layout], qR: s.qr.layout === 'sticker' ? '999px' : R + 'px', qBg: { brand: t.primary, light: '#FFFFFF', dark: '#141210' }[s.qr.color], qFg: on({ brand: t.primary, light: '#FFFFFF', dark: '#141210' }[s.qr.color]), qGap: s.qr.layout === 'sticker' ? '8px' : '12px', qHeadSize: s.qr.layout === 'sticker' ? '20px' : '28px', qQrSize: s.qr.layout === 'sticker' ? '130px' : '170px', qLogoD: s.qr.logo && s.qr.layout !== 'sticker' ? 'grid' : 'none', qQrisD: s.qr.qris ? 'block' : 'none', qWifiD: s.qr.wifi && s.qr.layout !== 'sticker' ? 'block' : 'none', qHead: s.qr.head, qSub: s.qr.sub, qRange: s.qr.range, urlShort: `order.bornis.id/${slug}`,
+      mcR: Math.max(12, R) + 'px', mcBg: { brand: `linear-gradient(135deg,${t.primary},${mix(t.primary, '#000000', .5)})`, dark: '#141210', photo: cover0 }[s.mc.style], mcShadeD: s.mc.style === 'photo' ? 'block' : 'none', mcProg: s.mc.prog, mcPts: s.mc.pts, mcTier: (s.mc.tiers.split(',')[1] || s.mc.tiers.split(',')[0] || 'Gold').trim().toUpperCase(), mcNext: `760 ${s.mc.pts} to ${(s.mc.tiers.split(',')[2] || 'next tier').trim()}`, mcBarD: s.mc.barcode ? 'block' : 'none', mcProgD: s.mc.progress ? 'block' : 'none',
+      mcTiers: s.mc.tiers.split(',').map(x => x.trim()).filter(Boolean).map((n, i) => ({ n, d: ['From first visit · 1 ' + s.mc.pts + ' per IDR 1,000', '1,000 ' + s.mc.pts + ' · birthday month 20% off', '2,000 ' + s.mc.pts + ' · free drink every month'][i] || 'Custom' })),
+      pPublish: s.tab === 'publish', versions: [['v13', 'Draft · current changes', 'Now', 'You', true], ['v12', 'Menu layout grid → list', 'Today 09:14', 'Andi (Manager)', false], ['v11', 'Payday promo banners', '8 Oct, 18:02', 'You', false], ['v10', 'Initial Kopi Biru theme', '1 Oct, 10:30', 'You', false]].map(([v, note, when, who, cur]) => ({ v, note, when, who, bg: cur ? '#F26B1D' : '#F2EFEA', fg: cur ? '#FFFFFF' : '#45403A', restoreD: cur ? 'none' : 'block' })),
+      outletLabel: ['All outlets', 'Senayan', 'Kemang'][s.outlet], cycleOutlet: () => this.setState({ outlet: (s.outlet + 1) % 3 }),
+    };
+  }
+}
+</script>
+</body>
+</html>

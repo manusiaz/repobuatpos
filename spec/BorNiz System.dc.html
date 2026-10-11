@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+/*bn-type*/h1,h2,h3,b{font-family:'Space Grotesk',system-ui,sans-serif}body{font-variant-numeric:tabular-nums}
+body{margin:0;background:#FAF8F5;color:#141210;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#D9560B;text-decoration:none}
+a:hover{color:#B04408;text-decoration:underline}
+</style>
+<script src="./bn-embed.js"></script>
+</helmet>
+
+<div style="display:flex;flex-direction:column;min-height:100vh">
+<div style="position:sticky;top:0;z-index:40;background:rgba(250,248,245,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #E6E2DC">
+  <div style="max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px);height:64px;display:flex;align-items:center;gap:24px">
+    <span style="font-size:22px;font-weight:700;letter-spacing:-.03em">BorNiz</span>
+    <div style="display:flex;gap:4px;overflow-x:auto;font-size:14px;font-weight:500">
+      <a href="BorNiz Design System.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Foundations</a>
+      <a href="BorNiz Components.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Components</a>
+      <a href="BorNiz POS Patterns.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">POS patterns</a>
+      <a href="BorNiz System.dc.html" style="padding:8px 12px;border-radius:10px;color:#141210;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC;white-space:nowrap">System</a>
+      <a href="BorNiz Responsive.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Responsive</a>
+      <a href="BorNiz Theming.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Theming</a>
+      <a href="BorNiz Brand Studio.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Customization</a>
+      <a href="BorNiz Menu Studio.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Menu studio</a>
+      <a href="BorNiz Motion.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Motion</a>
+      <a href="BorNiz Design Notes.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Design notes</a>
+      <a href="BorNiz States Gallery.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">States </a>
+      <a href="BorNiz Sitemap.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Sitemap</a>
+    </div>
+  </div>
+</div>
+
+<main style="max-width:1280px;width:100%;margin:0 auto;padding:48px clamp(20px,4vw,40px) 120px;display:flex;flex-direction:column;gap:64px">
+
+<header style="display:flex;flex-direction:column;gap:14px">
+  <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">System</span>
+  <h1 style="margin:0;font-size:clamp(44px,6vw,72px);line-height:1;font-weight:700;letter-spacing:-.04em">Rules behind every screen</h1>
+  <p style="margin:0;max-width:680px;font-size:17px;line-height:1.55;color:#45403A">Surfaces and breakpoints, layout grids, layering, accessibility, the state matrix, dark mode for every component, and formatting for Indonesian data.</p>
+</header>
+
+<section style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px"><span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">S1 — Surfaces &amp; breakpoints</span><h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Eight surfaces, one system</h2></div>
+  <div style="padding:28px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap;overflow-x:auto">
+    <sc-for list="{{ devices }}" as="d" hint-placeholder-count="8">
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+        <div style="width:{{ d.w }};height:{{ d.h }};border-radius:10px;background:{{ d.bg }};box-shadow:inset 0 0 0 2px #141210;display:grid;place-items:center;font:500 10px/1.2 'JetBrains Mono',ui-monospace,monospace;color:{{ d.fg }};text-align:center;padding:4px">{{ d.res }}</div>
+        <span style="font-size:13px;font-weight:600">{{ d.name }}</span>
+      </div>
+    </sc-for>
+  </div>
+  <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:auto">
+    <div style="min-width:900px">
+      <div style="display:grid;grid-template-columns:1.1fr 1fr 1.2fr .8fr 1fr 1.4fr;padding:12px 18px;background:#F2EFEA;font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55;letter-spacing:.06em;text-transform:uppercase"><span>Surface</span><span>Domain</span><span>Target / min</span><span>Theme</span><span>Hit target</span><span>Breakpoints</span></div>
+      <sc-for list="{{ surfaces }}" as="s" hint-placeholder-count="8">
+        <div style="display:grid;grid-template-columns:1.1fr 1fr 1.2fr .8fr 1fr 1.4fr;padding:14px 18px;border-top:1px solid #F2EFEA;font-size:14px;line-height:1.35;gap:8px">
+          <b>{{ s.name }}</b><span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:#45403A">{{ s.domain }}</span><span>{{ s.size }}</span><span>{{ s.theme }}</span><span>{{ s.hit }}</span><span style="color:#45403A">{{ s.bp }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px"><span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">S2 — Layout grids</span><h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Where things sit</h2></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="padding:20px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+      <span style="font-size:17px;font-weight:600">Dashboard · 12 col</span>
+      <div style="aspect-ratio:16/10;border-radius:14px;background:#FAF8F5;box-shadow:inset 0 0 0 1px #E6E2DC;display:flex;overflow:hidden">
+        <div style="width:19%;background:#FFFFFF;border-right:1px solid #E6E2DC;display:grid;place-items:center;font:500 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">248</div>
+        <div style="flex:1;display:flex;flex-direction:column">
+          <div style="height:12%;background:#FFFFFF;border-bottom:1px solid #E6E2DC;display:grid;place-items:center;font:500 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">top bar 68</div>
+          <div style="flex:1;padding:4%;display:grid;grid-template-columns:repeat(12,1fr);gap:3%"><sc-for list="{{ twelve }}" as="c" hint-placeholder-count="12"><span style="background:rgba(242,107,29,.16);border-radius:3px"></span></sc-for></div>
+        </div>
+      </div>
+      <span style="font-size:13px;line-height:1.45;color:#625C55">Content max 1440px, margin 24px, gutter 16px. KPI rows use 3 or 4 columns, charts 8 + 4, tables span all 12. Below 1024px the sidebar collapses to a 76px rail.</span>
+    </div>
+    <div style="padding:20px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+      <span style="font-size:17px;font-weight:600">POS register · split</span>
+      <div style="aspect-ratio:16/10;border-radius:14px;background:#FAF8F5;box-shadow:inset 0 0 0 1px #E6E2DC;display:flex;overflow:hidden">
+        <div style="width:8%;background:#141210;display:grid;place-items:center;font:500 9px/1 'JetBrains Mono',ui-monospace,monospace;color:#A9A39B">rail</div>
+        <div style="flex:1;padding:3%;display:flex;flex-direction:column;gap:4%">
+          <div style="height:9%;border-radius:6px;background:rgba(20,18,16,.08)"></div>
+          <div style="flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:4%"><sc-for list="{{ eight }}" as="c" hint-placeholder-count="8"><span style="background:rgba(242,107,29,.16);border-radius:6px"></span></sc-for></div>
+        </div>
+        <div style="width:34%;background:#FFFFFF;border-left:1px solid #E6E2DC;display:flex;flex-direction:column;justify-content:flex-end;padding:3%"><div style="height:16%;border-radius:8px;background:#F26B1D"></div></div>
+      </div>
+      <span style="font-size:13px;line-height:1.45;color:#625C55">Product grid on the left: auto-fill 160–200px tiles, 12px gap. Cart on the right: 360–420px fixed. The Pay button stays pinned to the bottom. Left-handed mode mirrors the layout.</span>
+    </div>
+    <div style="padding:20px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+      <span style="font-size:17px;font-weight:600">Kitchen display · ticket columns</span>
+      <div style="aspect-ratio:16/10;border-radius:14px;background:#121110;padding:3%;display:grid;grid-template-columns:repeat(5,1fr);gap:2.5%"><sc-for list="{{ five }}" as="c" hint-placeholder-count="5"><span style="border-radius:8px;background:#1C1A18;box-shadow:inset 0 3px 0 {{ c }}"></span></sc-for></div>
+      <span style="font-size:13px;line-height:1.45;color:#625C55">Tickets are 300px wide and flow left to right, oldest first. Long tickets span two rows. The header strip shows station, all-day count and clock. No scrolling: overflow pages after 10s.</span>
+    </div>
+    <div style="padding:20px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+      <span style="font-size:17px;font-weight:600">Mobile · 4 col</span>
+      <div style="display:flex;gap:12px;align-items:flex-end">
+        <div style="width:120px;aspect-ratio:9/19.5;border-radius:18px;background:#FAF8F5;box-shadow:inset 0 0 0 2px #141210;padding:16px 8px 8px;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;align-content:stretch"><sc-for list="{{ four }}" as="c" hint-placeholder-count="4"><span style="background:rgba(242,107,29,.16);border-radius:3px"></span></sc-for></div>
+        <span style="font-size:13px;line-height:1.45;color:#625C55">Margin 16px, gutter 12px. Respect the safe area at the top and bottom. Primary actions sit in a bottom bar above the home indicator, 56px tall. Menu cards are full width; category chips scroll horizontally.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+  <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:10px">
+    <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">S3 — Layering</span>
+    <span style="font-size:22px;font-weight:700">z-index scale</span>
+    <sc-for list="{{ zscale }}" as="z" hint-placeholder-count="9">
+      <div style="display:grid;grid-template-columns:120px 50px minmax(0,1fr);gap:12px;padding:8px 0;border-top:1px solid #F2EFEA;font-size:14px;align-items:center"><span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace">{{ z.name }}</span><b>{{ z.v }}</b><span style="color:#625C55">{{ z.use }}</span></div>
+    </sc-for>
+  </div>
+  <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:10px">
+    <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">S3 — Opacity &amp; blur</span>
+    <span style="font-size:22px;font-weight:700">Transparency, sparingly</span>
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">
+      <sc-for list="{{ opac }}" as="o" hint-placeholder-count="4">
+        <div style="display:flex;flex-direction:column;gap:6px"><div style="height:64px;border-radius:12px;background:repeating-linear-gradient(45deg,#F26B1D 0 6px,#FFFFFF 6px 12px);position:relative;overflow:hidden"><span style="position:absolute;inset:0;background:#141210;opacity:{{ o.v }}"></span></div><span style="font:500 11px/1.3 'JetBrains Mono',ui-monospace,monospace">{{ o.name }} · {{ o.v }}</span><span style="font-size:12px;color:#625C55;line-height:1.3">{{ o.use }}</span></div>
+      </sc-for>
+    </div>
+    <span style="font-size:13px;line-height:1.45;color:#625C55;margin-top:6px">Blur is used in exactly one place: sticky headers (12px, 88% canvas). Text never sits at reduced opacity. Disabled text uses Ink-400, which still meets 3:1 against the surface.</span>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px"><span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">S4 — Accessibility</span><h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Readable at a busy counter</h2></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px">
+    <sc-for list="{{ contrast }}" as="c" hint-placeholder-count="10">
+      <div style="border-radius:16px;overflow:hidden;border:1px solid #E6E2DC;display:flex;flex-direction:column">
+        <div style="height:72px;background:{{ c.bg }};color:{{ c.fg }};display:grid;place-items:center;font-size:17px;font-weight:600">{{ c.sample }}</div>
+        <div style="padding:10px 12px;background:#FFFFFF;display:flex;justify-content:space-between;align-items:center"><span style="font:400 11px/1.3 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ c.fg }} / {{ c.bg }}</span><span style="height:22px;padding:0 8px;border-radius:999px;background:{{ c.passBg }};color:{{ c.passFg }};font-size:11px;font-weight:700;line-height:22px">{{ c.ratio }} {{ c.grade }}</span></div>
+      </div>
+    </sc-for>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:10px">
+      <span style="font-size:19px;font-weight:600">Rules</span>
+      <sc-for list="{{ a11y }}" as="r" hint-placeholder-count="8">
+        <div style="display:grid;grid-template-columns:24px minmax(0,1fr);gap:10px;padding:8px 0;border-top:1px solid #F2EFEA;font-size:14px;line-height:1.45"><span style="width:22px;height:22px;border-radius:7px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:12px;font-weight:700">{{ r.n }}</span><span><b>{{ r.t }}</b> {{ r.d }}</span></div>
+      </sc-for>
+    </div>
+    <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:10px">
+      <span style="font-size:19px;font-weight:600">POS keyboard shortcuts</span>
+      <sc-for list="{{ keys }}" as="k" hint-placeholder-count="12">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid #F2EFEA;font-size:14px"><span>{{ k.a }}</span><span style="display:flex;gap:4px"><sc-for list="{{ k.k }}" as="x" hint-placeholder-count="1"><span style="min-width:28px;height:28px;padding:0 8px;border-radius:8px;background:#F2EFEA;box-shadow:inset 0 -2px 0 #CFCAC3;font:600 12px/28px 'JetBrains Mono',ui-monospace,monospace;text-align:center">{{ x }}</span></sc-for></span></div>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px"><span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">S5 — State matrix</span><h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Every state, every pattern</h2></div>
+  <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;overflow-x:auto">
+    <div style="min-width:1040px;display:grid;grid-template-columns:120px repeat(7,minmax(0,1fr));gap:10px;align-items:stretch">
+      <span></span>
+      <sc-for list="{{ stateNames }}" as="n" hint-placeholder-count="7"><span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ n }}</span></sc-for>
+
+      <span style="font-size:13px;font-weight:600;align-self:center">Product tile</span>
+      <sc-for list="{{ tileStates }}" as="t" hint-placeholder-count="7">
+        <div style="border-radius:16px;background:#FFFFFF;box-shadow:{{ t.ring }};overflow:hidden;opacity:{{ t.op }};transform:scale({{ t.s }});position:relative">
+          <div style="aspect-ratio:4/3;background:{{ t.img }}"></div>
+          <div style="padding:8px 10px;display:flex;flex-direction:column;gap:3px"><span style="font-size:12px;font-weight:600">Kopi Aren</span><span style="font-size:13px;font-weight:700">{{ t.price }}</span></div>
+          <span style="position:absolute;top:6px;right:6px;min-width:22px;height:22px;border-radius:999px;background:#F26B1D;color:#FFFFFF;font-size:11px;font-weight:700;line-height:22px;text-align:center;display:{{ t.badgeD }}">2</span>
+        </div>
+      </sc-for>
+
+      <span style="font-size:13px;font-weight:600;align-self:center">Payment tile</span>
+      <sc-for list="{{ payStates }}" as="t" hint-placeholder-count="7">
+        <div style="height:84px;border-radius:16px;border:2px solid {{ t.border }};background:{{ t.bg }};box-shadow:{{ t.ring }};opacity:{{ t.op }};transform:scale({{ t.s }});padding:10px;display:flex;flex-direction:column;justify-content:space-between">
+          <span style="width:20px;height:20px;background:{{ t.ic }};-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/qr-code.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/qr-code.svg) center/contain no-repeat"></span>
+          <span style="font-size:13px;font-weight:600;color:{{ t.fg }}">{{ t.label }}</span>
+        </div>
+      </sc-for>
+
+      <span style="font-size:13px;font-weight:600;align-self:center">Nav item</span>
+      <sc-for list="{{ navStates }}" as="t" hint-placeholder-count="7">
+        <div style="height:44px;border-radius:12px;background:{{ t.bg }};color:{{ t.fg }};box-shadow:{{ t.ring }};opacity:{{ t.op }};display:flex;align-items:center;gap:8px;padding:0 10px;font-size:13px;font-weight:{{ t.w }}"><span style="width:16px;height:16px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/receipt.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/receipt.svg) center/contain no-repeat"></span>Sales</div>
+      </sc-for>
+
+      <span style="font-size:13px;font-weight:600;align-self:center">Table row</span>
+      <sc-for list="{{ rowStates }}" as="t" hint-placeholder-count="7">
+        <div style="height:44px;border-radius:10px;background:{{ t.bg }};box-shadow:{{ t.ring }};opacity:{{ t.op }};display:flex;align-items:center;justify-content:space-between;padding:0 10px;font-size:12px"><span style="font-family:'JetBrains Mono',ui-monospace,monospace">#2048</span><b>{{ t.v }}</b></div>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px"><span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">S6 — Dark mode · every component</span><h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Same system, lights off</h2></div>
+  <div style="border-radius:28px;background:#121110;color:#F5F2EE;padding:28px;display:flex;flex-direction:column;gap:22px">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <span style="height:56px;padding:0 22px;border-radius:16px;background:#F8823A;color:#141210;display:flex;align-items:center;font-size:16px;font-weight:700">Charge IDR 81,900</span>
+      <span style="height:56px;padding:0 22px;border-radius:16px;background:#F5F2EE;color:#141210;display:flex;align-items:center;font-size:16px;font-weight:600">Save</span>
+      <span style="height:56px;padding:0 22px;border-radius:16px;border:2px solid #F5F2EE;display:flex;align-items:center;font-size:16px;font-weight:600">Split bill</span>
+      <span style="height:56px;padding:0 22px;border-radius:16px;background:#26231F;display:flex;align-items:center;font-size:16px;font-weight:600">Hold</span>
+      <span style="height:56px;padding:0 22px;border-radius:16px;background:#3A1414;color:#FF8A8C;display:flex;align-items:center;font-size:16px;font-weight:600">Void</span>
+      <span style="height:56px;padding:0 22px;border-radius:16px;background:#26231F;color:#6F6862;display:flex;align-items:center;font-size:16px;font-weight:600">Disabled</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-size:13px;font-weight:600;color:#A9A39B">Inputs</span>
+        <span style="height:52px;padding:0 16px;border-radius:14px;background:#0C0B0A;border:1.5px solid #34302B;display:flex;align-items:center;font-size:16px;color:#857E76">Search menu</span>
+        <span style="height:52px;padding:0 16px;border-radius:14px;background:#0C0B0A;border:1.5px solid #F8823A;box-shadow:0 0 0 4px #3A2214;display:flex;align-items:center;font-size:16px">Es Kopi Susu</span>
+        <span style="height:52px;padding:0 16px;border-radius:14px;background:#0C0B0A;border:1.5px solid #FF6B6E;display:flex;align-items:center;font-size:16px">KOP-001</span>
+        <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
+          <span style="width:52px;height:32px;border-radius:999px;background:#F8823A;position:relative"><span style="position:absolute;top:3px;left:23px;width:26px;height:26px;border-radius:999px;background:#141210"></span></span>
+          <span style="width:52px;height:32px;border-radius:999px;background:#45403A;position:relative"><span style="position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:999px;background:#CFCAC3"></span></span>
+          <span style="width:26px;height:26px;border-radius:8px;background:#F8823A;display:grid;place-items:center"><span style="width:16px;height:16px;background:#141210;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat"></span></span>
+          <span style="width:26px;height:26px;border-radius:999px;border:2px solid #F8823A;display:grid;place-items:center"><span style="width:12px;height:12px;border-radius:999px;background:#F8823A"></span></span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-size:13px;font-weight:600;color:#A9A39B">Badges, tabs, segmented</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span style="height:28px;padding:0 12px;border-radius:999px;background:#163A24;color:#6EE7A0;font-size:13px;font-weight:600;line-height:28px">Paid</span>
+          <span style="height:28px;padding:0 12px;border-radius:999px;background:#3A2A12;color:#FFC15C;font-size:13px;font-weight:600;line-height:28px">Pending</span>
+          <span style="height:28px;padding:0 12px;border-radius:999px;background:#3A1414;color:#FF8A8C;font-size:13px;font-weight:600;line-height:28px">Void</span>
+          <span style="height:28px;padding:0 12px;border-radius:999px;background:#142344;color:#8FB2FF;font-size:13px;font-weight:600;line-height:28px">Refunded</span>
+          <span style="height:28px;padding:0 12px;border-radius:999px;background:#26231F;color:#CFCAC3;font-size:13px;font-weight:600;line-height:28px">Draft</span>
+        </div>
+        <div style="display:flex;gap:20px;border-bottom:1px solid #34302B;font-size:15px;font-weight:600"><span style="height:40px;border-bottom:3px solid #F8823A">All 128</span><span style="height:40px;color:#A9A39B">Paid 112</span><span style="height:40px;color:#A9A39B">Void 7</span></div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;border-radius:16px;background:#0C0B0A"><span style="height:44px;border-radius:12px;background:#26231F;display:grid;place-items:center;font-size:14px;font-weight:600">Dine-in</span><span style="height:44px;display:grid;place-items:center;font-size:14px;font-weight:600;color:#A9A39B">Takeaway</span><span style="height:44px;display:grid;place-items:center;font-size:14px;font-weight:600;color:#A9A39B">Delivery</span></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-size:13px;font-weight:600;color:#A9A39B">Card, table, toast</span>
+        <div style="padding:16px;border-radius:18px;background:#1C1A18;display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;color:#A9A39B">Revenue today</span><span style="font-size:28px;font-weight:700;color:#FF9F63">IDR 4,3 jt</span><span style="font-size:12px;color:#6EE7A0">▲ 12,4%</span></div>
+        <div style="border-radius:14px;background:#1C1A18;overflow:hidden;font-size:13px"><div style="display:flex;justify-content:space-between;padding:10px 12px;background:#26231F;color:#A9A39B;font-weight:600"><span>Order</span><span>Total</span></div><div style="display:flex;justify-content:space-between;padding:10px 12px;border-top:1px solid #34302B"><span style="font-family:'JetBrains Mono',ui-monospace,monospace">#TRX-2048</span><b>IDR 81,900</b></div><div style="display:flex;justify-content:space-between;padding:10px 12px;border-top:1px solid #34302B;background:#3A2214"><span style="font-family:'JetBrains Mono',ui-monospace,monospace">#TRX-2047</span><b>IDR 54,000</b></div></div>
+        <div style="padding:12px 14px;border-radius:14px;background:#F5F2EE;color:#141210;font-size:14px;font-weight:500">Product saved to 4 outlets</div>
+      </div>
+    </div>
+    <span style="font-size:13px;line-height:1.5;color:#A9A39B">Rules: lift surfaces with lighter fills, never with shadows. Accent becomes Ember-400 with ink text on top. Status colors switch to a dark fill with a light tint. Product photos keep full brightness. The chart grid becomes #26231F and the tooltip inverts to #F5F2EE.</span>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px"><span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">S7 — Data formats</span><h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Write it the same way everywhere</h2></div>
+  <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:auto">
+    <div style="min-width:820px">
+      <div style="display:grid;grid-template-columns:1fr 1.3fr 1.3fr 1.4fr;padding:12px 18px;background:#F2EFEA;font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55;letter-spacing:.06em;text-transform:uppercase"><span>Type</span><span>EN</span><span>ID</span><span>Rule</span></div>
+      <sc-for list="{{ formats }}" as="f" hint-placeholder-count="14">
+        <div style="display:grid;grid-template-columns:1fr 1.3fr 1.3fr 1.4fr;padding:12px 18px;border-top:1px solid #F2EFEA;font-size:14px;gap:10px;line-height:1.4"><b>{{ f.t }}</b><span style="font-variant-numeric:tabular-nums">{{ f.en }}</span><span style="font-variant-numeric:tabular-nums">{{ f.id }}</span><span style="color:#625C55">{{ f.r }}</span></div>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px"><span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">S8 — Imagery</span><h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Food first, warm light</h2></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+    <sc-for list="{{ imagery }}" as="i" hint-placeholder-count="4">
+      <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden;display:flex;flex-direction:column">
+        <div style="aspect-ratio:{{ i.ratio }};background:repeating-linear-gradient(135deg,#F2EFEA 0 8px,#E6E2DC 8px 9px);display:grid;place-items:center;font:400 11px/1.3 'JetBrains Mono',ui-monospace,monospace;color:#857E76;text-align:center;padding:8px">{{ i.slot }}</div>
+        <div style="padding:14px;display:flex;flex-direction:column;gap:6px"><span style="font-size:15px;font-weight:600">{{ i.t }}</span><span style="font-size:13px;line-height:1.45;color:#625C55">{{ i.d }}</span></div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+</main>
+</div>
+<div data-bn-links="1" style="position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:60;max-width:calc(100vw - 24px)"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:18px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#141210;color:#FFFFFF"><span style="width:8px;height:8px;border-radius:9px;background:#F26B1D"></span>Linked pages · 17<span style="font-weight:500;color:#A9A39B">▴</span></summary><div style="width:min(460px,calc(100vw - 24px));padding:6px 16px 12px;display:flex;flex-direction:column;max-height:50vh;overflow:auto"><a href="BorNiz Brand Studio.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Brand Studio</b><span style="color:#45403A">Staff brand tokens</span></a><a href="BorNiz Components.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Components</b><span style="color:#45403A">Breakpoints, z-index, a11y</span></a><a href="BorNiz Customer Display.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Customer display</b><span style="color:#45403A">Fixed 16:9 canvas rules</span></a><a href="BorNiz Design Notes.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Design notes</b><span style="color:#45403A">Alternatives and rules</span></a><a href="BorNiz Design System.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Foundations</b><span style="color:#45403A">Breakpoints, z-index, a11y</span></a><a href="BorNiz Kiosk.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Kiosk</b><span style="color:#45403A">Portrait canvas rules</span></a><a href="BorNiz Menu Studio.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Menu studio</b><span style="color:#45403A">Merchant theme tokens</span></a><a href="BorNiz Motion.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Motion</b><span style="color:#45403A">Motion tokens</span></a><a href="BorNiz POS Patterns.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>POS patterns</b><span style="color:#45403A">Breakpoints, z-index, a11y</span></a><a href="BorNiz POS Register.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>POS Register</b><span style="color:#45403A">Payment failed, printer offline states</span></a><a href="BorNiz Responsive.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Responsive</b><span style="color:#45403A">Layout per breakpoint</span></a><a href="BorNiz Roles.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Roles</b><span style="color:#45403A">Access denied and permission states</span></a><a href="BorNiz Shifts.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Shifts</b><span style="color:#45403A">Offline clock-in and session sync</span></a><a href="BorNiz Sitemap.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Sitemap</b><span style="color:#45403A">Listed in the sitemap</span></a><a href="BorNiz States Gallery.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>States gallery</b><span style="color:#45403A">States to build</span></a><a href="BorNiz Studios.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Studios</b><span style="color:#45403A">Closed, paused and sold-out screens</span></a><a href="BorNiz Theming.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Theming &amp; language</b><span style="color:#45403A">Light/dark and merchant brand</span></a><a href="BorNiz Connections.dc.html" style="margin-top:8px;height:40px;border-radius:12px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:13px;font-weight:700">Open the full connection map →</a></div></details></div>
+<div data-bn-spec="1" style="position:fixed;left:12px;bottom:10px;z-index:61"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:16px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#F26B1D;color:#FFFFFF">◆ Design spec · this page</summary><div style="width:min(420px,calc(100vw - 24px));max-height:65vh;overflow:auto;padding:10px 16px 14px;display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Covers</span><b style="text-align:right">Breakpoints, z-index, a11y, formats</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Page type</span><b style="text-align:right">Design-system documentation</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Theme</span><b style="text-align:right">Light doc · paper #FAF8F5</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Container</span><b style="text-align:right">max 1280px · fluid padding</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Type</span><b style="text-align:right">H1 clamp 44–88 · section 36–44 · body 15–17</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Cards</span><b style="text-align:right">radius 20–24 · 1px #E6E2DC</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Nav</span><b style="text-align:right">Sticky top nav to every DS page</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Rule</span><b style="text-align:right">Live demos use the real tokens</b></div><a href="BorNiz Page Templates.dc.html" style="margin-top:12px;height:38px;border-radius:10px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:12px;font-weight:700">Page templates →</a></div></details></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+function lum(h) { const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4)); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; }
+function ratio(a, b) { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
+class Component extends DCLogic {
+  renderVals() {
+    const sc = 0.11;
+    const dev = [['Marketing', 1440, 900, '#FFFFFF'], ['Owner dash', 1440, 900, '#FAF8F5'], ['POS tablet', 1280, 800, '#FFFFFF'], ['Customer disp.', 1280, 800, '#121110'], ['Kitchen KDS', 1920, 1080, '#121110'], ['Kiosk', 1080, 1920, '#F26B1D'], ['Self-order', 390, 844, '#FAF8F5'], ['Owner mobile', 390, 844, '#FFFFFF']];
+    const stripe = 'repeating-linear-gradient(135deg,#F2EFEA 0 6px,#E6E2DC 6px 7px)';
+    const F = '0 0 0 3px #FFFFFF,0 0 0 6px #F8823A';
+    const C = [['#141210', '#FFFFFF', 'Body text'], ['#625C55', '#FFFFFF', 'Secondary'], ['#FFFFFF', '#F26B1D', 'On Ember'], ['#141210', '#F26B1D', 'Ink on Ember'], ['#B04408', '#FFFFFF', 'Ember text'], ['#156B3A', '#E3F5EA', 'Paid'], ['#8A5A00', '#FFF4D6', 'Pending'], ['#B3261E', '#FDE8E8', 'Void'], ['#F5F2EE', '#121110', 'Dark body'], ['#141210', '#F8823A', 'Dark accent']];
+    return {
+      devices: dev.map(([name, w, h, bg]) => ({ name, w: Math.round(w * sc) + 'px', h: Math.round(h * sc) + 'px', bg, fg: bg === '#121110' ? '#A9A39B' : (bg === '#F26B1D' ? '#FFFFFF' : '#625C55'), res: `${w}×${h}` })),
+      surfaces: [
+        ['Marketing site', 'bornis.id', 'Fluid 360–1440', 'Light', '44px', '640 · 960 · 1280'], ['Owner / manager dashboard', 'app.bornis.id', '1440 / 1024 min', 'Light + dark', '40–48px', '1024 rail · 1280 full · 1600 wide'],
+        ['POS register', 'pos.bornis.id', '1280×800 / 1024×768', 'Light + dark', '56px · pay 72px', '1024 compact cart · 1280 default'], ['Customer display', 'display.bornis.id', '1280×800 · 10–15"', 'Dark', 'n/a (view only)', 'Scales by vw'],
+        ['Kitchen display', 'kds.bornis.id', '1920×1080 · 21–32"', 'Dark', '64px bump', '1280 · 1920 (3–6 columns)'], ['Kiosk', 'order.bornis.id/kiosk', '1080×1920 portrait', 'Brand', '72px', 'Portrait only'],
+        ['Self-order (QR)', 'order.bornis.id', '390 / 360 min', 'Light (brand)', '48px', '360 · 430 · 768'], ['Super admin', 'admin.bornis.id', '1440', 'Light', '40px', '1280 · 1600'],
+      ].map(([name, domain, size, theme, hit, bp]) => ({ name, domain, size, theme, hit, bp })),
+      twelve: Array(12).fill(0), eight: Array(8).fill(0), four: Array(4).fill(0), five: ['#CFCAC3', '#E5A000', '#CFCAC3', '#E5383B', '#CFCAC3'],
+      zscale: [['base', 0, 'Page content'], ['sticky', 10, 'Table headers, cart footer'], ['header', 40, 'App top bar, docs nav'], ['dropdown', 50, 'Select, menu, popover'], ['drawer', 60, 'Side drawers, order detail'], ['sheet', 70, 'Bottom sheets'], ['modal', 80, 'Dialogs, PIC / manager PIN'], ['toast', 90, 'Toasts, order alerts'], ['critical', 100, 'Offline banner, session expired']].map(([name, v, use]) => ({ name, v, use })),
+      opac: [['scrim-light', .4, 'Drawer, sheet'], ['scrim', .55, 'Modal'], ['scrim-heavy', .75, 'PIN lock, kiosk timeout'], ['disabled', .45, 'Sold-out tile, dimmed table']].map(([name, v, use]) => ({ name, v, use })),
+      contrast: C.map(([fg, bg, sample]) => { const r = ratio(fg, bg); const g = r >= 7 ? 'AAA' : r >= 4.5 ? 'AA' : r >= 3 ? 'AA large' : 'Fail'; return { fg, bg, sample, ratio: r.toFixed(1), grade: g, passBg: r >= 4.5 ? '#E3F5EA' : r >= 3 ? '#FFF4D6' : '#FDE8E8', passFg: r >= 4.5 ? '#156B3A' : r >= 3 ? '#8A5A00' : '#B3261E' }; }),
+      a11y: [['Contrast', '4.5:1 for text. 3:1 for large numbers and icons. White on Ember-500 is only allowed at 16px semibold or larger (buttons); otherwise use Ember-700 text.'], ['Targets', 'POS 56px minimum with 8px spacing, dashboard 40px, mobile 48px.'], ['Focus', 'Every interactive element shows the 3px white + 3px Ember-400 double ring on keyboard focus.'], ['Color is never alone', 'Status always pairs color with a label or icon. Kitchen timers also show mm:ss.'], ['Motion', 'prefers-reduced-motion replaces movement with 120ms fades and turns off chart draw-in and shimmer.'], ['Sound', 'Every sound cue has a visual twin (toast, flash, badge). Volume and mute are set per device.'], ['Language', 'Every string ships in EN and ID. Layouts allow 30% text expansion; no fixed-width labels.'], ['Screen readers', 'Totals are announced on change (aria-live polite). Payment results use assertive.']].map(([t, d], i) => ({ n: i + 1, t, d })),
+      keys: [['Search / scan', ['/']], ['Command palette', ['⌘', 'K']], ['New order', ['N']], ['Charge', ['F12']], ['Cash payment', ['F1']], ['QRIS', ['F2']], ['Card', ['F3']], ['Hold order', ['H']], ['Customer lookup', ['C']], ['Discount', ['D']], ['Void line', ['⌫']], ['Open drawer', ['⌘', 'O']]].map(([a, k]) => ({ a, k })),
+      stateNames: ['DEFAULT', 'HOVER', 'PRESSED', 'FOCUS', 'SELECTED', 'DISABLED', 'LOADING'],
+      tileStates: [['0 0 0 1px #E6E2DC', 1, 1, stripe, 'IDR 25,000', 'none'], ['0 0 0 2px #CFCAC3', 1, 1, stripe, 'IDR 25,000', 'none'], ['0 0 0 2px #F26B1D', 1, .96, stripe, 'IDR 25,000', 'none'], [F, 1, 1, stripe, 'IDR 25,000', 'none'], ['0 0 0 2px #F26B1D', 1, 1, stripe, 'IDR 25,000', 'block'], ['0 0 0 1px #E6E2DC', .45, 1, stripe, 'Sold out', 'none'], ['0 0 0 1px #E6E2DC', 1, 1, 'linear-gradient(90deg,#F2EFEA,#FAF8F5,#F2EFEA)', '——', 'none']].map(([ring, op, s, img, price, badgeD]) => ({ ring, op, s, img, price, badgeD })),
+      payStates: [['#E6E2DC', '#FFFFFF', 'none', 1, 1, '#141210', '#141210', 'QRIS'], ['#CFCAC3', '#FAF8F5', 'none', 1, 1, '#141210', '#141210', 'QRIS'], ['#F26B1D', '#FFE2CF', 'none', 1, .96, '#141210', '#141210', 'QRIS'], ['#E6E2DC', '#FFFFFF', F, 1, 1, '#141210', '#141210', 'QRIS'], ['#F26B1D', '#FFF3EB', 'none', 1, 1, '#B04408', '#84340A', 'QRIS ✓'], ['#E6E2DC', '#FAF8F5', 'none', .5, 1, '#A9A39B', '#857E76', 'Offline'], ['#F26B1D', '#FFFFFF', 'none', 1, 1, '#F26B1D', '#141210', 'Connecting…']].map(([border, bg, ring, op, s, ic, fg, label]) => ({ border, bg, ring, op, s, ic, fg, label })),
+      navStates: [['transparent', '#45403A', 'none', 1, 500], ['#F2EFEA', '#141210', 'none', 1, 500], ['#E6E2DC', '#141210', 'none', 1, 500], ['transparent', '#141210', F, 1, 500], ['#FFF3EB', '#B04408', 'none', 1, 700], ['transparent', '#A9A39B', 'none', 1, 500], ['#F2EFEA', '#857E76', 'none', .7, 500]].map(([bg, fg, ring, op, w]) => ({ bg, fg, ring, op, w })),
+      rowStates: [['#FFFFFF', '0 0 0 1px #F2EFEA', 1, '81,900'], ['#FAF8F5', '0 0 0 1px #F2EFEA', 1, '81,900'], ['#F2EFEA', '0 0 0 1px #E6E2DC', 1, '81,900'], ['#FFFFFF', F, 1, '81,900'], ['#FFF3EB', '0 0 0 1px #FFC49E', 1, '81,900'], ['#FAF8F5', 'none', .45, 'Void'], ['#F2EFEA', 'none', 1, '···']].map(([bg, ring, op, v]) => ({ bg, ring, op, v })),
+      formats: [
+        ['Price (UI)', 'IDR 25,000', 'IDR 25.000', 'No decimals. Locale separator. Currency code first, one space.'], ['Price (chart / KPI)', 'IDR 2.4M · IDR 23K', 'IDR 2,4 jt · IDR 23 rb', 'One decimal max. ID uses rb / jt / M.'], ['Negative', '− IDR 3,900', '− IDR 3.900', 'Real minus sign (−), never brackets.'], ['Percent', '+12.4%', '+12,4%', 'Always signed in deltas.'],
+        ['Date', '10 Oct 2026', '10 Okt 2026', 'Day, short month, year. No numeric-only dates in UI.'], ['Date + day', 'Sat, 10 Oct', 'Sab, 10 Okt', 'For schedules and bookings.'], ['Time', '14:32', '14.32', '24-hour, always. Timezone shown only across zones: WIB / WITA / WIT.'], ['Relative', '2 min ago · Yesterday', '2 mnt lalu · Kemarin', 'Absolute after 7 days.'],
+        ['Duration', '1h 24m · 08:42', '1j 24m · 08:42', 'Timers use mm:ss, tabular.'], ['Phone', '+62 812-3456-7890', '+62 812-3456-7890', 'Store E.164; display 3-4-4. Mask in lists: 812-••••-7890.'], ['Order / receipt ID', '#TRX-2048 · #1042', '#TRX-2048 · #1042', 'Mono. Prefix by channel: TRX, GF, GB, SF, ON.'], ['Address', 'Jl. Kemang Raya 12, Jakarta Selatan 12730', 'idem', 'Street, city, postal code. Kelurahan/Kecamatan on invoices only.'],
+        ['Tax ID', 'NPWP 01.234.567.8-901.000', 'idem', 'Printed on receipts and invoices.'], ['Quantity', '2× Es Kopi', '2× Es Kopi', 'Multiplication sign, no space before the name.'],
+      ].map(([t, en, id, r]) => ({ t, en, id, r })),
+      imagery: [['4/3', 'product photo · 1200×900', 'Product', 'Top-down or 45° angle, warm daylight, plain warm-neutral background, no props crossing the edges.'], ['16/9', 'outlet / lifestyle · 1920×1080', 'Outlet & lifestyle', 'Real staff and customers, natural light, slight warmth. Use it on the landing page and the customer display idle screen.'], ['1/1', 'empty-state art · 480×480', 'Empty states', 'A single object on Ink-100 with an Ember accent. Flat, no gradients.'], ['9/16', 'kiosk hero · 1080×1920', 'Kiosk & promo', 'Hero product on a full-bleed brand color with a short headline.']].map(([ratio, slot, t, d]) => ({ ratio, slot, t, d })),
+    };
+  }
+}
+</script>
+</body>
+</html>

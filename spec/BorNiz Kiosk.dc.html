@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&amp;display=swap" rel="stylesheet">
+<script src="./bn-brand.js"></script>
+<style>
+/*bn-type*/h1,h2,h3,b{font-family:'Space Grotesk',system-ui,sans-serif}body{font-variant-numeric:tabular-nums}
+body{margin:0;background:#E9E5DE;color:#14213D;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#1F4FD8;text-decoration:none}
+a:hover{text-decoration:underline}
+button{font-family:inherit}
+</style>
+<script src="./bn-embed.js"></script>
+<script src="./bn-promos.js"></script>
+<script src="./bn-86.js"></script>
+<script src="./bn-data.js"></script>
+<script src="./bn-alerts.js"></script>
+</helmet>
+<div style="min-height:100vh;display:flex;gap:28px;justify-content:center;align-items:flex-start;padding:24px 16px 80px;flex-wrap:wrap">
+  <div style="width:min(460px,100%);flex:none;border-radius:32px;background:#141210;padding:12px">
+    <div style="aspect-ratio:9/16;border-radius:22px;overflow:hidden;background:var(--bn-paper,#F7F4EE);display:flex;flex-direction:column;position:relative;container-type:inline-size">
+
+      <sc-if value="{{ sAttract }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ start }}" style="flex:1;border:0;padding:0;cursor:pointer;display:flex;flex-direction:column;text-align:left;font-family:inherit">
+          <span style="flex:1.1;width:100%;background:var(--bn-banner,linear-gradient(135deg,#2B4C7E,#14213D));position:relative"><span style="position:absolute;top:5cqw;left:5cqw;width:14cqw;height:14cqw;border-radius:3.6cqw;background:#FFFFFF;color:var(--bn-p,#1F4FD8);display:grid;place-items:center;font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-weight:800;font-size:5cqw">KB</span></span>
+          <span style="flex:1;width:100%;background:var(--bn-p,#1F4FD8);color:#FFFFFF;padding:7cqw 6cqw;display:flex;flex-direction:column;justify-content:flex-end;gap:3cqw">
+            <span data-bn-promos="big" style="display:none;gap:2cqw;overflow:hidden;margin:0 -1cqw 1cqw"></span>
+            <b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:10cqw;line-height:.95"><span data-bn-name="1">Kopi Biru</span><br>Order here, skip the line</b>
+            <span style="font-size:4cqw;opacity:.9">Pay with QRIS or card · earn beans</span>
+            <span style="height:17cqw;border-radius:5cqw;background:#FFFFFF;color:var(--bn-p,#1F4FD8);display:grid;place-items:center;font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:6cqw;font-weight:800">Tap to start</span>
+            <span style="text-align:center;font-size:3.4cqw;opacity:.85">English · Bahasa Indonesia</span>
+          </span>
+        </button>
+      </sc-if>
+
+      <sc-if value="{{ sType }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;padding:8cqw 6cqw;display:flex;flex-direction:column;justify-content:center;gap:5cqw">
+          <b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:9cqw;text-align:center">Where will you eat?</b>
+          <sc-for list="{{ types }}" as="t" hint-placeholder-count="2"><button onClick="{{ t.onClick }}" style="height:34cqw;border:0;border-radius:6cqw;background:#FFFFFF;box-shadow:0 0 0 2px #E3DED5;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2cqw;color:var(--bn-ink,#14213D)"><span style="width:16cqw;height:16cqw;background:currentColor;-webkit-mask:{{ t.e }};mask:{{ t.e }}"></span><b style="font-size:6cqw">{{ t.l }}</b></button></sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sMenu }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:none;padding:5cqw 5cqw 3cqw;display:flex;align-items:center;gap:3cqw"><b style="flex:1;font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:7cqw">Menu</b><span style="height:9cqw;padding:0 4cqw;border-radius:999px;background:#FFFFFF;font-size:3.4cqw;font-weight:700;line-height:9cqw">{{ typeLbl }}</span></div>
+        <div style="flex:none;display:flex;gap:2cqw;padding:0 5cqw 3cqw;overflow-x:auto"><sc-for list="{{ cats }}" as="c" hint-placeholder-count="4"><button onClick="{{ c.onClick }}" style="flex:none;height:12cqw;padding:0 5cqw;border:0;border-radius:999px;background:{{ c.bg }};color:{{ c.fg }};font-size:4cqw;font-weight:700;cursor:pointer">{{ c.l }}</button></sc-for></div>
+        <div style="flex:1;min-height:0;overflow:auto;padding:0 5cqw 24cqw;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:min-content;gap:3cqw">
+          <sc-for list="{{ items }}" as="i" hint-placeholder-count="6"><button onClick="{{ i.onClick }}" style="border:0;padding:0;border-radius:5cqw;background:#FFFFFF;overflow:hidden;text-align:left;cursor:pointer;color:var(--bn-ink,#14213D);position:relative"><span style="display:block;aspect-ratio:1;background:{{ i.ph }}"></span><span style="display:block;padding:3cqw"><b style="display:block;font-size:4cqw;line-height:1.2">{{ i.n }}</b><b style="font-size:4cqw;color:var(--bn-p,#1F4FD8)">{{ i.p }}</b></span><span style="position:absolute;top:2.4cqw;right:2.4cqw;min-width:9cqw;height:9cqw;padding:0 2cqw;border-radius:999px;background:var(--bn-p,#1F4FD8);color:#FFFFFF;font-size:4cqw;font-weight:800;line-height:9cqw;text-align:center;display:{{ i.cD }}">{{ i.c }}</span></button></sc-for>
+        </div>
+        <sc-if value="{{ hasCart }}" hint-placeholder-val="{{ false }}"><button onClick="{{ toPay }}" style="position:absolute;left:5cqw;right:5cqw;bottom:5cqw;height:17cqw;border:0;border-radius:5cqw;background:var(--bn-p,#1F4FD8);color:#FFFFFF;display:flex;align-items:center;padding:0 5cqw;gap:3cqw;cursor:pointer;font-size:5cqw;font-weight:800"><span>{{ count }} items</span><span style="margin-left:auto">Pay {{ totText }}</span></button></sc-if>
+      </sc-if>
+
+      <sc-if value="{{ sPay }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;padding:7cqw 6cqw;display:flex;flex-direction:column;gap:4cqw">
+          <b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:8cqw">Pay {{ totText }}</b>
+          <div style="flex:none;padding:4cqw;border-radius:5cqw;background:#FFFFFF;display:flex;flex-direction:column;gap:2cqw;font-size:3.8cqw"><sc-for list="{{ lines }}" as="l" hint-placeholder-count="2"><div style="display:flex;justify-content:space-between"><span>{{ l.q }}× {{ l.n }}</span><b>{{ l.t }}</b></div></sc-for></div>
+          <sc-for list="{{ pays }}" as="p" hint-placeholder-count="3"><button onClick="{{ p.onClick }}" style="height:18cqw;border:0;border-radius:5cqw;background:#FFFFFF;box-shadow:0 0 0 2px #E3DED5;cursor:pointer;display:flex;align-items:center;gap:4cqw;padding:0 5cqw;color:var(--bn-ink,#14213D);text-align:left"><span style="width:8cqw;height:8cqw;background:currentColor;-webkit-mask:{{ p.e }};mask:{{ p.e }}"></span><span style="display:flex;flex-direction:column;gap:1cqw"><b style="font-size:5cqw">{{ p.l }}</b><span style="font-size:3.4cqw;color:#5B6478">{{ p.d }}</span></span></button></sc-for>
+          <button onClick="{{ back }}" style="margin-top:auto;height:13cqw;border:0;border-radius:4cqw;background:transparent;color:#5B6478;font-size:4cqw;font-weight:700;cursor:pointer">← Back to menu</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sDone }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;background:#1F9D55;color:#FFFFFF;padding:8cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4cqw;text-align:center">
+          <span style="font-size:6cqw;font-weight:700">Your number</span>
+          <b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:30cqw;line-height:.9">K-27</b>
+          <span style="font-size:4.4cqw;line-height:1.4">Watch the screen near the counter. We’ll call your number when it’s ready.</span>
+          <span style="padding:3cqw 5cqw;border-radius:4cqw;background:rgba(255,255,255,.18);font-size:3.8cqw">Receipt printed · +{{ pts }} beans if you scan your member QR</span>
+          <button onClick="{{ reset }}" style="margin-top:4cqw;height:14cqw;padding:0 8cqw;border:0;border-radius:4cqw;background:#FFFFFF;color:#156B3A;font-size:4.6cqw;font-weight:800;cursor:pointer">Done</button>
+          <span style="font-size:3.2cqw;opacity:.8">Resets in {{ left }}s</span>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+  <div style="width:300px;flex:none;display:flex;flex-direction:column;gap:12px;padding-top:8px">
+    <b style="font-size:20px">Kiosk · self-order</b>
+    <span style="font-size:14px;line-height:1.5;color:#45403A">Portrait 9:16 kiosk. All targets 64px+, important actions in the bottom half. Uses the merchant brand: tap “Customize brand” at top right to change colors, font and banner. Resets after 60s idle.</span>
+    <div style="display:flex;flex-direction:column;gap:4px"><sc-for list="{{ jump }}" as="j" hint-placeholder-count="5"><button onClick="{{ j.onClick }}" style="height:40px;padding:0 12px;border:1px solid {{ j.bc }};border-radius:10px;background:{{ j.bg }};font-size:13px;font-weight:600;text-align:left;cursor:pointer;color:#141210">{{ j.l }}</button></sc-for></div>
+  </div>
+</div>
+<div data-bn-spec="1" style="position:fixed;left:12px;bottom:10px;z-index:61"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:16px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#F26B1D;color:#FFFFFF">◆ Design spec · this page</summary><div style="width:min(420px,calc(100vw - 24px));max-height:65vh;overflow:auto;padding:10px 16px 14px;display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Theme</span><b style="text-align:right">Merchant brand (bn-brand)</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Canvas</span><b style="text-align:right">9:16 portrait, cqw units</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Hit targets</span><b style="text-align:right">64px+</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Type</span><b style="text-align:right">Headline 10cqw · body 4cqw</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Flow</span><b style="text-align:right">Attract → type → menu → pay → number</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">States</span><b style="text-align:right">Idle reset 60s · done reset 15s · sold out</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Motion</span><b style="text-align:right">Press .97 only</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">A11y</span><b style="text-align:right">Text-size toggle, high contrast</b></div><a href="BorNiz Design Notes.dc.html" style="margin-top:12px;height:38px;border-radius:10px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:12px;font-weight:700">Alternatives &amp; dev notes →</a></div></details></div>
+<div data-bn-links="1" style="position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:60;max-width:calc(100vw - 24px)"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:18px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#141210;color:#FFFFFF"><span style="width:8px;height:8px;border-radius:9px;background:#F26B1D"></span>Linked pages · 9<span style="font-weight:500;color:#A9A39B">▴</span></summary><div style="width:min(460px,calc(100vw - 24px));padding:6px 16px 12px;display:flex;flex-direction:column;max-height:50vh;overflow:auto"><a href="BorNiz Design Notes.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Design notes</b><span style="color:#45403A">Alternatives and rules</span></a><a href="BorNiz Self Order.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Self-order</b><span style="color:#45403A">Same menu &amp; theme</span></a><a href="BorNiz Kitchen Display.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Kitchen display</b><span style="color:#45403A">Orders as K-numbers</span></a><a href="BorNiz System.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>System</b><span style="color:#45403A">Portrait canvas rules</span></a><a href="BorNiz Owner Dashboard.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Owner dashboard</b><span style="color:#45403A">Pair kiosks from Apps</span></a><a href="BorNiz Theming.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Theming &amp; language</b><span style="color:#45403A">Merchant theme on the kiosk</span></a><a href="BorNiz Page Spec.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Per-page design system</b><span style="color:#45403A">Has its own design system page</span></a><a href="BorNiz Menu Studio.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Menu studio</b><span style="color:#45403A">Kiosk shows only items active at its outlet</span></a><a href="BorNiz Alerts.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Alerts &amp; notifications</b><span style="color:#45403A">Queue screen numbers</span></a><a href="BorNiz Connections.dc.html" style="margin-top:8px;height:40px;border-radius:12px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:13px;font-weight:700">Open the full connection map →</a></div></details></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const PH = h => `linear-gradient(135deg,oklch(.9 .05 ${h}),oklch(.8 .07 ${h}))`;
+const idr = n => 'IDR ' + Math.round(n).toLocaleString('en-US');
+const M = [['k1', 'Es Kopi Susu Aren', 25000, 'coffee', 60], ['k2', 'Americano', 22000, 'coffee', 50], ['k3', 'Matcha Latte', 30000, 'noncoffee', 130], ['k4', 'Teh Tarik', 18000, 'noncoffee', 70], ['k5', 'Croissant Almond', 32000, 'pastry', 80], ['k6', 'Banana Bread', 28000, 'pastry', 90], ['k7', 'Nasi Goreng', 38000, 'rice', 30], ['k8', 'Ayam Bakar', 42000, 'rice', 20]];
+const FP = (n, v) => { const b = window.BN_PRICE ? window.BN_PRICE(n, v) : v; return window.BN_PROMOS ? window.BN_PROMOS.price(n, b) : b; };
+const ICX = n => `url(https://unpkg.com/lucide-static@0.452.0/icons/${n}.svg) center/contain no-repeat`;
+const H86 = n => !!(window.BN86 && window.BN86.has(n, 'sen'));
+class Component extends DCLogic {
+  state = { s: 'attract', type: 'Dine-in', cat: 'all', cart: {}, left: 15 };
+  componentDidMount() { this.t = setInterval(() => { if (this.state.s === 'done') { const l = this.state.left - 1; this.setState(l <= 0 ? { s: 'attract', cart: {}, left: 15 } : { left: l }); } }, 1000); }
+  componentWillUnmount() { clearInterval(this.t); }
+  renderVals() {
+    const st = this.state, cnt = Object.values(st.cart).reduce((a, b) => a + b, 0), tot = M.reduce((a, m) => a + (st.cart[m[0]] || 0) * FP(m[1], m[2]), 0) * 1.1;
+    return {
+      sAttract: st.s === 'attract', sType: st.s === 'type', sMenu: st.s === 'menu', sPay: st.s === 'pay', sDone: st.s === 'done',
+      start: () => this.setState({ s: 'type' }),
+      types: [['utensils', 'Eat here'], ['shopping-bag', 'Take away']].map(([ic, l]) => ({ e: ICX(ic), l, onClick: () => this.setState({ s: 'menu', type: l === 'Eat here' ? 'Dine-in' : 'Takeaway' }) })),
+      typeLbl: st.type, cats: [['all', 'All'], ['coffee', 'Coffee'], ['noncoffee', 'Non-coffee'], ['pastry', 'Pastry'], ['rice', 'Rice']].map(([k, l]) => ({ l, bg: st.cat === k ? 'var(--bn-ink,#14213D)' : '#FFFFFF', fg: st.cat === k ? '#FFFFFF' : 'var(--bn-ink,#14213D)', onClick: () => this.setState({ cat: k }) })),
+      items: M.filter(m => st.cat === 'all' || m[3] === st.cat).map(m => ({ n: m[1], p: H86(m[1]) ? 'Sold out' : idr(FP(m[1], m[2])), ph: H86(m[1]) ? '#E6E2DC' : PH(m[4]), c: st.cart[m[0]] || '', cD: st.cart[m[0]] ? 'block' : 'none', onClick: () => !H86(m[1]) && this.setState(x => ({ cart: { ...x.cart, [m[0]]: (x.cart[m[0]] || 0) + 1 } })) })),
+      hasCart: cnt > 0, count: cnt, totText: idr(tot), toPay: () => this.setState({ s: 'pay' }), back: () => this.setState({ s: 'menu' }),
+      lines: M.filter(m => st.cart[m[0]]).map(m => ({ q: st.cart[m[0]], n: m[1], t: idr(st.cart[m[0]] * FP(m[1], m[2])) })),
+      pays: [['qr-code', 'QRIS', 'Scan with any bank or e-wallet'], ['credit-card', 'Card', 'Tap or insert below the screen'], ['receipt', 'Pay at cashier', 'Print a ticket and pay at the counter']].map(([ic, l, d]) => ({ e: ICX(ic), l, d, onClick: () => this.setState({ s: 'done', left: 15 }) })),
+      pts: Math.round(tot / 1000), left: st.left, reset: () => this.setState({ s: 'attract', cart: {}, left: 15 }),
+      jump: [['attract', '1 · Attract screen'], ['type', '2 · Dine-in / takeaway'], ['menu', '3 · Menu & cart'], ['pay', '4 · Payment'], ['done', '5 · Order number']].map(([k, l]) => ({ l, bg: st.s === k ? '#FFFFFF' : 'transparent', bc: st.s === k ? '#1F4FD8' : '#CFCAC3', onClick: () => this.setState(x => ({ s: k, cart: ['pay', 'done'].includes(k) && !Object.keys(x.cart).length ? { k1: 2, k5: 1 } : x.cart, left: 15 })) })),
+    };
+  }
+}
+</script>
+</body>
+</html>

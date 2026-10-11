@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script src="./bn-diagrams.js"></script>
+<script src="./bn-diagrams-logic.js"></script>
+<script src="./bn-embed.js"></script>
+<style>
+/*bn-type*/h1,h2,h3,b{font-family:'Space Grotesk',system-ui,sans-serif}
+body{margin:0;background:#FAF8F5;color:#141210;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#D9560B;text-decoration:none}
+a:hover{color:#B04408;text-decoration:underline}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="height:100vh;display:flex">
+  <nav style="width:268px;flex:none;height:100vh;overflow:auto;background:#FFFFFF;border-right:1px solid #E6E2DC;padding:18px 12px 24px;display:flex;flex-direction:column;gap:2px">
+    <div style="display:flex;flex-direction:column;gap:4px;padding:0 8px 12px"><span style="font:600 11px/1 'JetBrains Mono',monospace;color:#D9560B;letter-spacing:.08em">FOR DEVELOPERS</span><b style="font-size:22px;letter-spacing:-.02em">Diagrams</b><span style="font-size:12px;line-height:1.45;color:#625C55">Architecture, data model, state machines and sequences. Every diagram is Mermaid: copy it into your repo or docs.</span></div>
+    <sc-for list="{{ groups }}" as="g" hint-placeholder-count="5">
+      <span style="padding:12px 10px 6px;font:700 10px/1 'JetBrains Mono',monospace;letter-spacing:.08em;color:#857E76">{{ g.l }}</span>
+      <sc-for list="{{ g.items }}" as="i" hint-placeholder-count="4"><button onClick="{{ i.onClick }}" style="min-height:36px;padding:6px 10px;border:0;border-radius:10px;background:{{ i.bg }};color:{{ i.fg }};font-size:13px;font-weight:600;text-align:left;cursor:pointer;display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;flex:none;border-radius:3px;background:{{ g.c }}"></span>{{ i.l }}</button></sc-for>
+    </sc-for>
+  </nav>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0">
+    <div style="flex:none;padding:14px 18px;border-bottom:1px solid #E6E2DC;background:#FFFFFF;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:3px"><span style="font:600 11px/1 'JetBrains Mono',monospace;color:#857E76;letter-spacing:.06em">{{ kind }}</span><b style="font-size:20px;letter-spacing:-.02em">{{ title }}</b></span>
+      <div style="display:flex;gap:3px;padding:3px;border-radius:12px;background:#F2EFEA"><sc-for list="{{ views }}" as="v" hint-placeholder-count="2"><button onClick="{{ v.onClick }}" style="height:34px;padding:0 12px;border:0;border-radius:9px;background:{{ v.bg }};box-shadow:{{ v.sh }};font-size:12px;font-weight:700;cursor:pointer">{{ v.l }}</button></sc-for></div>
+      <div style="display:flex;gap:4px"><button onClick="{{ zoomOut }}" style="width:34px;height:34px;border:1px solid #E6E2DC;border-radius:10px;background:#FFFFFF;font-size:16px;cursor:pointer">−</button><span style="width:52px;text-align:center;font:600 12px/34px 'JetBrains Mono',monospace">{{ zoomTxt }}</span><button onClick="{{ fit }}" style="height:34px;padding:0 10px;border:1px solid #E6E2DC;border-radius:10px;background:#FFFFFF;font-size:12px;font-weight:700;cursor:pointer">Fit</button><button onClick="{{ zoomIn }}" style="width:34px;height:34px;border:1px solid #E6E2DC;border-radius:10px;background:#FFFFFF;font-size:16px;cursor:pointer">+</button></div>
+      <button onClick="{{ copy }}" style="height:34px;padding:0 14px;border:0;border-radius:10px;background:#141210;color:#FFFFFF;font-size:12px;font-weight:700;cursor:pointer">{{ copyLbl }}</button>
+    </div>
+    <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 320px">
+      <div ref="{{ boxRef }}" style="min-width:0;min-height:0;overflow:auto;padding:20px;background:#FAF8F5">
+        <div style="display:{{ diaD }};min-width:min-content">
+          <div ref="{{ svgRef }}" style="zoom:{{ zoom }};padding:18px;border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC;display:inline-block"></div>
+        </div>
+        <pre style="display:{{ codeD }};margin:0;padding:18px;border-radius:18px;background:#141210;color:#E6E2DC;font:400 12px/1.6 'JetBrains Mono',monospace;white-space:pre;overflow:auto">{{ src }}</pre>
+        <span style="display:{{ errD }};font-size:13px;color:#B3261E">{{ err }}</span>
+      </div>
+      <aside style="min-height:0;overflow:auto;border-left:1px solid #E6E2DC;background:#FFFFFF;padding:16px;display:flex;flex-direction:column;gap:10px">
+        <span style="font:600 11px/1 'JetBrains Mono',monospace;color:#D9560B;letter-spacing:.06em">READ THIS FIRST</span>
+        <span style="font-size:13px;line-height:1.5;color:#45403A">{{ about }}</span>
+        <sc-for list="{{ notes }}" as="n" hint-placeholder-count="5"><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:8px;padding:8px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.45"><b style="color:{{ n.c }}">{{ n.m }}</b><span>{{ n.t }}</span></div></sc-for>
+        <span style="font:600 11px/1 'JetBrains Mono',monospace;color:#857E76;letter-spacing:.06em;padding-top:8px;border-top:1px solid #F2EFEA">RELATED SCREENS</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ rel }}" as="r" hint-placeholder-count="3"><a href="{{ r.href }}" style="height:30px;padding:0 10px;border-radius:9px;background:#FFF3EB;color:#B04408;font-size:12px;font-weight:700;line-height:30px">{{ r.l }} →</a></sc-for></div>
+      </aside>
+    </div>
+  </main>
+</div>
+<div data-bn-links="1" style="position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:60;max-width:calc(100vw - 24px)"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:18px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#141210;color:#FFFFFF"><span style="width:8px;height:8px;border-radius:9px;background:#F26B1D"></span>Linked pages · 7<span style="font-weight:500;color:#A9A39B">▴</span></summary><div style="width:min(460px,calc(100vw - 24px));padding:6px 16px 12px;display:flex;flex-direction:column;max-height:50vh;overflow:auto"><a href="BorNiz Product.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Product plan</b><span style="color:#45403A">Epics map to sequences and state machines</span></a><a href="BorNiz Authority.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Who controls what</b><span style="color:#45403A">Who may change each state</span></a><a href="BorNiz Alerts.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Alerts &amp; notifications</b><span style="color:#45403A">Alert engine flowchart</span></a><a href="BorNiz Online Orders.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Online orders</b><span style="color:#45403A">Ride-hailing order sequence</span></a><a href="BorNiz Roles.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Roles</b><span style="color:#45403A">Approval routing</span></a><a href="BorNiz POS Register.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>POS Register</b><span style="color:#45403A">QRIS and split-bill sequences</span></a><a href="BorNiz PIC.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Shift lead (PIC)</b><span style="color:#45403A">Opname and approval sequences</span></a><a href="BorNiz Connections.dc.html" style="margin-top:8px;height:40px;border-radius:12px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:13px;font-weight:700">Open the full connection map →</a></div></details></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const F = n => 'BorNiz ' + n + '.dc.html';
+const MK = { y: ['✓', '#156B3A'], n: ['×', '#B3261E'], w: ['!', '#8A5A00'] };
+class Component extends DCLogic {
+  constructor(p) { super(p); let k = 'arch'; try { k = localStorage.getItem('bn-dia') || 'arch'; } catch (e) {} this.state = { k, view: 'dia', zoom: 1, copied: false, err: '' }; this.svgRef = React.createRef(); this.boxRef = React.createRef(); this.n = 0; }
+  list() { const out = []; (window.BN_DIAGRAMS || []).forEach(([g, c, items]) => items.forEach(it => out.push({ g, c, id: it[0], t: it[1], kind: it[2], about: it[3], notes: it[4], rel: it[5], src: it[6] }))); return out; }
+  cur() { const L = this.list(); return L.find(x => x.id === this.state.k) || L[0]; }
+  componentDidMount() { this.wait = setInterval(() => { if (window.mermaid && window.BN_DIAGRAMS) { clearInterval(this.wait); window.mermaid.initialize({ startOnLoad: false, securityLevel: 'loose', theme: 'base', themeVariables: { fontFamily: 'Instrument Sans, system-ui, sans-serif', fontSize: '14px', primaryColor: '#FFF3EB', primaryBorderColor: '#F26B1D', primaryTextColor: '#141210', lineColor: '#857E76', secondaryColor: '#F2EFEA', tertiaryColor: '#FAF8F5', clusterBkg: '#FAF8F5', clusterBorder: '#E6E2DC', noteBkgColor: '#FFF4D6', noteBorderColor: '#E5A000', actorBkg: '#FFF3EB', actorBorder: '#F26B1D' }, er: { useMaxWidth: false }, flowchart: { useMaxWidth: false, curve: 'basis' }, sequence: { useMaxWidth: false }, state: { useMaxWidth: false } }); this.draw(); } }, 150); }
+  componentWillUnmount() { clearInterval(this.wait); }
+  componentDidUpdate(pp, ps) { if (ps.k !== this.state.k || (ps.view !== this.state.view && this.state.view === 'dia')) this.draw(); }
+  async draw() { const c = this.cur(), el = this.svgRef.current; if (!c || !el || !window.mermaid) return; try { const { svg } = await window.mermaid.render('bnd' + (++this.n), c.src); el.innerHTML = svg; const sv = el.querySelector('svg'); if (sv) { sv.style.maxWidth = 'none'; } this.setState({ err: '' }, () => this.doFit()); } catch (e) { el.innerHTML = ''; this.setState({ err: 'Diagram failed to render: ' + (e.message || e) }); } }
+  doFit() { const el = this.svgRef.current, box = this.boxRef.current; if (!el || !box) return; const sv = el.querySelector('svg'); if (!sv) return; const w = (parseFloat(sv.getAttribute('width')) || sv.viewBox.baseVal.width || sv.getBoundingClientRect().width) + 36; const z = Math.max(.35, Math.min(1, (box.clientWidth - 40) / w)); this.setState({ zoom: +z.toFixed(2) }); }
+  go(k) { this.setState({ k, copied: false, view: 'dia' }, () => this.draw()); try { localStorage.setItem('bn-dia', k); } catch (e) {} }
+  renderVals() {
+    const s = this.state, c = this.cur() || { t: 'Loading…', kind: '', about: '', notes: [], rel: [], src: '' };
+    const groups = []; (window.BN_DIAGRAMS || []).forEach(([l, col, items]) => groups.push({ l, c: col, items: items.map(it => ({ l: it[1], bg: s.k === it[0] ? '#FFF3EB' : 'transparent', fg: s.k === it[0] ? '#B04408' : '#45403A', onClick: () => this.go(it[0]) })) }));
+    return {
+      groups, title: c.t, kind: (c.g || '') + ' · ' + c.kind.toUpperCase(), about: c.about, src: c.src, svgRef: this.svgRef, boxRef: this.boxRef, fit: () => this.doFit(),
+      notes: c.notes.map(([m, t]) => ({ m: MK[m][0], c: MK[m][1], t })), rel: c.rel.map(r => ({ l: r, href: F(r) })),
+      views: [['dia', 'Diagram'], ['code', 'Mermaid code']].map(([k, l]) => ({ l, bg: s.view === k ? '#FFFFFF' : 'transparent', sh: s.view === k ? '0 1px 3px rgba(20,18,16,.15)' : 'none', onClick: () => this.setState({ view: k }, () => { if (k === 'dia') this.draw(); }) })),
+      diaD: s.view === 'dia' ? 'block' : 'none', codeD: s.view === 'code' ? 'block' : 'none', errD: s.err ? 'block' : 'none', err: s.err,
+      zoom: s.zoom, zoomTxt: Math.round(s.zoom * 100) + '%', zoomIn: () => this.setState({ zoom: Math.min(2, +(s.zoom + .1).toFixed(2)) }), zoomOut: () => this.setState({ zoom: Math.max(.4, +(s.zoom - .1).toFixed(2)) }),
+      copyLbl: s.copied ? 'Copied ✓' : 'Copy Mermaid', copy: () => { try { navigator.clipboard.writeText(c.src); } catch (e) {} this.setState({ copied: true }); setTimeout(() => this.setState({ copied: false }), 1600); },
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+/*bn-type*/h1,h2,h3,b{font-family:'Space Grotesk',system-ui,sans-serif}body{font-variant-numeric:tabular-nums}
+body{margin:0;background:#FAF8F5;color:#141210;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#D9560B;text-decoration:none}
+a:hover{color:#B04408;text-decoration:underline}
+@keyframes bnShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+@keyframes bnSpin{to{transform:rotate(360deg)}}
+@keyframes bnPulse{0%{box-shadow:0 0 0 0 rgba(242,107,29,.45)}100%{box-shadow:0 0 0 14px rgba(242,107,29,0)}}
+</style>
+<script src="./bn-embed.js"></script>
+</helmet>
+
+<div style="display:flex;min-height:100vh;align-items:flex-start">
+
+<nav style="position:sticky;top:0;flex:none;width:clamp(0px,calc((100vw - 1000px) * 999),232px);height:100vh;overflow:hidden auto;border-right:1px solid #E6E2DC;background:#FFFFFF"><div style="width:232px;min-height:100%;padding:28px 20px;display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;flex-direction:column;gap:4px">
+    <div style="font:700 26px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.03em">BorNiz</div>
+    <div style="font:500 11px/1.4 'JetBrains Mono',ui-monospace,monospace;color:#625C55;letter-spacing:.06em;text-transform:uppercase">Design System v1.0</div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:2px;font:500 14px/1 'Instrument Sans',system-ui,sans-serif">
+    <a href="#brand" style="padding:10px 12px;border-radius:10px;color:#141210" style-hover="background:#F2EFEA;text-decoration:none">01 Brand</a>
+    <a href="#color" style="padding:10px 12px;border-radius:10px;color:#141210" style-hover="background:#F2EFEA;text-decoration:none">02 Color</a>
+    <a href="#type" style="padding:10px 12px;border-radius:10px;color:#141210" style-hover="background:#F2EFEA;text-decoration:none">03 Typography</a>
+    <a href="#layout" style="padding:10px 12px;border-radius:10px;color:#141210" style-hover="background:#F2EFEA;text-decoration:none">04 Space, radius, depth</a>
+    <a href="#icons" style="padding:10px 12px;border-radius:10px;color:#141210" style-hover="background:#F2EFEA;text-decoration:none">05 Iconography</a>
+    <a href="#components" style="padding:10px 12px;border-radius:10px;color:#141210" style-hover="background:#F2EFEA;text-decoration:none">06 Components</a>
+    <a href="#commerce" style="padding:10px 12px;border-radius:10px;color:#141210" style-hover="background:#F2EFEA;text-decoration:none">07 POS patterns</a>
+    <a href="#payments" style="padding:10px 12px;border-radius:10px;color:#141210" style-hover="background:#F2EFEA;text-decoration:none">08 Payments &amp; QRIS</a>
+    <a href="#charts" style="padding:10px 12px;border-radius:10px;color:#141210" style-hover="background:#F2EFEA;text-decoration:none">09 Data viz</a>
+    <a href="#motion" style="padding:10px 12px;border-radius:10px;color:#141210" style-hover="background:#F2EFEA;text-decoration:none">10 Motion</a>
+    <a href="#sound" style="padding:10px 12px;border-radius:10px;color:#141210" style-hover="background:#F2EFEA;text-decoration:none">11 Sound</a>
+    <a href="#dark" style="padding:10px 12px;border-radius:10px;color:#141210" style-hover="background:#F2EFEA;text-decoration:none">12 Dark mode</a>
+    <a href="#voice" style="padding:10px 12px;border-radius:10px;color:#141210" style-hover="background:#F2EFEA;text-decoration:none">13 Voice &amp; copy</a>
+  </div>
+  <div style="margin-top:auto;display:flex;flex-direction:column;gap:2px;font-size:14px;font-weight:500"><span style="padding:0 12px 6px;font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55;letter-spacing:.06em">MORE DOCS</span><a href="BorNiz Components.dc.html" style="padding:10px 12px;border-radius:10px;color:#141210">Components</a><a href="BorNiz POS Patterns.dc.html" style="padding:10px 12px;border-radius:10px;color:#141210">POS patterns</a><a href="BorNiz System.dc.html" style="padding:10px 12px;border-radius:10px;color:#141210">System</a>
+      <a href="BorNiz Responsive.dc.html" style="padding:10px 12px;border-radius:10px;color:#141210">Responsive</a>
+      <a href="BorNiz Theming.dc.html" style="padding:10px 12px;border-radius:10px;color:#141210">Theming</a><a href="BorNiz Brand Studio.dc.html" style="padding:10px 12px;border-radius:10px;color:#141210">Customization</a><a href="BorNiz Motion.dc.html" style="padding:10px 12px;border-radius:10px;color:#141210">Motion</a></div>
+  <a href="BorNiz Design Notes.dc.html" style="padding:12px;border-radius:12px;background:#141210;color:#FFFFFF;font:600 13px/1.3 'Instrument Sans',system-ui,sans-serif;display:flex;justify-content:space-between;align-items:center">Design notes <span>→</span></a>
+      <a href="BorNiz States Gallery.dc.html" style="padding:12px;border-radius:12px;background:#141210;color:#FFFFFF;font:600 13px/1.3 'Instrument Sans',system-ui,sans-serif;display:flex;justify-content:space-between;align-items:center">States <span>→</span></a>
+      <a href="BorNiz Sitemap.dc.html" style="padding:12px;border-radius:12px;background:#141210;color:#FFFFFF;font:600 13px/1.3 'Instrument Sans',system-ui,sans-serif;display:flex;justify-content:space-between;align-items:center">Full sitemap <span>→</span></a>
+</div></nav>
+
+<main style="flex:1;min-width:0;padding:0 clamp(20px,4vw,48px) 120px;display:flex;flex-direction:column">
+
+<header id="brand" style="padding:64px 0 56px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:40px;align-items:end">
+  <div style="display:flex;flex-direction:column;gap:20px">
+    <div style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">01 — Brand</div>
+    <h1 style="margin:0;font:700 clamp(48px,7vw,88px)/.95 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.045em">Sell fast.<br>See everything.</h1>
+    <p style="margin:0;max-width:560px;font:400 18px/1.55 'Instrument Sans',system-ui,sans-serif;color:#45403A;text-wrap:pretty">BorNiz is a cloud POS for F&amp;B, retail and service businesses in Indonesia, from a single warung to a franchise network. The system is built for the counter first: big touch targets, high contrast, one orange that always means "the next action".</p>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+    <div style="aspect-ratio:1.4;border-radius:20px;background:#F26B1D;color:#FFFFFF;padding:18px;display:flex;flex-direction:column;justify-content:space-between">
+      <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.06em">WORDMARK</span>
+      <span style="font:700 clamp(24px,3vw,40px)/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.04em">BorNiz</span>
+    </div>
+    <div style="aspect-ratio:1.4;border-radius:20px;background:#141210;color:#FFFFFF;padding:18px;display:flex;flex-direction:column;justify-content:space-between">
+      <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.06em;color:#A9A39B">ON INK</span>
+      <span style="font:700 clamp(24px,3vw,40px)/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.04em">Bor<span style="color:#F26B1D">Niz</span></span>
+    </div>
+    <div style="grid-column:span 2;border-radius:16px;border:1px dashed #CFCAC3;padding:14px 16px;font:400 13px/1.5 'Instrument Sans',system-ui,sans-serif;color:#625C55">No logo file yet. The wordmark is set in SF Pro Display Bold, −4% tracking, until the real mark arrives.</div>
+  </div>
+</header>
+
+<section id="principles" style="padding:0 0 56px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+  <div style="padding:20px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:8px">
+    <div style="font:600 13px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B">P1</div>
+    <div style="font:600 20px/1.2 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Thumb-first</div>
+    <div style="font:400 14px/1.5 'Instrument Sans',system-ui,sans-serif;color:#625C55">Counter targets are at least 56px. Nothing important needs a precise tap.</div>
+  </div>
+  <div style="padding:20px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:8px">
+    <div style="font:600 13px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B">P2</div>
+    <div style="font:600 20px/1.2 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">One loud color</div>
+    <div style="font:400 14px/1.5 'Instrument Sans',system-ui,sans-serif;color:#625C55">Orange is reserved for the primary action and the live data line. Everything else is ink.</div>
+  </div>
+  <div style="padding:20px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:8px">
+    <div style="font:600 13px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B">P3</div>
+    <div style="font:600 20px/1.2 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Numbers lead</div>
+    <div style="font:400 14px/1.5 'Instrument Sans',system-ui,sans-serif;color:#625C55">Totals, timers and stock use tabular SF Pro, so digits never jump.</div>
+  </div>
+  <div style="padding:20px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:8px">
+    <div style="font:600 13px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B">P4</div>
+    <div style="font:600 20px/1.2 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Motion confirms</div>
+    <div style="font:400 14px/1.5 'Instrument Sans',system-ui,sans-serif;color:#625C55">Animation answers "did it work?" in under 200ms. It never makes a cashier wait.</div>
+  </div>
+</section>
+
+<section id="color" style="padding:56px 0;border-top:1px solid #E6E2DC;display:flex;flex-direction:column;gap:32px">
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">02 — Color</div>
+    <h2 style="margin:0;font:700 44px/1.02 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.03em">Ember &amp; Ink</h2>
+    <p style="margin:0;max-width:640px;font:400 16px/1.55 'Instrument Sans',system-ui,sans-serif;color:#45403A">Two scales do almost all the work. Ember (orange) marks action and live data. Ink is a warm near-black family for text, borders and surfaces. Status colors only appear on badges, alerts and order timers.</p>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="font:600 14px/1 'Instrument Sans',system-ui,sans-serif">Ember — primary</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px">
+      <sc-for list="{{ ember }}" as="c" hint-placeholder-count="10">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="height:72px;border-radius:14px;background:{{ c.hex }};box-shadow:inset 0 0 0 1px rgba(20,18,16,.06)"></div>
+          <div style="font:600 12px/1.2 'JetBrains Mono',ui-monospace,monospace">{{ c.name }}</div>
+          <div style="font:400 11px/1.2 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ c.hex }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="font:600 14px/1 'Instrument Sans',system-ui,sans-serif">Ink — neutrals</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px">
+      <sc-for list="{{ ink }}" as="c" hint-placeholder-count="12">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="height:72px;border-radius:14px;background:{{ c.hex }};box-shadow:inset 0 0 0 1px rgba(20,18,16,.08)"></div>
+          <div style="font:600 12px/1.2 'JetBrains Mono',ui-monospace,monospace">{{ c.name }}</div>
+          <div style="font:400 11px/1.2 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ c.hex }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+    <sc-for list="{{ status }}" as="s" hint-placeholder-count="4">
+      <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden;display:flex;flex-direction:column">
+        <div style="display:flex;height:64px">
+          <div style="flex:2;background:{{ s.base }}"></div>
+          <div style="flex:1;background:{{ s.soft }}"></div>
+        </div>
+        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 16px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">{{ s.name }}</span><span style="font:400 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ s.base }} / {{ s.soft }}</span></div>
+          <div style="font:400 13px/1.45 'Instrument Sans',system-ui,sans-serif;color:#625C55">{{ s.use }}</div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="font:600 14px/1 'Instrument Sans',system-ui,sans-serif">Semantic tokens</div>
+    <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden">
+      <div style="display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) minmax(0,2fr);padding:12px 18px;background:#F2EFEA;font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55;letter-spacing:.06em;text-transform:uppercase"><span>Token</span><span>Light</span><span>Dark</span><span>Use</span></div>
+      <sc-for list="{{ semantic }}" as="t" hint-placeholder-count="10">
+        <div style="display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) minmax(0,2fr);padding:12px 18px;border-top:1px solid #F2EFEA;align-items:center;font:400 13px/1.3 'Instrument Sans',system-ui,sans-serif">
+          <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace">{{ t.name }}</span>
+          <span style="display:flex;gap:8px;align-items:center"><span style="width:18px;height:18px;border-radius:6px;background:{{ t.light }};box-shadow:inset 0 0 0 1px rgba(20,18,16,.12)"></span><span style="font:400 11px/1 'JetBrains Mono',ui-monospace,monospace">{{ t.light }}</span></span>
+          <span style="display:flex;gap:8px;align-items:center"><span style="width:18px;height:18px;border-radius:6px;background:{{ t.dark }};box-shadow:inset 0 0 0 1px rgba(20,18,16,.12)"></span><span style="font:400 11px/1 'JetBrains Mono',ui-monospace,monospace">{{ t.dark }}</span></span>
+          <span style="color:#625C55">{{ t.use }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<section id="type" style="padding:56px 0;border-top:1px solid #E6E2DC;display:flex;flex-direction:column;gap:32px">
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">03 — Typography</div>
+    <h2 style="margin:0;font:700 44px/1.02 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.03em">SF Pro, Apple's system typeface</h2>
+    <p style="margin:0;max-width:640px;font:400 16px/1.55 'Instrument Sans',system-ui,sans-serif;color:#45403A">SF Pro Display handles headlines, prices, totals and timers, always with tabular figures. SF Pro Text handles body copy and UI labels. SF Mono is for order IDs, SKUs, OTPs and codes. All three load from the operating system. Apple devices render SF; Windows and Android fall back to Helvetica Neue or the native sans.</p>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+    <div style="padding:24px;border-radius:20px;background:#141210;color:#FFFFFF;display:flex;flex-direction:column;gap:16px;min-height:220px">
+      <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#A9A39B;letter-spacing:.06em">DISPLAY · NUMERALS</span>
+      <span style="margin-top:auto;font:700 clamp(44px,5vw,72px)/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums">Aa 86,500</span>
+      <span style="font:400 13px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;color:#CFCAC3">SF Pro Display · Regular Medium Semibold Bold</span>
+    </div>
+    <div style="padding:24px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:16px;min-height:220px">
+      <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55;letter-spacing:.06em">BODY · UI</span>
+      <span style="margin-top:auto;font:500 clamp(36px,4vw,56px)/1 'Instrument Sans',system-ui,sans-serif;letter-spacing:-.02em">Aa Kopi</span>
+      <span style="font:400 13px/1 'Instrument Sans',system-ui,sans-serif;color:#625C55">SF Pro Text · Regular Medium Semibold Bold</span>
+    </div>
+    <div style="padding:24px;border-radius:20px;background:#FFF3EB;display:flex;flex-direction:column;gap:16px;min-height:220px">
+      <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#B04408;letter-spacing:.06em">CODE · IDS</span>
+      <span style="margin-top:auto;font:500 40px/1 'JetBrains Mono',ui-monospace,monospace;color:#84340A">#TRX-2048</span>
+      <span style="font:400 13px/1 'JetBrains Mono',ui-monospace,monospace;color:#B04408">SF Mono · Regular Medium</span>
+    </div>
+  </div>
+  <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden">
+    <sc-for list="{{ typeScale }}" as="t" hint-placeholder-count="10">
+      <div style="display:grid;grid-template-columns:150px minmax(0,1fr) 170px;gap:20px;padding:16px 22px;border-top:1px solid #F2EFEA;align-items:center">
+        <span style="font:500 12px/1.3 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ t.token }}</span>
+        <span style="font-family:{{ t.family }};font-size:{{ t.size }};line-height:1.25;padding:4px 0;font-weight:{{ t.weight }};letter-spacing:{{ t.ls }};font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.sample }}</span>
+        <span style="font:400 12px/1.3 'JetBrains Mono',ui-monospace,monospace;color:#625C55;text-align:right">{{ t.spec }}</span>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section id="layout" style="padding:56px 0;border-top:1px solid #E6E2DC;display:flex;flex-direction:column;gap:32px">
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">04 — Space, radius, depth</div>
+    <h2 style="margin:0;font:700 44px/1.02 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.03em">Soft corners, firm edges</h2>
+    <p style="margin:0;max-width:640px;font:400 16px/1.55 'Instrument Sans',system-ui,sans-serif;color:#45403A">Spacing runs on a 4px base. Corners start at 16px and grow with the size of the surface. Depth comes from a 1px warm border first; shadows are only for things that float, like toasts, dialogs and drawers.</p>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="padding:22px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:10px">
+      <div style="font:600 14px/1 'Instrument Sans',system-ui,sans-serif;margin-bottom:6px">Spacing</div>
+      <sc-for list="{{ spacing }}" as="s" hint-placeholder-count="10">
+        <div style="display:grid;grid-template-columns:80px 50px minmax(0,1fr);gap:12px;align-items:center">
+          <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace">{{ s.name }}</span>
+          <span style="font:400 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ s.px }}</span>
+          <span style="height:14px;width:{{ s.px }};background:#F26B1D;border-radius:4px"></span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="padding:22px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+        <div style="font:600 14px/1 'Instrument Sans',system-ui,sans-serif">Radius</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:10px">
+          <sc-for list="{{ radii }}" as="r" hint-placeholder-count="6">
+            <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+              <div style="width:100%;aspect-ratio:1;background:#F2EFEA;border:2px solid #141210;border-radius:{{ r.px }}"></div>
+              <span style="font:500 11px/1.2 'JetBrains Mono',ui-monospace,monospace;text-align:center">{{ r.name }}<br><span style="color:#625C55">{{ r.px }}</span></span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="padding:22px;border-radius:20px;background:#F2EFEA;display:flex;flex-direction:column;gap:14px">
+        <div style="font:600 14px/1 'Instrument Sans',system-ui,sans-serif">Elevation</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px">
+          <sc-for list="{{ shadows }}" as="s" hint-placeholder-count="4">
+            <div style="height:96px;border-radius:16px;background:#FFFFFF;box-shadow:{{ s.value }};padding:12px;display:flex;flex-direction:column;justify-content:space-between">
+              <span style="font:600 12px/1 'JetBrains Mono',ui-monospace,monospace">{{ s.name }}</span>
+              <span style="font:400 11px/1.3 'Instrument Sans',system-ui,sans-serif;color:#625C55">{{ s.use }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="padding:22px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+        <div style="font:600 14px/1 'Instrument Sans',system-ui,sans-serif">Touch targets</div>
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+          <div style="height:40px;padding:0 14px;border-radius:12px;background:#F2EFEA;display:flex;align-items:center;font:500 12px/1 'JetBrains Mono',ui-monospace,monospace">40 · dashboard dense</div>
+          <div style="height:48px;padding:0 16px;border-radius:14px;background:#FFE2CF;display:flex;align-items:center;font:500 12px/1 'JetBrains Mono',ui-monospace,monospace">48 · default</div>
+          <div style="height:56px;padding:0 18px;border-radius:16px;background:#FFC49E;display:flex;align-items:center;font:500 12px/1 'JetBrains Mono',ui-monospace,monospace">56 · POS minimum</div>
+          <div style="height:72px;padding:0 22px;border-radius:20px;background:#F26B1D;color:#FFFFFF;display:flex;align-items:center;font:500 12px/1 'JetBrains Mono',ui-monospace,monospace">72 · Pay / Charge</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="icons" style="padding:56px 0;border-top:1px solid #E6E2DC;display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">05 — Iconography</div>
+    <h2 style="margin:0;font:700 44px/1.02 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.03em">Lucide, 2px stroke</h2>
+    <p style="margin:0;max-width:640px;font:400 16px/1.55 'Instrument Sans',system-ui,sans-serif;color:#45403A">We use the open-source Lucide set at 20px (UI) and 24px (POS). Icons inherit text color and always come with a label on the counter. No emoji in product UI. Payment brand marks (QRIS, GPN, Visa) use the official files only.</p>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px">
+    <sc-for list="{{ icons }}" as="i" hint-placeholder-count="24">
+      <div style="height:96px;border-radius:16px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#141210" style-hover="border-color:#F26B1D;color:#D9560B">
+        <span style="width:24px;height:24px;background:currentColor;-webkit-mask:{{ i.mask }};mask:{{ i.mask }}"></span>
+        <span style="font:400 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ i.name }}</span>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section id="components" style="padding:56px 0;border-top:1px solid #E6E2DC;display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">06 — Components</div>
+    <h2 style="margin:0;font:700 44px/1.02 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.03em">Core controls</h2>
+    <p style="margin:0;max-width:640px;font:400 16px/1.55 'Instrument Sans',system-ui,sans-serif;color:#45403A">Everything here works with a tap, a click, or the keyboard. Every control on this page is live.</p>
+  </div>
+
+  <div style="padding:28px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:22px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 20px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Button</span><span style="font:400 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">primary · ink · outline · ghost · danger</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+      <button style="height:56px;padding:0 24px;border:0;border-radius:16px;background:#F26B1D;color:#FFFFFF;font:600 17px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer;transition:transform 80ms cubic-bezier(.2,0,0,1),background 140ms" style-hover="background:#D9560B" style-active="transform:scale(.96);background:#B04408">Charge IDR 86,500</button>
+      <button style="height:56px;padding:0 24px;border:0;border-radius:16px;background:#141210;color:#FFFFFF;font:600 17px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer;transition:transform 80ms cubic-bezier(.2,0,0,1),background 140ms" style-hover="background:#2E2A26" style-active="transform:scale(.96)">Save order</button>
+      <button style="height:56px;padding:0 24px;border:2px solid #141210;border-radius:16px;background:#FFFFFF;color:#141210;font:600 17px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer;transition:transform 80ms cubic-bezier(.2,0,0,1),background 140ms" style-hover="background:#F2EFEA" style-active="transform:scale(.96)">Split bill</button>
+      <button style="height:56px;padding:0 20px;border:0;border-radius:16px;background:transparent;color:#141210;font:600 17px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer;transition:transform 80ms cubic-bezier(.2,0,0,1),background 140ms" style-hover="background:#F2EFEA" style-active="transform:scale(.96)">Cancel</button>
+      <button style="height:56px;padding:0 24px;border:0;border-radius:16px;background:#FDE8E8;color:#B3261E;font:600 17px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer;transition:transform 80ms cubic-bezier(.2,0,0,1),background 140ms" style-hover="background:#F9CFCF" style-active="transform:scale(.96)">Void item</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+      <button style="height:40px;padding:0 16px;border:0;border-radius:12px;background:#F26B1D;color:#FFFFFF;font:600 14px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer" style-active="transform:scale(.96)">S · 40</button>
+      <button style="height:48px;padding:0 20px;border:0;border-radius:14px;background:#F26B1D;color:#FFFFFF;font:600 15px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer" style-active="transform:scale(.96)">M · 48</button>
+      <button style="height:56px;padding:0 24px;border:0;border-radius:16px;background:#F26B1D;color:#FFFFFF;font:600 17px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer" style-active="transform:scale(.96)">L · 56</button>
+      <button style="height:72px;padding:0 32px;border:0;border-radius:20px;background:#F26B1D;color:#FFFFFF;font:700 20px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;cursor:pointer" style-active="transform:scale(.97)">XL · 72</button>
+      <button disabled="" style="height:56px;padding:0 24px;border:0;border-radius:16px;background:#E6E2DC;color:#857E76;font:600 17px/1 'Instrument Sans',system-ui,sans-serif;cursor:not-allowed">Disabled</button>
+      <button style="height:56px;padding:0 24px;border:0;border-radius:16px;background:#F26B1D;color:#FFFFFF;font:600 17px/1 'Instrument Sans',system-ui,sans-serif;display:flex;gap:10px;align-items:center">{{ spinnerWhite }}Processing</button>
+      <button aria-label="Scan barcode" style="width:56px;height:56px;border:1px solid #E6E2DC;border-radius:16px;background:#FFFFFF;color:#141210;display:grid;place-items:center;cursor:pointer" style-hover="background:#F2EFEA" style-active="transform:scale(.94)"><span style="width:24px;height:24px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/scan-line.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/scan-line.svg) center/contain no-repeat"></span></button>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="padding:28px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:18px">
+      <span style="font:600 20px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Inputs</span>
+      <label style="display:flex;flex-direction:column;gap:8px">
+        <span style="font:600 13px/1 'Instrument Sans',system-ui,sans-serif">Product name</span>
+        <input value="Es Kopi Susu Aren" style="height:52px;padding:0 16px;border:1.5px solid #CFCAC3;border-radius:14px;background:#FFFFFF;font:500 16px/1 'Instrument Sans',system-ui,sans-serif;color:#141210;outline:none;transition:border-color 140ms,box-shadow 140ms" style-focus="border-color:#F26B1D;box-shadow:0 0 0 4px #FFE2CF">
+      </label>
+      <label style="display:flex;flex-direction:column;gap:8px">
+        <span style="font:600 13px/1 'Instrument Sans',system-ui,sans-serif">Price</span>
+        <div style="height:52px;border:1.5px solid #CFCAC3;border-radius:14px;display:flex;align-items:center;overflow:hidden">
+          <span style="height:100%;padding:0 14px;display:flex;align-items:center;background:#F2EFEA;font:600 14px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;color:#45403A">IDR</span>
+          <input value="25,000" style="flex:1;min-width:0;height:100%;padding:0 14px;border:0;font:600 18px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;font-variant-numeric:tabular-nums;outline:none">
+        </div>
+      </label>
+      <label style="display:flex;flex-direction:column;gap:8px">
+        <span style="font:600 13px/1 'Instrument Sans',system-ui,sans-serif">SKU</span>
+        <input value="KOP-001" style="height:52px;padding:0 16px;border:1.5px solid #E5383B;border-radius:14px;font:500 15px/1 'JetBrains Mono',ui-monospace,monospace;outline:none;box-shadow:0 0 0 4px #FDE8E8">
+        <span style="font:500 13px/1.3 'Instrument Sans',system-ui,sans-serif;color:#B3261E">SKU already used by "Kopi Hitam".</span>
+      </label>
+      <div style="height:56px;padding:0 18px;border-radius:999px;background:#F2EFEA;display:flex;align-items:center;gap:12px;color:#625C55">
+        <span style="width:20px;height:20px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/search.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/search.svg) center/contain no-repeat"></span>
+        <span style="font:400 16px/1 'Instrument Sans',system-ui,sans-serif;flex:1">Search menu or scan barcode</span>
+        <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;padding:6px 8px;border-radius:8px;background:#FFFFFF">/</span>
+      </div>
+    </div>
+
+    <div style="padding:28px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:20px">
+      <span style="font:600 20px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Selection</span>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font:600 13px/1 'Instrument Sans',system-ui,sans-serif">Segmented · order type</span>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;border-radius:18px;background:#F2EFEA">
+          <sc-for list="{{ segItems }}" as="s" hint-placeholder-count="3">
+            <button onClick="{{ s.onClick }}" style="height:48px;border:0;border-radius:14px;background:{{ s.bg }};color:{{ s.fg }};box-shadow:{{ s.shadow }};font:600 14px/1 'Instrument Sans',system-ui,sans-serif;padding:0 6px;white-space:nowrap;cursor:pointer;transition:background 140ms cubic-bezier(.2,0,0,1),box-shadow 140ms">{{ s.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font:600 13px/1 'Instrument Sans',system-ui,sans-serif">Tabs</span>
+        <div style="display:flex;gap:24px;border-bottom:1px solid #E6E2DC">
+          <sc-for list="{{ tabItems }}" as="t" hint-placeholder-count="4">
+            <button onClick="{{ t.onClick }}" style="height:44px;padding:0;border:0;background:none;border-bottom:3px solid {{ t.line }};margin-bottom:-1px;color:{{ t.fg }};font:600 15px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer;display:flex;gap:8px;align-items:center;transition:border-color 140ms">{{ t.label }}<span style="font:600 12px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;padding:4px 7px;border-radius:999px;background:#F2EFEA;color:#45403A">{{ t.count }}</span></button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <span style="font:600 13px/1 'Instrument Sans',system-ui,sans-serif">Switch</span>
+          <sc-for list="{{ switches }}" as="s" hint-placeholder-count="3">
+            <button onClick="{{ s.onClick }}" style="display:flex;align-items:center;gap:12px;border:0;background:none;padding:0;cursor:pointer;font:500 15px/1.2 'Instrument Sans',system-ui,sans-serif;color:#141210;text-align:left">
+              <span style="flex:none;width:52px;height:32px;border-radius:999px;background:{{ s.track }};position:relative;transition:background 140ms cubic-bezier(.2,0,0,1)"><span style="position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:999px;background:#FFFFFF;box-shadow:0 1px 3px rgba(20,18,16,.25);transform:translateX({{ s.x }});transition:transform 200ms cubic-bezier(.34,1.4,.64,1)"></span></span>
+              {{ s.label }}
+            </button>
+          </sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <span style="font:600 13px/1 'Instrument Sans',system-ui,sans-serif">Checkbox · radio</span>
+          <sc-for list="{{ checks }}" as="c" hint-placeholder-count="2">
+            <button onClick="{{ c.onClick }}" style="display:flex;align-items:center;gap:12px;border:0;background:none;padding:0;cursor:pointer;font:500 15px/1.2 'Instrument Sans',system-ui,sans-serif;color:#141210">
+              <span style="flex:none;width:26px;height:26px;border-radius:8px;border:2px solid {{ c.border }};background:{{ c.bg }};display:grid;place-items:center;transition:background 120ms,border-color 120ms"><span style="width:16px;height:16px;background:#FFFFFF;opacity:{{ c.op }};transform:scale({{ c.scale }});transition:transform 180ms cubic-bezier(.34,1.56,.64,1),opacity 100ms;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat"></span></span>
+              {{ c.label }}
+            </button>
+          </sc-for>
+          <sc-for list="{{ radios }}" as="r" hint-placeholder-count="2">
+            <button onClick="{{ r.onClick }}" style="display:flex;align-items:center;gap:12px;border:0;background:none;padding:0;cursor:pointer;font:500 15px/1.2 'Instrument Sans',system-ui,sans-serif;color:#141210">
+              <span style="flex:none;width:26px;height:26px;border-radius:999px;border:2px solid {{ r.border }};display:grid;place-items:center"><span style="width:12px;height:12px;border-radius:999px;background:#F26B1D;transform:scale({{ r.scale }});transition:transform 180ms cubic-bezier(.34,1.56,.64,1)"></span></span>
+              {{ r.label }}
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="padding:28px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:18px">
+      <span style="font:600 20px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Badges</span>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#E3F5EA;color:#156B3A;font:600 13px/1 'Instrument Sans',system-ui,sans-serif;display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:9px;background:#1F9D55"></span>Paid</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#FFF4D6;color:#8A5A00;font:600 13px/1 'Instrument Sans',system-ui,sans-serif;display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:9px;background:#E5A000"></span>Pending</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#FDE8E8;color:#B3261E;font:600 13px/1 'Instrument Sans',system-ui,sans-serif;display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:9px;background:#E5383B"></span>Void</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#E6EEFD;color:#1F4FB5;font:600 13px/1 'Instrument Sans',system-ui,sans-serif;display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:9px;background:#2F6FEB"></span>Refunded</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#F2EFEA;color:#45403A;font:600 13px/1 'Instrument Sans',system-ui,sans-serif;display:flex;align-items:center">Draft</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#141210;color:#FFFFFF;font:600 13px/1 'Instrument Sans',system-ui,sans-serif;display:flex;align-items:center">Pro plan</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#FFE2CF;color:#84340A;font:600 13px/1 'Instrument Sans',system-ui,sans-serif;display:flex;align-items:center">Low stock · 4</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;border:1.5px solid #CFCAC3;color:#45403A;font:600 13px/1 'Instrument Sans',system-ui,sans-serif;display:flex;align-items:center">Dine-in · T12</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#F26B1D;color:#FFFFFF;font:600 13px/1 'Instrument Sans',system-ui,sans-serif;display:flex;align-items:center;gap:6px;animation:bnPulse 1.4s cubic-bezier(.2,0,0,1) infinite"><span style="width:6px;height:6px;border-radius:9px;background:#FFFFFF"></span>Live</span>
+      </div>
+      <span style="font:600 20px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;margin-top:8px">Quantity stepper</span>
+      <div style="display:flex;align-items:center;gap:20px">
+        <div style="display:flex;align-items:center;border-radius:16px;background:#F2EFEA;padding:4px">
+          <button onClick="{{ qtyDec }}" aria-label="Decrease" style="width:48px;height:48px;border:0;border-radius:12px;background:#FFFFFF;color:#141210;display:grid;place-items:center;cursor:pointer" style-active="transform:scale(.9)"><span style="width:20px;height:20px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/minus.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/minus.svg) center/contain no-repeat"></span></button>
+          <span style="width:56px;text-align:center;font:700 22px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;font-variant-numeric:tabular-nums">{{ qty }}</span>
+          <button onClick="{{ qtyInc }}" aria-label="Increase" style="width:48px;height:48px;border:0;border-radius:12px;background:#141210;color:#FFFFFF;display:grid;place-items:center;cursor:pointer" style-active="transform:scale(.9)"><span style="width:20px;height:20px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/plus.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/plus.svg) center/contain no-repeat"></span></button>
+        </div>
+        <span style="font:400 14px/1.4 'Instrument Sans',system-ui,sans-serif;color:#625C55">Line total <b style="font:700 18px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;color:#141210;font-variant-numeric:tabular-nums">{{ qtyTotal }}</b></span>
+      </div>
+    </div>
+
+    <div style="padding:28px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:16px">
+      <span style="font:600 20px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Feedback</span>
+      <div style="padding:16px;border-radius:16px;background:#141210;color:#FFFFFF;display:flex;gap:14px;align-items:center;box-shadow:0 16px 40px -8px rgba(20,18,16,.32)">
+        <span style="flex:none;width:40px;height:40px;border-radius:12px;background:#F26B1D;display:grid;place-items:center"><span style="width:20px;height:20px;background:#FFFFFF;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/bell.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/bell.svg) center/contain no-repeat"></span></span>
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px"><span style="font:600 15px/1.2 'Instrument Sans',system-ui,sans-serif">New order · Table 7</span><span style="font:400 13px/1.3 'Instrument Sans',system-ui,sans-serif;color:#CFCAC3">3 items · IDR 112,000 · via QR menu</span></div>
+        <span style="font:600 14px/1 'Instrument Sans',system-ui,sans-serif;color:#FF9F63">Open</span>
+      </div>
+      <div style="padding:14px 16px;border-radius:16px;background:#FFF4D6;color:#5C3D00;display:flex;gap:12px;align-items:flex-start;font:500 14px/1.45 'Instrument Sans',system-ui,sans-serif">
+        <span style="flex:none;margin-top:1px;width:20px;height:20px;background:#8A5A00;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/wifi-off.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/wifi-off.svg) center/contain no-repeat"></span>
+        <span>You're offline. Sales are saved on this device and will sync when the connection is back. <b>12 queued</b></span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:16px;border:1px solid #E6E2DC">
+        <span style="font:600 13px/1 'Instrument Sans',system-ui,sans-serif;color:#625C55">Skeleton</span>
+        {{ skeleton }}
+      </div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <span style="position:relative;padding:8px 12px;border-radius:10px;background:#141210;color:#FFFFFF;font:500 13px/1 'Instrument Sans',system-ui,sans-serif">Tooltip: 2 refunds today</span>
+        <span style="font:400 13px/1.3 'Instrument Sans',system-ui,sans-serif;color:#625C55">Ink, 10px radius, 120ms fade</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:28px;border-radius:24px;background:#F2EFEA;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;align-items:center">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <span style="font:600 20px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Dialog · PIC / manager approval</span>
+      <span style="font:400 14px/1.5 'Instrument Sans',system-ui,sans-serif;color:#45403A">Every approve or reject needs the approver’s own 6-digit approval PIN, separate from the login password. Cashier requests go to the shift PIC; above the PIC limit they go to the manager. 5 wrong tries lock the PIN for 15 minutes. Dialogs scale in from 96% with a 60% ink scrim.</span>
+    </div>
+    <div style="padding:24px;border-radius:28px;background:#FFFFFF;box-shadow:0 24px 60px -12px rgba(20,18,16,.35);display:flex;flex-direction:column;gap:18px;max-width:420px;width:100%;justify-self:center">
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font:700 22px/1.1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Approve void?</span><span style="font:400 14px/1.45 'Instrument Sans',system-ui,sans-serif;color:#625C55">Nasi Goreng Spesial × 1 · IDR 38,000 · requested by Rina (Cashier)</span></div>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <sc-for list="{{ pinDots }}" as="d" hint-placeholder-count="6">
+          <span style="width:16px;height:16px;border-radius:999px;border:2px solid #141210;background:{{ d.bg }};transform:scale({{ d.scale }});transition:transform 160ms cubic-bezier(.34,1.56,.64,1),background 80ms"></span>
+        </sc-for>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+        <sc-for list="{{ pinKeys }}" as="k" hint-placeholder-count="12">
+          <button onClick="{{ k.onClick }}" style="height:56px;border:0;border-radius:16px;background:{{ k.bg }};color:#141210;font:600 22px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;cursor:pointer;transition:transform 80ms,background 120ms" style-active="transform:scale(.94);background:#E6E2DC">{{ k.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:28px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 20px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Data table</span><span style="font:400 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">row 56px · sticky header · zebra off</span></div>
+    <div style="border-radius:16px;border:1px solid #E6E2DC;overflow:hidden">
+      <div style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1.2fr) minmax(0,.9fr) minmax(0,.8fr) minmax(0,1fr);padding:0 18px;height:44px;align-items:center;background:#F2EFEA;font:600 12px/1 'Instrument Sans',system-ui,sans-serif;color:#45403A;letter-spacing:.02em"><span>Order</span><span>Time</span><span>Customer</span><span>Method</span><span>Status</span><span style="text-align:right">Total</span></div>
+      <sc-for list="{{ txRows }}" as="r" hint-placeholder-count="5">
+        <div style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1.2fr) minmax(0,.9fr) minmax(0,.8fr) minmax(0,1fr);padding:0 18px;height:56px;align-items:center;border-top:1px solid #F2EFEA;font:500 14px/1.2 'Instrument Sans',system-ui,sans-serif;cursor:pointer;transition:background 120ms" style-hover="background:#FAF8F5">
+          <span style="font:500 13px/1 'JetBrains Mono',ui-monospace,monospace">{{ r.id }}</span>
+          <span style="color:#625C55">{{ r.time }}</span>
+          <span>{{ r.customer }}</span>
+          <span>{{ r.method }}</span>
+          <span><span style="height:26px;padding:0 10px;border-radius:999px;background:{{ r.sbg }};color:{{ r.sfg }};font:600 12px/1 'Instrument Sans',system-ui,sans-serif;display:inline-flex;align-items:center">{{ r.status }}</span></span>
+          <span style="text-align:right;font:600 15px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;font-variant-numeric:tabular-nums">{{ r.total }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<section id="commerce" style="padding:56px 0;border-top:1px solid #E6E2DC;display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">07 — POS patterns</div>
+    <h2 style="margin:0;font:700 44px/1.02 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.03em">Built for the counter</h2>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+      <span style="font:600 20px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Product tile</span>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+        <sc-for list="{{ tiles }}" as="p" hint-placeholder-count="3">
+          <button onClick="{{ p.onClick }}" style="border:0;padding:0;border-radius:20px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC;overflow:hidden;text-align:left;cursor:pointer;display:flex;flex-direction:column;opacity:{{ p.op }};transition:transform 80ms cubic-bezier(.2,0,0,1),box-shadow 140ms;position:relative" style-active="transform:scale(.96)" style-hover="box-shadow:0 0 0 2px #F26B1D">
+            <div style="aspect-ratio:4/3;background:repeating-linear-gradient(135deg,#F2EFEA 0 8px,#E6E2DC 8px 9px);display:grid;place-items:center;font:400 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">product photo</div>
+            <div style="padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px">
+              <span style="font:600 15px/1.2 'Instrument Sans',system-ui,sans-serif;color:#141210">{{ p.name }}</span>
+              <span style="font:700 17px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;color:#141210;font-variant-numeric:tabular-nums">{{ p.price }}</span>
+            </div>
+            <span style="position:absolute;top:10px;right:10px;min-width:28px;height:28px;padding:0 8px;border-radius:999px;background:{{ p.badgeBg }};color:#FFFFFF;font:700 13px/28px -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;text-align:center;transform:scale({{ p.badgeScale }});transition:transform 200ms cubic-bezier(.34,1.56,.64,1)">{{ p.badge }}</span>
+          </button>
+        </sc-for>
+      </div>
+      <span style="font:400 13px/1.4 'Instrument Sans',system-ui,sans-serif;color:#625C55">Tap a tile: the count badge pops with a spring. Sold-out tiles drop to 45% opacity and can't be tapped.</span>
+    </div>
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+      <span style="font:600 20px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Cart</span>
+      <div style="display:flex;flex-direction:column">
+        <sc-for list="{{ cart }}" as="c" hint-placeholder-count="3">
+          <div style="display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:12px;padding:12px 0;border-bottom:1px dashed #E6E2DC;align-items:start">
+            <span style="height:32px;border-radius:10px;background:#F2EFEA;display:grid;place-items:center;font:700 15px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">{{ c.qty }}</span>
+            <span style="display:flex;flex-direction:column;gap:4px"><span style="font:600 15px/1.25 'Instrument Sans',system-ui,sans-serif">{{ c.name }}</span><span style="font:400 13px/1.3 'Instrument Sans',system-ui,sans-serif;color:#625C55">{{ c.mod }}</span></span>
+            <span style="font:600 15px/1.25 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;font-variant-numeric:tabular-nums">{{ c.total }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;font:500 14px/1 'Instrument Sans',system-ui,sans-serif;color:#45403A">
+        <div style="display:flex;justify-content:space-between"><span>Subtotal</span><span style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;font-variant-numeric:tabular-nums">IDR 78,000</span></div>
+        <div style="display:flex;justify-content:space-between"><span>PB1 10%</span><span style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;font-variant-numeric:tabular-nums">IDR 7,800</span></div>
+        <div style="display:flex;justify-content:space-between"><span>Member discount</span><span style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;color:#156B3A">− IDR 3,900</span></div>
+      </div>
+      <button style="height:72px;border:0;border-radius:20px;background:#F26B1D;color:#FFFFFF;display:flex;justify-content:space-between;align-items:center;padding:0 24px;cursor:pointer;transition:transform 80ms" style-active="transform:scale(.97)"><span style="font:600 17px/1 'Instrument Sans',system-ui,sans-serif">Charge</span><span style="font:700 24px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;font-variant-numeric:tabular-nums">IDR 81,900</span></button>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 20px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Kitchen ticket</span><span style="font:400 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">timer: ink &lt; 8m · amber 8–12m · red &gt; 12m</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+        <sc-for list="{{ tickets }}" as="t" hint-placeholder-count="3">
+          <div style="border-radius:20px;border:2px solid {{ t.border }};overflow:hidden;display:flex;flex-direction:column;background:#FFFFFF">
+            <div style="padding:12px 14px;background:{{ t.head }};color:{{ t.headFg }};display:flex;justify-content:space-between;align-items:center"><span style="font:700 18px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">{{ t.table }}</span><span style="font:700 18px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;font-variant-numeric:tabular-nums">{{ t.timer }}</span></div>
+            <div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px;font:600 15px/1.3 'Instrument Sans',system-ui,sans-serif">
+              <sc-for list="{{ t.items }}" as="it" hint-placeholder-count="2"><span>{{ it }}</span></sc-for>
+              <span style="font:400 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ t.meta }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+      <span style="font:600 20px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Cash numpad</span>
+      <div style="height:64px;border-radius:16px;background:#F2EFEA;display:flex;align-items:center;justify-content:space-between;padding:0 18px"><span style="font:500 13px/1 'Instrument Sans',system-ui,sans-serif;color:#625C55">Tendered</span><span style="font:700 26px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;font-variant-numeric:tabular-nums">{{ tenderText }}</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+        <sc-for list="{{ numKeys }}" as="k" hint-placeholder-count="12">
+          <button onClick="{{ k.onClick }}" style="height:56px;border:1px solid #E6E2DC;border-radius:16px;background:#FFFFFF;font:600 22px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;color:#141210;cursor:pointer;transition:transform 80ms,background 120ms" style-active="transform:scale(.94);background:#F2EFEA">{{ k.label }}</button>
+        </sc-for>
+      </div>
+      <div style="display:flex;justify-content:space-between;font:500 14px/1 'Instrument Sans',system-ui,sans-serif"><span style="color:#625C55">Change due</span><span style="font:700 18px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;color:{{ changeColor }}">{{ changeText }}</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="payments" style="padding:56px 0;border-top:1px solid #E6E2DC;display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">08 — Payments &amp; QRIS</div>
+    <h2 style="margin:0;font:700 44px/1.02 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.03em">Every way to pay</h2>
+    <p style="margin:0;max-width:640px;font:400 16px/1.55 'Instrument Sans',system-ui,sans-serif;color:#45403A">Six payment methods share one tile pattern. Each payment moves through the same four states: idle, processing, success, failed. QRIS adds a fifth state, expired.</p>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">
+    <sc-for list="{{ methods }}" as="m" hint-placeholder-count="6">
+      <button onClick="{{ m.onClick }}" style="height:112px;border:2px solid {{ m.border }};border-radius:20px;background:{{ m.bg }};display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;padding:14px;cursor:pointer;color:#141210;transition:border-color 140ms,background 140ms,transform 80ms" style-active="transform:scale(.96)">
+        <span style="width:28px;height:28px;background:currentColor;-webkit-mask:{{ m.mask }};mask:{{ m.mask }}"></span>
+        <span style="display:flex;flex-direction:column;gap:4px;text-align:left"><span style="font:600 15px/1 'Instrument Sans',system-ui,sans-serif">{{ m.label }}</span><span style="font:400 12px/1.2 'Instrument Sans',system-ui,sans-serif;color:#625C55">{{ m.sub }}</span></span>
+      </button>
+    </sc-for>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="border-radius:28px;background:#141210;color:#FFFFFF;padding:28px;display:flex;flex-direction:column;gap:18px;min-height:460px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.08em;color:#A9A39B">CUSTOMER DISPLAY · QRIS</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:{{ qrisBadgeBg }};color:{{ qrisBadgeFg }};font:600 12px/28px 'Instrument Sans',system-ui,sans-serif">{{ qrisLabel }}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center">
+        <span style="font:500 14px/1 'Instrument Sans',system-ui,sans-serif;color:#CFCAC3">Total to pay</span>
+        <span style="font:700 48px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums">IDR 81,900</span>
+      </div>
+      <div style="align-self:center;width:220px;height:220px;border-radius:24px;background:#FFFFFF;padding:16px;position:relative;display:grid;place-items:center">
+        <div style="width:100%;height:100%;border-radius:10px;background:repeating-linear-gradient(45deg,#141210 0 6px,#FFFFFF 6px 12px);opacity:{{ qrisQrOp }};transition:opacity 200ms;display:grid;place-items:center"><span style="padding:6px 8px;border-radius:6px;background:#FFFFFF;font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#141210">dynamic QRIS</span></div>
+        <sc-if value="{{ qrisPaid }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;inset:0;border-radius:24px;background:#1F9D55;display:grid;place-items:center">{{ qrisCheck }}</div>
+        </sc-if>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+        <span style="font:600 15px/1.3 'Instrument Sans',system-ui,sans-serif">{{ qrisMsg }}</span>
+        <span style="font:700 22px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;color:{{ qrisTimerColor }};font-variant-numeric:tabular-nums">{{ qrisTime }}</span>
+      </div>
+      <div style="margin-top:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+        <button onClick="{{ qrisWait }}" style="height:44px;border:1px solid #45403A;border-radius:12px;background:transparent;color:#FFFFFF;font:600 13px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer" style-hover="background:#2E2A26">Waiting</button>
+        <button onClick="{{ qrisPay }}" style="height:44px;border:1px solid #45403A;border-radius:12px;background:transparent;color:#FFFFFF;font:600 13px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer" style-hover="background:#2E2A26">Paid</button>
+        <button onClick="{{ qrisExpire }}" style="height:44px;border:1px solid #45403A;border-radius:12px;background:transparent;color:#FFFFFF;font:600 13px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer" style-hover="background:#2E2A26">Expired</button>
+      </div>
+    </div>
+    <div style="border-radius:28px;background:#FFFFFF;border:1px solid #E6E2DC;padding:28px;display:flex;flex-direction:column;gap:18px;min-height:460px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.08em;color:#625C55">CASHIER · PAYMENT RESULT</span>
+        <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ payStateName }}</span>
+      </div>
+      <div style="flex:1;display:grid;place-items:center">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;transform:translateX({{ shakeX }});transition:transform 50ms linear">
+          <div style="width:120px;height:120px;border-radius:999px;background:{{ payCircle }};display:grid;place-items:center;transform:scale({{ payScale }});transition:transform 420ms cubic-bezier(.34,1.56,.64,1),background 200ms">{{ payIcon }}</div>
+          <span style="font:700 28px/1.1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">{{ payTitle }}</span>
+          <span style="font:400 15px/1.45 'Instrument Sans',system-ui,sans-serif;color:#625C55;max-width:320px">{{ paySub }}</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:8px">
+        <button onClick="{{ runPay }}" style="height:56px;border:0;border-radius:16px;background:#F26B1D;color:#FFFFFF;font:600 16px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer" style-active="transform:scale(.97)">Charge IDR 81,900</button>
+        <button onClick="{{ runFail }}" style="height:56px;border:2px solid #141210;border-radius:16px;background:#FFFFFF;color:#141210;font:600 16px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer" style-active="transform:scale(.97)">Simulate fail</button>
+      </div>
+    </div>
+  </div>
+  <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;align-items:center">
+    <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 20px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Split bill</span><span style="font:400 14px/1.5 'Instrument Sans',system-ui,sans-serif;color:#45403A">Split evenly, by item or by custom amount. Each part gets its own method and its own progress state.</span></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="height:12px;border-radius:999px;background:#F2EFEA;overflow:hidden;display:flex"><span style="width:50%;background:#1F9D55"></span><span style="width:30%;background:#F26B1D"></span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+        <div style="padding:12px;border-radius:14px;background:#E3F5EA;display:flex;flex-direction:column;gap:6px"><span style="font:600 13px/1 'Instrument Sans',system-ui,sans-serif;color:#156B3A">Part 1 · QRIS · Paid</span><span style="font:700 17px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">IDR 40,950</span></div>
+        <div style="padding:12px;border-radius:14px;background:#FFF3EB;display:flex;flex-direction:column;gap:6px"><span style="font:600 13px/1 'Instrument Sans',system-ui,sans-serif;color:#B04408">Part 2 · Cash · Now</span><span style="font:700 17px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">IDR 24,570</span></div>
+        <div style="padding:12px;border-radius:14px;background:#F2EFEA;display:flex;flex-direction:column;gap:6px"><span style="font:600 13px/1 'Instrument Sans',system-ui,sans-serif;color:#45403A">Part 3 · Card · Next</span><span style="font:700 17px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">IDR 16,380</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="charts" style="padding:56px 0;border-top:1px solid #E6E2DC;display:flex;flex-direction:column;gap:24px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">09 — Data visualization</div>
+      <h2 style="margin:0;font:700 44px/1.02 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.03em">Orange is the number</h2>
+      <p style="margin:0;max-width:640px;font:400 16px/1.55 'Instrument Sans',system-ui,sans-serif;color:#45403A">Charts use Chart.js 4 with BorNiz defaults: smooth curves (tension 0.4), a 22% → 0% Ember area fill, ink tooltips and a dashed crosshair. The comparison period is a dashed Ink-300 line. Amounts use the short format: IDR 2,4 jt.</p>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div style="display:flex;padding:4px;border-radius:14px;background:#F2EFEA;gap:2px">
+        <sc-for list="{{ ranges }}" as="r" hint-placeholder-count="4">
+          <button onClick="{{ r.onClick }}" style="height:36px;padding:0 14px;border:0;border-radius:10px;background:{{ r.bg }};color:#141210;box-shadow:{{ r.shadow }};font:600 13px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer">{{ r.label }}</button>
+        </sc-for>
+      </div>
+      <button onClick="{{ replayCharts }}" style="height:44px;padding:0 16px;border:1px solid #E6E2DC;border-radius:12px;background:#FFFFFF;font:600 13px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer;display:flex;gap:8px;align-items:center" style-active="transform:scale(.96)"><span style="width:16px;height:16px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/rotate-ccw.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/rotate-ccw.svg) center/contain no-repeat"></span>Replay draw-in</button>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+    <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="3">
+      <div style="padding:20px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:500 14px/1 'Instrument Sans',system-ui,sans-serif;color:#625C55">{{ k.label }}</span><span style="height:24px;padding:0 8px;border-radius:999px;background:{{ k.dbg }};color:{{ k.dfg }};font:600 12px/24px -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">{{ k.delta }}</span></div>
+        <span style="font:700 32px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums">{{ k.value }}</span>
+        <div style="height:44px;position:relative"><canvas ref="{{ k.ref }}"></canvas></div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:600 18px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Revenue trend · area + compare</span><span style="display:flex;gap:14px;font:500 12px/1 'Instrument Sans',system-ui,sans-serif;color:#625C55"><span style="display:flex;gap:6px;align-items:center"><span style="width:14px;height:3px;border-radius:2px;background:#F26B1D"></span>This period</span><span style="display:flex;gap:6px;align-items:center"><span style="width:14px;height:0;border-top:2px dashed #A9A39B"></span>Previous</span></span></div>
+      <div style="height:280px;position:relative"><canvas ref="{{ lineRef }}"></canvas></div>
+    </div>
+    <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+      <span style="font:600 18px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Payment mix · donut</span>
+      <div style="height:200px;position:relative"><canvas ref="{{ donutRef }}"></canvas></div>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px 12px">
+        <sc-for list="{{ mixLegend }}" as="l" hint-placeholder-count="5">
+          <span style="display:flex;gap:8px;align-items:center;font:500 13px/1.2 'Instrument Sans',system-ui,sans-serif"><span style="width:10px;height:10px;border-radius:3px;background:{{ l.color }}"></span>{{ l.label }}<span style="margin-left:auto;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;color:#625C55">{{ l.pct }}</span></span>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+      <span style="font:600 18px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Revenue per outlet · stacked bar</span>
+      <div style="height:240px;position:relative"><canvas ref="{{ barRef }}"></canvas></div>
+    </div>
+    <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+      <span style="font:600 18px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Transactions vs. avg ticket · combo</span>
+      <div style="height:240px;position:relative"><canvas ref="{{ comboRef }}"></canvas></div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:600 18px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Busy hours · heatmap</span><span style="display:flex;gap:6px;align-items:center;font:500 11px/1 'Instrument Sans',system-ui,sans-serif;color:#625C55">Quiet<span style="width:80px;height:8px;border-radius:4px;background:linear-gradient(90deg,#FFF3EB,#F26B1D)"></span>Peak</span></div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <sc-for list="{{ heat }}" as="row" hint-placeholder-count="7">
+          <div style="display:grid;grid-template-columns:36px repeat(14,minmax(0,1fr));gap:4px;align-items:center">
+            <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ row.day }}</span>
+            <sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="14">
+              <span title="{{ c.title }}" style="height:24px;border-radius:6px;background:{{ c.bg }};transition:transform 120ms" style-hover="transform:scale(1.15)"></span>
+            </sc-for>
+          </div>
+        </sc-for>
+        <div style="display:grid;grid-template-columns:36px repeat(14,minmax(0,1fr));gap:4px;font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76"><span></span><sc-for list="{{ hours }}" as="h" hint-placeholder-count="14"><span style="text-align:center">{{ h }}</span></sc-for></div>
+      </div>
+    </div>
+    <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+      <span style="font:600 18px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Daily target · gauge</span>
+      <div style="height:150px;position:relative"><canvas ref="{{ gaugeRef }}"></canvas><div style="position:absolute;left:0;right:0;bottom:6px;text-align:center;display:flex;flex-direction:column;gap:4px"><span style="font:700 32px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">72%</span><span style="font:400 12px/1 'Instrument Sans',system-ui,sans-serif;color:#625C55">IDR 4,3 jt of 6 jt</span></div></div>
+      <div style="height:1px;background:#F2EFEA"></div>
+      <span style="font:600 15px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">QR order funnel</span>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <sc-for list="{{ funnel }}" as="f" hint-placeholder-count="4">
+          <div style="display:grid;grid-template-columns:96px minmax(0,1fr) 48px;gap:10px;align-items:center;font:500 12px/1 'Instrument Sans',system-ui,sans-serif">
+            <span style="color:#45403A">{{ f.label }}</span>
+            <span style="height:22px;border-radius:6px;background:#F2EFEA;overflow:hidden"><span style="display:block;height:100%;width:{{ f.w }};background:{{ f.color }};border-radius:6px;transition:width 600ms cubic-bezier(.05,.7,.1,1)"></span></span>
+            <span style="text-align:right;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;font-weight:600">{{ f.val }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+      <span style="font:600 18px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Top products · ranking + mini bar</span>
+      <div style="display:flex;flex-direction:column">
+        <sc-for list="{{ ranking }}" as="r" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:28px minmax(0,1.4fr) minmax(0,1fr) 92px;gap:12px;align-items:center;padding:10px 0;border-top:1px solid #F2EFEA">
+            <span style="font:700 15px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;color:{{ r.rankColor }}">{{ r.rank }}</span>
+            <span style="display:flex;flex-direction:column;gap:3px"><span style="font:600 14px/1.2 'Instrument Sans',system-ui,sans-serif">{{ r.name }}</span><span style="font:400 12px/1 'Instrument Sans',system-ui,sans-serif;color:#625C55">{{ r.qty }} sold</span></span>
+            <span style="height:8px;border-radius:999px;background:#F2EFEA;overflow:hidden"><span style="display:block;height:100%;width:{{ r.w }};background:{{ r.barColor }};border-radius:999px;transition:width 600ms cubic-bezier(.05,.7,.1,1)"></span></span>
+            <span style="text-align:right;font:600 14px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">{{ r.rev }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:600 18px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Live sales · real-time</span><span style="height:24px;padding:0 10px;border-radius:999px;background:#FFF3EB;color:#B04408;font:600 12px/24px 'Instrument Sans',system-ui,sans-serif;display:flex;gap:6px;align-items:center"><span style="width:6px;height:6px;border-radius:9px;background:#F26B1D;animation:bnPulse 1.4s infinite"></span>updates every 2s</span></div>
+      <div style="height:180px;position:relative"><canvas ref="{{ rtRef }}"></canvas></div>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px">
+        <div style="border-radius:16px;min-height:96px;background:repeating-linear-gradient(135deg,#F2EFEA 0 8px,#E6E2DC 8px 9px);display:grid;place-items:center;font:400 11px/1.4 'JetBrains Mono',ui-monospace,monospace;color:#857E76;text-align:center;padding:8px">outlet map<br>(Leaflet tiles + Ember pins)</div>
+        <div style="display:flex;flex-direction:column;gap:6px;font:500 13px/1.2 'Instrument Sans',system-ui,sans-serif">
+          <span style="display:flex;justify-content:space-between"><span>Kemang</span><b style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">IDR 2,4 jt</b></span>
+          <span style="display:flex;justify-content:space-between"><span>Senopati</span><b style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">IDR 1,9 jt</b></span>
+          <span style="display:flex;justify-content:space-between"><span>BSD</span><b style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">IDR 1,1 jt</b></span>
+          <span style="display:flex;justify-content:space-between;color:#625C55"><span>Bandung</span><b style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">IDR 0,8 jt</b></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="motion" style="padding:56px 0;border-top:1px solid #E6E2DC;display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">10 — Motion</div>
+    <h2 style="margin:0;font:700 44px/1.02 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.03em">Snappy by default</h2>
+    <p style="margin:0;max-width:680px;font:400 16px/1.55 'Instrument Sans',system-ui,sans-serif;color:#45403A">Press feedback starts within 80ms. Most transitions run 140–200ms. Only payment success and order arrival get an overshoot spring, so they stand out. Exits run faster than entrances. With <span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:14px">prefers-reduced-motion</span>, movement becomes a 120ms opacity fade.</p>
+  </div>
+  <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:6px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font:600 20px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Duration &amp; easing tokens</span><button onClick="{{ togglePlay }}" style="height:44px;padding:0 18px;border:0;border-radius:12px;background:#141210;color:#FFFFFF;font:600 14px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer;display:flex;gap:8px;align-items:center" style-active="transform:scale(.96)"><span style="width:14px;height:14px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/play.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/play.svg) center/contain no-repeat"></span>Play all</button></div>
+    <sc-for list="{{ motionTokens }}" as="m" hint-placeholder-count="8">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;align-items:center;padding:12px 0;border-top:1px solid #F2EFEA">
+        <span style="font:600 12px/1.2 'JetBrains Mono',ui-monospace,monospace">{{ m.name }}</span>
+        <span style="font:400 12px/1.3 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ m.value }}</span>
+        <span style="font:400 13px/1.35 'Instrument Sans',system-ui,sans-serif;color:#45403A">{{ m.use }}</span>
+        <span style="height:28px;border-radius:999px;background:#F2EFEA;position:relative;overflow:hidden"><span style="position:absolute;top:4px;left:{{ m.x }};width:20px;height:20px;border-radius:999px;background:#F26B1D;transition:{{ m.transition }}"></span></span>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+    <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+      <span style="font:600 17px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">M1 · Press</span>
+      <span style="font:400 13px/1.45 'Instrument Sans',system-ui,sans-serif;color:#625C55">scale .96 on pointer-down, 80ms standard. Releases on pointer-up, 140ms.</span>
+      <button style="margin-top:auto;height:72px;border:0;border-radius:20px;background:#F26B1D;color:#FFFFFF;font:700 20px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;cursor:pointer;transition:transform 140ms cubic-bezier(.2,0,0,1)" style-active="transform:scale(.96);transition:transform 80ms cubic-bezier(.2,0,0,1)">Hold me</button>
+    </div>
+    <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden;min-height:260px">
+      <span style="font:600 17px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">M2 · Panel / drawer</span>
+      <span style="font:400 13px/1.45 'Instrument Sans',system-ui,sans-serif;color:#625C55">Enters in 320ms with emphasized-decelerate. Exits in 200ms with accelerate. The scrim fades to 40%.</span>
+      <button onClick="{{ toggleDrawer }}" style="margin-top:auto;height:56px;border:2px solid #141210;border-radius:16px;background:#FFFFFF;font:600 16px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer" style-active="transform:scale(.97)">Open order detail</button>
+      <div onClick="{{ toggleDrawer }}" style="position:absolute;inset:0;background:#141210;opacity:{{ scrimOp }};pointer-events:{{ scrimPe }};transition:opacity {{ drawerDur }}"></div>
+      <div style="position:absolute;top:0;right:0;bottom:0;width:72%;background:#FFFFFF;box-shadow:-16px 0 40px -12px rgba(20,18,16,.3);border-radius:20px 0 0 20px;padding:18px;display:flex;flex-direction:column;gap:10px;transform:translateX({{ drawerX }});transition:transform {{ drawerTrans }}">
+        <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">#TRX-2048</span>
+        <span style="font:700 22px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">IDR 81,900</span>
+        <span style="font:400 13px/1.4 'Instrument Sans',system-ui,sans-serif;color:#625C55">Table 7 · 3 items · QRIS</span>
+        <button onClick="{{ toggleDrawer }}" style="margin-top:auto;height:48px;border:0;border-radius:14px;background:#F2EFEA;font:600 14px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer">Close</button>
+      </div>
+    </div>
+    <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+      <span style="font:600 17px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">M3 · Order arrives</span>
+      <span style="font:400 13px/1.45 'Instrument Sans',system-ui,sans-serif;color:#625C55">The toast drops 16px from the top with a spring and plays the order chime. It stays 5s and leaves upward in 160ms.</span>
+      <button onClick="{{ pushToast }}" style="margin-top:auto;height:56px;border:0;border-radius:16px;background:#141210;color:#FFFFFF;font:600 16px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer;display:flex;gap:10px;align-items:center;justify-content:center" style-active="transform:scale(.97)"><span style="width:18px;height:18px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/bell.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/bell.svg) center/contain no-repeat"></span>Simulate new order</button>
+    </div>
+    <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+      <span style="font:600 17px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">M4 · Count-up</span>
+      <span style="font:400 13px/1.45 'Instrument Sans',system-ui,sans-serif;color:#625C55">KPI numbers count up over 700ms on first view and on refresh. Never on every live tick.</span>
+      <span style="margin-top:auto;font:700 34px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums">{{ kpiText }}</span>
+      <button onClick="{{ countUp }}" style="height:44px;border:1px solid #E6E2DC;border-radius:12px;background:#FFFFFF;font:600 13px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer" style-active="transform:scale(.96)">Replay</button>
+    </div>
+    <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+      <span style="font:600 17px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">M5 · Payment result</span>
+      <span style="font:400 13px/1.45 'Instrument Sans',system-ui,sans-serif;color:#625C55">Success: the circle scales from 0.6 to 1 with a 420ms overshoot, then the check pops. Failure: a 5-step, 250ms horizontal shake and no overshoot. See the demo in 08.</span>
+      <a href="#payments" style="margin-top:auto;font:600 14px/1 'Instrument Sans',system-ui,sans-serif">Go to payment demo →</a>
+    </div>
+    <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+      <span style="font:600 17px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">M6 · Page &amp; chart</span>
+      <span style="font:400 13px/1.45 'Instrument Sans',system-ui,sans-serif;color:#625C55">Pages fade in and rise 8px over 200ms. Content staggers 30ms per card, max 6 cards. Charts draw in over 600ms with easeOutQuart, and live updates take 300ms.</span>
+      <a href="#charts" style="margin-top:auto;font:600 14px/1 'Instrument Sans',system-ui,sans-serif">Replay charts →</a>
+    </div>
+  </div>
+</section>
+
+<section id="sound" style="padding:56px 0;border-top:1px solid #E6E2DC;display:flex;flex-direction:column;gap:24px">
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">11 — Sound</div>
+    <h2 style="margin:0;font:700 44px/1.02 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.03em">Four cues, no more</h2>
+    <p style="margin:0;max-width:640px;font:400 16px/1.55 'Instrument Sans',system-ui,sans-serif;color:#45403A">Sound marks the moments a busy cashier or cook might miss. Each cue is a short sine tone under 400ms and can be muted per device. The demos below use synthesized placeholders; final assets ship as 48kHz OGG and MP3.</p>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+    <sc-for list="{{ sounds }}" as="s" hint-placeholder-count="4">
+      <div style="padding:20px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:10px">
+        <span style="font:600 12px/1 'JetBrains Mono',ui-monospace,monospace">{{ s.token }}</span>
+        <span style="font:600 17px/1.2 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">{{ s.name }}</span>
+        <span style="font:400 13px/1.45 'Instrument Sans',system-ui,sans-serif;color:#625C55">{{ s.desc }}</span>
+        <span style="font:400 11px/1.3 'JetBrains Mono',ui-monospace,monospace;color:#857E76">{{ s.spec }}</span>
+        <button onClick="{{ s.play }}" style="margin-top:auto;height:44px;border:0;border-radius:12px;background:#F2EFEA;font:600 13px/1 'Instrument Sans',system-ui,sans-serif;cursor:pointer;display:flex;gap:8px;align-items:center;justify-content:center" style-active="transform:scale(.96)"><span style="width:16px;height:16px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/volume-2.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/volume-2.svg) center/contain no-repeat"></span>Play</button>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section id="dark" style="padding:56px 0;border-top:1px solid #E6E2DC;display:flex;flex-direction:column;gap:24px">
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">12 — Dark mode</div>
+    <h2 style="margin:0;font:700 44px/1.02 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.03em">Night service</h2>
+    <p style="margin:0;max-width:640px;font:400 16px/1.55 'Instrument Sans',system-ui,sans-serif;color:#45403A">Dark mode is the default for the kitchen display and the customer QRIS screen, and optional everywhere else. Surfaces get lighter as they rise. In dark mode, Ember shifts up to 400 so text keeps 4.5:1 contrast.</p>
+  </div>
+  <div style="border-radius:28px;background:#121110;padding:28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px">
+        <div style="height:64px;border-radius:14px;background:#121110;box-shadow:inset 0 0 0 1px #34302B;padding:8px;font:400 10px/1.2 'JetBrains Mono',ui-monospace,monospace;color:#A9A39B">bg<br>#121110</div>
+        <div style="height:64px;border-radius:14px;background:#1C1A18;padding:8px;font:400 10px/1.2 'JetBrains Mono',ui-monospace,monospace;color:#A9A39B">surface<br>#1C1A18</div>
+        <div style="height:64px;border-radius:14px;background:#26231F;padding:8px;font:400 10px/1.2 'JetBrains Mono',ui-monospace,monospace;color:#A9A39B">raised<br>#26231F</div>
+        <div style="height:64px;border-radius:14px;background:#34302B;padding:8px;font:400 10px/1.2 'JetBrains Mono',ui-monospace,monospace;color:#CFCAC3">border<br>#34302B</div>
+        <div style="height:64px;border-radius:14px;background:#F8823A;padding:8px;font:400 10px/1.2 'JetBrains Mono',ui-monospace,monospace;color:#141210">accent<br>#F8823A</div>
+      </div>
+      <div style="padding:18px;border-radius:20px;background:#1C1A18;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:600 16px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;color:#F5F2EE">Order #1042 · Table 3</span><span style="height:26px;padding:0 10px;border-radius:999px;background:#3A2A12;color:#FFC15C;font:600 12px/26px 'Instrument Sans',system-ui,sans-serif">Pending</span></div>
+        <div style="display:flex;justify-content:space-between;font:500 14px/1 'Instrument Sans',system-ui,sans-serif;color:#CFCAC3"><span>2 × Es Kopi Susu Aren</span><span style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;color:#F5F2EE">IDR 50,000</span></div>
+        <div style="display:flex;justify-content:space-between;font:500 14px/1 'Instrument Sans',system-ui,sans-serif;color:#CFCAC3"><span>1 × Croissant Almond</span><span style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;color:#F5F2EE">IDR 32,000</span></div>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:8px;margin-top:4px">
+          <button style="height:56px;border:1px solid #34302B;border-radius:16px;background:#26231F;color:#F5F2EE;font:600 15px/1 'Instrument Sans',system-ui,sans-serif">Hold</button>
+          <button style="height:56px;border:0;border-radius:16px;background:#F8823A;color:#141210;font:700 16px/1 'Instrument Sans',system-ui,sans-serif">Charge IDR 82,000</button>
+        </div>
+      </div>
+    </div>
+    <div style="padding:18px;border-radius:20px;background:#1C1A18;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 22px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;color:#F5F2EE">T-12</span><span style="font:700 22px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;color:#FF6B6E">13:42</span></div>
+      <div style="height:1px;background:#34302B"></div>
+      <span style="font:600 16px/1.3 'Instrument Sans',system-ui,sans-serif;color:#F5F2EE">2 × Mie Goreng Jawa</span>
+      <span style="font:400 14px/1.3 'Instrument Sans',system-ui,sans-serif;color:#FFA066">— no egg, extra spicy</span>
+      <span style="font:600 16px/1.3 'Instrument Sans',system-ui,sans-serif;color:#F5F2EE">1 × Teh Tarik</span>
+      <button style="margin-top:auto;height:64px;border:0;border-radius:18px;background:#1F9D55;color:#FFFFFF;font:700 18px/1 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif">Bump · Ready</button>
+    </div>
+  </div>
+</section>
+
+<section id="voice" style="padding:56px 0;border-top:1px solid #E6E2DC;display:flex;flex-direction:column;gap:24px">
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">13 — Voice &amp; copy</div>
+    <h2 style="margin:0;font:700 44px/1.02 -apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;letter-spacing:-.03em">Say it like the shift lead</h2>
+    <p style="margin:0;max-width:640px;font:400 16px/1.55 'Instrument Sans',system-ui,sans-serif;color:#45403A">Short, direct and kind. English is the default and Bahasa Indonesia is a full, first-class translation. Buttons are verbs in sentence case. Prices are written <b>IDR 25,000</b> in the UI and <b>IDR 2,4 jt</b> in charts. Speak to the user as "you" in English and "Anda" in Indonesian, or "kamu" in the self-order app.</p>
+  </div>
+  <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden">
+    <div style="display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr) minmax(0,1.2fr) minmax(0,1.2fr);padding:12px 18px;background:#F2EFEA;font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55;letter-spacing:.06em;text-transform:uppercase"><span>Moment</span><span>EN</span><span>ID</span><span>Avoid</span></div>
+    <sc-for list="{{ voice }}" as="v" hint-placeholder-count="6">
+      <div style="display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr) minmax(0,1.2fr) minmax(0,1.2fr);padding:14px 18px;border-top:1px solid #F2EFEA;gap:12px;font:500 14px/1.4 'Instrument Sans',system-ui,sans-serif">
+        <span style="color:#625C55">{{ v.m }}</span><span>{{ v.en }}</span><span>{{ v.id }}</span><span style="color:#B3261E;text-decoration:line-through;text-decoration-color:rgba(179,38,30,.4)">{{ v.no }}</span>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+</main>
+</div>
+
+<div style="position:fixed;top:20px;right:20px;z-index:50;display:flex;flex-direction:column;gap:10px;width:360px;pointer-events:none">
+  <sc-for list="{{ toasts }}" as="t" hint-placeholder-count="0">
+    <div style="pointer-events:auto;padding:14px 16px;border-radius:18px;background:#141210;color:#FFFFFF;display:flex;gap:14px;align-items:center;box-shadow:0 16px 40px -8px rgba(20,18,16,.4);transform:translateY({{ t.y }}) scale({{ t.s }});opacity:{{ t.op }};transition:{{ t.trans }}">
+      <span style="flex:none;width:40px;height:40px;border-radius:12px;background:#F26B1D;display:grid;place-items:center"><span style="width:20px;height:20px;background:#FFFFFF;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/bell.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/bell.svg) center/contain no-repeat"></span></span>
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px"><span style="font:600 15px/1.2 'Instrument Sans',system-ui,sans-serif">{{ t.title }}</span><span style="font:400 13px/1.3 'Instrument Sans',system-ui,sans-serif;color:#CFCAC3">{{ t.sub }}</span></div>
+    </div>
+  </sc-for>
+</div>
+<div data-bn-links="1" style="position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:60;max-width:calc(100vw - 24px)"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:18px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#141210;color:#FFFFFF"><span style="width:8px;height:8px;border-radius:9px;background:#F26B1D"></span>Linked pages · 23<span style="font-weight:500;color:#A9A39B">▴</span></summary><div style="width:min(460px,calc(100vw - 24px));padding:6px 16px 12px;display:flex;flex-direction:column;max-height:50vh;overflow:auto"><a href="BorNiz Auth.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Auth &amp; onboarding</b><span style="color:#45403A">Uses foundation tokens</span></a><a href="BorNiz Brand Studio.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Brand Studio</b><span style="color:#45403A">Overrides foundation tokens</span></a><a href="BorNiz Components.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Components</b><span style="color:#45403A">Built from foundation tokens</span></a><a href="BorNiz Customer Display.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Customer display</b><span style="color:#45403A">Uses foundation tokens</span></a><a href="BorNiz Design Notes.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Design notes</b><span style="color:#45403A">Tokens are fixed</span></a><a href="BorNiz Responsive.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Responsive</b><span style="color:#45403A">Spacing and type scale per breakpoint</span></a><a href="BorNiz Motion.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Motion</b><span style="color:#45403A">Motion tokens live alongside color and type</span></a><a href="BorNiz Theming.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Theming &amp; language</b><span style="color:#45403A">Base tokens</span></a><a href="BorNiz Page Spec.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Per-page design system</b><span style="color:#45403A">Every page spec starts from these tokens</span></a><a href="BorNiz Landing.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Landing site</b><span style="color:#45403A">Marketing uses the same tokens</span></a><a href="BorNiz POS Patterns.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>POS patterns</b><span style="color:#45403A">Counter patterns</span></a><a href="BorNiz System.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>System</b><span style="color:#45403A">Breakpoints, z-index, a11y</span></a><a href="BorNiz States Gallery.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>States gallery</b><span style="color:#45403A">States to build</span></a><a href="BorNiz Sitemap.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Sitemap</b><span style="color:#45403A">Listed in the sitemap</span></a><a href="BorNiz Roles.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Roles</b><span style="color:#45403A">Uses foundation tokens</span></a><a href="BorNiz Shifts.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Shifts</b><span style="color:#45403A">Uses foundation tokens</span></a><a href="BorNiz Studios.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Studios</b><span style="color:#45403A">Uses foundation tokens</span></a><a href="BorNiz Kitchen Display.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Kitchen display</b><span style="color:#45403A">Uses foundation tokens</span></a><a href="BorNiz Self Order.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Self-order</b><span style="color:#45403A">Uses foundation tokens</span></a><a href="BorNiz Manager Dashboard.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Manager</b><span style="color:#45403A">Uses foundation tokens</span></a><a href="BorNiz Owner Dashboard.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Owner dashboard</b><span style="color:#45403A">Uses foundation tokens</span></a><a href="BorNiz Owner Mobile.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Owner mobile</b><span style="color:#45403A">Uses foundation tokens</span></a><a href="BorNiz Super Admin.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Super admin</b><span style="color:#45403A">Uses foundation tokens</span></a><a href="BorNiz Connections.dc.html" style="margin-top:8px;height:40px;border-radius:12px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:13px;font-weight:700">Open the full connection map →</a></div></details></div>
+<div data-bn-spec="1" style="position:fixed;left:12px;bottom:10px;z-index:61"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:16px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#F26B1D;color:#FFFFFF">◆ Design spec · this page</summary><div style="width:min(420px,calc(100vw - 24px));max-height:65vh;overflow:auto;padding:10px 16px 14px;display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Covers</span><b style="text-align:right">Foundations: color, type, space, radius, icons, charts, sound, voice</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Page type</span><b style="text-align:right">Design-system documentation</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Theme</span><b style="text-align:right">Light doc · paper #FAF8F5</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Container</span><b style="text-align:right">max 1280px · fluid padding</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Type</span><b style="text-align:right">H1 clamp 44–88 · section 36–44 · body 15–17</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Cards</span><b style="text-align:right">radius 20–24 · 1px #E6E2DC</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Nav</span><b style="text-align:right">Sticky top nav to every DS page</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Rule</span><b style="text-align:right">Live demos use the real tokens</b></div><a href="BorNiz Page Templates.dc.html" style="margin-top:12px;height:38px;border-radius:10px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:12px;font-weight:700">Page templates →</a></div></details></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;slowMo&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;1x&quot;,&quot;2x slow-mo&quot;,&quot;4x slow-mo&quot;],&quot;default&quot;:&quot;1x&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Motion review&quot;},&quot;sound&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Motion review&quot;}}">
+const ICON = n => `url(https://unpkg.com/lucide-static@0.452.0/icons/${n}.svg) center/contain no-repeat`;
+const fmtIDR = v => 'IDR ' + Math.round(v).toLocaleString('en-US');
+const fmtShort = v => { const a = Math.abs(v); if (a >= 1e9) return 'IDR ' + (v/1e9).toFixed(1).replace('.', ',') + ' M'; if (a >= 1e6) return 'IDR ' + (v/1e6).toFixed(1).replace('.', ',') + ' jt'; if (a >= 1e3) return 'IDR ' + Math.round(v/1e3) + ' rb'; return 'IDR ' + v; };
+const SPD = { '1x': 1, '2x slow-mo': 2, '4x slow-mo': 4 };
+const E = { std: 'cubic-bezier(.65,0,.35,1)', dec: 'cubic-bezier(.2,.8,.2,1)', acc: 'cubic-bezier(.4,0,1,1)', spring: 'cubic-bezier(.3,1.35,.5,1)', lin: 'linear' };
+function rng(seed) { let s = seed; return () => (s = (s * 9301 + 49297) % 233280) / 233280; }
+
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { sw: [true, false, true], seg: 0, tab: 0, chk: [true, false], radio: 0, qty: 2, pin: '', tender: '', drawer: false, play: false, pay: 'idle', payIn: false, shake: 0, toasts: [], kpi: 0, qris: 'waiting', qrisLeft: 179, cartAdds: [0, 2, 0], range: 1, rt: 0 };
+    this.refs2 = { line: React.createRef(), bar: React.createRef(), donut: React.createRef(), combo: React.createRef(), gauge: React.createRef(), rt: React.createRef(), s1: React.createRef(), s2: React.createRef(), s3: React.createRef() };
+    this.charts = {};
+    this.timers = [];
+  }
+  f() { return SPD[this.props.slowMo] || 1; }
+  componentDidMount() {
+    this.countUp();
+    this.timers.push(setInterval(() => {
+      if (this.state.qris === 'waiting') { const l = this.state.qrisLeft - 1; this.setState(l <= 0 ? { qris: 'expired', qrisLeft: 0 } : { qrisLeft: l }); }
+    }, 1000));
+    const wait = () => { if (window.Chart) this.buildCharts(); else setTimeout(wait, 120); };
+    wait();
+  }
+  componentWillUnmount() { this.timers.forEach(clearInterval); Object.values(this.charts).forEach(c => c && c.destroy()); }
+
+  tone(seq) {
+    if (this.props.sound === false) return;
+    try {
+      const ctx = this.ac || (this.ac = new (window.AudioContext || window.webkitAudioContext)());
+      let t = ctx.currentTime;
+      seq.forEach(([hz, ms, gap = 0]) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = hz; o.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.18, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + ms / 1000);
+        o.start(t); o.stop(t + ms / 1000 + 0.02); t += (ms + gap) / 1000;
+      });
+    } catch (e) {}
+  }
+  sfx = {
+    order: () => this.tone([[880, 120, 20], [1320, 180]]),
+    success: () => this.tone([[523, 90], [659, 90], [784, 200]]),
+    fail: () => this.tone([[220, 140, 40], [196, 200]]),
+    scan: () => this.tone([[1760, 60]]),
+  };
+
+  countUp = () => {
+    const target = 48250000, dur = 700 * this.f(), t0 = performance.now();
+    const step = now => { const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 4); this.setState({ kpi: target * e }); if (p < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  };
+
+  baseOpts(extra = {}) {
+    const crosshair = { id: 'bnCross', afterDatasetsDraw(c) { const a = c.tooltip && c.tooltip.getActiveElements(); if (!a || !a.length) return; const x = a[0].element.x, { top, bottom } = c.chartArea, k = c.ctx; k.save(); k.strokeStyle = '#141210'; k.globalAlpha = .5; k.lineWidth = 1; k.setLineDash([3, 3]); k.beginPath(); k.moveTo(x, top); k.lineTo(x, bottom); k.stroke(); k.restore(); } };
+    return {
+      plugins: [crosshair],
+      options: Object.assign({
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 600 * this.f(), easing: 'easeOutQuart' },
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: false }, tooltip: { backgroundColor: '#141210', padding: 12, cornerRadius: 12, displayColors: false, titleFont: { family: "'Instrument Sans',system-ui,sans-serif", size: 12, weight: '500' }, titleColor: '#CFCAC3', bodyFont: { family: "-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif", size: 15, weight: '700' }, callbacks: { label: c => (c.dataset.label ? c.dataset.label + ': ' : '') + (c.dataset.fmt === 'n' ? c.parsed.y : fmtShort(c.parsed.y)) } } },
+        scales: {
+          x: { grid: { display: false }, border: { display: false }, ticks: { color: '#857E76', font: { family: "'JetBrains Mono',ui-monospace,monospace", size: 10 } } },
+          y: { grid: { color: '#F2EFEA' }, border: { display: false }, ticks: { color: '#857E76', font: { family: "'JetBrains Mono',ui-monospace,monospace", size: 10 }, callback: v => fmtShort(v).replace('IDR ', '') } },
+        },
+      }, extra),
+    };
+  }
+  grad(alpha = .22) { return ctx => { const { chart } = ctx, a = chart.chartArea; if (!a) return 'transparent'; const g = chart.ctx.createLinearGradient(0, a.top, 0, a.bottom); g.addColorStop(0, `rgba(242,107,29,${alpha})`); g.addColorStop(1, 'rgba(242,107,29,0)'); return g; }; }
+  series(n, seed, base, amp) { const r = rng(seed); return Array.from({ length: n }, (_, i) => Math.round(base + Math.sin(i / 2.2) * amp * .6 + r() * amp)); }
+
+  buildCharts() {
+    const C = window.Chart, R = this.refs2;
+    Object.values(this.charts).forEach(c => c && c.destroy());
+    const n = [7, 14, 30, 12][this.state.range];
+    const labels = Array.from({ length: n }, (_, i) => this.state.range === 3 ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][i] : String(i + 1));
+    const cur = this.series(n, 7 + this.state.range, 2.2e6, 1.4e6), prev = this.series(n, 3 + this.state.range, 1.9e6, 1.1e6);
+    if (R.line.current) { const b = this.baseOpts(); this.charts.line = new C(R.line.current, { type: 'line', data: { labels, datasets: [
+      { label: 'This period', data: cur, borderColor: '#F26B1D', borderWidth: 3, tension: .4, fill: true, backgroundColor: this.grad(), pointRadius: 0, pointHoverRadius: 6, pointHoverBackgroundColor: '#FFFFFF', pointHoverBorderColor: '#141210', pointHoverBorderWidth: 3 },
+      { label: 'Previous', data: prev, borderColor: '#A9A39B', borderWidth: 2, borderDash: [5, 5], tension: .4, pointRadius: 0, fill: false },
+    ] }, ...b }); }
+    if (R.bar.current) { const b = this.baseOpts(); b.options.scales.x.stacked = true; b.options.scales.y.stacked = true; const d = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      const cols = ['#F26B1D', '#141210', '#A9A39B', '#FFC49E'], names = ['Kemang', 'Senopati', 'BSD', 'Bandung'];
+      this.charts.bar = new C(R.bar.current, { type: 'bar', data: { labels: d, datasets: names.map((nm, i) => ({ label: nm, data: this.series(7, 11 + i, 6e5 + i * 1e5, 6e5), backgroundColor: cols[i], borderRadius: 6, borderSkipped: false, barPercentage: .62 })) }, ...b }); }
+    if (R.combo.current) { const b = this.baseOpts(); b.options.scales.y1 = { position: 'right', grid: { display: false }, border: { display: false }, ticks: { color: '#857E76', font: { family: "'JetBrains Mono',ui-monospace,monospace", size: 10 } } }; b.options.scales.y.ticks.callback = v => v;
+      const l = labels.slice(0, 12);
+      this.charts.combo = new C(R.combo.current, { data: { labels: l, datasets: [
+        { type: 'bar', label: 'Transactions', fmt: 'n', data: this.series(l.length, 5, 60, 70), backgroundColor: '#E6E2DC', hoverBackgroundColor: '#CFCAC3', borderRadius: 8, yAxisID: 'y' },
+        { type: 'line', label: 'Avg ticket', data: this.series(l.length, 9, 52000, 26000), borderColor: '#F26B1D', borderWidth: 3, tension: .4, pointRadius: 0, pointHoverRadius: 5, yAxisID: 'y1' },
+      ] }, ...b }); }
+    if (R.donut.current) { this.charts.donut = new C(R.donut.current, { type: 'doughnut', data: { labels: ['QRIS', 'Cash', 'Card', 'E-wallet', 'VA'], datasets: [{ data: [46, 22, 14, 12, 6], backgroundColor: ['#F26B1D', '#141210', '#857E76', '#FFC49E', '#E6E2DC'], borderWidth: 0, spacing: 3, borderRadius: 6, hoverOffset: 6 }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '68%', animation: { duration: 600 * this.f(), easing: 'easeOutQuart', animateRotate: true }, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#141210', padding: 10, cornerRadius: 10, displayColors: false, bodyFont: { family: "-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif", size: 14, weight: '700' }, callbacks: { label: c => c.label + ' · ' + c.parsed + '%' } } } } }); }
+    if (R.gauge.current) { this.charts.gauge = new C(R.gauge.current, { type: 'doughnut', data: { datasets: [{ data: [72, 28], backgroundColor: ['#F26B1D', '#F2EFEA'], borderWidth: 0, borderRadius: 20 }] },
+      options: { responsive: true, maintainAspectRatio: false, rotation: -90, circumference: 180, cutout: '78%', animation: { duration: 700 * this.f(), easing: 'easeOutQuart' }, plugins: { legend: { display: false }, tooltip: { enabled: false } } } }); }
+    const spark = [[R.s1, 1], [R.s2, 2], [R.s3, 3]];
+    spark.forEach(([r, s], i) => { if (!r.current) return; this.charts['s' + i] = new C(r.current, { type: 'line', data: { labels: Array(16).fill(''), datasets: [{ data: this.series(16, s * 13, 40, 30), borderColor: i === 2 ? '#857E76' : '#F26B1D', borderWidth: 2, tension: .4, fill: true, backgroundColor: i === 2 ? 'rgba(133,126,118,.12)' : this.grad(.18), pointRadius: 0 }] },
+      options: { responsive: true, maintainAspectRatio: false, animation: { duration: 600 * this.f(), easing: 'easeOutQuart' }, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false } } } }); });
+    if (R.rt.current) { const b = this.baseOpts(); b.options.animation = { duration: 300 }; const r = rng(42);
+      const data = Array.from({ length: 20 }, () => Math.round(1e5 + r() * 2.5e5));
+      this.charts.rt = new C(R.rt.current, { type: 'line', data: { labels: data.map((_, i) => `-${(20 - i) * 2}s`), datasets: [{ label: 'Sales', data, borderColor: '#F26B1D', borderWidth: 2.5, tension: .4, fill: true, backgroundColor: this.grad(), pointRadius: 0, pointHoverRadius: 5 }] }, ...b });
+      if (!this.rtTimer) { this.rtTimer = setInterval(() => { const ch = this.charts.rt; if (!ch) return; const ds = ch.data.datasets[0].data; ds.push(Math.round(1e5 + Math.random() * 2.8e5)); ds.shift(); ch.update(); }, 2000); this.timers.push(this.rtTimer); } }
+  }
+
+  setRange(i) { this.setState({ range: i }, () => this.buildCharts()); }
+  replayCharts = () => { Object.values(this.charts).forEach(c => { if (c) { c.reset(); c.update(); } }); this.setState({ rt: this.state.rt + 1 }); };
+
+  pushToast = () => {
+    const id = Date.now(), tables = [7, 3, 12, 5, 9], items = [3, 2, 5, 1, 4];
+    const k = Math.floor(Math.random() * 5);
+    this.sfx.order();
+    this.setState(s => ({ toasts: [...s.toasts, { id, in: false, out: false, title: `New order · Table ${tables[k]}`, sub: `${items[k]} items · ${fmtIDR(items[k] * 28500)} · QR menu` }].slice(-3) }));
+    setTimeout(() => this.setState(s => ({ toasts: s.toasts.map(t => t.id === id ? { ...t, in: true } : t) })), 20);
+    setTimeout(() => this.setState(s => ({ toasts: s.toasts.map(t => t.id === id ? { ...t, out: true } : t) })), 5000 * this.f());
+    setTimeout(() => this.setState(s => ({ toasts: s.toasts.filter(t => t.id !== id) })), 5000 * this.f() + 200 * this.f());
+  };
+  runPay = () => {
+    this.setState({ pay: 'processing', payIn: false });
+    setTimeout(() => { this.setState({ pay: 'success', payIn: false }); this.sfx.success(); setTimeout(() => this.setState({ payIn: true }), 20); }, 1200 * this.f());
+  };
+  runFail = () => {
+    this.setState({ pay: 'processing', payIn: false });
+    setTimeout(() => { this.setState({ pay: 'failed', payIn: true }); this.sfx.fail(); [-10, 10, -7, 7, -3, 0].forEach((x, i) => setTimeout(() => this.setState({ shake: x }), i * 45 * this.f())); }, 900 * this.f());
+  };
+
+  renderVals() {
+    const s = this.state, F = this.f();
+    const spinner = (color) => React.createElement('span', { style: { width: 18, height: 18, borderRadius: 999, border: `2.5px solid ${color}`, borderTopColor: 'transparent', display: 'inline-block', animation: `bnSpin ${700 * F}ms linear infinite` } });
+    const sk = (w, h) => React.createElement('div', { style: { width: w, height: h, borderRadius: 8, background: 'linear-gradient(90deg,#F2EFEA 0px,#FAF8F5 120px,#F2EFEA 240px)', backgroundSize: '800px 100%', animation: `bnShimmer ${1200 * F}ms linear infinite` } });
+    const skeleton = React.createElement('div', { style: { display: 'flex', gap: 12, alignItems: 'center' } },
+      React.createElement('div', { style: { width: 48, height: 48, borderRadius: 14, background: 'linear-gradient(90deg,#F2EFEA 0px,#FAF8F5 120px,#F2EFEA 240px)', backgroundSize: '800px 100%', animation: `bnShimmer ${1200 * F}ms linear infinite`, flex: 'none' } }),
+      React.createElement('div', { style: { flex: 1, display: 'flex', flexDirection: 'column', gap: 8 } }, sk('70%', 12), sk('45%', 12)),
+      sk(72, 20));
+    const checkIcon = (size, color) => React.createElement('span', { style: { width: size, height: size, background: color, WebkitMask: ICON('check'), mask: ICON('check'), transform: `scale(${s.payIn ? 1 : 0})`, transition: `transform ${260 * F}ms ${E.spring} ${160 * F}ms` } });
+    const xIcon = React.createElement('span', { style: { width: 52, height: 52, background: '#FFFFFF', WebkitMask: ICON('x'), mask: ICON('x') } });
+
+    const P = {
+      idle: { circle: '#F2EFEA', scale: 1, icon: React.createElement('span', { style: { width: 48, height: 48, background: '#857E76', WebkitMask: ICON('credit-card'), mask: ICON('credit-card') } }), title: 'Ready to charge', sub: 'Pick a method, then tap Charge. The result appears here and on the customer display.' },
+      processing: { circle: '#FFF3EB', scale: 1, icon: React.createElement('span', { style: { width: 48, height: 48, borderRadius: 999, border: '4px solid #F26B1D', borderTopColor: 'transparent', display: 'inline-block', animation: `bnSpin ${700 * F}ms linear infinite` } }), title: 'Waiting for payment…', sub: 'Keep this screen open. Do not hand over the receipt yet.' },
+      success: { circle: '#1F9D55', scale: s.payIn ? 1 : .6, icon: checkIcon(56, '#FFFFFF'), title: 'Payment received', sub: 'IDR 81,900 via QRIS · receipt sent to WhatsApp' },
+      failed: { circle: '#E5383B', scale: 1, icon: xIcon, title: 'Payment failed', sub: 'Card declined by issuer (code 51). Try another method or ask the customer to retry.' },
+    }[s.pay];
+
+    const qr = { waiting: ['#3A2A12', '#FFC15C', 'Waiting', 'Scan with any bank or e-wallet app', 1], paid: ['#163A24', '#6EE7A0', 'Paid', 'Thank you! Payment received.', .2], expired: ['#3A1414', '#FF8A8C', 'Expired', 'This code expired. Ask the cashier for a new one.', .15] }[s.qris];
+    const mm = String(Math.floor(s.qrisLeft / 60)).padStart(1, '0'), ss = String(s.qrisLeft % 60).padStart(2, '0');
+
+    const tender = parseInt(s.tender || '0', 10), due = 81900, change = tender - due;
+    const press = d => () => { this.sfx.scan(); this.setState(st => ({ tender: d === 'del' ? st.tender.slice(0, -1) : (st.tender + d).slice(0, 8) })); };
+    const pinPress = d => () => this.setState(st => { if (d === 'del') return { pin: st.pin.slice(0, -1) }; const p = (st.pin + d).slice(0, 6); if (p.length === 6) setTimeout(() => { this.sfx.success(); this.setState({ pin: '' }); }, 400); return { pin: p }; });
+
+    const heatR = rng(17);
+    const heat = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, di) => ({ day, cells: Array.from({ length: 14 }, (_, h) => { const hr = h + 8; let v = .12 + heatR() * .2; if (hr >= 11 && hr <= 13) v += .45; if (hr >= 18 && hr <= 20) v += .5; if (di >= 4) v += .15; v = Math.min(1, v); return { bg: `rgba(242,107,29,${(0.08 + v * 0.92).toFixed(2)})`, title: `${day} ${hr}:00 · ${Math.round(v * 120)} orders` }; }) }));
+
+    const tokens = [
+      ['--dur-instant', '80ms · ease-out', 'Press feedback, key tap', 80, E.dec],
+      ['--dur-fast', '140ms · ease-out', 'Hover, color, checkbox', 140, E.dec],
+      ['--dur-base', '220ms · ease-out', 'Tabs, switch, tooltip, page fade', 220, E.dec],
+      ['--dur-slow', '320ms · ease-out', 'Sheet, drawer, dialog enter', 320, E.dec],
+      ['--exit', '0.7× · ease-in', 'Every exit: faster than its entrance', 220, E.acc],
+      ['--ease-in-out', '220ms · in-out', 'On-screen moves: tab indicator, reorder', 220, E.std],
+      ['--dur-celebrate', '480ms · spring', 'Payment success only; badge pop at 220ms', 480, E.spring],
+      ['--dur-chart', '600ms · ease-out', 'Chart draw-in, count-up', 600, E.dec],
+    ];
+
+    const segs = ['Dine-in', 'Takeaway', 'Delivery'];
+    const tabs = [['All', 128], ['Paid', 112], ['Pending', 9], ['Void', 7]];
+    const tilesData = [['Es Kopi Susu Aren', 25000, false], ['Croissant Almond', 32000, false], ['Matcha Latte', 30000, true]];
+
+    return {
+      ember: [['50', '#FFF3EB'], ['100', '#FFE2CF'], ['200', '#FFC49E'], ['300', '#FF9F63'], ['400', '#F8823A'], ['500', '#F26B1D'], ['600', '#D9560B'], ['700', '#B04408'], ['800', '#84340A'], ['900', '#4F1F06']].map(([n, h]) => ({ name: 'ember-' + n, hex: h })),
+      ink: [['0', '#FFFFFF'], ['50', '#FAF8F5'], ['100', '#F2EFEA'], ['200', '#E6E2DC'], ['300', '#CFCAC3'], ['400', '#A9A39B'], ['500', '#857E76'], ['600', '#625C55'], ['700', '#45403A'], ['800', '#2E2A26'], ['900', '#1F1C19'], ['950', '#141210']].map(([n, h]) => ({ name: 'ink-' + n, hex: h })),
+      status: [
+        { name: 'Success', base: '#1F9D55', soft: '#E3F5EA', use: 'Paid, ready, in stock, synced, on target.' },
+        { name: 'Warning', base: '#E5A000', soft: '#FFF4D6', use: 'Pending, low stock, order 8–12 min old, offline.' },
+        { name: 'Danger', base: '#E5383B', soft: '#FDE8E8', use: 'Void, failed payment, out of stock, order over 12 min.' },
+        { name: 'Info', base: '#2F6FEB', soft: '#E6EEFD', use: 'Refunded, scheduled, links in dense tables.' },
+      ],
+      semantic: [
+        ['--bg-canvas', '#FAF8F5', '#121110', 'App background'], ['--bg-surface', '#FFFFFF', '#1C1A18', 'Cards, panels, tables'], ['--bg-sunken', '#F2EFEA', '#0C0B0A', 'Inputs, segmented track, table header'],
+        ['--fg-1', '#141210', '#F5F2EE', 'Primary text, numerals'], ['--fg-2', '#625C55', '#A9A39B', 'Secondary text, labels'], ['--border', '#E6E2DC', '#34302B', 'Card border, dividers'],
+        ['--accent', '#F26B1D', '#F8823A', 'Primary action, live data line'], ['--accent-hover', '#D9560B', '#FF9F63', 'Primary hover'], ['--accent-soft', '#FFF3EB', '#3A2214', 'Selected tile, active nav'], ['--focus-ring', '#FFC49E', '#84340A', '4px focus halo'],
+      ].map(([name, light, dark, use]) => ({ name, light, dark, use })),
+      typeScale: [
+        ['display-xl', "-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif", '88px', '.92', 700, '-.045em', 'Sell fast.', '88 / 0.92 · 700 · −4.5%'],
+        ['display-l', "-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif", '64px', '1', 700, '-.04em', 'IDR 4,3 jt today', '64 / 1.0 · 700 · −4%'],
+        ['heading-1', "-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif", '44px', '1.02', 700, '-.03em', 'Sales overview', '44 / 1.02 · 700 · −3%'],
+        ['heading-2', "-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif", '32px', '1.1', 700, '-.02em', 'Total IDR 81,900', '32 / 1.1 · 700 · −2%'],
+        ['heading-3', "-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif", '22px', '1.2', 600, '-.01em', 'Order #1042 · Table 3', '22 / 1.2 · 600'],
+        ['body-l', "'Instrument Sans',system-ui,sans-serif", '18px', '1.55', 400, '0', 'Sales are saved on this device and sync automatically.', '18 / 1.55 · 400'],
+        ['body', "'Instrument Sans',system-ui,sans-serif", '16px', '1.5', 400, '0', 'Pick a payment method to continue.', '16 / 1.5 · 400 · POS base'],
+        ['label', "'Instrument Sans',system-ui,sans-serif", '14px', '1.3', 600, '0', 'Product name', '14 / 1.3 · 600'],
+        ['caption', "'Instrument Sans',system-ui,sans-serif", '12px', '1.3', 500, '.01em', 'Updated 2 min ago', '12 / 1.3 · 500'],
+        ['mono', "'JetBrains Mono',ui-monospace,monospace", '13px', '1.3', 500, '0', '#TRX-2048 · KOP-001 · OTP 4821', '13 / 1.3 · 500'],
+      ].map(([token, family, size, lh, weight, ls, sample, spec]) => ({ token, family, size, lh, weight, ls, sample, spec })),
+      spacing: [['space-1', '4px'], ['space-2', '8px'], ['space-3', '12px'], ['space-4', '16px'], ['space-5', '20px'], ['space-6', '24px'], ['space-8', '32px'], ['space-10', '40px'], ['space-12', '48px'], ['space-16', '64px']].map(([name, px]) => ({ name, px })),
+      radii: [['xs', '8px'], ['sm', '12px'], ['md', '16px'], ['lg', '20px'], ['xl', '28px'], ['pill', '999px']].map(([name, px]) => ({ name, px })),
+      shadows: [
+        { name: 'e0', value: '0 0 0 1px #E6E2DC', use: 'Cards, tiles' },
+        { name: 'e1', value: '0 1px 2px rgba(20,18,16,.06),0 0 0 1px #E6E2DC', use: 'Hover, selected' },
+        { name: 'e2', value: '0 8px 24px -6px rgba(20,18,16,.16)', use: 'Popover, menu' },
+        { name: 'e3', value: '0 24px 60px -12px rgba(20,18,16,.35)', use: 'Dialog, toast, drawer' },
+      ],
+      icons: ['shopping-bag', 'receipt', 'qr-code', 'scan-line', 'banknote', 'credit-card', 'wallet', 'landmark', 'split', 'store', 'users', 'package', 'chef-hat', 'clock', 'bell', 'printer', 'search', 'plus', 'minus', 'trash-2', 'wifi-off', 'tag', 'calendar', 'settings'].map(n => ({ name: n, mask: ICON(n) })),
+      spinnerWhite: spinner('#FFFFFF'),
+      segItems: segs.map((label, i) => ({ label, bg: s.seg === i ? '#FFFFFF' : 'transparent', fg: s.seg === i ? '#141210' : '#625C55', shadow: s.seg === i ? '0 1px 3px rgba(20,18,16,.12)' : 'none', onClick: () => this.setState({ seg: i }) })),
+      tabItems: tabs.map(([label, count], i) => ({ label, count, line: s.tab === i ? '#F26B1D' : 'transparent', fg: s.tab === i ? '#141210' : '#625C55', onClick: () => this.setState({ tab: i }) })),
+      switches: ['Print receipt automatically', 'Accept tips', 'Send receipt via WhatsApp'].map((label, i) => ({ label, track: s.sw[i] ? '#F26B1D' : '#CFCAC3', x: s.sw[i] ? '20px' : '0px', onClick: () => this.setState(st => ({ sw: st.sw.map((v, j) => j === i ? !v : v) })) })),
+      checks: ['Less sugar', 'Extra shot'].map((label, i) => ({ label, border: s.chk[i] ? '#F26B1D' : '#A9A39B', bg: s.chk[i] ? '#F26B1D' : '#FFFFFF', op: s.chk[i] ? 1 : 0, scale: s.chk[i] ? 1 : .4, onClick: () => this.setState(st => ({ chk: st.chk.map((v, j) => j === i ? !v : v) })) })),
+      radios: ['Hot', 'Iced'].map((label, i) => ({ label, border: s.radio === i ? '#F26B1D' : '#A9A39B', scale: s.radio === i ? 1 : 0, onClick: () => this.setState({ radio: i }) })),
+      qty: s.qty, qtyTotal: fmtIDR(s.qty * 25000),
+      qtyDec: () => this.setState(st => ({ qty: Math.max(1, st.qty - 1) })), qtyInc: () => this.setState(st => ({ qty: Math.min(99, st.qty + 1) })),
+      skeleton,
+      pinDots: Array.from({ length: 6 }, (_, i) => ({ bg: i < s.pin.length ? '#141210' : 'transparent', scale: i === s.pin.length - 1 ? 1.15 : 1 })),
+      pinKeys: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'].map(k => ({ label: k, bg: k === '' ? 'transparent' : '#F2EFEA', onClick: k === '' ? () => {} : pinPress(k === '⌫' ? 'del' : k) })),
+      txRows: [
+        ['#TRX-2048', '14:32', 'Walk-in', 'QRIS', 'Paid', 81900], ['#TRX-2047', '14:18', 'Dewi A.', 'Cash', 'Paid', 54000], ['#TRX-2046', '14:02', 'Budi S.', 'Card', 'Refunded', 126500], ['#TRX-2045', '13:55', 'Table 4', 'Split', 'Pending', 212000], ['#TRX-2044', '13:41', 'Walk-in', 'GoPay', 'Void', 38000],
+      ].map(([id, time, customer, method, status, t]) => { const c = { Paid: ['#E3F5EA', '#156B3A'], Refunded: ['#E6EEFD', '#1F4FB5'], Pending: ['#FFF4D6', '#8A5A00'], Void: ['#FDE8E8', '#B3261E'] }[status]; return { id, time, customer, method, status, total: fmtIDR(t), sbg: c[0], sfg: c[1] }; }),
+      tiles: tilesData.map(([name, price, sold], i) => ({ name, price: sold ? 'Sold out' : fmtIDR(price), op: sold ? .45 : 1, badge: s.cartAdds[i] || '', badgeBg: s.cartAdds[i] ? '#F26B1D' : 'transparent', badgeScale: s.cartAdds[i] ? 1 : 0, onClick: sold ? () => {} : () => { this.sfx.scan(); this.setState(st => ({ cartAdds: st.cartAdds.map((v, j) => j === i ? v + 1 : v) })); } })),
+      cart: [{ qty: 2, name: 'Es Kopi Susu Aren', mod: 'Iced · less sugar', total: 'IDR 50,000' }, { qty: 1, name: 'Croissant Almond', mod: 'Warm up', total: 'IDR 32,000' }, { qty: 1, name: 'Air Mineral', mod: '—', total: 'IDR 8,000' }],
+      tickets: [
+        { table: 'T-04', timer: '03:12', border: '#E6E2DC', head: '#F2EFEA', headFg: '#141210', items: ['2 × Nasi Goreng', '1 × Es Teh'], meta: 'Dine-in · Rina' },
+        { table: 'T-09', timer: '09:47', border: '#E5A000', head: '#FFF4D6', headFg: '#5C3D00', items: ['1 × Sop Buntut', '2 × Teh Tarik'], meta: 'Dine-in · Andi' },
+        { table: 'GF-21', timer: '13:05', border: '#E5383B', head: '#E5383B', headFg: '#FFFFFF', items: ['3 × Ayam Geprek', '— extra sambal'], meta: 'GoFood · OTP 4821' },
+      ],
+      numKeys: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0', '⌫'].map(k => ({ label: k, onClick: press(k === '⌫' ? 'del' : k) })),
+      tenderText: fmtIDR(tender), changeText: s.tender === '' ? '—' : (change < 0 ? 'Short ' + fmtIDR(-change) : fmtIDR(change)), changeColor: change < 0 && s.tender !== '' ? '#B3261E' : '#156B3A',
+      methods: [['QRIS', 'All banks & e-wallets', 'qr-code'], ['Cash', 'Numpad & change', 'banknote'], ['Card', 'Debit · credit · EDC', 'credit-card'], ['E-wallet', 'GoPay · OVO · DANA', 'wallet'], ['Virtual account', 'BCA · BNI · Mandiri', 'landmark'], ['Split bill', 'Even · item · custom', 'split']].map(([label, sub, ic], i) => ({ label, sub, mask: ICON(ic), border: i === 0 ? '#F26B1D' : '#E6E2DC', bg: i === 0 ? '#FFF3EB' : '#FFFFFF', onClick: () => this.sfx.scan() })),
+      qrisBadgeBg: qr[0], qrisBadgeFg: qr[1], qrisLabel: qr[2], qrisMsg: qr[3], qrisQrOp: qr[4], qrisPaid: s.qris === 'paid',
+      qrisCheck: React.createElement('span', { style: { width: 96, height: 96, background: '#FFFFFF', WebkitMask: ICON('check'), mask: ICON('check') } }),
+      qrisTime: s.qris === 'paid' ? 'Done' : `${mm}:${ss}`, qrisTimerColor: s.qris === 'expired' ? '#FF8A8C' : (s.qrisLeft < 30 ? '#FFC15C' : '#FFFFFF'),
+      qrisWait: () => this.setState({ qris: 'waiting', qrisLeft: 179 }), qrisPay: () => { this.sfx.success(); this.setState({ qris: 'paid' }); }, qrisExpire: () => { this.sfx.fail(); this.setState({ qris: 'expired', qrisLeft: 0 }); },
+      payStateName: 'state: ' + s.pay, payCircle: P.circle, payScale: P.scale, payIcon: P.icon, payTitle: P.title, paySub: P.sub, shakeX: s.shake + 'px', runPay: this.runPay, runFail: this.runFail,
+      ranges: ['7D', '14D', '30D', '12M'].map((label, i) => ({ label, bg: s.range === i ? '#FFFFFF' : 'transparent', shadow: s.range === i ? '0 1px 3px rgba(20,18,16,.12)' : 'none', onClick: () => this.setRange(i) })),
+      replayCharts: this.replayCharts,
+      kpis: [
+        { label: 'Revenue today', value: 'IDR 4,3 jt', delta: '+12,4%', dbg: '#E3F5EA', dfg: '#156B3A', ref: this.refs2.s1 },
+        { label: 'Transactions', value: '186', delta: '+8,1%', dbg: '#E3F5EA', dfg: '#156B3A', ref: this.refs2.s2 },
+        { label: 'Avg ticket', value: 'IDR 23 rb', delta: '−2,3%', dbg: '#FDE8E8', dfg: '#B3261E', ref: this.refs2.s3 },
+      ],
+      lineRef: this.refs2.line, barRef: this.refs2.bar, donutRef: this.refs2.donut, comboRef: this.refs2.combo, gaugeRef: this.refs2.gauge, rtRef: this.refs2.rt,
+      mixLegend: [['QRIS', '#F26B1D', '46%'], ['Cash', '#141210', '22%'], ['Card', '#857E76', '14%'], ['E-wallet', '#FFC49E', '12%'], ['VA', '#E6E2DC', '6%']].map(([label, color, pct]) => ({ label, color, pct })),
+      heat, hours: Array.from({ length: 14 }, (_, i) => String(i + 8)),
+      funnel: [['Opened menu', 1240], ['Added to cart', 820], ['Checkout', 610], ['Paid', 574]].map(([label, val], i) => ({ label, val: val.toLocaleString('en-US'), w: (val / 1240 * 100).toFixed(0) + '%', color: i === 3 ? '#F26B1D' : ['#141210', '#45403A', '#857E76'][i] })),
+      ranking: [['Es Kopi Susu Aren', 412, 10.3e6], ['Croissant Almond', 268, 8.6e6], ['Matcha Latte', 231, 6.9e6], ['Nasi Goreng Spesial', 154, 5.9e6], ['Teh Tarik', 198, 3.6e6]].map(([name, qty, rev], i) => ({ rank: i + 1, name, qty, rev: fmtShort(rev), w: (rev / 10.3e6 * 100).toFixed(0) + '%', rankColor: i === 0 ? '#D9560B' : '#141210', barColor: i === 0 ? '#F26B1D' : '#141210' })),
+      togglePlay: () => this.setState(st => ({ play: !st.play })),
+      motionTokens: tokens.map(([name, value, use, ms, ease]) => ({ name, value, use, x: s.play ? 'calc(100% - 24px)' : '4px', transition: `left ${ms * F}ms ${ease}` })),
+      toggleDrawer: () => this.setState(st => ({ drawer: !st.drawer })),
+      drawerX: s.drawer ? '0%' : '105%', drawerTrans: s.drawer ? `${320 * F}ms ${E.dec}` : `${200 * F}ms ${E.acc}`, drawerDur: `${200 * F}ms`, scrimOp: s.drawer ? .4 : 0, scrimPe: s.drawer ? 'auto' : 'none',
+      pushToast: this.pushToast,
+      toasts: s.toasts.map(t => ({ ...t, y: t.out ? '-16px' : (t.in ? '0px' : '-24px'), s: t.in && !t.out ? 1 : .96, op: t.in && !t.out ? 1 : 0, trans: t.out ? `transform ${160 * F}ms ${E.acc},opacity ${160 * F}ms` : `transform ${420 * F}ms ${E.spring},opacity ${140 * F}ms` })),
+      kpiText: fmtIDR(s.kpi), countUp: this.countUp,
+      sounds: [
+        { token: 'sfx-order-in', name: 'New order', desc: 'Kitchen, cashier and the owner live monitor. Repeats every 20s while an order is still unaccepted.', spec: '880 → 1320 Hz · 120 + 180ms', play: this.sfx.order },
+        { token: 'sfx-pay-success', name: 'Payment received', desc: 'Cashier and customer display, when a payment settles.', spec: 'C5 E5 G5 arpeggio · 380ms', play: this.sfx.success },
+        { token: 'sfx-pay-fail', name: 'Payment failed', desc: 'Declined card, expired QRIS, or a sync error that blocks checkout.', spec: '220 → 196 Hz · 380ms', play: this.sfx.fail },
+        { token: 'sfx-scan', name: 'Scan / add', desc: 'Barcode scan and add-to-cart. Very short, so it works on rapid repeats.', spec: '1760 Hz · 60ms', play: this.sfx.scan },
+      ],
+      voice: [
+        { m: 'Primary action', en: 'Charge IDR 81,900', id: 'Tagih IDR 81.900', no: 'Click here to proceed with payment' },
+        { m: 'Success', en: 'Payment received', id: 'Pembayaran diterima', no: 'Yay! 🎉 Transaction successful!!' },
+        { m: 'Error', en: 'Card declined. Try another method.', id: 'Kartu ditolak. Coba metode lain.', no: 'Error 51: Transaction failure' },
+        { m: 'Empty state', en: 'No sales yet today. Open a shift to start selling.', id: 'Belum ada penjualan hari ini. Buka shift untuk mulai.', no: 'Nothing to see here!' },
+        { m: 'Offline', en: "You're offline. Sales will sync later.", id: 'Anda offline. Penjualan akan disinkronkan nanti.', no: 'Network error occurred' },
+        { m: 'Destructive', en: 'Void item', id: 'Batalkan item', no: 'Delete' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FAF8F5;color:#141210;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+*{box-sizing:border-box}
+a{color:#D9560B;text-decoration:none}
+a:hover{color:#B04408;text-decoration:underline}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="height:100vh;display:flex">
+  <nav style="width:248px;flex:none;height:100vh;overflow:auto;background:#FFFFFF;border-right:1px solid #E6E2DC;padding:18px 12px 24px;display:flex;flex-direction:column;gap:2px">
+    <div style="display:flex;align-items:center;gap:10px;padding:0 8px 16px"><span style="width:34px;height:34px;border-radius:10px;background:#F26B1D;color:#FFFFFF;display:grid;place-items:center;font:800 15px/1 'Space Grotesk',sans-serif">B</span><span style="display:flex;flex-direction:column;gap:2px"><b style="font:700 18px/1 'Space Grotesk',sans-serif;letter-spacing:-.02em">BorNiz</b><span style="font:500 10px/1 'JetBrains Mono',monospace;color:#625C55;letter-spacing:.06em">DESIGN SYSTEM · ALL IN ONE</span></span></div>
+    <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+      <span style="padding:14px 10px 6px;font:700 10px/1 'JetBrains Mono',monospace;letter-spacing:.08em;color:#857E76">{{ g.l }}</span>
+      <sc-for list="{{ g.items }}" as="i" hint-placeholder-count="5"><button onClick="{{ i.onClick }}" style="min-height:38px;padding:6px 10px;border:0;border-radius:10px;background:{{ i.bg }};color:{{ i.fg }};font-size:14px;font-weight:600;text-align:left;cursor:pointer;display:flex;align-items:center;gap:10px"><span style="width:8px;height:8px;flex:none;border-radius:3px;background:{{ i.c }}"></span><span style="flex:1">{{ i.l }}</span><span style="font:600 10px/1 'JetBrains Mono',monospace;color:#A9A39B;display:{{ i.nD }}">{{ i.n }}</span></button></sc-for>
+    </sc-for>
+  </nav>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="flex:none;padding:10px 16px;border-bottom:1px solid #E6E2DC;background:#FFFFFF;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><b style="font:700 18px/1.2 'Space Grotesk',sans-serif;letter-spacing:-.02em">{{ title }}</b><span style="font-size:12px;color:#625C55">{{ sub }}</span></span>
+        <a href="{{ src }}" target="_blank" style="flex:none;height:34px;padding:0 12px;border-radius:10px;border:1px solid #E6E2DC;color:#141210;font-size:12px;font-weight:700;line-height:32px;white-space:nowrap">Open full screen ↗</a>
+      </div>
+      <sc-if value="{{ hasTabs }}" hint-placeholder-val="{{ false }}"><div style="align-self:flex-start;max-width:100%;display:flex;gap:3px;padding:3px;border-radius:12px;background:#F2EFEA;overflow-x:auto"><sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.onClick }}" style="flex:none;height:34px;padding:0 12px;border:0;border-radius:9px;background:{{ t.bg }};box-shadow:{{ t.sh }};font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">{{ t.l }}</button></sc-for></div></sc-if>
+    </div>
+    <iframe src="{{ src }}" style="flex:1;width:100%;border:0;background:#FAF8F5"></iframe>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const F = n => { const [a, q] = n.split('?'); return `BorNiz ${a}.dc.html` + (q ? '?' + q : ''); };
+const G = [
+  ['DESIGN SYSTEM', '#141210', [
+    ['found', 'Foundations', 'Color, type, space, icons, charts, sound, voice', [['Foundations', 'Design System']]],
+    ['comp', 'Components & patterns', 'Base components and POS-specific patterns', [['Components', 'Components'], ['POS patterns', 'POS Patterns']]],
+    ['sys', 'System, responsive & theming', 'Breakpoints, grid, dark mode, merchant brand, EN/ID', [['System', 'System'], ['Responsive', 'Responsive'], ['Theming & language', 'Theming']]],
+    ['motion', 'Motion', 'Durations, curves, choreography', [['Motion', 'Motion']]],
+    ['roles', 'Roles, PIC & shifts', 'Each role’s shell, permissions, PIC per shift', [['Roles', 'Roles'], ['Shifts', 'Shifts']]],
+    ['pagespec', 'Per-page design system', 'Color, type, size, layout, components, states for every screen', [['All pages', 'Page Spec']]],
+    ['build', 'Build guide', 'Alternatives, states and page templates for code', [['Product plan', 'Product'], ['Alerts', 'Alerts'], ['Diagrams', 'Diagrams'], ['Design notes', 'Design Notes'], ['States', 'States Gallery'], ['Page templates', 'Page Templates', ['Who controls what', 'Authority']]],
+  ]],
+  ['PRODUCT', '#F26B1D', [
+    ['public', 'Website & sign-up', 'Marketing site, login, onboarding', [['Landing', 'Landing'], ['Auth & onboarding', 'Auth']]],
+    ['owner', 'Owner', 'All outlets: live, all modules, phone', [['Live', 'Owner Dashboard'], ['All modules', 'Back Office'], ['Phone', 'Owner Mobile']]],
+    ['manager', 'Manager', 'Owner tools for assigned outlets + approvals', [['Dashboard', 'Manager Dashboard'], ['All modules', 'Back Office?role=manager'], ['Customize', 'Studios'], ['Menu studio', 'Menu Studio']]],
+    ['counter', 'Counter & floor', 'POS, PIC, waiter phone, kitchen', [['POS register', 'POS Register'], ['Online orders', 'Online Orders'], ['Shift lead (PIC)', 'PIC'], ['Waiter & staff', 'Waiter'], ['Kitchen display', 'Kitchen Display']]],
+    ['guest', 'Guest screens', 'Everything the customer sees', [['Customer display', 'Customer Display'], ['QR self-order', 'Self Order'], ['Kiosk', 'Kiosk'], ['Loyalty', 'Loyalty']]],
+    ['admin', 'BorNiz admin', 'Platform console', [['Super admin', 'Super Admin']]],
+  ]],
+  ['CUSTOMIZATION', '#7C3AED', [
+    ['custom', 'Customize', 'Every way a client makes BorNiz theirs', [['All studios', 'Studios'], ['Menu studio · brand, menu, pages & promos', 'Menu Studio'], ['Staff brand', 'Brand Studio']]],
+  ]],
+  ['MAP', '#2F6FEB', [
+    ['guide', 'Operations guide', 'Roles, logins, flows, how-to, rules, page logic', [['Operations guide', 'Operations Guide']]],
+    ['map', 'Sitemap & connections', 'Every page and how they link', [['Sitemap', 'Sitemap'], ['Connections', 'Connections']]],
+  ]],
+];
+const ALL = {}; G.forEach(([, c, items]) => items.forEach(([k, l, d, tabs]) => { ALL[k] = { k, l, d, tabs, c }; }));
+const BYFILE = {}; Object.values(ALL).forEach(e => e.tabs.forEach(([, f], i) => { BYFILE[F(f)] = [e.k, i]; }));
+class Component extends DCLogic {
+  constructor(p) { super(p); let st = { k: 'found', t: 0 }; try { const s = JSON.parse(localStorage.getItem('bn-hub') || 'null'); if (s && ALL[s.k]) st = s; } catch (e) {} this.state = st; }
+  componentDidMount() { this.onMsg = e => { const g = e.data && e.data.bnGo; if (g && BYFILE[g]) this.go(BYFILE[g][0], BYFILE[g][1]); }; window.addEventListener('message', this.onMsg); }
+  componentWillUnmount() { window.removeEventListener('message', this.onMsg); }
+  go(k, t = 0) { this.setState({ k, t }); try { localStorage.setItem('bn-hub', JSON.stringify({ k, t })); } catch (e) {} }
+  renderVals() {
+    const s = this.state, e = ALL[s.k], tab = e.tabs[Math.min(s.t, e.tabs.length - 1)];
+    return {
+      groups: G.map(([l, c, items]) => ({ l, items: items.map(([k, il, d, tabs]) => ({ l: il, c, n: tabs.length, nD: tabs.length > 1 ? 'block' : 'none', bg: s.k === k ? '#FFF3EB' : 'transparent', fg: s.k === k ? '#B04408' : '#45403A', onClick: () => this.go(k, 0) })) })),
+      title: e.l, sub: e.d, hasTabs: e.tabs.length > 1,
+      tabs: e.tabs.map(([l], i) => ({ l, bg: s.t === i ? '#FFFFFF' : 'transparent', sh: s.t === i ? '0 1px 3px rgba(20,18,16,.15)' : 'none', onClick: () => this.go(s.k, i) })),
+      src: F(tab[1]),
+    };
+  }
+}
+</script>
+</body>
+</html>

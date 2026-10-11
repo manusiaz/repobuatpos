@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<script src="./bn-authority.js"></script>
+<script src="./bn-embed.js"></script>
+<script src="./bn-launcher.js?role=owner"></script>
+<style>
+/*bn-type*/h1,h2,h3,b{font-family:'Space Grotesk',system-ui,sans-serif}
+body{margin:0;background:#FAF8F5;color:#141210;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#D9560B;text-decoration:none}
+a:hover{color:#B04408;text-decoration:underline}
+button,input{font-family:inherit}
+</style>
+</helmet>
+<div style="max-width:1320px;margin:0 auto;padding:32px clamp(16px,3vw,32px) 120px;display:flex;flex-direction:column;gap:18px">
+  <header style="display:flex;flex-direction:column;gap:10px">
+    <span style="font:600 12px/1 'JetBrains Mono',monospace;color:#D9560B;letter-spacing:.08em">BACK OFFICE · DATA AUTHORITY</span>
+    <h1 style="margin:0;font-size:clamp(36px,4.6vw,60px);line-height:.98;letter-spacing:-.04em">Who controls what</h1>
+    <p style="margin:0;max-width:760px;font-size:16px;line-height:1.55;color:#45403A">Most of the back office fills itself from the field: sales, payments, stock, attendance, points, tax and reports come from what happens at the counter, kitchen, gateway and clock-in. People only type what can’t come from anywhere else, and anything with money or prices waits for the right person. This page is the rule book; every back-office page shows its own row.</p>
+  </header>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <div style="display:flex;gap:4px;padding:4px;border-radius:14px;background:#141210"><sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.onClick }}" style="height:36px;padding:0 14px;border:0;border-radius:10px;background:{{ t.bg }};color:{{ t.fg }};font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">{{ t.l }}</button></sc-for></div>
+    <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ srcF }}" as="f" hint-placeholder-count="6"><button onClick="{{ f.onClick }}" style="height:34px;padding:0 12px;border-radius:999px;border:1.5px solid {{ f.bc }};background:{{ f.bg }};color:{{ f.fg }};font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">{{ f.l }} · {{ f.n }}</button></sc-for></div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px"><sc-for list="{{ legend }}" as="l" hint-placeholder-count="5"><div style="padding:14px;border-radius:16px;background:{{ l.bg }};color:{{ l.fg }};display:flex;flex-direction:column;gap:6px"><b style="font-size:15px">{{ l.l }} · {{ l.n }}</b><span style="font-size:12px;line-height:1.45">{{ l.d }}</span></div></sc-for></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:14px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+        <sc-for list="{{ areas }}" as="g" hint-placeholder-count="5">
+          <div style="border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden">
+            <div style="padding:10px 16px;background:#F2EFEA;font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.06em;color:#45403A">{{ g.a }} · {{ g.n }}</div>
+            <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="5"><button onClick="{{ r.onClick }}" style="width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:12px 16px;border:0;border-top:1px solid #F2EFEA;background:{{ r.bg }};text-align:left;cursor:pointer;color:#141210"><b style="font-size:14px;line-height:1.3">{{ r.name }}</b><span style="justify-self:start;height:24px;padding:0 9px;border-radius:999px;background:{{ r.sb }};color:{{ r.sf }};font:800 10px/24px 'Space Grotesk',sans-serif;white-space:nowrap">{{ r.sl }}</span><span style="grid-column:1 / -1;font-size:12px;line-height:1.4;color:#45403A">{{ r.who }}</span></button></sc-for>
+          </div>
+        </sc-for>
+      </div>
+      <div style="position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC">
+        <div style="padding:16px;border-bottom:1px solid #F2EFEA;display:flex;flex-direction:column;gap:8px"><span style="align-self:flex-start;height:26px;padding:0 10px;border-radius:999px;background:{{ D.sb }};color:{{ D.sf }};font:800 11px/26px 'Space Grotesk',sans-serif">{{ D.sl }}</span><b style="font-size:20px;line-height:1.15">{{ D.name }}</b><span style="font-size:12px;line-height:1.45;color:#625C55">{{ D.sd }}</span></div>
+        <div style="padding:4px 16px 12px;display:flex;flex-direction:column"><sc-for list="{{ D.rows }}" as="x" hint-placeholder-count="7"><div style="display:flex;flex-direction:column;gap:3px;padding:9px 0;border-top:1px solid #F2EFEA"><span style="font:600 10px/1.4 'JetBrains Mono',monospace;color:#857E76;letter-spacing:.05em">{{ x.k }}</span><span style="font-size:13px;line-height:1.45">{{ x.v }}</span></div></sc-for></div>
+        <div style="padding:12px 16px;background:#FDF6F2;border-top:1px solid #F7E3D6;font-size:13px;line-height:1.45;color:#5C2A0E"><b style="color:#B04408">Loophole closed:</b> {{ D.closed }}</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isLadder }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <sc-for list="{{ ladder }}" as="l" hint-placeholder-count="5"><div style="display:grid;grid-template-columns:44px 170px minmax(0,1.4fr) minmax(0,1.1fr) 200px;gap:14px;align-items:start;padding:16px;border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC"><span style="width:36px;height:36px;border-radius:12px;background:{{ l.c }};color:#FFFFFF;display:grid;place-items:center;font:800 14px/1 'Space Grotesk',sans-serif">{{ l.i }}</span><b style="font-size:16px;line-height:1.25">{{ l.r }}</b><span style="font-size:13px;line-height:1.45"><b style="display:block;font:600 10px/1.6 'JetBrains Mono',monospace;color:#156B3A;letter-spacing:.05em">CAN DECIDE</b>{{ l.can }}</span><span style="font-size:13px;line-height:1.45"><b style="display:block;font:600 10px/1.6 'JetBrains Mono',monospace;color:#B3261E;letter-spacing:.05em">NEVER</b>{{ l.never }}</span><span style="font-size:13px;line-height:1.45"><b style="display:block;font:600 10px/1.6 'JetBrains Mono',monospace;color:#1F4FB5;letter-spacing:.05em">IF NO ANSWER</b>{{ l.esc }}</span></div></sc-for>
+      <div style="padding:16px;border-radius:18px;background:#141210;color:#E6E2DC;display:flex;flex-direction:column;gap:8px"><b style="font-size:16px;color:#FFFFFF">Rules for every request</b><sc-for list="{{ rules }}" as="r" hint-placeholder-count="6"><span style="font-size:13px;line-height:1.5;padding:6px 0;border-top:1px solid #2E2A26">{{ r }}</span></sc-for></div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isLoop }}" hint-placeholder-val="{{ false }}">
+    <div style="border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden">
+      <div style="display:grid;grid-template-columns:34px minmax(0,1fr) minmax(0,1.5fr) 180px;gap:12px;padding:12px 16px;background:#F2EFEA;font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.05em;color:#45403A"><span>#</span><span>LOOPHOLE</span><span>HOW IT’S CLOSED</span><span>APPLIES TO</span></div>
+      <sc-for list="{{ loops }}" as="l" hint-placeholder-count="10"><div style="display:grid;grid-template-columns:34px minmax(0,1fr) minmax(0,1.5fr) 180px;gap:12px;padding:12px 16px;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.45;align-items:start"><span style="font:600 11px/1.6 'JetBrains Mono',monospace;color:#A9A39B">{{ l.n }}</span><b style="color:#B3261E">{{ l.t }}</b><span>{{ l.fix }}</span><span style="color:#625C55">{{ l.where }}</span></div></sc-for>
+    </div>
+  </sc-if>
+</div>
+<div data-bn-links="1" style="position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:60;max-width:calc(100vw - 24px)"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:18px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#141210;color:#FFFFFF"><span style="width:8px;height:8px;border-radius:9px;background:#F26B1D"></span>Linked pages · 13<span style="font-weight:500;color:#A9A39B">▴</span></summary><div style="width:min(460px,calc(100vw - 24px));padding:6px 16px 12px;display:flex;flex-direction:column;max-height:50vh;overflow:auto"><a href="BorNiz Product.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Product plan</b><span style="color:#45403A">Decisions: who sets ready-by, online orders incoming only</span></a><a href="BorNiz Diagrams.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Diagrams</b><span style="color:#45403A">Who may change each state</span></a><a href="BorNiz Online Orders.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Online orders</b><span style="color:#45403A">Incoming: accept / decline only</span></a><a href="BorNiz Back Office.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Back office (all modules)</b><span style="color:#45403A">Each page shows who creates, edits, approves and how it escalates</span></a><a href="BorNiz Sitemap.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Sitemap</b><span style="color:#45403A">Page drawer shows data source and who controls it</span></a><a href="BorNiz POS Register.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>POS Register</b><span style="color:#45403A">Voids, refunds, discounts, cash out start here and follow the ladder</span></a><a href="BorNiz PIC.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Shift lead (PIC)</b><span style="color:#45403A">PIC limits and escalation</span></a><a href="BorNiz Manager Dashboard.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Manager</b><span style="color:#45403A">Manager limits; owner-only items</span></a><a href="BorNiz Owner Dashboard.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Owner dashboard</b><span style="color:#45403A">Owner decides above IDR 500k, prices, payroll, bank</span></a><a href="BorNiz Loyalty.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Loyalty</b><span style="color:#45403A">Points are automatic; adjustments need the owner</span></a><a href="BorNiz Shifts.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Shifts</b><span style="color:#45403A">Attendance is automatic; corrections need the manager</span></a><a href="BorNiz Alerts.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Alerts &amp; notifications</b><span style="color:#45403A">Escalation timing matches the ladder</span></a><a href="BorNiz Design Notes.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Design notes</b><span style="color:#45403A">Authority rules for code</span></a><a href="BorNiz Connections.dc.html" style="margin-top:8px;height:40px;border-radius:12px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:13px;font-weight:700">Open the full connection map →</a></div></details></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const COL = ['#F26B1D', '#5B8CFF', '#2F6FEB', '#141210', '#7C3AED'];
+class Component extends DCLogic {
+  state = { tab: 'list', f: 'all', sel: 'refund' };
+  renderVals() {
+    const s = this.state, A = window.BN_AUTH || { objects: [], SRC: {}, LADDER: [], LOOP: [] }, S = A.SRC;
+    const cnt = k => A.objects.filter(o => k === 'all' || o.src === k).length;
+    const list = A.objects.filter(o => s.f === 'all' || o.src === s.f);
+    const areas = []; list.forEach(o => { let g = areas.find(x => x.a === o.area.toUpperCase()); if (!g) { g = { a: o.area.toUpperCase(), rows: [] }; areas.push(g); } g.rows.push({ name: o.name, sl: (S[o.src] || [''])[0], sb: (S[o.src] || ['', '#EEE'])[1], sf: (S[o.src] || ['', '', '#333'])[2], who: o.src === 'auto' || o.src === 'incoming' ? 'From: ' + o.from : 'Creates: ' + o.create, bg: s.sel === o.id ? '#FFF3EB' : '#FFFFFF', onClick: () => this.setState({ sel: o.id }) }); });
+    areas.forEach(g => g.n = g.rows.length);
+    const d = A.objects.find(o => o.id === s.sel) || A.objects[0] || {};
+    const sd = S[d.src] || ['', '#EEE', '#333', ''];
+    return {
+      tabs: [['list', 'Who controls what'], ['ladder', 'Escalation ladder'], ['loop', 'Loopholes closed · ' + A.LOOP.length]].map(([k, l]) => ({ l, bg: s.tab === k ? '#F26B1D' : 'transparent', fg: s.tab === k ? '#FFFFFF' : '#CFCAC3', onClick: () => this.setState({ tab: k }) })),
+      isList: s.tab === 'list', isLadder: s.tab === 'ladder', isLoop: s.tab === 'loop',
+      srcF: [['all', 'All'], ...Object.keys(S).map(k => [k, S[k][0]])].map(([k, l]) => ({ l, n: cnt(k), bg: s.f === k ? '#141210' : '#FFFFFF', fg: s.f === k ? '#FFFFFF' : '#141210', bc: s.f === k ? '#141210' : '#E6E2DC', onClick: () => this.setState({ f: k }) })),
+      legend: Object.keys(S).map(k => ({ l: S[k][0], n: cnt(k), bg: S[k][1], fg: S[k][2], d: S[k][3] })),
+      areas,
+      D: { name: d.name || '', sl: sd[0], sb: sd[1], sf: sd[2], sd: sd[3], closed: d.closed || '', rows: [['COMES FROM', d.from], ['WHO CREATES', d.create], ['WHO EDITS', d.edit], ['DELETE', d.remove], ['APPROVAL', d.approve], ['ESCALATION', d.escalate], ['AUTOMATIC EFFECTS', d.auto]].filter(r => r[1] && r[1] !== '—').map(([k, v]) => ({ k, v })) },
+      ladder: A.LADDER.map(([r, can, never, esc], i) => ({ r, can, never, esc, i: i + 1, c: COL[i] })),
+      rules: ['Every approve and reject needs the approver’s own 6-digit approval PIN, separate from the login password. No PIN, no decision. 5 wrong tries lock it for 15 minutes.', 'Requester and approver are always different people, even when they switch PIN on the same device.', 'Limits add up per order and per person per shift, so splitting a refund doesn’t get under the limit.', 'Nothing is ever approved automatically. If nobody answers, the request moves up; at shift end it expires and must be asked again.', 'Every request shows who asked, why, the amount, the order and a photo when required.', 'The person who approved is shown on the receipt, the order and the audit log.', 'Owner can change limits in Settings → Approval flows; managers are notified of every change.'],
+      loops: A.LOOP.map(([t, fix, where], i) => ({ n: String(i + 1).padStart(2, '0'), t, fix, where })),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+:root{
+--bp-sm:480px;--bp-md:768px;--bp-lg:1024px;--bp-xl:1280px;--bp-2xl:1536px;--content-max:1440px;
+--grid-cols:4;--gutter:16px;--margin:16px;--hit-min:44px;
+--text-h1:clamp(28px,2.2vw + 20px,44px);--text-display:clamp(44px,4vw + 30px,88px);
+}
+@media (min-width:480px){:root{--margin:20px}}
+@media (min-width:768px){:root{--grid-cols:8;--gutter:20px;--margin:24px}}
+@media (min-width:1024px){:root{--grid-cols:12;--margin:28px}}
+@media (min-width:1280px){:root{--gutter:24px;--margin:32px;--hit-min:40px}}
+@media (min-width:1536px){:root{--margin:40px}}
+@media (pointer:coarse){:root{--hit-min:44px}}
+.pos{--hit-min:56px;--hit-pay:72px}.kiosk{--hit-min:64px}

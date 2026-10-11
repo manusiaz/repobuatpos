@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+/*bn-type*/h1,h2,h3,b{font-family:'Space Grotesk',system-ui,sans-serif}body{font-variant-numeric:tabular-nums}
+body{margin:0;background:#FAF8F5;color:#141210;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#D9560B;text-decoration:none}
+a:hover{color:#B04408;text-decoration:underline}
+input,textarea,button{font-family:inherit}
+</style>
+<script src="./bn-embed.js"></script>
+</helmet>
+
+<div style="display:flex;flex-direction:column;min-height:100vh">
+<div style="position:sticky;top:0;z-index:40;background:rgba(250,248,245,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #E6E2DC">
+  <div style="max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px);height:64px;display:flex;align-items:center;gap:24px">
+    <span style="font-size:22px;font-weight:700;letter-spacing:-.03em">BorNiz</span>
+    <div style="display:flex;gap:4px;overflow-x:auto;font-size:14px;font-weight:500">
+      <a href="BorNiz Design System.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Foundations</a>
+      <a href="BorNiz Components.dc.html" style="padding:8px 12px;border-radius:10px;color:#141210;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC;white-space:nowrap">Components</a>
+      <a href="BorNiz POS Patterns.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">POS patterns</a>
+      <a href="BorNiz System.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">System</a>
+      <a href="BorNiz Responsive.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Responsive</a>
+      <a href="BorNiz Theming.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Theming</a>
+      <a href="BorNiz Brand Studio.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Customization</a>
+      <a href="BorNiz Menu Studio.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Menu studio</a>
+      <a href="BorNiz Motion.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Motion</a>
+      <a href="BorNiz Design Notes.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Design notes</a>
+      <a href="BorNiz States Gallery.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">States </a>
+      <a href="BorNiz Sitemap.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Sitemap</a>
+    </div>
+  </div>
+</div>
+
+<main style="max-width:1280px;width:100%;margin:0 auto;padding:48px clamp(20px,4vw,40px) 120px;display:flex;flex-direction:column;gap:64px">
+
+<header style="display:flex;flex-direction:column;gap:14px">
+  <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">Components · 46 families</span>
+  <h1 style="margin:0;font-size:clamp(44px,6vw,72px);line-height:1;font-weight:700;letter-spacing:-.04em">Component library</h1>
+  <p style="margin:0;max-width:640px;font-size:17px;line-height:1.55;color:#45403A">Every BorNiz component with every variant, size and state: core controls first, then forms, navigation, overlays, data and display.</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:14px;font-weight:600"><a href="#core" style="height:36px;padding:0 14px;border-radius:999px;background:#141210;color:#FFFFFF;display:flex;align-items:center">0 Core</a><a href="#forms" style="height:36px;padding:0 14px;border-radius:999px;background:#F2EFEA;color:#141210;display:flex;align-items:center">A Forms</a><a href="#navigation" style="height:36px;padding:0 14px;border-radius:999px;background:#F2EFEA;color:#141210;display:flex;align-items:center">B Navigation</a><a href="#overlays" style="height:36px;padding:0 14px;border-radius:999px;background:#F2EFEA;color:#141210;display:flex;align-items:center">C Overlays</a><a href="#data" style="height:36px;padding:0 14px;border-radius:999px;background:#F2EFEA;color:#141210;display:flex;align-items:center">D Data</a><a href="#display" style="height:36px;padding:0 14px;border-radius:999px;background:#F2EFEA;color:#141210;display:flex;align-items:center">E Display</a></div>
+</header>
+
+<section id="core" style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">0 — Core controls</span>
+    <h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Button, input, choice, badge</h2>
+  </div>
+
+  <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:18px;overflow-x:auto">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px"><span style="font-size:19px;font-weight:600">Button · variant × state</span><span style="font:400 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">L 56px · radius 16 · press scale .96 / 80ms</span></div>
+    <div style="min-width:860px;display:grid;grid-template-columns:110px repeat(6,minmax(0,1fr));gap:10px;align-items:center">
+      <span></span>
+      <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">DEFAULT</span><span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">HOVER</span><span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">PRESSED</span><span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">FOCUS</span><span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">LOADING</span><span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">DISABLED</span>
+
+      <span style="font-size:13px;font-weight:600">Primary</span>
+      <span style="height:56px;border-radius:16px;background:#F26B1D;color:#FFFFFF;display:grid;place-items:center;font-size:16px;font-weight:600">Charge</span>
+      <span style="height:56px;border-radius:16px;background:#D9560B;color:#FFFFFF;display:grid;place-items:center;font-size:16px;font-weight:600">Charge</span>
+      <span style="height:56px;border-radius:16px;background:#B04408;color:#FFFFFF;display:grid;place-items:center;font-size:16px;font-weight:600;transform:scale(.96)">Charge</span>
+      <span style="height:56px;border-radius:16px;background:#F26B1D;color:#FFFFFF;display:grid;place-items:center;font-size:16px;font-weight:600;box-shadow:0 0 0 3px #FFFFFF,0 0 0 6px #F8823A">Charge</span>
+      <span style="height:56px;border-radius:16px;background:#F26B1D;display:grid;place-items:center"><span style="width:20px;height:20px;border-radius:999px;border:2.5px solid #FFFFFF;border-top-color:transparent"></span></span>
+      <span style="height:56px;border-radius:16px;background:#E6E2DC;color:#857E76;display:grid;place-items:center;font-size:16px;font-weight:600">Charge</span>
+
+      <span style="font-size:13px;font-weight:600">Ink</span>
+      <span style="height:56px;border-radius:16px;background:#141210;color:#FFFFFF;display:grid;place-items:center;font-size:16px;font-weight:600">Save</span>
+      <span style="height:56px;border-radius:16px;background:#2E2A26;color:#FFFFFF;display:grid;place-items:center;font-size:16px;font-weight:600">Save</span>
+      <span style="height:56px;border-radius:16px;background:#45403A;color:#FFFFFF;display:grid;place-items:center;font-size:16px;font-weight:600;transform:scale(.96)">Save</span>
+      <span style="height:56px;border-radius:16px;background:#141210;color:#FFFFFF;display:grid;place-items:center;font-size:16px;font-weight:600;box-shadow:0 0 0 3px #FFFFFF,0 0 0 6px #F8823A">Save</span>
+      <span style="height:56px;border-radius:16px;background:#141210;display:grid;place-items:center"><span style="width:20px;height:20px;border-radius:999px;border:2.5px solid #FFFFFF;border-top-color:transparent"></span></span>
+      <span style="height:56px;border-radius:16px;background:#E6E2DC;color:#857E76;display:grid;place-items:center;font-size:16px;font-weight:600">Save</span>
+
+      <span style="font-size:13px;font-weight:600">Outline</span>
+      <span style="height:56px;border-radius:16px;border:2px solid #141210;background:#FFFFFF;display:grid;place-items:center;font-size:16px;font-weight:600">Split bill</span>
+      <span style="height:56px;border-radius:16px;border:2px solid #141210;background:#F2EFEA;display:grid;place-items:center;font-size:16px;font-weight:600">Split bill</span>
+      <span style="height:56px;border-radius:16px;border:2px solid #141210;background:#E6E2DC;display:grid;place-items:center;font-size:16px;font-weight:600;transform:scale(.96)">Split bill</span>
+      <span style="height:56px;border-radius:16px;border:2px solid #141210;background:#FFFFFF;display:grid;place-items:center;font-size:16px;font-weight:600;box-shadow:0 0 0 3px #FFFFFF,0 0 0 6px #F8823A">Split bill</span>
+      <span style="height:56px;border-radius:16px;border:2px solid #141210;background:#FFFFFF;display:grid;place-items:center"><span style="width:20px;height:20px;border-radius:999px;border:2.5px solid #141210;border-top-color:transparent"></span></span>
+      <span style="height:56px;border-radius:16px;border:2px solid #E6E2DC;background:#FFFFFF;color:#A9A39B;display:grid;place-items:center;font-size:16px;font-weight:600">Split bill</span>
+
+      <span style="font-size:13px;font-weight:600">Soft</span>
+      <span style="height:56px;border-radius:16px;background:#F2EFEA;display:grid;place-items:center;font-size:16px;font-weight:600">Hold</span>
+      <span style="height:56px;border-radius:16px;background:#E6E2DC;display:grid;place-items:center;font-size:16px;font-weight:600">Hold</span>
+      <span style="height:56px;border-radius:16px;background:#CFCAC3;display:grid;place-items:center;font-size:16px;font-weight:600;transform:scale(.96)">Hold</span>
+      <span style="height:56px;border-radius:16px;background:#F2EFEA;display:grid;place-items:center;font-size:16px;font-weight:600;box-shadow:0 0 0 3px #FFFFFF,0 0 0 6px #F8823A">Hold</span>
+      <span style="height:56px;border-radius:16px;background:#F2EFEA;display:grid;place-items:center"><span style="width:20px;height:20px;border-radius:999px;border:2.5px solid #141210;border-top-color:transparent"></span></span>
+      <span style="height:56px;border-radius:16px;background:#FAF8F5;color:#A9A39B;display:grid;place-items:center;font-size:16px;font-weight:600">Hold</span>
+
+      <span style="font-size:13px;font-weight:600">Ghost</span>
+      <span style="height:56px;border-radius:16px;display:grid;place-items:center;font-size:16px;font-weight:600">Cancel</span>
+      <span style="height:56px;border-radius:16px;background:#F2EFEA;display:grid;place-items:center;font-size:16px;font-weight:600">Cancel</span>
+      <span style="height:56px;border-radius:16px;background:#E6E2DC;display:grid;place-items:center;font-size:16px;font-weight:600;transform:scale(.96)">Cancel</span>
+      <span style="height:56px;border-radius:16px;display:grid;place-items:center;font-size:16px;font-weight:600;box-shadow:0 0 0 3px #FFFFFF,0 0 0 6px #F8823A">Cancel</span>
+      <span style="height:56px;border-radius:16px;display:grid;place-items:center"><span style="width:20px;height:20px;border-radius:999px;border:2.5px solid #141210;border-top-color:transparent"></span></span>
+      <span style="height:56px;border-radius:16px;color:#A9A39B;display:grid;place-items:center;font-size:16px;font-weight:600">Cancel</span>
+
+      <span style="font-size:13px;font-weight:600">Danger</span>
+      <span style="height:56px;border-radius:16px;background:#E5383B;color:#FFFFFF;display:grid;place-items:center;font-size:16px;font-weight:600">Void</span>
+      <span style="height:56px;border-radius:16px;background:#C92C2F;color:#FFFFFF;display:grid;place-items:center;font-size:16px;font-weight:600">Void</span>
+      <span style="height:56px;border-radius:16px;background:#A82326;color:#FFFFFF;display:grid;place-items:center;font-size:16px;font-weight:600;transform:scale(.96)">Void</span>
+      <span style="height:56px;border-radius:16px;background:#E5383B;color:#FFFFFF;display:grid;place-items:center;font-size:16px;font-weight:600;box-shadow:0 0 0 3px #FFFFFF,0 0 0 6px #FF8A8C">Void</span>
+      <span style="height:56px;border-radius:16px;background:#E5383B;display:grid;place-items:center"><span style="width:20px;height:20px;border-radius:999px;border:2.5px solid #FFFFFF;border-top-color:transparent"></span></span>
+      <span style="height:56px;border-radius:16px;background:#E6E2DC;color:#857E76;display:grid;place-items:center;font-size:16px;font-weight:600">Void</span>
+
+      <span style="font-size:13px;font-weight:600">Danger soft</span>
+      <span style="height:56px;border-radius:16px;background:#FDE8E8;color:#B3261E;display:grid;place-items:center;font-size:16px;font-weight:600">Remove</span>
+      <span style="height:56px;border-radius:16px;background:#F9CFCF;color:#B3261E;display:grid;place-items:center;font-size:16px;font-weight:600">Remove</span>
+      <span style="height:56px;border-radius:16px;background:#F4B4B4;color:#8E1D17;display:grid;place-items:center;font-size:16px;font-weight:600;transform:scale(.96)">Remove</span>
+      <span style="height:56px;border-radius:16px;background:#FDE8E8;color:#B3261E;display:grid;place-items:center;font-size:16px;font-weight:600;box-shadow:0 0 0 3px #FFFFFF,0 0 0 6px #FF8A8C">Remove</span>
+      <span style="height:56px;border-radius:16px;background:#FDE8E8;display:grid;place-items:center"><span style="width:20px;height:20px;border-radius:999px;border:2.5px solid #B3261E;border-top-color:transparent"></span></span>
+      <span style="height:56px;border-radius:16px;background:#FAF8F5;color:#A9A39B;display:grid;place-items:center;font-size:16px;font-weight:600">Remove</span>
+
+      <span style="font-size:13px;font-weight:600">Success</span>
+      <span style="height:56px;border-radius:16px;background:#1F9D55;color:#FFFFFF;display:grid;place-items:center;font-size:16px;font-weight:600">Bump · Ready</span>
+      <span style="height:56px;border-radius:16px;background:#188546;color:#FFFFFF;display:grid;place-items:center;font-size:16px;font-weight:600">Bump · Ready</span>
+      <span style="height:56px;border-radius:16px;background:#136C39;color:#FFFFFF;display:grid;place-items:center;font-size:16px;font-weight:600;transform:scale(.96)">Bump · Ready</span>
+      <span style="height:56px;border-radius:16px;background:#1F9D55;color:#FFFFFF;display:grid;place-items:center;font-size:16px;font-weight:600;box-shadow:0 0 0 3px #FFFFFF,0 0 0 6px #6EE7A0">Bump · Ready</span>
+      <span style="height:56px;border-radius:16px;background:#1F9D55;display:grid;place-items:center"><span style="width:20px;height:20px;border-radius:999px;border:2.5px solid #FFFFFF;border-top-color:transparent"></span></span>
+      <span style="height:56px;border-radius:16px;background:#E6E2DC;color:#857E76;display:grid;place-items:center;font-size:16px;font-weight:600">Bump · Ready</span>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:16px">
+      <span style="font-size:19px;font-weight:600">Button · size &amp; shape</span>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:center"><span style="font:500 11px/1.3 'JetBrains Mono',ui-monospace,monospace;color:#625C55">XS 32 · r10 · 13px</span><span style="justify-self:start;height:32px;padding:0 12px;border-radius:10px;background:#F26B1D;color:#FFFFFF;display:flex;align-items:center;font-size:13px;font-weight:600">Apply</span></div>
+        <div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:center"><span style="font:500 11px/1.3 'JetBrains Mono',ui-monospace,monospace;color:#625C55">S 40 · r12 · 14px</span><span style="justify-self:start;height:40px;padding:0 16px;border-radius:12px;background:#F26B1D;color:#FFFFFF;display:flex;align-items:center;font-size:14px;font-weight:600">Apply</span></div>
+        <div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:center"><span style="font:500 11px/1.3 'JetBrains Mono',ui-monospace,monospace;color:#625C55">M 48 · r14 · 15px</span><span style="justify-self:start;height:48px;padding:0 20px;border-radius:14px;background:#F26B1D;color:#FFFFFF;display:flex;align-items:center;font-size:15px;font-weight:600">Apply</span></div>
+        <div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:center"><span style="font:500 11px/1.3 'JetBrains Mono',ui-monospace,monospace;color:#625C55">L 56 · r16 · 16px</span><span style="justify-self:start;height:56px;padding:0 24px;border-radius:16px;background:#F26B1D;color:#FFFFFF;display:flex;align-items:center;font-size:16px;font-weight:600">Apply</span></div>
+        <div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:center"><span style="font:500 11px/1.3 'JetBrains Mono',ui-monospace,monospace;color:#625C55">XL 72 · r20 · 20px</span><span style="height:72px;padding:0 24px;border-radius:20px;background:#F26B1D;color:#FFFFFF;display:flex;align-items:center;justify-content:space-between;font-size:20px;font-weight:700"><span style="font-size:16px;font-weight:600">Charge</span>IDR 81,900</span></div>
+      </div>
+      <div style="height:1px;background:#F2EFEA"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <span style="height:48px;padding:0 18px 0 14px;border-radius:14px;background:#141210;color:#FFFFFF;display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600"><span style="width:18px;height:18px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/plus.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/plus.svg) center/contain no-repeat"></span>Leading icon</span>
+        <span style="height:48px;padding:0 14px 0 18px;border-radius:14px;border:2px solid #141210;display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600">Trailing icon<span style="width:18px;height:18px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/arrow-right.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/arrow-right.svg) center/contain no-repeat"></span></span>
+        <span style="width:48px;height:48px;border-radius:14px;background:#F2EFEA;display:grid;place-items:center"><span style="width:20px;height:20px;background:#141210;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/printer.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/printer.svg) center/contain no-repeat"></span></span>
+        <span style="width:48px;height:48px;border-radius:999px;background:#F26B1D;display:grid;place-items:center"><span style="width:20px;height:20px;background:#FFFFFF;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/scan-line.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/scan-line.svg) center/contain no-repeat"></span></span>
+        <span style="height:48px;padding:0 18px;border-radius:999px;background:#141210;color:#FFFFFF;display:flex;align-items:center;font-size:15px;font-weight:600">Pill</span>
+        <span style="height:48px;border-radius:14px;display:flex;overflow:hidden;border:2px solid #141210"><span style="padding:0 16px;display:flex;align-items:center;font-size:15px;font-weight:600">Print</span><span style="width:44px;border-left:2px solid #141210;display:grid;place-items:center"><span style="width:16px;height:16px;background:#141210;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/chevron-down.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/chevron-down.svg) center/contain no-repeat"></span></span></span>
+        <span style="font-size:15px;font-weight:600;color:#D9560B;text-decoration:underline;text-underline-offset:3px">Text link</span>
+      </div>
+      <span style="width:100%;height:56px;border-radius:16px;background:#F26B1D;color:#FFFFFF;display:grid;place-items:center;font-size:16px;font-weight:600">Full width (mobile, sheets, dialogs)</span>
+    </div>
+
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+      <span style="font-size:19px;font-weight:600">Text input · every state</span>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">EMPTY</span><span style="height:52px;padding:0 16px;border:1.5px solid #CFCAC3;border-radius:14px;display:flex;align-items:center;font-size:16px;color:#857E76">Product name</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">HOVER</span><span style="height:52px;padding:0 16px;border:1.5px solid #857E76;border-radius:14px;display:flex;align-items:center;font-size:16px;color:#857E76">Product name</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">FOCUS</span><span style="height:52px;padding:0 16px;border:1.5px solid #F26B1D;box-shadow:0 0 0 4px #FFE2CF;border-radius:14px;display:flex;align-items:center;font-size:16px">Es Kopi<span style="width:2px;height:20px;background:#F26B1D;margin-left:1px"></span></span></div>
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">FILLED</span><span style="height:52px;padding:0 16px;border:1.5px solid #CFCAC3;border-radius:14px;display:flex;align-items:center;font-size:16px">Es Kopi Susu Aren</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#B3261E">ERROR</span><span style="height:52px;padding:0 16px;border:1.5px solid #E5383B;box-shadow:0 0 0 4px #FDE8E8;border-radius:14px;display:flex;align-items:center;font-size:16px">KOP-001</span><span style="font-size:12px;color:#B3261E">SKU already used</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#156B3A">SUCCESS</span><span style="height:52px;padding:0 16px;border:1.5px solid #1F9D55;border-radius:14px;display:flex;align-items:center;justify-content:space-between;font-size:16px">kenangan-senja<span style="width:18px;height:18px;background:#1F9D55;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat"></span></span><span style="font-size:12px;color:#156B3A">Store link available</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">DISABLED</span><span style="height:52px;padding:0 16px;border:1.5px solid #E6E2DC;background:#F2EFEA;border-radius:14px;display:flex;align-items:center;font-size:16px;color:#A9A39B">Locked by plan</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">READ-ONLY</span><span style="height:52px;padding:0 16px;border:1.5px dashed #CFCAC3;border-radius:14px;display:flex;align-items:center;font-size:16px;color:#45403A;font-family:'JetBrains Mono',ui-monospace,monospace">#TRX-2048</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">PREFIX + SUFFIX</span><span style="height:52px;border:1.5px solid #CFCAC3;border-radius:14px;display:flex;align-items:center;overflow:hidden;font-size:16px"><span style="height:100%;padding:0 12px;background:#F2EFEA;display:flex;align-items:center;font-weight:600">IDR</span><span style="flex:1;padding:0 12px;font-weight:600">25,000</span><span style="padding:0 12px;color:#625C55;font-size:13px">/ cup</span></span></div>
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">PASSWORD</span><span style="height:52px;padding:0 16px;border:1.5px solid #CFCAC3;border-radius:14px;display:flex;align-items:center;justify-content:space-between;font-size:20px;letter-spacing:.2em">••••••••<span style="width:20px;height:20px;background:#625C55;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/eye.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/eye.svg) center/contain no-repeat"></span></span></div>
+      </div>
+      <span style="font-size:12px;color:#625C55">Sizes: S 40, M 48 (dashboard), L 52 (default form), XL 64 (POS search and amounts). Labels sit above at 13px/600, helper text below at 12px.</span>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px">
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+      <span style="font-size:19px;font-weight:600">Checkbox · every state</span>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;font-size:15px;font-weight:500">
+        <span style="display:flex;gap:10px;align-items:center"><span style="width:26px;height:26px;border-radius:8px;border:2px solid #A9A39B;background:#FFFFFF"></span>Off</span>
+        <span style="display:flex;gap:10px;align-items:center"><span style="width:26px;height:26px;border-radius:8px;background:#F26B1D;display:grid;place-items:center"><span style="width:16px;height:16px;background:#FFFFFF;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat"></span></span>On</span>
+        <span style="display:flex;gap:10px;align-items:center"><span style="width:26px;height:26px;border-radius:8px;background:#F26B1D;display:grid;place-items:center"><span style="width:12px;height:3px;border-radius:2px;background:#FFFFFF"></span></span>Indeterminate</span>
+        <span style="display:flex;gap:10px;align-items:center"><span style="width:26px;height:26px;border-radius:8px;border:2px solid #A9A39B;box-shadow:0 0 0 4px #FFE2CF"></span>Focus</span>
+        <span style="display:flex;gap:10px;align-items:center;color:#A9A39B"><span style="width:26px;height:26px;border-radius:8px;border:2px solid #E6E2DC;background:#F2EFEA"></span>Disabled</span>
+        <span style="display:flex;gap:10px;align-items:center;color:#A9A39B"><span style="width:26px;height:26px;border-radius:8px;background:#E6E2DC;display:grid;place-items:center"><span style="width:16px;height:16px;background:#FFFFFF;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat"></span></span>Disabled on</span>
+        <span style="display:flex;gap:10px;align-items:center;color:#B3261E"><span style="width:26px;height:26px;border-radius:8px;border:2px solid #E5383B"></span>Error</span>
+      </div>
+      <span style="font-size:19px;font-weight:600;margin-top:6px">Radio</span>
+      <div style="display:flex;gap:18px;flex-wrap:wrap;font-size:15px;font-weight:500">
+        <span style="display:flex;gap:10px;align-items:center"><span style="width:26px;height:26px;border-radius:999px;border:2px solid #A9A39B"></span>Off</span>
+        <span style="display:flex;gap:10px;align-items:center"><span style="width:26px;height:26px;border-radius:999px;border:2px solid #F26B1D;display:grid;place-items:center"><span style="width:12px;height:12px;border-radius:999px;background:#F26B1D"></span></span>On</span>
+        <span style="display:flex;gap:10px;align-items:center;color:#A9A39B"><span style="width:26px;height:26px;border-radius:999px;border:2px solid #E6E2DC;background:#F2EFEA"></span>Disabled</span>
+      </div>
+    </div>
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+      <span style="font-size:19px;font-weight:600">Switch · every state</span>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;font-size:15px;font-weight:500">
+        <span style="display:flex;gap:10px;align-items:center"><span style="width:52px;height:32px;border-radius:999px;background:#CFCAC3;position:relative"><span style="position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:999px;background:#FFFFFF;box-shadow:0 1px 3px rgba(20,18,16,.25)"></span></span>Off</span>
+        <span style="display:flex;gap:10px;align-items:center"><span style="width:52px;height:32px;border-radius:999px;background:#F26B1D;position:relative"><span style="position:absolute;top:3px;left:23px;width:26px;height:26px;border-radius:999px;background:#FFFFFF;box-shadow:0 1px 3px rgba(20,18,16,.25)"></span></span>On</span>
+        <span style="display:flex;gap:10px;align-items:center"><span style="width:52px;height:32px;border-radius:999px;background:#F26B1D;position:relative;box-shadow:0 0 0 4px #FFE2CF"><span style="position:absolute;top:3px;left:23px;width:26px;height:26px;border-radius:999px;background:#FFFFFF"></span></span>Focus</span>
+        <span style="display:flex;gap:10px;align-items:center"><span style="width:52px;height:32px;border-radius:999px;background:#F26B1D;position:relative"><span style="position:absolute;top:3px;left:17px;width:32px;height:26px;border-radius:999px;background:#FFFFFF"></span></span>Pressed (knob stretches)</span>
+        <span style="display:flex;gap:10px;align-items:center;color:#A9A39B"><span style="width:52px;height:32px;border-radius:999px;background:#E6E2DC;position:relative"><span style="position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:999px;background:#FAF8F5"></span></span>Disabled</span>
+        <span style="display:flex;gap:10px;align-items:center"><span style="width:40px;height:24px;border-radius:999px;background:#F26B1D;position:relative"><span style="position:absolute;top:3px;left:19px;width:18px;height:18px;border-radius:999px;background:#FFFFFF"></span></span>Small (dense tables)</span>
+      </div>
+      <span style="font-size:19px;font-weight:600;margin-top:6px">Chip / filter / choice</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span style="height:40px;padding:0 14px;border-radius:999px;border:1.5px solid #E6E2DC;display:flex;align-items:center;font-size:14px;font-weight:600">Default</span>
+        <span style="height:40px;padding:0 14px;border-radius:999px;background:#141210;color:#FFFFFF;display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600">Selected ×</span>
+        <span style="height:40px;padding:0 14px;border-radius:999px;background:#FFF3EB;border:1.5px solid #F26B1D;color:#84340A;display:flex;align-items:center;font-size:14px;font-weight:600">Choice on</span>
+        <span style="height:40px;padding:0 14px;border-radius:999px;border:1.5px solid #E6E2DC;color:#A9A39B;display:flex;align-items:center;font-size:14px;font-weight:600;text-decoration:line-through">Unavailable</span>
+      </div>
+    </div>
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+      <span style="font-size:19px;font-weight:600">Badge · full set</span>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#E3F5EA;color:#156B3A;font-size:13px;font-weight:600;display:flex;align-items:center">Paid</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#E3F5EA;color:#156B3A;font-size:13px;font-weight:600;display:flex;align-items:center">Ready</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#E3F5EA;color:#156B3A;font-size:13px;font-weight:600;display:flex;align-items:center">In stock</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#FFF4D6;color:#8A5A00;font-size:13px;font-weight:600;display:flex;align-items:center">Pending</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#FFF4D6;color:#8A5A00;font-size:13px;font-weight:600;display:flex;align-items:center">Cooking</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#FFF4D6;color:#8A5A00;font-size:13px;font-weight:600;display:flex;align-items:center">Awaiting approval</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#FDE8E8;color:#B3261E;font-size:13px;font-weight:600;display:flex;align-items:center">Void</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#FDE8E8;color:#B3261E;font-size:13px;font-weight:600;display:flex;align-items:center">Failed</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#FDE8E8;color:#B3261E;font-size:13px;font-weight:600;display:flex;align-items:center">Sold out</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#E6EEFD;color:#1F4FB5;font-size:13px;font-weight:600;display:flex;align-items:center">Refunded</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#E6EEFD;color:#1F4FB5;font-size:13px;font-weight:600;display:flex;align-items:center">Scheduled</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#F2EFEA;color:#45403A;font-size:13px;font-weight:600;display:flex;align-items:center">Draft</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#F2EFEA;color:#45403A;font-size:13px;font-weight:600;display:flex;align-items:center">Archived</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#141210;color:#FFFFFF;font-size:13px;font-weight:600;display:flex;align-items:center">Pro</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#FFE2CF;color:#84340A;font-size:13px;font-weight:600;display:flex;align-items:center">Gold member</span>
+        <span style="height:28px;padding:0 12px;border-radius:999px;background:#F26B1D;color:#FFFFFF;font-size:13px;font-weight:600;display:flex;align-items:center">New</span>
+      </div>
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <span style="position:relative;width:44px;height:44px;border-radius:12px;background:#F2EFEA;display:grid;place-items:center"><span style="width:20px;height:20px;background:#141210;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/bell.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/bell.svg) center/contain no-repeat"></span><span style="position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#F26B1D;color:#FFFFFF;font-size:11px;font-weight:700;line-height:20px;text-align:center;box-shadow:0 0 0 2px #FFFFFF">12</span></span>
+        <span style="position:relative;width:44px;height:44px;border-radius:12px;background:#F2EFEA;display:grid;place-items:center"><span style="width:20px;height:20px;background:#141210;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/receipt.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/receipt.svg) center/contain no-repeat"></span><span style="position:absolute;top:2px;right:2px;width:10px;height:10px;border-radius:9px;background:#F26B1D;box-shadow:0 0 0 2px #FFFFFF"></span></span>
+        <span style="font-size:13px;color:#625C55">Count badge (99+ caps) · dot badge</span>
+      </div>
+      <span style="font-size:19px;font-weight:600;margin-top:6px">Tooltip</span>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="padding:8px 12px;border-radius:10px;background:#141210;color:#FFFFFF;font-size:13px">Refunds need the PIC’s PIN (manager if over limit)</span><span style="padding:8px 12px;border-radius:10px;background:#141210;color:#FFFFFF;font-size:13px;display:flex;gap:8px;align-items:center">Print<span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;padding:3px 6px;border-radius:6px;background:#45403A">⌘P</span></span></div>
+    </div>
+  </div>
+</section>
+
+<section id="forms" style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">A — Forms</span>
+    <h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Input &amp; selection</h2>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:16px;position:relative">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:19px;font-weight:600">Select</span><span style="font:400 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">closed · open · selected</span></div>
+      <label style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:13px;font-weight:600">Outlet</span>
+        <button onClick="{{ toggleSel }}" style="height:52px;padding:0 16px;border:1.5px solid {{ selBorder }};box-shadow:{{ selRing }};border-radius:14px;background:#FFFFFF;display:flex;align-items:center;justify-content:space-between;font-size:16px;font-weight:500;color:#141210;cursor:pointer;transition:border-color 140ms,box-shadow 140ms">
+          {{ sel }}
+          <span style="width:18px;height:18px;background:#625C55;transform:rotate({{ selRot }});transition:transform 200ms cubic-bezier(.2,0,0,1);-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/chevron-down.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/chevron-down.svg) center/contain no-repeat"></span>
+        </button>
+      </label>
+      <div style="position:absolute;left:24px;right:24px;top:132px;z-index:5;padding:6px;border-radius:16px;background:#FFFFFF;box-shadow:0 12px 32px -8px rgba(20,18,16,.22),0 0 0 1px #E6E2DC;display:flex;flex-direction:column;gap:2px;opacity:{{ selOp }};transform:translateY({{ selY }}) scale({{ selS }});transform-origin:top;pointer-events:{{ selPe }};transition:opacity 140ms cubic-bezier(.2,0,0,1),transform 200ms cubic-bezier(.2,0,0,1)">
+        <sc-for list="{{ selOptions }}" as="o" hint-placeholder-count="5">
+          <button onClick="{{ o.onClick }}" style="height:44px;padding:0 12px;border:0;border-radius:10px;background:{{ o.bg }};display:flex;align-items:center;justify-content:space-between;font-size:15px;font-weight:{{ o.weight }};color:#141210;cursor:pointer;text-align:left" style-hover="background:#F2EFEA">{{ o.label }}<span style="width:16px;height:16px;background:#F26B1D;opacity:{{ o.check }};-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat"></span></button>
+        </sc-for>
+      </div>
+      <span style="font-size:13px;line-height:1.45;color:#625C55;margin-top:auto">The menu opens 4px below the trigger, fades 140ms and scales from 98%. It closes on select, Esc or an outside tap. On POS tablets with more than 8 options, use a bottom sheet instead.</span>
+    </div>
+
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:19px;font-weight:600">Combobox</span><span style="font:400 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">type to filter</span></div>
+      <label style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:13px;font-weight:600">Customer</span>
+        <div style="height:52px;padding:0 14px;border:1.5px solid #F26B1D;box-shadow:0 0 0 4px #FFE2CF;border-radius:14px;display:flex;align-items:center;gap:10px">
+          <span style="width:18px;height:18px;flex:none;background:#625C55;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/search.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/search.svg) center/contain no-repeat"></span>
+          <input value="{{ comboQ }}" onChange="{{ onCombo }}" placeholder="Name or phone number" style="flex:1;min-width:0;border:0;outline:none;font-size:16px;background:transparent;color:#141210">
+        </div>
+      </label>
+      <div style="border-radius:16px;border:1px solid #E6E2DC;overflow:hidden;display:flex;flex-direction:column">
+        <sc-for list="{{ comboResults }}" as="c" hint-placeholder-count="3">
+          <div style="display:flex;gap:12px;align-items:center;padding:10px 12px;border-top:1px solid #F2EFEA;cursor:pointer" style-hover="background:#FAF8F5">
+            <span style="width:36px;height:36px;flex:none;border-radius:999px;background:#FFE2CF;color:#84340A;display:grid;place-items:center;font-size:13px;font-weight:700">{{ c.ini }}</span>
+            <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:600">{{ c.name }}</span><span style="font:400 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ c.phone }}</span></span>
+            <span style="font-size:12px;font-weight:600;color:#B04408">{{ c.tier }}</span>
+          </div>
+        </sc-for>
+        <sc-if value="{{ comboEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:16px;display:flex;justify-content:space-between;align-items:center;font-size:14px;color:#625C55">No match for "{{ comboQ }}"<button style="height:36px;padding:0 12px;border:0;border-radius:10px;background:#141210;color:#FFFFFF;font-size:13px;font-weight:600">Add customer</button></div>
+        </sc-if>
+      </div>
+    </div>
+
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:19px;font-weight:600">Textarea</span><span style="font:400 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">with counter</span></div>
+      <label style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:13px;font-weight:600">Kitchen note</span>
+        <textarea value="{{ note }}" onChange="{{ onNote }}" rows="4" style="padding:14px 16px;border:1.5px solid #CFCAC3;border-radius:14px;font-size:16px;line-height:1.45;resize:vertical;outline:none;color:#141210;transition:border-color 140ms,box-shadow 140ms" style-focus="border-color:#F26B1D;box-shadow:0 0 0 4px #FFE2CF"></textarea>
+        <span style="display:flex;justify-content:space-between;font-size:12px;color:#625C55"><span>Printed on the kitchen ticket.</span><span style="font-family:'JetBrains Mono',ui-monospace,monospace;color:{{ noteColor }}">{{ noteCount }}/120</span></span>
+      </label>
+      <span style="font-size:13px;font-weight:600;margin-top:4px">Quick notes</span>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <sc-for list="{{ quickNotes }}" as="q" hint-placeholder-count="5">
+          <button onClick="{{ q.onClick }}" style="height:36px;padding:0 12px;border:1.5px solid #E6E2DC;border-radius:999px;background:#FFFFFF;font-size:13px;font-weight:600;color:#141210;cursor:pointer" style-active="transform:scale(.95)" style-hover="border-color:#F26B1D">+ {{ q.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:19px;font-weight:600">Date range picker</span><span style="font:400 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ rangeText }}</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <sc-for list="{{ presets }}" as="p" hint-placeholder-count="5">
+          <button onClick="{{ p.onClick }}" style="height:34px;padding:0 12px;border:0;border-radius:999px;background:{{ p.bg }};color:{{ p.fg }};font-size:13px;font-weight:600;cursor:pointer">{{ p.label }}</button>
+        </sc-for>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:16px;font-weight:700">October 2026</span><span style="display:flex;gap:4px"><span style="width:32px;height:32px;border-radius:10px;background:#F2EFEA;display:grid;place-items:center">‹</span><span style="width:32px;height:32px;border-radius:10px;background:#F2EFEA;display:grid;place-items:center">›</span></span></div>
+      <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));row-gap:4px">
+        <sc-for list="{{ weekdays }}" as="w" hint-placeholder-count="7"><span style="height:28px;display:grid;place-items:center;font-size:11px;font-weight:600;color:#857E76">{{ w }}</span></sc-for>
+        <sc-for list="{{ calDays }}" as="d" hint-placeholder-count="35">
+          <button onClick="{{ d.onClick }}" style="height:42px;border:0;padding:0;background:{{ d.band }};border-radius:{{ d.bandR }};cursor:{{ d.cursor }};display:grid;place-items:center">
+            <span style="width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:{{ d.bg }};color:{{ d.fg }};box-shadow:{{ d.ring }};font-size:15px;font-weight:{{ d.weight }};font-variant-numeric:tabular-nums;transition:background 120ms">{{ d.label }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <span style="font-size:19px;font-weight:600">Time slots</span>
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px">
+          <sc-for list="{{ slots }}" as="t" hint-placeholder-count="8">
+            <button onClick="{{ t.onClick }}" style="height:44px;border:1.5px solid {{ t.border }};border-radius:12px;background:{{ t.bg }};color:{{ t.fg }};font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;cursor:{{ t.cursor }};text-decoration:{{ t.strike }};transition:background 120ms,border-color 120ms" style-active="transform:scale(.95)">{{ t.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:19px;font-weight:600">Slider</span><span style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums">{{ sliderText }}</span></div>
+        <input type="range" min="0" max="50" step="5" value="{{ slider }}" onChange="{{ onSlider }}" style="width:100%;height:32px;accent-color:#F26B1D;cursor:pointer">
+        <div style="display:flex;justify-content:space-between;font:400 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76"><span>0%</span><span>Max discount without approval</span><span>50%</span></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font-size:19px;font-weight:600">OTP / verification code</span>
+        <div style="position:relative;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px">
+          <sc-for list="{{ otpBoxes }}" as="b" hint-placeholder-count="6">
+            <span style="height:60px;border-radius:14px;border:2px solid {{ b.border }};background:{{ b.bg }};display:grid;place-items:center;font-size:26px;font-weight:700;transition:border-color 120ms,background 120ms">{{ b.ch }}</span>
+          </sc-for>
+          <input value="{{ otp }}" onChange="{{ onOtp }}" inputmode="numeric" aria-label="Verification code" style="position:absolute;inset:0;opacity:0;font-size:16px;cursor:text">
+        </div>
+        <span style="font-size:13px;color:{{ otpMsgColor }}">{{ otpMsg }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:19px;font-weight:600">File upload</span><span style="font:400 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">state: {{ upState }}</span></div>
+      <div onDragOver="{{ onDragOver }}" onDragLeave="{{ onDragLeave }}" onDrop="{{ onDrop }}" onClick="{{ startUpload }}" style="min-height:168px;border-radius:20px;border:2px dashed {{ upBorder }};background:{{ upBg }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;text-align:center;cursor:pointer;transform:scale({{ upScale }});transition:background 140ms,border-color 140ms,transform 200ms cubic-bezier(.34,1.56,.64,1)">
+        <span style="width:40px;height:40px;border-radius:12px;background:{{ upIconBg }};display:grid;place-items:center"><span style="width:20px;height:20px;background:#FFFFFF;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/{{ upIcon }}.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/{{ upIcon }}.svg) center/contain no-repeat"></span></span>
+        <span style="font-size:15px;font-weight:600">{{ upTitle }}</span>
+        <span style="font-size:13px;color:#625C55">{{ upSub }}</span>
+        <span style="width:100%;max-width:260px;height:8px;border-radius:999px;background:#F2EFEA;overflow:hidden;opacity:{{ upBarOp }}"><span style="display:block;height:100%;width:{{ upW }};background:#F26B1D;border-radius:999px;transition:width 160ms linear"></span></span>
+      </div>
+    </div>
+
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+      <span style="font-size:19px;font-weight:600">Tag input</span>
+      <label style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:13px;font-weight:600">Product tags</span>
+        <div style="min-height:52px;padding:8px;border:1.5px solid #CFCAC3;border-radius:14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+          <sc-for list="{{ tagList }}" as="t" hint-placeholder-count="3">
+            <span style="height:32px;padding:0 6px 0 12px;border-radius:999px;background:#141210;color:#FFFFFF;display:flex;align-items:center;gap:4px;font-size:13px;font-weight:600">{{ t.label }}<button onClick="{{ t.remove }}" aria-label="Remove tag" style="width:22px;height:22px;border:0;border-radius:999px;background:#45403A;color:#FFFFFF;display:grid;place-items:center;cursor:pointer;font-size:13px;line-height:1">×</button></span>
+          </sc-for>
+          <input value="{{ tagIn }}" onChange="{{ onTagIn }}" onKeyDown="{{ onTagKey }}" placeholder="Type, then press Enter" style="flex:1;min-width:140px;height:32px;border:0;outline:none;font-size:15px;background:transparent">
+        </div>
+      </label>
+      <span style="font-size:13px;color:#625C55">Backspace on an empty field removes the last tag. Pasting a comma-separated list adds every tag at once.</span>
+    </div>
+
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:16px">
+      <span style="font-size:19px;font-weight:600">Stepper / wizard</span>
+      <div style="display:flex;align-items:center">
+        <sc-for list="{{ steps }}" as="s" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;flex:{{ s.flex }}">
+            <span style="width:36px;height:36px;flex:none;border-radius:999px;background:{{ s.bg }};color:{{ s.fg }};box-shadow:{{ s.ring }};display:grid;place-items:center;font-size:14px;font-weight:700;transition:background 200ms,box-shadow 200ms">{{ s.mark }}</span>
+            <span style="flex:1;height:3px;margin:0 6px;border-radius:2px;background:#E6E2DC;overflow:hidden;display:{{ s.lineDisplay }}"><span style="display:block;height:100%;width:{{ s.lineW }};background:#F26B1D;transition:width 320ms cubic-bezier(.05,.7,.1,1)"></span></span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px"><span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">STEP {{ stepNo }} OF 4</span><span style="font-size:22px;font-weight:700;letter-spacing:-.01em">{{ stepTitle }}</span><span style="font-size:14px;color:#625C55">{{ stepSub }}</span></div>
+      <div style="margin-top:auto;display:flex;gap:8px">
+        <button onClick="{{ stepBack }}" style="height:52px;padding:0 20px;border:2px solid #141210;border-radius:14px;background:#FFFFFF;font-size:15px;font-weight:600;cursor:pointer" style-active="transform:scale(.97)">Back</button>
+        <button onClick="{{ stepNext }}" style="flex:1;height:52px;border:0;border-radius:14px;background:#F26B1D;color:#FFFFFF;font-size:15px;font-weight:600;cursor:pointer" style-active="transform:scale(.97)">{{ stepCta }}</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <span style="font-size:19px;font-weight:600">Form validation</span>
+      <span style="font-size:14px;line-height:1.5;color:#45403A">Fields validate on blur, never while the user is still typing. On submit, an error summary appears at the top and the first invalid field gets focus. Error text says how to fix the problem. Required fields are marked; optional ones say "optional".</span>
+      <sc-if value="{{ formHasErr }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:14px 16px;border-radius:14px;background:#FDE8E8;color:#7A1A15;font-size:14px;line-height:1.45"><b>Fix 2 fields to continue.</b> Check the email and phone number.</div>
+      </sc-if>
+      <sc-if value="{{ formOk }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:14px 16px;border-radius:14px;background:#E3F5EA;color:#0F4D29;font-size:14px;line-height:1.45"><b>Invite sent.</b> Rina will get an email and a WhatsApp message.</div>
+      </sc-if>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <label style="display:flex;flex-direction:column;gap:6px">
+        <span style="font-size:13px;font-weight:600">Email <span style="color:#B3261E">*</span></span>
+        <input value="{{ fEmail }}" onChange="{{ onEmail }}" style="height:52px;padding:0 16px;border:1.5px solid {{ emailBorder }};border-radius:14px;font-size:16px;outline:none" style-focus="box-shadow:0 0 0 4px #FFE2CF">
+        <span style="font-size:13px;color:#B3261E;display:{{ emailErrD }}">Enter an email like name@store.com</span>
+      </label>
+      <label style="display:flex;flex-direction:column;gap:6px">
+        <span style="font-size:13px;font-weight:600">WhatsApp number <span style="color:#B3261E">*</span></span>
+        <div style="height:52px;border:1.5px solid {{ phoneBorder }};border-radius:14px;display:flex;align-items:center;overflow:hidden">
+          <span style="height:100%;padding:0 12px;display:flex;align-items:center;background:#F2EFEA;font-size:15px;font-weight:600">+62</span>
+          <input value="{{ fPhone }}" onChange="{{ onPhone }}" placeholder="812-3456-7890" style="flex:1;min-width:0;height:100%;padding:0 14px;border:0;font-size:16px;outline:none;font-variant-numeric:tabular-nums">
+        </div>
+        <span style="font-size:13px;color:#B3261E;display:{{ phoneErrD }}">Number must be 9–12 digits after +62</span>
+      </label>
+      <label style="display:flex;flex-direction:column;gap:6px">
+        <span style="font-size:13px;font-weight:600">Role note <span style="font-weight:400;color:#625C55">(optional)</span></span>
+        <input style="height:52px;padding:0 16px;border:1.5px solid #CFCAC3;border-radius:14px;font-size:16px;outline:none" style-focus="border-color:#F26B1D;box-shadow:0 0 0 4px #FFE2CF">
+      </label>
+      <button onClick="{{ submitForm }}" style="height:56px;border:0;border-radius:16px;background:#F26B1D;color:#FFFFFF;font-size:16px;font-weight:600;cursor:pointer" style-active="transform:scale(.97)">Send invite</button>
+    </div>
+  </div>
+</section>
+
+<section id="navigation" style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">B — Navigation</span>
+    <h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Getting around</h2>
+  </div>
+
+  <div style="border-radius:28px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden;display:flex;height:620px;position:relative">
+    <aside style="flex:none;width:{{ sideW }};border-right:1px solid #E6E2DC;background:#FFFFFF;display:flex;flex-direction:column;gap:6px;padding:16px 12px;overflow:hidden;transition:width 240ms cubic-bezier(.2,0,0,1)">
+      <button onClick="{{ toggleOutlet }}" style="height:56px;padding:0 10px;border:1px solid #E6E2DC;border-radius:16px;background:#FAF8F5;display:flex;align-items:center;gap:10px;cursor:pointer;text-align:left;margin-bottom:10px">
+        <span style="width:34px;height:34px;flex:none;border-radius:10px;background:#F26B1D;color:#FFFFFF;display:grid;place-items:center;font-size:14px;font-weight:700">K</span>
+        <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;opacity:{{ sideLabelOp }};transition:opacity 140ms;white-space:nowrap"><span style="font-size:14px;font-weight:700">Kopi Kenangan Senja</span><span style="font-size:12px;color:#625C55">{{ sel }} · Owner</span></span>
+      </button>
+      <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="10">
+        <button onClick="{{ n.onClick }}" title="{{ n.label }}" style="height:44px;padding:0 12px;border:0;border-radius:12px;background:{{ n.bg }};color:{{ n.fg }};display:flex;align-items:center;gap:12px;cursor:pointer;position:relative;white-space:nowrap;transition:background 140ms" style-hover="background:#F2EFEA">
+          <span style="width:20px;height:20px;flex:none;background:currentColor;-webkit-mask:{{ n.mask }};mask:{{ n.mask }}"></span>
+          <span style="flex:1;text-align:left;font-size:14px;font-weight:{{ n.weight }};opacity:{{ sideLabelOp }};transition:opacity 140ms">{{ n.label }}</span>
+          <span style="min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#F26B1D;color:#FFFFFF;font-size:11px;font-weight:700;line-height:22px;display:{{ n.badgeD }};position:{{ n.badgePos }};top:4px;right:4px">{{ n.badge }}</span>
+        </button>
+      </sc-for>
+      <button onClick="{{ toggleSide }}" style="margin-top:auto;height:44px;padding:0 12px;border:0;border-radius:12px;background:transparent;color:#625C55;display:flex;align-items:center;gap:12px;cursor:pointer;white-space:nowrap" style-hover="background:#F2EFEA">
+        <span style="width:20px;height:20px;flex:none;background:currentColor;transform:rotate({{ sideRot }});transition:transform 240ms;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/panel-left-close.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/panel-left-close.svg) center/contain no-repeat"></span>
+        <span style="font-size:14px;font-weight:500;opacity:{{ sideLabelOp }}">Collapse</span>
+      </button>
+    </aside>
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;background:#FAF8F5">
+      <div style="height:68px;flex:none;padding:0 20px;border-bottom:1px solid #E6E2DC;background:#FFFFFF;display:flex;align-items:center;gap:12px">
+        <div style="display:flex;align-items:center;gap:8px;font-size:14px;color:#625C55;min-width:0;white-space:nowrap;overflow:hidden">
+          <span>Owner</span><span style="color:#CFCAC3">/</span><span>{{ navParent }}</span><span style="color:#CFCAC3">/</span><span style="color:#141210;font-weight:600">{{ navActive }}</span>
+        </div>
+        <button onClick="{{ openCmd }}" style="margin-left:auto;height:44px;width:min(320px,40%);padding:0 12px;border:0;border-radius:999px;background:#F2EFEA;display:flex;align-items:center;gap:10px;color:#625C55;cursor:pointer;font-size:14px">
+          <span style="width:18px;height:18px;flex:none;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/search.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/search.svg) center/contain no-repeat"></span>
+          <span style="flex:1;text-align:left;white-space:nowrap;overflow:hidden">Search or jump to…</span>
+          <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;padding:5px 7px;border-radius:7px;background:#FFFFFF">⌘K</span>
+        </button>
+        <button style="height:44px;padding:0 14px;border:1px solid #E6E2DC;border-radius:12px;background:#FFFFFF;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;white-space:nowrap;cursor:pointer"><span style="width:16px;height:16px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/calendar.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/calendar.svg) center/contain no-repeat"></span>{{ rangeText }}</button>
+        <button aria-label="Notifications" style="width:44px;height:44px;flex:none;border:1px solid #E6E2DC;border-radius:12px;background:#FFFFFF;display:grid;place-items:center;position:relative;cursor:pointer"><span style="width:20px;height:20px;background:#141210;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/bell.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/bell.svg) center/contain no-repeat"></span><span style="position:absolute;top:9px;right:10px;width:9px;height:9px;border-radius:9px;background:#F26B1D;box-shadow:0 0 0 2px #FFFFFF"></span></button>
+        <span style="width:44px;height:44px;flex:none;border-radius:999px;background:#141210;color:#FFFFFF;display:grid;place-items:center;font-size:14px;font-weight:700">AR</span>
+      </div>
+      <div style="flex:1;padding:24px;display:flex;flex-direction:column;gap:16px;overflow:auto">
+        <span style="font-size:28px;font-weight:700;letter-spacing:-.02em">{{ navActive }}</span>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">
+          <div style="height:96px;border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC"></div>
+          <div style="height:96px;border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC"></div>
+          <div style="height:96px;border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC"></div>
+        </div>
+        <div style="flex:1;min-height:120px;border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <span style="font-size:13px;color:#625C55">Showing {{ pageFrom }}–{{ pageTo }} of 284</span>
+          <div style="display:flex;gap:4px;align-items:center">
+            <button onClick="{{ pagePrev }}" aria-label="Previous page" style="width:40px;height:40px;border:1px solid #E6E2DC;border-radius:12px;background:#FFFFFF;cursor:pointer;font-size:16px">‹</button>
+            <sc-for list="{{ pages }}" as="p" hint-placeholder-count="7">
+              <button onClick="{{ p.onClick }}" style="min-width:40px;height:40px;padding:0 6px;border:0;border-radius:12px;background:{{ p.bg }};color:{{ p.fg }};font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;cursor:{{ p.cursor }}">{{ p.label }}</button>
+            </sc-for>
+            <button onClick="{{ pageNext }}" aria-label="Next page" style="width:40px;height:40px;border:1px solid #E6E2DC;border-radius:12px;background:#FFFFFF;cursor:pointer;font-size:16px">›</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div onClick="{{ closeCmd }}" style="position:absolute;inset:0;background:rgba(20,18,16,.45);opacity:{{ cmdOp }};pointer-events:{{ cmdPe }};transition:opacity 160ms cubic-bezier(.2,0,0,1)"></div>
+    <div style="position:absolute;left:50%;top:72px;width:min(560px,90%);border-radius:24px;background:#FFFFFF;box-shadow:0 24px 60px -12px rgba(20,18,16,.4);overflow:hidden;opacity:{{ cmdOp }};pointer-events:{{ cmdPe }};transform:translateX(-50%) scale({{ cmdS }});transition:opacity 160ms,transform 200ms cubic-bezier(.2,0,0,1)">
+      <div style="height:60px;padding:0 18px;border-bottom:1px solid #E6E2DC;display:flex;align-items:center;gap:12px">
+        <span style="width:20px;height:20px;background:#625C55;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/search.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/search.svg) center/contain no-repeat"></span>
+        <input value="{{ cmdQ }}" onChange="{{ onCmdQ }}" placeholder="Type a command or search…" style="flex:1;border:0;outline:none;font-size:17px;background:transparent">
+        <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;padding:5px 7px;border-radius:7px;background:#F2EFEA">esc</span>
+      </div>
+      <div style="padding:8px;display:flex;flex-direction:column;gap:2px;max-height:340px;overflow:auto">
+        <sc-for list="{{ cmdResults }}" as="c" hint-placeholder-count="6">
+          <button onClick="{{ c.onClick }}" style="height:48px;padding:0 12px;border:0;border-radius:12px;background:{{ c.bg }};display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;color:#141210" style-hover="background:#F2EFEA">
+            <span style="width:32px;height:32px;flex:none;border-radius:10px;background:#F2EFEA;display:grid;place-items:center"><span style="width:16px;height:16px;background:#141210;-webkit-mask:{{ c.mask }};mask:{{ c.mask }}"></span></span>
+            <span style="flex:1;font-size:15px;font-weight:500">{{ c.label }}</span>
+            <span style="font-size:12px;color:#857E76">{{ c.group }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+      <span style="font-size:19px;font-weight:600">Mobile tab bar</span>
+      <span style="font-size:13px;line-height:1.45;color:#625C55">Owner mobile and self-order use a 5-slot bar, 64px tall plus the safe area. The active icon fills and the label turns ink.</span>
+      <div style="margin-top:auto;border-radius:24px;background:#FFFFFF;box-shadow:0 -1px 0 #E6E2DC,0 8px 24px -6px rgba(20,18,16,.16);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:8px 6px 14px">
+        <sc-for list="{{ mtabs }}" as="t" hint-placeholder-count="5">
+          <button onClick="{{ t.onClick }}" style="height:52px;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:{{ t.fg }};cursor:pointer">
+            <span style="width:40px;height:28px;border-radius:999px;background:{{ t.pill }};display:grid;place-items:center;transition:background 200ms cubic-bezier(.2,0,0,1)"><span style="width:20px;height:20px;background:currentColor;-webkit-mask:{{ t.mask }};mask:{{ t.mask }}"></span></span>
+            <span style="font-size:11px;font-weight:600">{{ t.label }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+      <span style="font-size:19px;font-weight:600">Category rail (POS)</span>
+      <span style="font-size:13px;line-height:1.45;color:#625C55">A horizontally scrolling pill rail above the product grid, 48px pills. The active pill is ink. Counts help cashiers spot empty categories.</span>
+      <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px">
+        <sc-for list="{{ cats }}" as="c" hint-placeholder-count="6">
+          <button onClick="{{ c.onClick }}" style="flex:none;height:48px;padding:0 18px;border:0;border-radius:999px;background:{{ c.bg }};color:{{ c.fg }};font-size:15px;font-weight:600;display:flex;gap:8px;align-items:center;cursor:pointer;transition:background 140ms" style-active="transform:scale(.95)">{{ c.label }}<span style="font-size:12px;opacity:.7">{{ c.n }}</span></button>
+        </sc-for>
+      </div>
+      <span style="font-size:19px;font-weight:600;margin-top:6px">Breadcrumb</span>
+      <div style="display:flex;align-items:center;gap:8px;font-size:14px;flex-wrap:wrap"><a href="#navigation">Owner</a><span style="color:#CFCAC3">/</span><a href="#navigation">Catalog</a><span style="color:#CFCAC3">/</span><a href="#navigation">Products</a><span style="color:#CFCAC3">/</span><span style="font-weight:600">Es Kopi Susu Aren</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="overlays" style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">C — Overlays</span>
+    <h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Layers on top</h2>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="border-radius:24px;background:#F2EFEA;position:relative;overflow:hidden;min-height:440px;padding:24px;display:flex;flex-direction:column;gap:12px">
+      <span style="font-size:19px;font-weight:600">Modal</span>
+      <span style="font-size:13px;line-height:1.45;color:#45403A">Confirm: max 420px wide, one primary action. Form: max 560px, sticky footer. Opens with scale .96→1 and a fade over 200ms. Closes in 140ms. Esc and the scrim both close it, unless there are unsaved changes.</span>
+      <div style="display:flex;gap:8px;margin-top:auto">
+        <button onClick="{{ openConfirm }}" style="flex:1;height:52px;border:0;border-radius:14px;background:#141210;color:#FFFFFF;font-size:15px;font-weight:600;cursor:pointer" style-active="transform:scale(.97)">Confirm modal</button>
+        <button onClick="{{ openFormModal }}" style="flex:1;height:52px;border:2px solid #141210;border-radius:14px;background:#FFFFFF;font-size:15px;font-weight:600;cursor:pointer" style-active="transform:scale(.97)">Form modal</button>
+      </div>
+      <div onClick="{{ closeModal }}" style="position:absolute;inset:0;background:rgba(20,18,16,.55);opacity:{{ modalOp }};pointer-events:{{ modalPe }};transition:opacity {{ modalDur }}"></div>
+      <div style="position:absolute;left:50%;top:50%;width:calc(100% - 40px);max-width:400px;padding:22px;border-radius:24px;background:#FFFFFF;box-shadow:0 24px 60px -12px rgba(20,18,16,.4);display:flex;flex-direction:column;gap:16px;opacity:{{ confirmOp }};pointer-events:{{ confirmPe }};transform:translate(-50%,-50%) scale({{ confirmS }});transition:opacity {{ modalDur }},transform {{ modalDur }} cubic-bezier(.2,0,0,1)">
+        <span style="width:48px;height:48px;border-radius:14px;background:#FDE8E8;display:grid;place-items:center"><span style="width:24px;height:24px;background:#B3261E;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/trash-2.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/trash-2.svg) center/contain no-repeat"></span></span>
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:21px;font-weight:700">Delete "Matcha Latte"?</span><span style="font-size:14px;line-height:1.45;color:#625C55">It will be removed from all 4 outlets and from active promos. Past sales stay in your reports.</span></div>
+        <div style="display:flex;gap:8px"><button onClick="{{ closeModal }}" style="flex:1;height:52px;border:0;border-radius:14px;background:#F2EFEA;font-size:15px;font-weight:600;cursor:pointer">Cancel</button><button onClick="{{ closeModal }}" style="flex:1;height:52px;border:0;border-radius:14px;background:#E5383B;color:#FFFFFF;font-size:15px;font-weight:600;cursor:pointer">Delete</button></div>
+      </div>
+      <div style="position:absolute;left:50%;top:50%;width:calc(100% - 40px);max-width:460px;border-radius:24px;background:#FFFFFF;box-shadow:0 24px 60px -12px rgba(20,18,16,.4);display:flex;flex-direction:column;opacity:{{ formOp }};pointer-events:{{ formPe }};transform:translate(-50%,-50%) scale({{ formS }});transition:opacity {{ modalDur }},transform {{ modalDur }} cubic-bezier(.2,0,0,1)">
+        <div style="padding:18px 20px;border-bottom:1px solid #E6E2DC;display:flex;justify-content:space-between;align-items:center"><span style="font-size:19px;font-weight:700">Add expense</span><button onClick="{{ closeModal }}" aria-label="Close" style="width:36px;height:36px;border:0;border-radius:10px;background:#F2EFEA;cursor:pointer;font-size:18px">×</button></div>
+        <div style="padding:18px 20px;display:flex;flex-direction:column;gap:12px">
+          <input value="Gas LPG 12kg" style="height:48px;padding:0 14px;border:1.5px solid #CFCAC3;border-radius:12px;font-size:15px">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px"><input value="IDR 210,000" style="height:48px;padding:0 14px;border:1.5px solid #CFCAC3;border-radius:12px;font-size:15px;font-weight:600"><input value="Operations" style="height:48px;padding:0 14px;border:1.5px solid #CFCAC3;border-radius:12px;font-size:15px"></div>
+        </div>
+        <div style="padding:14px 20px;border-top:1px solid #E6E2DC;display:flex;gap:8px;justify-content:flex-end"><button onClick="{{ closeModal }}" style="height:48px;padding:0 18px;border:0;border-radius:12px;background:#F2EFEA;font-size:15px;font-weight:600;cursor:pointer">Cancel</button><button onClick="{{ closeModal }}" style="height:48px;padding:0 18px;border:0;border-radius:12px;background:#F26B1D;color:#FFFFFF;font-size:15px;font-weight:600;cursor:pointer">Save expense</button></div>
+      </div>
+    </div>
+
+    <div style="border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;padding:24px;display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:20px;align-items:center">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <span style="font-size:19px;font-weight:600">Bottom sheet</span>
+        <span style="font-size:13px;line-height:1.45;color:#625C55">Used for mobile, self-order and POS options. Slides up in 320ms with decelerate easing, and drags down to close. It has a grab handle and a 28px top radius.</span>
+        <button onClick="{{ toggleSheet }}" style="height:52px;border:0;border-radius:14px;background:#141210;color:#FFFFFF;font-size:15px;font-weight:600;cursor:pointer" style-active="transform:scale(.97)">{{ sheetCta }}</button>
+      </div>
+      <div style="height:420px;border-radius:36px;background:#141210;padding:8px">
+        <div style="height:100%;border-radius:30px;background:#FAF8F5;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:8px;padding:40px 14px 14px">
+          <span style="font-size:18px;font-weight:700">Menu</span>
+          <div style="height:70px;border-radius:16px;background:#FFFFFF;border:1px solid #E6E2DC"></div>
+          <div style="height:70px;border-radius:16px;background:#FFFFFF;border:1px solid #E6E2DC"></div>
+          <div style="height:70px;border-radius:16px;background:#FFFFFF;border:1px solid #E6E2DC"></div>
+          <div onClick="{{ toggleSheet }}" style="position:absolute;inset:0;background:#141210;opacity:{{ sheetScrim }};pointer-events:{{ sheetPe }};transition:opacity 240ms"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;border-radius:28px 28px 0 0;background:#FFFFFF;padding:10px 16px 18px;display:flex;flex-direction:column;gap:10px;transform:translateY({{ sheetY }});transition:transform {{ sheetTrans }}">
+            <span style="align-self:center;width:40px;height:5px;border-radius:9px;background:#CFCAC3"></span>
+            <span style="font-size:17px;font-weight:700">Es Kopi Susu Aren</span>
+            <span style="font-size:12px;font-weight:600;color:#625C55">Sugar level</span>
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px"><span style="height:40px;border-radius:12px;background:#141210;color:#FFFFFF;display:grid;place-items:center;font-size:13px;font-weight:600">Normal</span><span style="height:40px;border-radius:12px;background:#F2EFEA;display:grid;place-items:center;font-size:13px;font-weight:600">Less</span><span style="height:40px;border-radius:12px;background:#F2EFEA;display:grid;place-items:center;font-size:13px;font-weight:600">None</span></div>
+            <button onClick="{{ toggleSheet }}" style="height:50px;border:0;border-radius:14px;background:#F26B1D;color:#FFFFFF;font-size:15px;font-weight:700;cursor:pointer">Add · IDR 25,000</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;padding:24px;display:flex;flex-direction:column;gap:14px;min-height:320px">
+      <span style="font-size:19px;font-weight:600">Popover &amp; dropdown menu</span>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div style="position:relative">
+          <button onClick="{{ togglePop }}" style="height:48px;padding:0 16px;border:1px solid #E6E2DC;border-radius:14px;background:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer;display:flex;gap:8px;align-items:center"><span style="width:16px;height:16px;background:#2F6FEB;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/info.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/info.svg) center/contain no-repeat"></span>What is PB1?</button>
+          <div style="position:absolute;top:56px;left:0;width:280px;z-index:6;padding:16px;border-radius:18px;background:#FFFFFF;box-shadow:0 12px 32px -8px rgba(20,18,16,.22),0 0 0 1px #E6E2DC;display:flex;flex-direction:column;gap:8px;opacity:{{ popOp }};transform:translateY({{ popY }});pointer-events:{{ popPe }};transition:opacity 140ms,transform 200ms cubic-bezier(.2,0,0,1)">
+            <span style="font-size:15px;font-weight:700">Pajak Barang &amp; Jasa Tertentu</span>
+            <span style="font-size:13px;line-height:1.45;color:#625C55">A 10% regional restaurant tax. If your outlet charges PB1, it replaces PPN on F&amp;B receipts.</span>
+            <a href="#overlays" style="font-size:13px;font-weight:600">Tax settings →</a>
+          </div>
+        </div>
+        <div style="position:relative">
+          <button onClick="{{ toggleMenu }}" style="height:48px;padding:0 16px;border:0;border-radius:14px;background:#141210;color:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer;display:flex;gap:8px;align-items:center">Actions<span style="width:16px;height:16px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/chevron-down.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/chevron-down.svg) center/contain no-repeat"></span></button>
+          <div style="position:absolute;top:56px;left:0;width:230px;z-index:6;padding:6px;border-radius:16px;background:#FFFFFF;box-shadow:0 12px 32px -8px rgba(20,18,16,.22),0 0 0 1px #E6E2DC;display:flex;flex-direction:column;opacity:{{ menuOp }};transform:translateY({{ menuY }});pointer-events:{{ menuPe }};transition:opacity 140ms,transform 200ms cubic-bezier(.2,0,0,1)">
+            <sc-for list="{{ menuItems }}" as="m" hint-placeholder-count="5">
+              <button onClick="{{ toggleMenu }}" style="height:42px;padding:0 10px;border:0;border-radius:10px;background:transparent;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;color:{{ m.fg }};cursor:pointer;border-top:{{ m.sep }}" style-hover="background:#F2EFEA"><span style="width:16px;height:16px;background:currentColor;-webkit-mask:{{ m.mask }};mask:{{ m.mask }}"></span><span style="flex:1;text-align:left">{{ m.label }}</span><span style="font:400 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">{{ m.kbd }}</span></button>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      <div onContextMenu="{{ onCtx }}" onClick="{{ closeCtx }}" style="margin-top:auto;position:relative;border-radius:16px;border:1.5px dashed #CFCAC3;min-height:140px;display:grid;place-items:center;font-size:14px;color:#625C55;user-select:none">
+        Right-click (or long-press) here for the context menu
+        <div style="position:absolute;left:{{ ctxX }};top:{{ ctxY }};width:200px;z-index:6;padding:6px;border-radius:14px;background:#141210;color:#FFFFFF;box-shadow:0 12px 32px -8px rgba(20,18,16,.4);display:flex;flex-direction:column;opacity:{{ ctxOp }};transform:scale({{ ctxS }});transform-origin:top left;pointer-events:{{ ctxPe }};transition:opacity 100ms,transform 140ms cubic-bezier(.2,0,0,1)">
+          <span style="height:38px;padding:0 10px;border-radius:9px;display:flex;align-items:center;font-size:14px">Duplicate</span>
+          <span style="height:38px;padding:0 10px;border-radius:9px;display:flex;align-items:center;font-size:14px">Move to category…</span>
+          <span style="height:38px;padding:0 10px;border-radius:9px;display:flex;align-items:center;font-size:14px">Mark as sold out</span>
+          <span style="height:38px;padding:0 10px;border-radius:9px;display:flex;align-items:center;font-size:14px;color:#FF8A8C;border-top:1px solid #2E2A26">Delete</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;padding:24px;display:flex;flex-direction:column;gap:14px;min-height:320px">
+      <span style="font-size:19px;font-weight:600">Toast variants</span>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+        <button onClick="{{ toastSuccess }}" style="height:48px;border:0;border-radius:12px;background:#E3F5EA;color:#0F4D29;font-size:14px;font-weight:600;cursor:pointer">Success</button>
+        <button onClick="{{ toastError }}" style="height:48px;border:0;border-radius:12px;background:#FDE8E8;color:#7A1A15;font-size:14px;font-weight:600;cursor:pointer">Error</button>
+        <button onClick="{{ toastUndo }}" style="height:48px;border:0;border-radius:12px;background:#141210;color:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer">Undo (5s)</button>
+        <button onClick="{{ toastInfo }}" style="height:48px;border:0;border-radius:12px;background:#E6EEFD;color:#163A85;font-size:14px;font-weight:600;cursor:pointer">Info</button>
+      </div>
+      <div style="flex:1;min-height:180px;border-radius:16px;background:#F2EFEA;position:relative;overflow:hidden;padding:12px;display:flex;flex-direction:column-reverse;gap:8px">
+        <sc-for list="{{ toasts }}" as="t" hint-placeholder-count="0">
+          <div style="padding:12px 14px;border-radius:14px;background:{{ t.bg }};color:{{ t.fg }};display:flex;gap:12px;align-items:center;box-shadow:0 12px 28px -8px rgba(20,18,16,.3);transform:translateY({{ t.y }});opacity:{{ t.op }};transition:transform 320ms cubic-bezier(.34,1.4,.64,1),opacity 160ms;position:relative;overflow:hidden">
+            <span style="width:20px;height:20px;flex:none;background:{{ t.ic }};-webkit-mask:{{ t.mask }};mask:{{ t.mask }}"></span>
+            <span style="flex:1;font-size:14px;font-weight:500;line-height:1.35">{{ t.text }}</span>
+            <span style="font-size:14px;font-weight:700;color:#FF9F63;display:{{ t.actD }}">Undo</span>
+            <span style="position:absolute;left:0;bottom:0;height:3px;background:#F26B1D;width:{{ t.bar }};transition:width {{ t.barDur }} linear"></span>
+          </div>
+        </sc-for>
+        <sc-if value="{{ noToasts }}" hint-placeholder-val="{{ true }}"><span style="margin:auto;font-size:13px;color:#857E76">Toasts stack bottom-up here</span></sc-if>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="data" style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">D — Data</span>
+    <h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Tables, filters, progress</h2>
+  </div>
+
+  <div style="border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden;position:relative">
+    <div style="padding:16px 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #E6E2DC">
+      <div style="height:44px;width:260px;max-width:100%;padding:0 14px;border-radius:999px;background:#F2EFEA;display:flex;align-items:center;gap:10px;color:#625C55;font-size:14px"><span style="width:16px;height:16px;flex:none;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/search.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/search.svg) center/contain no-repeat"></span>Search order ID or customer</div>
+      <sc-for list="{{ filterChips }}" as="f" hint-placeholder-count="5">
+        <button onClick="{{ f.onClick }}" style="height:40px;padding:0 14px;border:1.5px solid {{ f.border }};border-radius:999px;background:{{ f.bg }};color:{{ f.fg }};font-size:13px;font-weight:600;cursor:pointer;display:flex;gap:6px;align-items:center;transition:background 120ms">{{ f.label }}<span style="display:{{ f.xD }}">×</span></button>
+      </sc-for>
+      <button onClick="{{ clearFilters }}" style="height:40px;padding:0 10px;border:0;background:none;color:#D9560B;font-size:13px;font-weight:600;cursor:pointer;display:{{ clearD }}">Clear all</button>
+      <button style="margin-left:auto;height:40px;padding:0 14px;border:1px solid #E6E2DC;border-radius:12px;background:#FFFFFF;font-size:13px;font-weight:600;display:flex;gap:8px;align-items:center;cursor:pointer"><span style="width:16px;height:16px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/download.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/download.svg) center/contain no-repeat"></span>Export</button>
+    </div>
+    <div style="overflow-x:auto">
+      <div style="min-width:980px">
+        <div style="display:grid;grid-template-columns:52px 150px 120px 150px 140px 120px 120px minmax(120px,1fr) 48px;height:46px;align-items:center;background:#F2EFEA;font-size:12px;font-weight:600;color:#45403A">
+          <span style="position:sticky;left:0;background:#F2EFEA;height:100%;display:grid;place-items:center"><button onClick="{{ toggleAll }}" aria-label="Select all" style="width:22px;height:22px;border-radius:7px;border:2px solid {{ allBorder }};background:{{ allBg }};color:#FFFFFF;font-size:13px;font-weight:700;line-height:1;cursor:pointer;padding:0">{{ allMark }}</button></span>
+          <sc-for list="{{ cols }}" as="c" hint-placeholder-count="7">
+            <button onClick="{{ c.onClick }}" style="height:100%;border:0;background:{{ c.bg }};padding:0 12px;font-size:12px;font-weight:600;color:#45403A;text-align:{{ c.align }};cursor:{{ c.cursor }};display:flex;align-items:center;gap:4px;justify-content:{{ c.justify }};position:{{ c.pos }};left:52px">{{ c.label }}<span style="color:#D9560B">{{ c.arrow }}</span></button>
+          </sc-for>
+          <span></span>
+        </div>
+        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
+          <div style="display:flex;flex-direction:column;border-top:1px solid #F2EFEA;background:{{ r.bg }};transition:background 120ms">
+            <div style="display:grid;grid-template-columns:52px 150px 120px 150px 140px 120px 120px minmax(120px,1fr) 48px;height:58px;align-items:center;font-size:14px">
+              <span style="position:sticky;left:0;background:{{ r.stickyBg }};height:100%;display:grid;place-items:center"><button onClick="{{ r.toggle }}" aria-label="Select row" style="width:22px;height:22px;border-radius:7px;border:2px solid {{ r.cbBorder }};background:{{ r.cbBg }};color:#FFFFFF;font-size:13px;font-weight:700;line-height:1;cursor:pointer;padding:0">{{ r.cbMark }}</button></span>
+              <span style="position:sticky;left:52px;background:{{ r.stickyBg }};height:100%;display:flex;align-items:center;padding:0 12px;font:500 13px/1 'JetBrains Mono',ui-monospace,monospace">{{ r.id }}</span>
+              <span style="padding:0 12px;color:#625C55;font-variant-numeric:tabular-nums">{{ r.time }}</span>
+              <span style="padding:0 12px">{{ r.outlet }}</span>
+              <span style="padding:0 12px">{{ r.cashier }}</span>
+              <span style="padding:0 12px">{{ r.method }}</span>
+              <span style="padding:0 12px"><span style="height:26px;padding:0 10px;border-radius:999px;background:{{ r.sbg }};color:{{ r.sfg }};font-size:12px;font-weight:600;display:inline-flex;align-items:center">{{ r.status }}</span></span>
+              <span style="padding:0 12px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums">{{ r.total }}</span>
+              <button onClick="{{ r.expand }}" aria-label="Expand row" style="width:36px;height:36px;border:0;border-radius:10px;background:transparent;cursor:pointer;display:grid;place-items:center" style-hover="background:#F2EFEA"><span style="width:16px;height:16px;background:#45403A;transform:rotate({{ r.rot }});transition:transform 200ms cubic-bezier(.2,0,0,1);-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/chevron-down.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/chevron-down.svg) center/contain no-repeat"></span></button>
+            </div>
+            <div style="display:grid;grid-template-rows:{{ r.rows }};transition:grid-template-rows 240ms cubic-bezier(.2,0,0,1)">
+              <div style="overflow:hidden">
+                <div style="margin:0 18px 14px 64px;padding:14px 16px;border-radius:14px;background:#FAF8F5;display:flex;gap:28px;flex-wrap:wrap;font-size:13px">
+                  <sc-for list="{{ r.items }}" as="it" hint-placeholder-count="2"><span><b>{{ it.q }}×</b> {{ it.n }} <span style="color:#625C55">{{ it.p }}</span></span></sc-for>
+                  <a href="#data" style="margin-left:auto;font-weight:600">Open transaction →</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="position:absolute;left:50%;bottom:16px;padding:8px 8px 8px 18px;border-radius:18px;background:#141210;color:#FFFFFF;display:flex;align-items:center;gap:14px;box-shadow:0 16px 40px -8px rgba(20,18,16,.45);transform:translate(-50%,{{ bulkY }});opacity:{{ bulkOp }};pointer-events:{{ bulkPe }};transition:transform 320ms cubic-bezier(.34,1.3,.64,1),opacity 160ms;white-space:nowrap">
+      <span style="font-size:14px;font-weight:600">{{ selCount }} selected</span>
+      <button style="height:40px;padding:0 14px;border:0;border-radius:12px;background:#2E2A26;color:#FFFFFF;font-size:13px;font-weight:600">Export</button>
+      <button style="height:40px;padding:0 14px;border:0;border-radius:12px;background:#2E2A26;color:#FFFFFF;font-size:13px;font-weight:600">Print receipts</button>
+      <button style="height:40px;padding:0 14px;border:0;border-radius:12px;background:#E5383B;color:#FFFFFF;font-size:13px;font-weight:600">Refund</button>
+    </div>
+    <div style="height:72px"></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px">
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:16px">
+      <span style="font-size:19px;font-weight:600">Progress</span>
+      <div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;font-size:13px"><span style="font-weight:600">Importing products</span><span style="color:#625C55;font-variant-numeric:tabular-nums">312 / 480</span></div><div style="height:10px;border-radius:999px;background:#F2EFEA;overflow:hidden"><div style="height:100%;width:65%;background:#F26B1D;border-radius:999px"></div></div></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;font-size:13px"><span style="font-weight:600">Stock · Susu UHT 1L</span><span style="color:#B3261E;font-weight:600">4 left</span></div><div style="display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:3px"><span style="height:10px;border-radius:3px;background:#E5383B"></span><span style="height:10px;border-radius:3px;background:#F2EFEA"></span><span style="height:10px;border-radius:3px;background:#F2EFEA"></span><span style="height:10px;border-radius:3px;background:#F2EFEA"></span><span style="height:10px;border-radius:3px;background:#F2EFEA"></span><span style="height:10px;border-radius:3px;background:#F2EFEA"></span><span style="height:10px;border-radius:3px;background:#F2EFEA"></span><span style="height:10px;border-radius:3px;background:#F2EFEA"></span><span style="height:10px;border-radius:3px;background:#F2EFEA"></span><span style="height:10px;border-radius:3px;background:#F2EFEA"></span></div></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;font-size:13px"><span style="font-weight:600">Plan usage · products</span><span style="color:#625C55">186 of 200 (Basic)</span></div><div style="height:10px;border-radius:999px;background:#F2EFEA;overflow:hidden"><div style="height:100%;width:93%;background:#E5A000;border-radius:999px"></div></div><a href="#data" style="font-size:13px;font-weight:600">Upgrade to Pro for unlimited products →</a></div>
+      <div style="display:flex;align-items:center;gap:12px;font-size:13px;color:#625C55"><span style="width:20px;height:20px;border-radius:999px;border:3px solid #FFE2CF;border-top-color:#F26B1D;display:inline-block"></span>Indeterminate: spinner for waits under 2s; use a skeleton for anything longer</div>
+    </div>
+    <sc-for list="{{ empties }}" as="e" hint-placeholder-count="2">
+      <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center">
+        <div style="width:140px;height:100px;border-radius:20px;background:repeating-linear-gradient(135deg,#F2EFEA 0 8px,#E6E2DC 8px 9px);display:grid;place-items:center;font:400 10px/1.3 'JetBrains Mono',ui-monospace,monospace;color:#857E76">{{ e.art }}</div>
+        <span style="font-size:19px;font-weight:700">{{ e.title }}</span>
+        <span style="font-size:14px;line-height:1.45;color:#625C55;max-width:280px">{{ e.body }}</span>
+        <button style="height:48px;padding:0 18px;border:0;border-radius:14px;background:{{ e.bg }};color:{{ e.fg }};font-size:14px;font-weight:600">{{ e.cta }}</button>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section id="display" style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">E — Display</span>
+    <h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">People, history, schedules</h2>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px">
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:16px">
+      <span style="font-size:19px;font-weight:600">Avatar</span>
+      <div style="display:flex;gap:12px;align-items:flex-end">
+        <span style="width:32px;height:32px;border-radius:999px;background:#FFE2CF;color:#84340A;display:grid;place-items:center;font-size:12px;font-weight:700">RW</span>
+        <span style="width:40px;height:40px;border-radius:999px;background:#141210;color:#FFFFFF;display:grid;place-items:center;font-size:14px;font-weight:700">AP</span>
+        <span style="width:48px;height:48px;border-radius:999px;background:#F2EFEA;color:#45403A;display:grid;place-items:center;font-size:16px;font-weight:700;position:relative">DA<span style="position:absolute;right:0;bottom:0;width:13px;height:13px;border-radius:9px;background:#1F9D55;box-shadow:0 0 0 2.5px #FFFFFF"></span></span>
+        <span style="width:64px;height:64px;border-radius:999px;background:repeating-linear-gradient(135deg,#F2EFEA 0 6px,#E6E2DC 6px 7px);display:grid;place-items:center;font:400 9px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">photo</span>
+      </div>
+      <div style="display:flex;align-items:center">
+        <span style="width:40px;height:40px;border-radius:999px;background:#FFE2CF;color:#84340A;display:grid;place-items:center;font-size:13px;font-weight:700;box-shadow:0 0 0 3px #FFFFFF">RW</span>
+        <span style="width:40px;height:40px;margin-left:-10px;border-radius:999px;background:#141210;color:#FFFFFF;display:grid;place-items:center;font-size:13px;font-weight:700;box-shadow:0 0 0 3px #FFFFFF">AP</span>
+        <span style="width:40px;height:40px;margin-left:-10px;border-radius:999px;background:#F2EFEA;color:#45403A;display:grid;place-items:center;font-size:13px;font-weight:700;box-shadow:0 0 0 3px #FFFFFF">DA</span>
+        <span style="width:40px;height:40px;margin-left:-10px;border-radius:999px;background:#F26B1D;color:#FFFFFF;display:grid;place-items:center;font-size:13px;font-weight:700;box-shadow:0 0 0 3px #FFFFFF">+5</span>
+        <span style="margin-left:12px;font-size:14px;color:#625C55">8 on shift now · PIC Maya</span>
+      </div>
+      <span style="font-size:13px;line-height:1.45;color:#625C55">Initials use the first and last name. Green dot = clocked in; amber = on break. Customers get an Ember tint, staff get ink.</span>
+    </div>
+
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:6px">
+      <span style="font-size:19px;font-weight:600;margin-bottom:8px">Accordion</span>
+      <sc-for list="{{ acc }}" as="a" hint-placeholder-count="3">
+        <div style="border-radius:16px;background:{{ a.bg }};transition:background 160ms">
+          <button onClick="{{ a.onClick }}" style="width:100%;min-height:56px;padding:0 16px;border:0;background:none;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:15px;font-weight:600;color:#141210;cursor:pointer;text-align:left">{{ a.q }}<span style="width:28px;height:28px;flex:none;border-radius:999px;background:#FFFFFF;display:grid;place-items:center;transform:rotate({{ a.rot }});transition:transform 240ms cubic-bezier(.2,0,0,1);font-size:18px;line-height:1">+</span></button>
+          <div style="display:grid;grid-template-rows:{{ a.rows }};transition:grid-template-rows 240ms cubic-bezier(.2,0,0,1)"><div style="overflow:hidden"><p style="margin:0;padding:0 16px 16px;font-size:14px;line-height:1.55;color:#45403A">{{ a.a }}</p></div></div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:4px">
+      <span style="font-size:19px;font-weight:600;margin-bottom:12px">Activity timeline</span>
+      <sc-for list="{{ timeline }}" as="t" hint-placeholder-count="5">
+        <div style="display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:12px">
+          <div style="display:flex;flex-direction:column;align-items:center"><span style="width:12px;height:12px;margin-top:4px;border-radius:999px;background:{{ t.dot }};box-shadow:0 0 0 3px {{ t.ring }}"></span><span style="flex:1;width:2px;background:#E6E2DC;margin:4px 0;display:{{ t.lineD }}"></span></div>
+          <div style="display:flex;flex-direction:column;gap:3px;padding-bottom:16px"><span style="font-size:14px;font-weight:600;line-height:1.35">{{ t.title }}</span><span style="font-size:13px;color:#625C55;line-height:1.35">{{ t.sub }}</span></div>
+          <span style="font:400 12px/1.6 'JetBrains Mono',ui-monospace,monospace;color:#857E76">{{ t.time }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="padding:24px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px"><span style="font-size:19px;font-weight:600">Booking calendar · day view (services)</span><span style="font:400 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">Sat, 10 Oct 2026 · 1 hour = 64px</span></div>
+    <div style="overflow-x:auto">
+      <div style="min-width:760px;display:grid;grid-template-columns:56px repeat(4,minmax(0,1fr));gap:0 8px">
+        <span></span>
+        <sc-for list="{{ staff }}" as="s" hint-placeholder-count="4">
+          <div style="height:52px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #E6E2DC"><span style="width:32px;height:32px;border-radius:999px;background:#F2EFEA;display:grid;place-items:center;font-size:12px;font-weight:700">{{ s.ini }}</span><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:600">{{ s.name }}</span><span style="font-size:11px;color:#625C55">{{ s.role }}</span></span></div>
+        </sc-for>
+        <div style="position:relative;height:576px">
+          <sc-for list="{{ hoursCol }}" as="h" hint-placeholder-count="9"><span style="position:absolute;top:{{ h.top }};right:6px;font:400 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">{{ h.label }}</span></sc-for>
+        </div>
+        <sc-for list="{{ staff }}" as="s" hint-placeholder-count="4">
+          <div style="position:relative;height:576px;background:repeating-linear-gradient(180deg,#FFFFFF 0 63px,#F2EFEA 63px 64px)">
+            <sc-for list="{{ s.appts }}" as="a" hint-placeholder-count="2">
+              <div style="position:absolute;left:3px;right:3px;top:{{ a.top }};height:{{ a.h }};border-radius:12px;background:{{ a.bg }};color:{{ a.fg }};border-left:0;padding:8px 10px;display:flex;flex-direction:column;gap:3px;overflow:hidden;cursor:pointer;transition:transform 120ms" style-hover="transform:scale(1.02)">
+                <span style="font-size:13px;font-weight:700;line-height:1.2">{{ a.title }}</span>
+                <span style="font-size:12px;opacity:.85">{{ a.time }} · {{ a.who }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+    <div style="padding:20px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:500;color:#625C55">Stat · compact</span><span style="font-size:30px;font-weight:700;letter-spacing:-.02em">186</span><span style="font-size:13px;color:#156B3A;font-weight:600">▲ 8,1% vs yesterday</span></div>
+    <div style="padding:20px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:10px"><span style="font-size:13px;font-weight:500;color:#625C55">Stat · with target</span><span style="font-size:30px;font-weight:700;letter-spacing:-.02em">IDR 4,3 jt</span><div style="height:8px;border-radius:999px;background:#F2EFEA;overflow:hidden"><div style="height:100%;width:72%;background:#F26B1D;border-radius:999px"></div></div><span style="font-size:12px;color:#625C55">72% of IDR 6 jt daily target</span></div>
+    <div style="padding:20px;border-radius:20px;background:#141210;color:#FFFFFF;display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:500;color:#CFCAC3">Stat · highlight</span><span style="font-size:30px;font-weight:700;letter-spacing:-.02em;color:#FF9F63">IDR 12,8 jt</span><span style="font-size:13px;color:#CFCAC3">All outlets · live</span></div>
+    <div style="padding:20px;border-radius:20px;background:#FDE8E8;display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:#7A1A15">Stat · alert</span><span style="font-size:30px;font-weight:700;letter-spacing:-.02em;color:#7A1A15">− IDR 85,000</span><span style="font-size:13px;color:#7A1A15">Cash variance · Senopati · shift 2</span></div>
+  </div>
+</section>
+
+</main>
+</div>
+<div data-bn-links="1" style="position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:60;max-width:calc(100vw - 24px)"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:18px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#141210;color:#FFFFFF"><span style="width:8px;height:8px;border-radius:9px;background:#F26B1D"></span>Linked pages · 15<span style="font-weight:500;color:#A9A39B">▴</span></summary><div style="width:min(460px,calc(100vw - 24px));padding:6px 16px 12px;display:flex;flex-direction:column;max-height:50vh;overflow:auto"><a href="BorNiz Brand Studio.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Brand Studio</b><span style="color:#45403A">Staff brand tokens</span></a><a href="BorNiz Design System.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Foundations</b><span style="color:#45403A">Built from foundation tokens</span></a><a href="BorNiz POS Patterns.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>POS patterns</b><span style="color:#45403A">Composed into counter patterns</span></a><a href="BorNiz Roles.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Roles</b><span style="color:#45403A">Density and hit size change per role</span></a><a href="BorNiz POS Register.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>POS Register</b><span style="color:#45403A">Used live in the prototype</span></a><a href="BorNiz Motion.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Motion</b><span style="color:#45403A">Press, switch, toast timings</span></a><a href="BorNiz Page Spec.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Per-page design system</b><span style="color:#45403A">Components listed per page</span></a><a href="BorNiz Page Templates.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Page templates</b><span style="color:#45403A">Built from base components</span></a><a href="BorNiz States Gallery.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>States gallery</b><span style="color:#45403A">State styles per component</span></a><a href="BorNiz System.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>System</b><span style="color:#45403A">Breakpoints, z-index, a11y</span></a><a href="BorNiz Responsive.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Responsive</b><span style="color:#45403A">Layout per breakpoint</span></a><a href="BorNiz Theming.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Theming &amp; language</b><span style="color:#45403A">Light/dark and merchant brand</span></a><a href="BorNiz Menu Studio.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Menu studio</b><span style="color:#45403A">Merchant theme tokens</span></a><a href="BorNiz Design Notes.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Design notes</b><span style="color:#45403A">Alternatives and rules</span></a><a href="BorNiz Sitemap.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Sitemap</b><span style="color:#45403A">Listed in the sitemap</span></a><a href="BorNiz Connections.dc.html" style="margin-top:8px;height:40px;border-radius:12px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:13px;font-weight:700">Open the full connection map →</a></div></details></div>
+<div data-bn-spec="1" style="position:fixed;left:12px;bottom:10px;z-index:61"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:16px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#F26B1D;color:#FFFFFF">◆ Design spec · this page</summary><div style="width:min(420px,calc(100vw - 24px));max-height:65vh;overflow:auto;padding:10px 16px 14px;display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Covers</span><b style="text-align:right">Every base component with states</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Page type</span><b style="text-align:right">Design-system documentation</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Theme</span><b style="text-align:right">Light doc · paper #FAF8F5</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Container</span><b style="text-align:right">max 1280px · fluid padding</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Type</span><b style="text-align:right">H1 clamp 44–88 · section 36–44 · body 15–17</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Cards</span><b style="text-align:right">radius 20–24 · 1px #E6E2DC</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Nav</span><b style="text-align:right">Sticky top nav to every DS page</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Rule</span><b style="text-align:right">Live demos use the real tokens</b></div><a href="BorNiz Page Templates.dc.html" style="margin-top:12px;height:38px;border-radius:10px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:12px;font-weight:700">Page templates →</a></div></details></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const ICON = n => `url(https://unpkg.com/lucide-static@0.452.0/icons/${n}.svg) center/contain no-repeat`;
+const fmt = v => 'IDR ' + Math.round(v).toLocaleString('en-US');
+const OUTLETS = ['Kemang', 'Senopati', 'BSD City', 'Bandung Dago', 'Surabaya Tunjungan'];
+const CUSTOMERS = [['Dewi Anggraini', '+62 812-3456-7890', 'Gold · 1,240 pts'], ['Budi Santoso', '+62 813-2222-1010', 'Silver · 410 pts'], ['Rina Wulandari', '+62 857-7788-3344', 'Gold · 980 pts'], ['Andi Pratama', '+62 821-9090-1212', 'New'], ['Sari Lestari', '+62 878-5566-7788', 'Platinum · 3,120 pts'], ['Fajar Nugroho', '+62 811-4455-6677', 'Silver · 260 pts']];
+const NAV = [['Live monitor', 'activity', 0, 'Monitor'], ['Overview', 'layout-dashboard', 0, 'Monitor'], ['Sales', 'receipt', 12, 'Sales'], ['Products', 'package', 0, 'Catalog'], ['Inventory', 'boxes', 3, 'Inventory'], ['Customers', 'users', 0, 'Customers'], ['Promos', 'tag', 0, 'Promo'], ['Team', 'user-cog', 0, 'Team'], ['Finance', 'wallet', 0, 'Finance'], ['Reports', 'file-text', 0, 'Reports'], ['Settings', 'settings', 0, 'Account']];
+const CMD = [['Sales', 'Go to', 'receipt'], ['Live monitor', 'Go to', 'activity'], ['Inventory', 'Go to', 'boxes'], ['New product', 'Action', 'plus'], ['Open shift', 'Action', 'clock'], ['Issue refund', 'Action', 'rotate-ccw'], ['Dewi Anggraini', 'Customer', 'user'], ['Daily sales report', 'Report', 'file-text'], ['Profit & loss', 'Report', 'file-text']];
+const ROWS = [
+  ['#TRX-2048', '10 Oct · 14:32', 'Kemang', 'Rina W.', 'QRIS', 'Paid', 81900, [[2, 'Es Kopi Susu Aren', 'IDR 50,000'], [1, 'Croissant Almond', 'IDR 32,000']]],
+  ['#TRX-2047', '10 Oct · 14:18', 'Senopati', 'Andi P.', 'Cash', 'Paid', 54000, [[1, 'Nasi Goreng Spesial', 'IDR 38,000'], [1, 'Es Teh Manis', 'IDR 16,000']]],
+  ['#TRX-2046', '10 Oct · 14:02', 'Kemang', 'Rina W.', 'Card', 'Refunded', 126500, [[3, 'Matcha Latte', 'IDR 90,000'], [1, 'Banana Bread', 'IDR 36,500']]],
+  ['#TRX-2045', '10 Oct · 13:55', 'BSD City', 'Fajar N.', 'Split', 'Pending', 212000, [[4, 'Ayam Geprek', 'IDR 152,000'], [4, 'Air Mineral', 'IDR 60,000']]],
+  ['#TRX-2044', '10 Oct · 13:41', 'Senopati', 'Andi P.', 'GoPay', 'Void', 38000, [[1, 'Nasi Goreng Spesial', 'IDR 38,000']]],
+  ['#TRX-2043', '10 Oct · 13:30', 'Bandung Dago', 'Sari L.', 'VA BCA', 'Paid', 345000, [[6, 'Paket Hemat A', 'IDR 345,000']]],
+];
+const ST = { Paid: ['#E3F5EA', '#156B3A'], Refunded: ['#E6EEFD', '#1F4FB5'], Pending: ['#FFF4D6', '#8A5A00'], Void: ['#FDE8E8', '#B3261E'] };
+const STEPS = [['Business profile', 'Name, category and logo. Customers see this on receipts.'], ['Outlet & tax', 'Address, opening hours, PB1 or PPN.'], ['Import products', 'Upload a spreadsheet or start from a template.'], ['Invite team', 'Add cashiers and managers. They get a PIN.']];
+
+class Component extends DCLogic {
+  state = { selOpen: false, sel: 'Kemang', comboQ: 'ri', note: 'No ice, sambal on the side', range: [5, 11], slot: 3, slider: 15, otp: '48', up: 'idle', upP: 0, tags: ['Best seller', 'Iced', 'Halal'], tagIn: '', step: 1, fEmail: 'rina@', fPhone: '81234', fTried: false, fOk: false, side: false, nav: 2, cmd: false, cmdQ: '', page: 1, modal: null, sheet: false, pop: false, menu: false, ctx: null, toasts: [], sort: ['total', -1], sel2: [], exp: null, filters: ['Today', 'Paid'], acc: 0, mtab: 0, cat: 0 };
+
+  addToast(kind) {
+    const id = Date.now() + Math.random();
+    const K = { success: ['#141210', '#FFFFFF', '#6EE7A0', 'circle-check', 'Product saved to 4 outlets'], error: ['#B3261E', '#FFFFFF', '#FFFFFF', 'circle-alert', "Couldn't print. Check the printer connection."], undo: ['#141210', '#FFFFFF', '#FF9F63', 'trash-2', 'Order #1042 removed'], info: ['#FFFFFF', '#141210', '#2F6FEB', 'info', 'New version available. It installs after your shift.'] }[kind];
+    const dur = kind === 'undo' ? 5000 : 3500;
+    this.setState(s => ({ toasts: [...s.toasts, { id, kind, K, in: false, out: false, bar: 100, dur }].slice(-4) }));
+    setTimeout(() => this.setState(s => ({ toasts: s.toasts.map(t => t.id === id ? { ...t, in: true, bar: 0 } : t) })), 30);
+    setTimeout(() => this.setState(s => ({ toasts: s.toasts.map(t => t.id === id ? { ...t, out: true } : t) })), dur);
+    setTimeout(() => this.setState(s => ({ toasts: s.toasts.filter(t => t.id !== id) })), dur + 200);
+  }
+  startUpload = () => {
+    if (this.state.up === 'uploading') return;
+    clearInterval(this.upT);
+    this.setState({ up: 'uploading', upP: 0 });
+    this.upT = setInterval(() => { const p = this.state.upP + 9 + Math.random() * 10; if (p >= 100) { clearInterval(this.upT); this.setState({ up: 'done', upP: 100 }); } else this.setState({ upP: p }); }, 160);
+  };
+  componentWillUnmount() { clearInterval(this.upT); }
+
+  renderVals() {
+    const s = this.state;
+    const close = () => this.setState({ selOpen: false });
+    const [ra, rb] = s.range;
+    const days = [];
+    for (let i = 0; i < 3; i++) days.push({ label: '', bg: 'transparent', fg: '#141210', ring: 'none', band: 'transparent', bandR: '0', weight: 400, cursor: 'default', onClick: () => {} });
+    for (let d = 1; d <= 31; d++) {
+      const end = d === ra || d === rb, inR = rb && d > ra && d < rb;
+      days.push({ label: d, bg: end ? '#F26B1D' : 'transparent', fg: end ? '#FFFFFF' : '#141210', ring: d === 10 && !end ? 'inset 0 0 0 2px #141210' : 'none', weight: end || d === 10 ? 700 : 500, band: (inR || (rb && end)) ? '#FFF3EB' : 'transparent', bandR: d === ra && rb ? '12px 0 0 12px' : (d === rb ? '0 12px 12px 0' : '0'), cursor: 'pointer',
+        onClick: () => this.setState(st => { const [a, b] = st.range; if (!a || b) return { range: [d, null] }; if (d < a) return { range: [d, null] }; return { range: [a, d] }; }) });
+    }
+    const rangeText = rb ? `${ra}–${rb} Oct 2026` : `${ra} Oct 2026`;
+    const comboResults = CUSTOMERS.filter(c => !s.comboQ || (c[0] + c[1]).toLowerCase().replace(/\s|-/g, '').includes(s.comboQ.toLowerCase().replace(/\s|-/g, ''))).slice(0, 4).map(([name, phone, tier]) => ({ name, phone, tier, ini: name.split(' ').map(w => w[0]).join('') }));
+    const otpOk = s.otp.length === 6;
+    const up = { idle: ['#CFCAC3', '#FAF8F5', 1, '#141210', 'upload', 'Drop product photos here', 'or tap to browse · JPG, PNG up to 5 MB', 0], drag: ['#F26B1D', '#FFF3EB', 1.02, '#F26B1D', 'image-plus', 'Release to upload', '3 files', 0], uploading: ['#F26B1D', '#FFFFFF', 1, '#F26B1D', 'loader', `Uploading… ${Math.round(s.upP)}%`, 'croissant-almond.jpg', 1], done: ['#1F9D55', '#E3F5EA', 1, '#1F9D55', 'check', 'Uploaded 3 photos', 'Tap to upload more', 0] }[s.up];
+    const emailBad = s.fTried && !/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(s.fEmail), phoneBad = s.fTried && !/^\d{9,12}$/.test(s.fPhone.replace(/\D/g, ''));
+    const totalPages = 24, pg = s.page;
+    const pageNums = pg <= 3 ? [1, 2, 3, 4, '…', totalPages] : pg >= totalPages - 2 ? [1, '…', totalPages - 3, totalPages - 2, totalPages - 1, totalPages] : [1, '…', pg - 1, pg, pg + 1, '…', totalPages];
+    const cmdResults = CMD.filter(c => !s.cmdQ || c[0].toLowerCase().includes(s.cmdQ.toLowerCase())).map(([label, group, ic], i) => ({ label, group, mask: ICON(ic), bg: i === 0 ? '#FFF3EB' : 'transparent', onClick: () => { const n = NAV.findIndex(x => x[0] === label); this.setState({ cmd: false, cmdQ: '', nav: n >= 0 ? n : s.nav }); } }));
+    const [sk, sd] = s.sort;
+    const sortKey = { id: 0, time: 1, outlet: 2, cashier: 3, method: 4, status: 5, total: 6 };
+    let rows = ROWS.filter(r => !s.filters.includes('Paid') || r[5] === 'Paid' || s.filters.length === 0);
+    if (!s.filters.includes('Paid')) rows = ROWS.slice();
+    rows = rows.sort((a, b) => { const i = sortKey[sk]; return (a[i] > b[i] ? 1 : a[i] < b[i] ? -1 : 0) * sd; });
+    const allSel = rows.length && rows.every(r => s.sel2.includes(r[0]));
+    const colDefs = [['id', 'Order', 'left'], ['time', 'Time', 'left'], ['outlet', 'Outlet', 'left'], ['cashier', 'Cashier', 'left'], ['method', 'Method', 'left'], ['status', 'Status', 'left'], ['total', 'Total', 'right']];
+    const modalOpen = !!s.modal;
+    const T = this;
+    return {
+      sel: s.sel, toggleSel: () => this.setState({ selOpen: !s.selOpen }), selBorder: s.selOpen ? '#F26B1D' : '#CFCAC3', selRing: s.selOpen ? '0 0 0 4px #FFE2CF' : 'none', selRot: s.selOpen ? '180deg' : '0deg',
+      selOp: s.selOpen ? 1 : 0, selY: s.selOpen ? '0px' : '-6px', selS: s.selOpen ? 1 : .98, selPe: s.selOpen ? 'auto' : 'none',
+      selOptions: OUTLETS.map(o => ({ label: o, bg: o === s.sel ? '#FFF3EB' : 'transparent', weight: o === s.sel ? 700 : 500, check: o === s.sel ? 1 : 0, onClick: () => this.setState({ sel: o, selOpen: false }) })),
+      comboQ: s.comboQ, onCombo: e => this.setState({ comboQ: e.target.value }), comboResults, comboEmpty: comboResults.length === 0,
+      note: s.note, onNote: e => this.setState({ note: e.target.value.slice(0, 120) }), noteCount: s.note.length, noteColor: s.note.length > 100 ? '#B3261E' : '#625C55',
+      quickNotes: ['No ice', 'Less sugar', 'Extra spicy', 'Separate sauce', 'Takeaway cup'].map(label => ({ label, onClick: () => this.setState(st => ({ note: (st.note ? st.note + ', ' : '') + label.toLowerCase() })) })),
+      presets: [['Today', [10, null]], ['Yesterday', [9, null]], ['Last 7 days', [4, 10]], ['This month', [1, 31]], ['Custom', [5, 11]]].map(([label, r]) => { const on = r[0] === ra && r[1] === rb; return { label, bg: on ? '#141210' : '#F2EFEA', fg: on ? '#FFFFFF' : '#141210', onClick: () => this.setState({ range: r }) }; }),
+      weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], calDays: days, rangeText,
+      slots: ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '13:00', '13:30'].map((label, i) => { const taken = i === 1 || i === 5, on = s.slot === i; return { label, bg: on ? '#F26B1D' : (taken ? '#FAF8F5' : '#FFFFFF'), fg: on ? '#FFFFFF' : (taken ? '#A9A39B' : '#141210'), border: on ? '#F26B1D' : '#E6E2DC', strike: taken ? 'line-through' : 'none', cursor: taken ? 'not-allowed' : 'pointer', onClick: taken ? () => {} : () => this.setState({ slot: i }) }; }),
+      slider: s.slider, sliderText: s.slider + '%', onSlider: e => this.setState({ slider: +e.target.value }),
+      otp: s.otp, onOtp: e => this.setState({ otp: e.target.value.replace(/\D/g, '').slice(0, 6) }),
+      otpBoxes: Array.from({ length: 6 }, (_, i) => ({ ch: s.otp[i] || '', border: otpOk ? '#1F9D55' : (i === s.otp.length ? '#F26B1D' : (s.otp[i] ? '#141210' : '#E6E2DC')), bg: otpOk ? '#E3F5EA' : '#FFFFFF' })),
+      otpMsg: otpOk ? 'Code verified' : 'We sent a 6-digit code to +62 812-••••-7890 · Resend in 0:42', otpMsgColor: otpOk ? '#156B3A' : '#625C55',
+      upState: s.up, upBorder: up[0], upBg: up[1], upScale: up[2], upIconBg: up[3], upIcon: up[4], upTitle: up[5], upSub: up[6], upBarOp: up[7], upW: s.upP + '%',
+      onDragOver: e => { e.preventDefault(); if (s.up !== 'drag') this.setState({ up: 'drag' }); }, onDragLeave: () => this.setState({ up: 'idle' }), onDrop: e => { e.preventDefault(); this.startUpload(); }, startUpload: this.startUpload,
+      tagList: s.tags.map(label => ({ label, remove: () => this.setState(st => ({ tags: st.tags.filter(t => t !== label) })) })), tagIn: s.tagIn,
+      onTagIn: e => { const v = e.target.value; if (v.includes(',')) { const parts = v.split(',').map(x => x.trim()).filter(Boolean); this.setState(st => ({ tags: [...new Set([...st.tags, ...parts])], tagIn: '' })); } else this.setState({ tagIn: v }); },
+      onTagKey: e => { if (e.key === 'Enter' && s.tagIn.trim()) { e.preventDefault(); this.setState(st => ({ tags: [...new Set([...st.tags, st.tagIn.trim()])], tagIn: '' })); } else if (e.key === 'Backspace' && !s.tagIn) this.setState(st => ({ tags: st.tags.slice(0, -1) })); },
+      steps: STEPS.map((_, i) => { const n = i + 1, done = n < s.step, on = n === s.step; return { mark: done ? '✓' : n, bg: done ? '#F26B1D' : (on ? '#141210' : '#F2EFEA'), fg: done || on ? '#FFFFFF' : '#857E76', ring: on ? '0 0 0 4px #FFE2CF' : 'none', flex: i < 3 ? '1' : 'none', lineDisplay: i < 3 ? 'block' : 'none', lineW: done ? '100%' : '0%' }; }),
+      stepNo: s.step, stepTitle: STEPS[s.step - 1][0], stepSub: STEPS[s.step - 1][1], stepCta: s.step === 4 ? 'Finish setup' : 'Continue',
+      stepBack: () => this.setState({ step: Math.max(1, s.step - 1) }), stepNext: () => this.setState({ step: s.step === 4 ? 1 : s.step + 1 }),
+      fEmail: s.fEmail, fPhone: s.fPhone, onEmail: e => this.setState({ fEmail: e.target.value, fOk: false }), onPhone: e => this.setState({ fPhone: e.target.value, fOk: false }),
+      emailBorder: emailBad ? '#E5383B' : '#CFCAC3', phoneBorder: phoneBad ? '#E5383B' : '#CFCAC3', emailErrD: emailBad ? 'block' : 'none', phoneErrD: phoneBad ? 'block' : 'none',
+      formHasErr: emailBad || phoneBad, formOk: s.fOk && !emailBad && !phoneBad,
+      submitForm: () => { const eb = !/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(s.fEmail), pb = !/^\d{9,12}$/.test(s.fPhone.replace(/\D/g, '')); this.setState({ fTried: true, fOk: !eb && !pb }); },
+      sideW: s.side ? '76px' : '248px', sideLabelOp: s.side ? 0 : 1, sideRot: s.side ? '180deg' : '0deg', toggleSide: () => this.setState({ side: !s.side }), toggleOutlet: () => this.setState({ selOpen: false }),
+      navItems: NAV.map(([label, ic, badge], i) => ({ label, mask: ICON(ic), bg: s.nav === i ? '#FFF3EB' : 'transparent', fg: s.nav === i ? '#B04408' : '#45403A', weight: s.nav === i ? 700 : 500, badge, badgeD: badge ? 'inline-block' : 'none', badgePos: s.side ? 'absolute' : 'static', onClick: () => this.setState({ nav: i }) })),
+      navActive: NAV[s.nav][0], navParent: NAV[s.nav][3],
+      openCmd: () => this.setState({ cmd: true }), closeCmd: () => this.setState({ cmd: false }), cmdOp: s.cmd ? 1 : 0, cmdPe: s.cmd ? 'auto' : 'none', cmdS: s.cmd ? 1 : .96, cmdQ: s.cmdQ, onCmdQ: e => this.setState({ cmdQ: e.target.value }), cmdResults,
+      pages: pageNums.map(p => ({ label: p, bg: p === pg ? '#141210' : 'transparent', fg: p === pg ? '#FFFFFF' : '#141210', cursor: p === '…' ? 'default' : 'pointer', onClick: p === '…' ? () => {} : () => this.setState({ page: p }) })),
+      pagePrev: () => this.setState({ page: Math.max(1, pg - 1) }), pageNext: () => this.setState({ page: Math.min(totalPages, pg + 1) }), pageFrom: (pg - 1) * 12 + 1, pageTo: Math.min(284, pg * 12),
+      mtabs: [['Live', 'activity'], ['Sales', 'receipt'], ['Approve', 'shield-check'], ['Stock', 'boxes'], ['More', 'menu']].map(([label, ic], i) => ({ label, mask: ICON(ic), fg: s.mtab === i ? '#141210' : '#857E76', pill: s.mtab === i ? '#FFE2CF' : 'transparent', onClick: () => this.setState({ mtab: i }) })),
+      cats: [['All', 64], ['Coffee', 18], ['Non-coffee', 12], ['Food', 21], ['Pastry', 9], ['Add-ons', 4]].map(([label, n], i) => ({ label, n, bg: s.cat === i ? '#141210' : '#F2EFEA', fg: s.cat === i ? '#FFFFFF' : '#141210', onClick: () => this.setState({ cat: i }) })),
+      openConfirm: () => this.setState({ modal: 'confirm' }), openFormModal: () => this.setState({ modal: 'form' }), closeModal: () => this.setState({ modal: null }),
+      modalOp: modalOpen ? 1 : 0, modalPe: modalOpen ? 'auto' : 'none', modalDur: modalOpen ? '200ms' : '140ms',
+      confirmOp: s.modal === 'confirm' ? 1 : 0, confirmPe: s.modal === 'confirm' ? 'auto' : 'none', confirmS: s.modal === 'confirm' ? 1 : .96,
+      formOp: s.modal === 'form' ? 1 : 0, formPe: s.modal === 'form' ? 'auto' : 'none', formS: s.modal === 'form' ? 1 : .96,
+      toggleSheet: () => this.setState({ sheet: !s.sheet }), sheetCta: s.sheet ? 'Close sheet' : 'Open option sheet', sheetY: s.sheet ? '0%' : '105%', sheetScrim: s.sheet ? .4 : 0, sheetPe: s.sheet ? 'auto' : 'none', sheetTrans: s.sheet ? '320ms cubic-bezier(.05,.7,.1,1)' : '200ms cubic-bezier(.3,0,.8,.15)',
+      togglePop: () => this.setState({ pop: !s.pop, menu: false }), popOp: s.pop ? 1 : 0, popY: s.pop ? '0px' : '-6px', popPe: s.pop ? 'auto' : 'none',
+      toggleMenu: () => this.setState({ menu: !s.menu, pop: false }), menuOp: s.menu ? 1 : 0, menuY: s.menu ? '0px' : '-6px', menuPe: s.menu ? 'auto' : 'none',
+      menuItems: [['Edit', 'pencil', '⌘E', '#141210', 'none'], ['Duplicate', 'copy', '⌘D', '#141210', 'none'], ['Print label', 'printer', '⌘P', '#141210', 'none'], ['Archive', 'archive', '', '#141210', 'none'], ['Delete', 'trash-2', '⌫', '#B3261E', '1px solid #F2EFEA']].map(([label, ic, kbd, fg, sep]) => ({ label, mask: ICON(ic), kbd, fg, sep })),
+      onCtx: e => { e.preventDefault(); const r = e.currentTarget.getBoundingClientRect(); this.setState({ ctx: [Math.min(e.clientX - r.left, r.width - 210), Math.min(e.clientY - r.top, r.height - 40)] }); }, closeCtx: () => this.setState({ ctx: null }),
+      ctxX: s.ctx ? s.ctx[0] + 'px' : '0px', ctxY: s.ctx ? s.ctx[1] + 'px' : '0px', ctxOp: s.ctx ? 1 : 0, ctxS: s.ctx ? 1 : .94, ctxPe: s.ctx ? 'auto' : 'none',
+      toastSuccess: () => this.addToast('success'), toastError: () => this.addToast('error'), toastUndo: () => this.addToast('undo'), toastInfo: () => this.addToast('info'),
+      toasts: s.toasts.map(t => ({ bg: t.K[0], fg: t.K[1], ic: t.K[2], mask: ICON(t.K[3]), text: t.K[4], y: t.in && !t.out ? '0px' : '24px', op: t.in && !t.out ? 1 : 0, actD: t.kind === 'undo' ? 'inline' : 'none', bar: t.kind === 'undo' ? t.bar + '%' : '0%', barDur: t.dur + 'ms' })), noToasts: s.toasts.length === 0,
+      filterChips: ['Today', 'Paid', 'Kemang', 'QRIS', 'Over IDR 100,000'].map(label => { const on = s.filters.includes(label); return { label, bg: on ? '#141210' : '#FFFFFF', fg: on ? '#FFFFFF' : '#141210', border: on ? '#141210' : '#E6E2DC', xD: on ? 'inline' : 'none', onClick: () => this.setState(st => ({ filters: on ? st.filters.filter(f => f !== label) : [...st.filters, label] })) }; }),
+      clearFilters: () => this.setState({ filters: [] }), clearD: s.filters.length ? 'block' : 'none',
+      toggleAll: () => this.setState({ sel2: allSel ? [] : rows.map(r => r[0]) }), allBorder: allSel ? '#F26B1D' : '#A9A39B', allBg: allSel ? '#F26B1D' : '#FFFFFF', allMark: allSel ? '✓' : (s.sel2.length ? '–' : ''),
+      cols: colDefs.map(([k, label, align]) => ({ label, align, justify: align === 'right' ? 'flex-end' : 'flex-start', arrow: sk === k ? (sd === 1 ? '↑' : '↓') : '', cursor: 'pointer', bg: k === 'id' ? '#F2EFEA' : 'transparent', pos: k === 'id' ? 'sticky' : 'static', onClick: () => this.setState({ sort: [k, sk === k ? -sd : 1] }) })),
+      rows: rows.map(r => { const sel = s.sel2.includes(r[0]), ex = s.exp === r[0]; const c = ST[r[5]]; return { id: r[0], time: r[1], outlet: r[2], cashier: r[3], method: r[4], status: r[5], total: fmt(r[6]), sbg: c[0], sfg: c[1], bg: sel ? '#FFF3EB' : '#FFFFFF', stickyBg: sel ? '#FFF3EB' : '#FFFFFF', cbBorder: sel ? '#F26B1D' : '#A9A39B', cbBg: sel ? '#F26B1D' : '#FFFFFF', cbMark: sel ? '✓' : '', rot: ex ? '180deg' : '0deg', rows: ex ? '1fr' : '0fr', items: r[7].map(([q, n, p]) => ({ q, n, p })), toggle: () => this.setState(st => ({ sel2: sel ? st.sel2.filter(x => x !== r[0]) : [...st.sel2, r[0]] })), expand: () => this.setState({ exp: ex ? null : r[0] }) }; }),
+      selCount: s.sel2.length, bulkY: s.sel2.length ? '0px' : '90px', bulkOp: s.sel2.length ? 1 : 0, bulkPe: s.sel2.length ? 'auto' : 'none',
+      empties: [
+        { art: 'empty · receipt', title: 'No sales yet today', body: 'Open a shift on any register to start selling. Sales appear here in real time.', cta: 'Open POS', bg: '#F26B1D', fg: '#FFFFFF' },
+        { art: 'empty · search', title: 'No results for "matcha oat"', body: 'Check the spelling, or search by SKU or barcode instead.', cta: 'Clear search', bg: '#F2EFEA', fg: '#141210' },
+      ],
+      acc: [['Can I use BorNiz offline?', 'Yes. The register keeps selling without internet and syncs automatically when the connection returns. QRIS and card payments need a connection.'], ['Which printers are supported?', 'Any ESC/POS thermal printer, 58mm or 80mm, over Bluetooth, USB or LAN. EDC machines from BCA, BRI and Mandiri connect through the Devices page.'], ['How is PB1 calculated?', 'PB1 is calculated per outlet on the subtotal after discounts and before service charge, unless you change the order in Tax settings.']].map(([q, a], i) => ({ q, a, bg: s.acc === i ? '#F2EFEA' : '#FAF8F5', rot: s.acc === i ? '45deg' : '0deg', rows: s.acc === i ? '1fr' : '0fr', onClick: () => this.setState({ acc: s.acc === i ? -1 : i }) })),
+      timeline: [['#F26B1D', '#FFE2CF', 'Refund approved · IDR 126,500', 'Manager Andi approved Rina\'s request', '14:06'], ['#1F9D55', '#E3F5EA', 'Shift 2 opened · Kemang', 'Opening cash IDR 500,000', '13:00'], ['#E5A000', '#FFF4D6', 'Low stock · Susu UHT 1L', '4 left, reorder point is 12', '12:41'], ['#141210', '#E6E2DC', 'Price changed · Matcha Latte', 'IDR 28,000 → 30,000 at all outlets', '11:15'], ['#2F6FEB', '#E6EEFD', 'Promo started · Payday 20%', 'Runs until 31 Oct', '09:00']].map(([dot, ring, title, sub, time], i, a) => ({ dot, ring, title, sub, time, lineD: i < a.length - 1 ? 'block' : 'none' })),
+      staff: [['Maya', 'Senior stylist', [[0, 1.5, 'Hair color', 'Dewi A.', 'ember'], [3, 1, 'Haircut', 'Budi S.', 'ink']]], ['Tono', 'Stylist', [[1, 1, 'Haircut', 'Fajar N.', 'ink'], [4.5, 2, 'Keratin', 'Sari L.', 'ember']]], ['Lia', 'Nail artist', [[0.5, 1, 'Manicure', 'Rina W.', 'soft'], [2, 1.5, 'Gel nails', 'Walk-in', 'ember'], [6, 1, 'Pedicure', 'Andi P.', 'soft']]], ['Rudi', 'Barber', [[2, .75, 'Shave', 'Walk-in', 'ink'], [5, 1, 'Fade cut', 'Budi S.', 'soft']]]].map(([name, role, ap]) => ({ name, role, ini: name.slice(0, 2).toUpperCase(), appts: ap.map(([st, du, title, who, tone]) => { const c = { ember: ['#F26B1D', '#FFFFFF'], ink: ['#141210', '#FFFFFF'], soft: ['#FFE2CF', '#4F1F06'] }[tone]; const h0 = 9 + st, h1 = h0 + du, f = h => `${Math.floor(h)}:${String(Math.round((h % 1) * 60)).padStart(2, '0')}`; return { title, who, top: (st * 64 + 2) + 'px', h: (du * 64 - 4) + 'px', bg: c[0], fg: c[1], time: `${f(h0)}–${f(h1)}` }; }) })),
+      hoursCol: Array.from({ length: 9 }, (_, i) => ({ label: `${9 + i}:00`, top: (i * 64 - 5 < 0 ? 2 : i * 64 - 5) + 'px' })),
+    };
+  }
+}
+</script>
+</body>
+</html>

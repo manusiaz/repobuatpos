@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<script src="./bn-pm.js"></script>
+<script src="./bn-embed.js"></script>
+<style>
+/*bn-type*/h1,h2,h3,b{font-family:'Space Grotesk',system-ui,sans-serif}
+body{margin:0;background:#FAF8F5;color:#141210;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#D9560B;text-decoration:none}
+a:hover{color:#B04408;text-decoration:underline}
+button{font-family:inherit}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column">
+  <div style="position:sticky;top:0;z-index:20;background:rgba(250,248,245,.94);backdrop-filter:blur(12px);border-bottom:1px solid #E6E2DC">
+    <div style="max-width:1320px;margin:0 auto;padding:12px clamp(16px,3vw,32px);display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <span style="display:flex;flex-direction:column;gap:3px"><span style="font:600 11px/1 'JetBrains Mono',monospace;color:#D9560B;letter-spacing:.08em">PRODUCT MANAGEMENT</span><b style="font-size:22px;letter-spacing:-.02em">BorNiz product plan</b></span>
+      <div style="margin-left:auto;display:flex;gap:3px;padding:3px;border-radius:12px;background:#F2EFEA;flex-wrap:wrap"><sc-for list="{{ tabs }}" as="t" hint-placeholder-count="7"><button onClick="{{ t.onClick }}" style="height:34px;padding:0 12px;border:0;border-radius:9px;background:{{ t.bg }};box-shadow:{{ t.sh }};font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">{{ t.l }}</button></sc-for></div>
+    </div>
+  </div>
+  <main style="max-width:1320px;width:100%;margin:0 auto;padding:24px clamp(16px,3vw,32px) 100px;display:flex;flex-direction:column;gap:14px">
+
+    <sc-if value="{{ vOverview }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:28px;border-radius:24px;background:#141210;color:#FFFFFF;display:flex;flex-direction:column;gap:12px"><span style="font:600 11px/1 'JetBrains Mono',monospace;color:#FF9F63;letter-spacing:.08em">VISION</span><b style="font-size:clamp(24px,3vw,36px);line-height:1.15;letter-spacing:-.02em;max-width:900px">{{ vision }}</b></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px"><sc-for list="{{ facts }}" as="f" hint-placeholder-count="4"><div style="padding:16px;border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:6px"><span style="font:600 11px/1 'JetBrains Mono',monospace;color:#857E76;letter-spacing:.05em">{{ f.k }}</span><span style="font-size:14px;line-height:1.5">{{ f.v }}</span></div></sc-for></div>
+      <b style="font-size:20px;padding-top:6px">Personas</b>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px"><sc-for list="{{ personas }}" as="p" hint-placeholder-count="6"><div style="padding:16px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:8px"><div style="display:flex;align-items:center;gap:10px"><span style="width:40px;height:40px;border-radius:999px;background:{{ p.c }};color:#FFFFFF;display:grid;place-items:center;font:800 15px/1 'Space Grotesk',sans-serif">{{ p.i }}</span><span style="display:flex;flex-direction:column;gap:2px"><b style="font-size:16px">{{ p.n }}</b><span style="font-size:12px;color:#625C55">{{ p.r }}</span></span></div><span style="font-size:13px;line-height:1.45">{{ p.goal }}</span><span style="font:600 10px/1 'JetBrains Mono',monospace;color:#B3261E;letter-spacing:.05em;padding-top:4px">PAINS</span><sc-for list="{{ p.pains }}" as="x" hint-placeholder-count="3"><span style="font-size:12px;color:#45403A">• {{ x }}</span></sc-for><div style="display:flex;gap:4px;flex-wrap:wrap;padding-top:4px"><sc-for list="{{ p.scr }}" as="s" hint-placeholder-count="2"><a href="{{ s.h }}" style="height:26px;padding:0 9px;border-radius:8px;background:#FFF3EB;color:#B04408;font-size:11px;font-weight:700;line-height:26px">{{ s.l }} →</a></sc-for></div></div></sc-for></div>
+    </sc-if>
+
+    <sc-if value="{{ vEpics }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ prio }}" as="p" hint-placeholder-count="3"><button onClick="{{ p.onClick }}" style="height:32px;padding:0 12px;border-radius:999px;border:1.5px solid {{ p.bc }};background:{{ p.bg }};color:{{ p.fg }};font-size:12px;font-weight:700;cursor:pointer">{{ p.l }}</button></sc-for></div>
+      <sc-for list="{{ epics }}" as="e" hint-placeholder-count="9"><div style="flex:none;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden">
+        <button onClick="{{ e.onClick }}" style="width:100%;padding:16px 18px;border:0;background:none;display:grid;grid-template-columns:52px minmax(0,1fr) auto auto auto 20px;gap:12px;align-items:center;text-align:left;cursor:pointer;color:#141210"><b style="font:700 13px/1 'JetBrains Mono',monospace;color:#857E76">{{ e.id }}</b><span style="display:flex;flex-direction:column;gap:3px;min-width:0"><b style="font-size:17px">{{ e.t }}</b><span style="font-size:13px;color:#625C55;line-height:1.4">{{ e.d }}</span></span><span style="height:24px;padding:0 9px;border-radius:999px;background:{{ e.pb }};color:{{ e.pf }};font-size:11px;font-weight:800;line-height:24px">{{ e.p }}</span><span style="font:600 12px/1 'JetBrains Mono',monospace;white-space:nowrap">{{ e.rel }}</span><span style="font-size:12px;color:#625C55;white-space:nowrap">{{ e.pts }} pts</span><span style="font-size:14px;color:#857E76">{{ e.ar }}</span></button>
+        <sc-if value="{{ e.open }}" hint-placeholder-val="{{ false }}"><div style="padding:0 18px 16px 82px;display:flex;flex-direction:column;gap:10px"><sc-for list="{{ e.stories }}" as="s" hint-placeholder-count="3"><div style="padding:12px 14px;border-radius:14px;background:#FAF8F5;display:flex;flex-direction:column;gap:6px"><b style="font-size:14px">{{ s.t }}</b><sc-for list="{{ s.ac }}" as="a" hint-placeholder-count="2"><span style="font-size:12px;color:#45403A;display:flex;gap:6px"><b style="color:#156B3A">✓</b>{{ a }}</span></sc-for></div></sc-for><div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ e.scr }}" as="x" hint-placeholder-count="2"><a href="{{ x.h }}" style="height:28px;padding:0 10px;border-radius:9px;background:#FFF3EB;color:#B04408;font-size:12px;font-weight:700;line-height:28px">{{ x.l }} →</a></sc-for></div></div></sc-if>
+      </div></sc-for>
+    </sc-if>
+
+    <sc-if value="{{ vRoad }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px"><sc-for list="{{ road }}" as="r" hint-placeholder-count="5"><div style="padding:18px;border-radius:20px;background:{{ r.bg }};color:{{ r.fg }};border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:10px"><div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:22px">{{ r.v }}</b><span style="font:600 11px/1 'JetBrains Mono',monospace;opacity:.7">{{ r.w }}</span></div><b style="font-size:14px;line-height:1.35">{{ r.goal }}</b><sc-for list="{{ r.items }}" as="i" hint-placeholder-count="4"><span style="font-size:13px;line-height:1.4">• {{ i }}</span></sc-for><span style="font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.06em;opacity:.7;padding-top:6px">EXIT CRITERIA</span><sc-for list="{{ r.exit }}" as="x" hint-placeholder-count="3"><span style="font-size:12px;line-height:1.4;font-weight:600">{{ x }}</span></sc-for></div></sc-for></div>
+    </sc-if>
+
+    <sc-if value="{{ vTable }}" hint-placeholder-val="{{ false }}">
+      <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:auto"><div style="min-width:760px"><div style="display:grid;grid-template-columns:{{ cols }};padding:12px 16px;background:#F2EFEA;font-size:12px;font-weight:700;gap:12px"><sc-for list="{{ head }}" as="h" hint-placeholder-count="4"><span>{{ h }}</span></sc-for></div><sc-for list="{{ rows }}" as="r" hint-placeholder-count="6"><div style="display:grid;grid-template-columns:{{ cols }};padding:13px 16px;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.45;gap:12px"><sc-for list="{{ r }}" as="c" hint-placeholder-count="4"><span style="font-weight:{{ c.w }};color:{{ c.col }}">{{ c.v }}</span></sc-for></div></sc-for></div></div>
+      <span style="font-size:12px;color:#625C55">{{ tableNote }}</span>
+    </sc-if>
+  </main>
+</div>
+<div data-bn-links="1" style="position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:60;max-width:calc(100vw - 24px)"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:18px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#141210;color:#FFFFFF"><span style="width:8px;height:8px;border-radius:9px;background:#F26B1D"></span>Linked pages · 6<span style="font-weight:500;color:#A9A39B">▴</span></summary><div style="width:min(460px,calc(100vw - 24px));padding:6px 16px 12px;display:flex;flex-direction:column;max-height:50vh;overflow:auto"><a href="BorNiz Online Orders.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Online orders</b><span style="color:#45403A">E2 stories for lanes, busy mode, pickup shelf, scheduled orders</span></a><a href="BorNiz Authority.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Who controls what</b><span style="color:#45403A">Decisions: who sets ready-by, online orders incoming only</span></a><a href="BorNiz Roles.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Roles</b><span style="color:#45403A">Personas map to roles</span></a><a href="BorNiz Diagrams.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Diagrams</b><span style="color:#45403A">Epics map to sequences and state machines</span></a><a href="BorNiz Operations Guide.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Operations guide</b><span style="color:#45403A">How each persona works day to day</span></a><a href="BorNiz Alerts.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Alerts &amp; notifications</b><span style="color:#45403A">Metrics and risks feed alert thresholds</span></a><a href="BorNiz Connections.dc.html" style="margin-top:8px;height:40px;border-radius:12px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:13px;font-weight:700">Open the full connection map →</a></div></details></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const F = n => 'BorNiz ' + n + '.dc.html';
+const PB = { Must: ['#FDE8E8', '#B3261E'], Should: ['#FFF4D6', '#8A5A00'], Could: ['#E6EEFD', '#1F4FB5'] };
+class Component extends DCLogic {
+  state = { tab: 'overview', open: 'E1', pf: 'all' };
+  renderVals() {
+    const s = this.state, D = window.BN_PM || { vision: ['', '', []], personas: [], epics: [], roadmap: [], metrics: [], risks: [], decisions: [], open: [], raci: [] };
+    const T = { metrics: ['1fr 1.6fr 1fr', ['Area', 'Metric', 'Target'], D.metrics, 'Tracked per tenant and per outlet. Targets are for the stage named in the roadmap.'], risks: ['1.4fr 110px 2fr', ['Risk', 'Impact', 'Mitigation'], D.risks, 'Reviewed every release.'], decisions: ['1fr 1.6fr 1.6fr', ['Decision', 'What we chose', 'Why'], D.decisions, 'Changing one of these needs a written proposal and owner of the epic.'], open: ['2fr 70px 1.2fr', ['Open question', 'Epic', 'How we answer it'], D.open, 'Answer before the epic’s UI freeze.'], raci: ['1.2fr 1fr 1fr 1fr 1fr', ['Area', 'Responsible', 'Accountable', 'Consulted', 'Informed'], D.raci, 'Who does what inside a merchant, for product and support decisions.'] }[s.tab];
+    const epics = D.epics.filter(e => s.pf === 'all' || e[3] === s.pf);
+    return {
+      tabs: [['overview', 'Vision & personas'], ['epics', 'Epics & stories'], ['road', 'Roadmap'], ['metrics', 'Metrics'], ['risks', 'Risks'], ['decisions', 'Decisions'], ['open', 'Open questions'], ['raci', 'RACI']].map(([k, l]) => ({ l, bg: s.tab === k ? '#FFFFFF' : 'transparent', sh: s.tab === k ? '0 1px 3px rgba(20,18,16,.15)' : 'none', onClick: () => this.setState({ tab: k }) })),
+      vOverview: s.tab === 'overview', vEpics: s.tab === 'epics', vRoad: s.tab === 'road', vTable: !!T,
+      vision: D.vision[1], facts: D.vision[2].map(([k, v]) => ({ k: k.toUpperCase(), v })),
+      personas: D.personas.map(([n, r, c, goal, pains, scr]) => ({ n, r, c, i: n[0], goal, pains, scr: scr.map(x => ({ l: x, h: F(x) })) })),
+      prio: [['all', 'All'], ['Must', 'Must'], ['Should', 'Should'], ['Could', 'Could']].map(([k, l]) => ({ l, bg: s.pf === k ? '#141210' : '#FFFFFF', fg: s.pf === k ? '#FFFFFF' : '#141210', bc: s.pf === k ? '#141210' : '#E6E2DC', onClick: () => this.setState({ pf: k }) })),
+      epics: epics.map(([id, t, d, p, rel, pts, scr, stories]) => ({ id, t, d, p, rel, pts, pb: PB[p][0], pf: PB[p][1], open: s.open === id, ar: s.open === id ? '▴' : '▾', onClick: () => this.setState({ open: s.open === id ? null : id }), scr: scr.map(x => ({ l: x, h: F(x) })), stories: stories.map(([st, ac]) => ({ t: st, ac })) })),
+      road: D.roadmap.map(([v, w, goal, items, exit], i) => ({ v, w, goal, items, exit, bg: i === 0 ? '#141210' : '#FFFFFF', fg: i === 0 ? '#FFFFFF' : '#141210' })),
+      cols: T ? T[0] : '1fr', head: T ? T[1] : [], tableNote: T ? T[3] : '',
+      rows: T ? T[2].map(r => r.map((v, i) => ({ v, w: i === 0 ? 700 : 400, col: v === 'High' ? '#B3261E' : v === 'Medium' ? '#8A5A00' : '#141210' }))) : [],
+    };
+  }
+}
+</script>
+</body>
+</html>

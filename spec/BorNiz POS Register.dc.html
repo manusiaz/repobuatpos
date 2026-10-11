@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+/*bn-type*/h1,h2,h3,b{font-family:'Space Grotesk',system-ui,sans-serif}body{font-variant-numeric:tabular-nums}
+body{margin:0;background:#141210;color:#141210;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+*{box-sizing:border-box}
+a{color:#D9560B;text-decoration:none}
+a:hover{color:#B04408;text-decoration:underline}
+button,input{font-family:inherit}
+@keyframes bnSpin{to{transform:rotate(360deg)}}
+</style>
+<script src="./bn-launcher.js?role=cashier"></script>
+<script src="./bn-embed.js"></script>
+<script src="./bn-promos.js"></script>
+<script src="./bn-86.js"></script>
+<script src="./bn-data.js"></script>
+<script src="./bn-pin.js?role=pic"></script>
+<script src="./bn-perms.js?role=cashier&outlet=sen"></script>
+</helmet>
+<div style="height:100vh;display:flex;flex-direction:column;background:#FAF8F5;min-width:0">
+
+<sc-if value="{{ sPin }}" hint-placeholder-val="{{ true }}">
+  <div data-screen-label="01 PIN login" style="flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);background:#141210;color:#FFFFFF">
+    <div style="padding:48px;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(160deg,#2E2A26,#141210)">
+      <span style="font-size:24px;font-weight:700;letter-spacing:-.03em">BorNiz</span>
+      <div style="display:flex;flex-direction:column;gap:10px"><span style="font-size:14px;color:#A9A39B">Kopi Biru · Senayan · Register 1</span><span style="font-size:64px;font-weight:700;letter-spacing:-.04em;font-variant-numeric:tabular-nums">{{ clock }}</span><span style="font-size:15px;color:#CFCAC3">Friday, 10 October 2026</span></div>
+      <div style="display:flex;gap:8px;align-items:center;font-size:13px;color:#A9A39B"><span style="width:8px;height:8px;border-radius:9px;background:#1F9D55"></span>Online · printer, drawer and EDC connected</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:32px">
+      <div style="display:flex;gap:10px">
+        <sc-for list="{{ staff }}" as="p" hint-placeholder-count="4"><button onClick="{{ p.onClick }}" style="width:84px;padding:10px 0;border:0;border-radius:18px;background:{{ p.bg }};color:#FFFFFF;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer"><span style="width:48px;height:48px;border-radius:999px;background:{{ p.av }};display:grid;place-items:center;font-size:16px;font-weight:700">{{ p.i }}</span><span style="font-size:12px;font-weight:600">{{ p.n }}</span></button></sc-for>
+      </div>
+      <span style="font-size:18px;font-weight:600">Enter PIN for {{ who }}</span>
+      <div style="display:flex;gap:14px;transform:translateX({{ pinShake }});transition:transform 50ms linear"><sc-for list="{{ pinDots }}" as="d" hint-placeholder-count="4"><span style="width:18px;height:18px;border-radius:999px;border:2px solid {{ d.bc }};background:{{ d.bg }};transition:background 80ms"></span></sc-for></div>
+      <span style="height:18px;font-size:13px;color:#FF8A8C">{{ pinErr }}</span>
+      <div style="display:grid;grid-template-columns:repeat(3,80px);gap:10px">
+        <sc-for list="{{ pinKeys }}" as="k" hint-placeholder-count="12"><button onClick="{{ k.onClick }}" style="height:72px;border:0;border-radius:20px;background:{{ k.bg }};color:#FFFFFF;font-size:26px;font-weight:600;cursor:pointer;transition:transform 80ms" style-active="transform:scale(.94)">{{ k.l }}</button></sc-for>
+      </div>
+      <span style="font-size:12px;color:#857E76">Demo PIN: 1234</span>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ sOpen }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="02 Open shift" style="flex:1;display:grid;place-items:center;padding:24px">
+    <div style="width:min(560px,100%);padding:32px;border-radius:28px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;color:#625C55">Hi {{ who }} · Register 1 · Senayan</span><span style="font-size:30px;font-weight:700;letter-spacing:-.02em">Open shift</span><span style="font-size:15px;color:#45403A">Count the cash in the drawer before you start selling.</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+        <sc-for list="{{ denoms }}" as="d" hint-placeholder-count="6"><div style="padding:10px 12px;border-radius:16px;background:#F2EFEA;display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600">{{ d.l }}</span><div style="display:flex;align-items:center;justify-content:space-between"><button onClick="{{ d.dec }}" style="width:40px;height:40px;border:0;border-radius:12px;background:#FFFFFF;font-size:20px;cursor:pointer">−</button><b style="font-size:20px;font-variant-numeric:tabular-nums">{{ d.q }}</b><button onClick="{{ d.inc }}" style="width:40px;height:40px;border:0;border-radius:12px;background:#141210;color:#FFFFFF;font-size:20px;cursor:pointer">+</button></div></div></sc-for>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;padding:14px 0;border-top:1px dashed #E6E2DC"><span style="font-size:15px;color:#625C55">Opening cash</span><b style="font-size:30px;font-variant-numeric:tabular-nums">{{ openCash }}</b></div>
+      <button onClick="{{ startShift }}" style="height:72px;border:0;border-radius:20px;background:#F26B1D;color:#FFFFFF;font-size:19px;font-weight:700;cursor:pointer" style-active="transform:scale(.97)">Start selling</button>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ sApp }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1;min-height:0;display:flex">
+    <nav style="width:88px;flex:none;background:#141210;display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:6px">
+      <span style="width:44px;height:44px;border-radius:14px;background:#F26B1D;color:#FFFFFF;display:grid;place-items:center;font-weight:800;margin-bottom:12px">B</span>
+      <sc-for list="{{ rail }}" as="r" hint-placeholder-count="5"><button onClick="{{ r.onClick }}" style="position:relative;width:72px;height:64px;border:0;border-radius:16px;background:{{ r.bg }};color:{{ r.fg }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;font-size:11px;font-weight:600"><span style="width:22px;height:22px;background:currentColor;-webkit-mask:{{ r.mask }};mask:{{ r.mask }}"></span>{{ r.l }}<span style="position:absolute;top:6px;right:10px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#F26B1D;color:#FFFFFF;font-size:10px;font-weight:800;line-height:18px;display:{{ r.badgeD }}">{{ r.badge }}</span></button></sc-for>
+      <button onClick="{{ lock }}" style="margin-top:auto;width:72px;height:64px;border:0;border-radius:16px;background:transparent;color:#A9A39B;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;font-size:11px;font-weight:600"><span style="width:22px;height:22px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/lock.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/lock.svg) center/contain no-repeat"></span>Lock</button>
+    </nav>
+
+    <sc-if value="{{ vRegister }}" hint-placeholder-val="{{ true }}">
+      <div data-screen-label="03 Register" style="flex:1;min-width:0;display:flex">
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;padding:16px 18px;gap:12px">
+          <div style="display:flex;gap:10px;align-items:center">
+            <div style="flex:1;min-width:0;height:52px;border-radius:999px;background:#F2EFEA;display:flex;align-items:center;gap:10px;padding:0 18px"><span style="width:20px;height:20px;background:#857E76;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/search.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/search.svg) center/contain no-repeat"></span><input value="{{ q }}" onChange="{{ onQ }}" placeholder="Search menu or scan barcode" style="flex:1;min-width:0;border:0;background:transparent;font-size:16px;outline:none"></div>
+            <span style="height:52px;padding:0 16px;border-radius:16px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;white-space:nowrap"><span style="width:8px;height:8px;border-radius:9px;background:#1F9D55"></span>{{ who }} · since {{ shiftStart }} · <span style="color:#1F4FB5">PIC Maya</span></span>
+          </div>
+          <div style="display:flex;gap:8px;overflow-x:auto;flex:none">
+            <sc-for list="{{ cats }}" as="c" hint-placeholder-count="6"><button onClick="{{ c.onClick }}" style="flex:none;height:48px;padding:0 20px;border:0;border-radius:999px;background:{{ c.bg }};color:{{ c.fg }};font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap">{{ c.l }}</button></sc-for>
+          </div>
+          <div style="flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));grid-auto-rows:min-content;gap:12px;padding-bottom:12px">
+            <sc-for list="{{ prods }}" as="p" hint-placeholder-count="12">
+              <button onClick="{{ p.onClick }}" style="position:relative;border:0;padding:0;border-radius:20px;background:#FFFFFF;box-shadow:{{ p.ring }};overflow:hidden;text-align:left;cursor:{{ p.cur }};opacity:{{ p.op }};display:flex;flex-direction:column;transition:transform 140ms cubic-bezier(.2,.8,.2,1),box-shadow 140ms" style-active="transform:scale(.97);transition:transform 80ms">
+                <span style="aspect-ratio:4/3;background:{{ p.ph }}"></span>
+                <span style="padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px"><span style="font-size:14px;font-weight:600;line-height:1.25">{{ p.n }}</span><b style="font-size:15px;font-variant-numeric:tabular-nums">{{ p.p }}</b></span>
+                <span style="position:absolute;top:8px;right:8px;min-width:28px;height:28px;padding:0 8px;border-radius:999px;background:#F26B1D;color:#FFFFFF;font-size:13px;font-weight:800;line-height:28px;text-align:center;transform:scale({{ p.bs }});transition:transform 220ms cubic-bezier(.3,1.35,.5,1)">{{ p.c }}</span>
+                <span style="position:absolute;top:8px;left:8px;height:24px;padding:0 9px;border-radius:999px;background:#141210;color:#FFFFFF;font-size:11px;font-weight:700;line-height:24px;display:{{ p.soldD }}">Sold out</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+        <aside style="width:380px;flex:none;background:#FFFFFF;border-left:1px solid #E6E2DC;display:flex;flex-direction:column;min-height:0">
+          <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid #F2EFEA">
+            <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:18px">Order #{{ orderNo }}</b><button onClick="{{ clearCart }}" style="height:34px;padding:0 12px;border:0;border-radius:10px;background:#F2EFEA;font-size:13px;font-weight:600;cursor:pointer;opacity:{{ cartOp }}">Clear</button></div>
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;border-radius:14px;background:#F2EFEA">
+              <sc-for list="{{ types }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.onClick }}" style="height:40px;border:0;border-radius:10px;background:{{ t.bg }};box-shadow:{{ t.sh }};font-size:13px;font-weight:600;cursor:pointer">{{ t.l }}</button></sc-for>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button onClick="{{ openTable }}" style="flex:1;height:44px;border:1px solid #E6E2DC;border-radius:12px;background:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer;display:{{ tableD }};align-items:center;justify-content:center;gap:6px">Table {{ table }}</button>
+              <button onClick="{{ openCust }}" style="flex:2;height:44px;border:1px solid {{ custBorder }};border-radius:12px;background:{{ custBg }};font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 10px">{{ custLabel }}</button>
+            </div>
+          </div>
+          <div style="flex:1;min-height:0;overflow:auto;padding:4px 16px">
+            <sc-if value="{{ cartEmpty }}" hint-placeholder-val="{{ true }}"><div style="height:100%;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#857E76;text-align:center"><span style="width:40px;height:40px;background:#CFCAC3;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/shopping-bag.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/shopping-bag.svg) center/contain no-repeat"></span><span style="font-size:14px">Tap a product to start an order.</span></div></sc-if>
+            <sc-for list="{{ lines }}" as="l" hint-placeholder-count="0">
+              <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;padding:12px 0;border-bottom:1px dashed #E6E2DC">
+                <span style="display:flex;flex-direction:column;gap:3px"><b style="font-size:15px">{{ l.n }}</b><span style="font-size:12px;color:#625C55;display:{{ l.modD }}">{{ l.mods }}</span></span>
+                <b style="font-size:15px;font-variant-numeric:tabular-nums">{{ l.t }}</b>
+                <div style="display:flex;align-items:center;gap:4px;padding:3px;border-radius:12px;background:#F2EFEA;justify-self:start">
+                  <button onClick="{{ l.dec }}" style="width:36px;height:36px;border:0;border-radius:9px;background:#FFFFFF;font-size:18px;cursor:pointer">−</button>
+                  <b style="width:30px;text-align:center;font-variant-numeric:tabular-nums">{{ l.q }}</b>
+                  <button onClick="{{ l.inc }}" style="width:36px;height:36px;border:0;border-radius:9px;background:#141210;color:#FFFFFF;font-size:18px;cursor:pointer">+</button>
+                </div>
+                <span style="align-self:center;font-size:12px;color:#857E76">{{ l.each }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="padding:12px 16px 16px;border-top:1px solid #F2EFEA;display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;gap:6px;margin-bottom:4px">
+              <button onClick="{{ toggleDisc }}" style="flex:1;height:40px;border:1px solid #E6E2DC;border-radius:12px;background:{{ discBg }};font-size:13px;font-weight:600;cursor:pointer">{{ discLabel }}</button>
+              <button onClick="{{ holdBill }}" style="flex:1;height:40px;border:1px solid #E6E2DC;border-radius:12px;background:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer;opacity:{{ cartOp }}">Save bill</button>
+              <button onClick="{{ sendKitchen }}" style="flex:1;height:40px;border:1px solid #E6E2DC;border-radius:12px;background:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer;opacity:{{ cartOp }}">To kitchen</button>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:14px;color:#45403A"><span>Subtotal · {{ T.items }} items</span><span style="font-variant-numeric:tabular-nums">{{ subText }}</span></div>
+            <div style="display:{{ discRowD }};justify-content:space-between;font-size:14px;color:#156B3A"><span>Member discount 10%</span><span>− {{ discText }}</span></div>
+            <div style="display:{{ svcRowD }};justify-content:space-between;font-size:14px;color:#45403A"><span>Service 5%</span><span style="font-variant-numeric:tabular-nums">{{ svcText }}</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:14px;color:#45403A"><span>PB1 10%</span><span style="font-variant-numeric:tabular-nums">{{ taxText }}</span></div>
+            <button onClick="{{ charge }}" style="margin-top:8px;height:72px;border:0;border-radius:20px;background:{{ chargeBg }};color:#FFFFFF;display:flex;justify-content:space-between;align-items:center;padding:0 22px;cursor:pointer;transition:background 140ms" style-active="transform:scale(.97)"><span style="font-size:17px;font-weight:700">Charge</span><span style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">{{ totalText }}</span></button>
+          </div>
+        </aside>
+      </div>
+    </sc-if>
+    <sc-if value="{{ vList }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="10 Lists" style="flex:1;min-width:0;padding:20px 24px;display:flex;flex-direction:column;gap:14px;overflow:auto">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:26px;letter-spacing:-.02em">{{ listTitle }}</b><span style="font-size:14px;color:#625C55">{{ listSub }}</span></div>
+        <sc-if value="{{ isOnline }}" hint-placeholder-val="{{ false }}"><div style="flex:none;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><sc-for list="{{ chChips }}" as="c" hint-placeholder-count="6"><button onClick="{{ c.onClick }}" style="height:40px;padding:0 14px;border-radius:999px;border:1.5px solid {{ c.bc }};background:{{ c.bg }};color:{{ c.fg }};font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:3px;background:{{ c.c }}"></span>{{ c.l }}</button></sc-for><a href="BorNiz Online Orders.dc.html" style="margin-left:auto;font-size:13px;font-weight:700">Lanes, shelf &amp; busy mode →</a></div></sc-if>
+        <sc-if value="{{ listEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:60px 20px;border-radius:20px;background:#FFFFFF;border:1px dashed #CFCAC3;text-align:center;color:#625C55;font-size:15px">{{ emptyTxt }}</div></sc-if>
+        <sc-for list="{{ listRows }}" as="r" hint-placeholder-count="0"><div style="min-height:72px;padding:12px 16px;border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;align-items:center;gap:14px"><span style="width:48px;height:48px;flex:none;border-radius:14px;background:#F2EFEA;display:grid;place-items:center;font-size:13px;font-weight:800">{{ r.tag }}</span><span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><b style="font-size:15px">{{ r.t }}</b><span style="font-size:13px;color:#625C55">{{ r.sub }}</span></span><b style="font-size:16px;font-variant-numeric:tabular-nums">{{ r.v }}</b><span style="height:26px;padding:0 10px;border-radius:999px;background:{{ r.sb }};color:{{ r.sf }};font-size:12px;font-weight:700;line-height:26px">{{ r.s }}</span><button onClick="{{ r.onClick }}" style="height:48px;padding:0 18px;border:0;border-radius:14px;background:#141210;color:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer;display:{{ r.btnD }}">{{ r.btn }}</button></div></sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ vShift }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="11 Shift / close" style="flex:1;min-width:0;padding:20px 24px;display:flex;flex-direction:column;gap:14px;overflow:auto">
+        <b style="font-size:26px;letter-spacing:-.02em">Shift · {{ who }} · since {{ shiftStart }}</b>
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px"><sc-for list="{{ shiftKpis }}" as="k" hint-placeholder-count="4"><div style="padding:16px;border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC"><span style="font-size:12px;color:#625C55">{{ k.l }}</span><br><b style="font-size:24px;font-variant-numeric:tabular-nums">{{ k.v }}</b></div></sc-for></div>
+        <div style="padding:16px;border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:6px"><b style="font-size:15px">By payment method</b><sc-for list="{{ byMethod }}" as="m" hint-placeholder-count="3"><div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #F2EFEA;font-size:14px"><span>{{ m.l }}</span><b>{{ m.v }}</b></div></sc-for></div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px"><span style="height:64px;border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC;display:grid;place-items:center;font-size:15px;font-weight:600">Cash in / out</span><span style="height:64px;border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC;display:grid;place-items:center;font-size:15px;font-weight:600">Print X report</span><button onClick="{{ closeShift }}" style="height:64px;border:0;border-radius:18px;background:#F26B1D;color:#FFFFFF;font-size:16px;font-weight:700;cursor:pointer">Close shift</button></div>
+      </div>
+    </sc-if>
+  </div>
+</sc-if>
+<sc-if value="{{ ovOn }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeOv }}" style="position:fixed;inset:0;z-index:20;background:rgba(20,18,16,.5);display:flex;align-items:center;justify-content:center;padding:20px">
+    <div onClick="{{ stop }}" style="width:min({{ ovW }},100%);max-height:calc(100vh - 40px);overflow:auto;border-radius:28px;background:#FFFFFF;box-shadow:0 24px 60px -12px rgba(20,18,16,.45);display:flex;flex-direction:column">
+
+      <sc-if value="{{ ovOpt }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="04 Product options" style="padding:24px;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;gap:14px;align-items:center"><span style="width:72px;height:72px;flex:none;border-radius:18px;background:{{ optPh }}"></span><div style="display:flex;flex-direction:column;gap:4px"><b style="font-size:22px">{{ optName }}</b><span style="font-size:15px;color:#625C55">{{ optBase }}</span></div></div>
+          <sc-for list="{{ optGroups }}" as="g" hint-placeholder-count="3">
+            <div style="display:flex;flex-direction:column;gap:8px"><b style="font-size:14px">{{ g.l }}</b><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px"><sc-for list="{{ g.opts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.onClick }}" style="height:56px;border:2px solid {{ o.bc }};border-radius:16px;background:{{ o.bg }};font-size:15px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">{{ o.l }}<span style="font-size:11px;color:#625C55;font-weight:500">{{ o.extra }}</span></button></sc-for></div></div>
+          </sc-for>
+          <input value="{{ optNote }}" onChange="{{ onOptNote }}" placeholder="Note for the bar (optional)" style="height:52px;padding:0 16px;border:1.5px solid #E6E2DC;border-radius:14px;font-size:15px;outline:none">
+          <button onClick="{{ optAdd }}" style="height:64px;border:0;border-radius:18px;background:#F26B1D;color:#FFFFFF;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font-size:17px;font-weight:700;cursor:pointer" style-active="transform:scale(.97)"><span>Add to order</span><span>{{ optPrice }}</span></button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ ovTable }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="05 Table picker" style="padding:24px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:22px">Choose table</b><div style="display:flex;gap:12px;font-size:12px;color:#625C55"><span style="display:flex;gap:5px;align-items:center"><span style="width:10px;height:10px;border-radius:3px;background:#FFFFFF;border:1.5px solid #CFCAC3"></span>Free</span><span style="display:flex;gap:5px;align-items:center"><span style="width:10px;height:10px;border-radius:3px;background:#FFE2CF"></span>Occupied</span><span style="display:flex;gap:5px;align-items:center"><span style="width:10px;height:10px;border-radius:3px;background:#E6EEFD"></span>Reserved</span></div></div>
+          <div style="display:flex;gap:6px"><span style="height:36px;padding:0 14px;border-radius:999px;background:#141210;color:#FFFFFF;font-size:13px;font-weight:600;line-height:36px">Indoor</span><span style="height:36px;padding:0 14px;border-radius:999px;background:#F2EFEA;font-size:13px;font-weight:600;line-height:36px">Terrace</span></div>
+          <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px">
+            <sc-for list="{{ tables }}" as="t" hint-placeholder-count="15"><button onClick="{{ t.onClick }}" style="height:84px;border:2px solid {{ t.bc }};border-radius:18px;background:{{ t.bg }};cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><b style="font-size:18px">{{ t.n }}</b><span style="font-size:11px;color:#45403A">{{ t.sub }}</span></button></sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ ovCust }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="06 Customer lookup" style="padding:24px;display:flex;flex-direction:column;gap:14px">
+          <b style="font-size:22px">Customer</b>
+          <div style="height:52px;border-radius:14px;border:1.5px solid #E6E2DC;display:flex;align-items:center;padding:0 16px;font-size:15px;color:#857E76">Search name or phone · or scan member QR</div>
+          <sc-for list="{{ custs }}" as="c" hint-placeholder-count="3"><button onClick="{{ c.onClick }}" style="height:68px;border:1.5px solid {{ c.bc }};border-radius:16px;background:{{ c.bg }};display:flex;align-items:center;gap:12px;padding:0 14px;cursor:pointer;text-align:left"><span style="width:44px;height:44px;border-radius:999px;background:#FFE2CF;color:#84340A;display:grid;place-items:center;font-weight:700">{{ c.i }}</span><span style="flex:1;display:flex;flex-direction:column;gap:3px"><b style="font-size:15px">{{ c.n }}</b><span style="font-size:13px;color:#625C55">{{ c.ph }}</span></span><span style="display:flex;flex-direction:column;align-items:flex-end;gap:3px"><span style="height:22px;padding:0 8px;border-radius:999px;background:#141210;color:#FFFFFF;font-size:11px;font-weight:700;line-height:22px">{{ c.tier }}</span><span style="font-size:12px;color:#625C55">{{ c.pts }} pts</span></span></button></sc-for>
+          <div style="display:flex;gap:8px"><button onClick="{{ removeCust }}" style="flex:1;height:52px;border:1px solid #E6E2DC;border-radius:14px;background:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer">No customer</button><button style="flex:1;height:52px;border:0;border-radius:14px;background:#141210;color:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer">+ New customer</button></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ ovPay }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="07 Payment" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);min-height:560px">
+          <div style="padding:24px;background:#FAF8F5;border-radius:28px 0 0 28px;display:flex;flex-direction:column;gap:10px">
+            <span style="font-size:14px;color:#625C55">Order #{{ orderNo }} · {{ T.items }} items</span>
+            <b style="font-size:40px;letter-spacing:-.03em;font-variant-numeric:tabular-nums">{{ totalText }}</b>
+            <span style="font-size:13px;color:#625C55;margin-bottom:8px">Includes PB1 and service</span>
+            <sc-for list="{{ methods }}" as="m" hint-placeholder-count="6"><button onClick="{{ m.onClick }}" style="height:60px;border:2px solid {{ m.bc }};border-radius:16px;background:{{ m.bg }};display:flex;align-items:center;gap:12px;padding:0 16px;cursor:pointer;text-align:left"><span style="width:24px;height:24px;background:#141210;-webkit-mask:{{ m.mask }};mask:{{ m.mask }}"></span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:15px">{{ m.l }}</b><span style="font-size:12px;color:#625C55">{{ m.sub }}</span></span><span style="font:600 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">{{ m.key }}</span></button></sc-for>
+          </div>
+          <div style="padding:24px;display:flex;flex-direction:column;gap:14px">
+            <sc-if value="{{ pNone }}" hint-placeholder-val="{{ true }}"><div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#857E76;text-align:center"><span style="width:48px;height:48px;background:#CFCAC3;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/credit-card.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/credit-card.svg) center/contain no-repeat"></span><span style="font-size:15px">Pick a payment method</span><span style="font-size:12px">Shortcut keys F1–F6</span></div></sc-if>
+
+            <sc-if value="{{ pCash }}" hint-placeholder-val="{{ false }}">
+              <b style="font-size:20px">Cash</b>
+              <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px"><sc-for list="{{ quick }}" as="x" hint-placeholder-count="4"><button onClick="{{ x.onClick }}" style="height:48px;border:1px solid #E6E2DC;border-radius:12px;background:#FFFFFF;font-size:14px;font-weight:700;cursor:pointer">{{ x.l }}</button></sc-for></div>
+              <div style="height:64px;border-radius:16px;background:#F2EFEA;display:flex;align-items:center;justify-content:space-between;padding:0 18px"><span style="font-size:13px;color:#625C55">Received</span><b style="font-size:28px;font-variant-numeric:tabular-nums">{{ tenderText }}</b></div>
+              <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px"><sc-for list="{{ numKeys }}" as="k" hint-placeholder-count="12"><button onClick="{{ k.onClick }}" style="height:56px;border:1px solid #E6E2DC;border-radius:16px;background:#FFFFFF;font-size:22px;font-weight:600;cursor:pointer" style-active="transform:scale(.94);background:#F2EFEA">{{ k.l }}</button></sc-for></div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:14px;color:#625C55">Change</span><b style="font-size:22px;color:{{ changeC }};font-variant-numeric:tabular-nums">{{ changeText }}</b></div>
+              <button onClick="{{ payCash }}" style="height:64px;border:0;border-radius:18px;background:{{ cashBg }};color:#FFFFFF;font-size:17px;font-weight:700;cursor:pointer" style-active="transform:scale(.97)">Complete · open drawer</button>
+            </sc-if>
+
+            <sc-if value="{{ pQris }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:20px">QRIS</b><span style="height:28px;padding:0 10px;border-radius:999px;background:#FFF4D6;color:#8A5A00;font-size:12px;font-weight:700;line-height:28px">Waiting · {{ qrisTime }}</span></div>
+              <div style="align-self:center;width:240px;height:240px;border-radius:24px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC;padding:18px"><span style="display:block;width:100%;height:100%;background:repeating-linear-gradient(45deg,#141210 0 6px,#FFFFFF 6px 12px)"></span></div>
+              <span style="text-align:center;font-size:14px;color:#45403A">Also showing on the customer display. Ask the guest to scan with any bank or e-wallet.</span>
+              <div style="margin-top:auto;display:grid;grid-template-columns:1fr 1fr;gap:8px"><button onClick="{{ simPaid }}" style="height:56px;border:0;border-radius:16px;background:#141210;color:#FFFFFF;font-size:14px;font-weight:700;cursor:pointer">Simulate paid</button><button onClick="{{ simFail }}" style="height:56px;border:1px solid #E6E2DC;border-radius:16px;background:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer">Simulate expired</button></div>
+            </sc-if>
+
+            <sc-if value="{{ pCard }}" hint-placeholder-val="{{ false }}">
+              <b style="font-size:20px">{{ cardTitle }}</b>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center"><span style="width:96px;height:96px;border-radius:999px;background:#FFF3EB;display:grid;place-items:center"><span style="width:44px;height:44px;background:#F26B1D;-webkit-mask:{{ cardMask }};mask:{{ cardMask }}"></span></span><b style="font-size:18px">{{ cardMsg }}</b><span style="font-size:14px;color:#625C55;max-width:280px">{{ cardSub }}</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button onClick="{{ simPaid }}" style="height:56px;border:0;border-radius:16px;background:#141210;color:#FFFFFF;font-size:14px;font-weight:700;cursor:pointer">Simulate approved</button><button onClick="{{ simFail }}" style="height:56px;border:1px solid #E6E2DC;border-radius:16px;background:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer">Simulate declined</button></div>
+            </sc-if>
+
+            <sc-if value="{{ pSplit }}" hint-placeholder-val="{{ false }}">
+              <b style="font-size:20px">Split bill</b>
+              <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;border-radius:14px;background:#F2EFEA"><span style="height:40px;border-radius:10px;background:#FFFFFF;box-shadow:0 1px 3px rgba(20,18,16,.15);display:grid;place-items:center;font-size:13px;font-weight:600">Evenly</span><span style="height:40px;display:grid;place-items:center;font-size:13px;font-weight:600">By item</span><span style="height:40px;display:grid;place-items:center;font-size:13px;font-weight:600">Custom</span></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0"><span style="font-size:14px">Split between</span><div style="display:flex;align-items:center;gap:6px"><button onClick="{{ splitDec }}" style="width:44px;height:44px;border:0;border-radius:12px;background:#F2EFEA;font-size:20px;cursor:pointer">−</button><b style="width:36px;text-align:center;font-size:20px">{{ splitN }}</b><button onClick="{{ splitInc }}" style="width:44px;height:44px;border:0;border-radius:12px;background:#141210;color:#FFFFFF;font-size:20px;cursor:pointer">+</button></div></div>
+              <sc-for list="{{ splits }}" as="x" hint-placeholder-count="2"><div style="height:60px;border-radius:16px;background:{{ x.bg }};display:flex;align-items:center;gap:12px;padding:0 16px"><b style="flex:1;font-size:15px">Part {{ x.i }}</b><span style="font-size:13px;color:#625C55">{{ x.m }}</span><b style="font-size:16px;font-variant-numeric:tabular-nums">{{ x.a }}</b></div></sc-for>
+              <button onClick="{{ splitNext }}" style="margin-top:auto;height:64px;border:0;border-radius:18px;background:#F26B1D;color:#FFFFFF;font-size:17px;font-weight:700;cursor:pointer">{{ splitBtn }}</button>
+            </sc-if>
+
+            <sc-if value="{{ pProc }}" hint-placeholder-val="{{ false }}"><div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px">{{ spinner }}<b style="font-size:17px">Confirming payment…</b></div></sc-if>
+
+            <sc-if value="{{ pFail }}" hint-placeholder-val="{{ false }}"><div data-screen-label="08 Payment failed" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center"><span style="width:96px;height:96px;border-radius:999px;background:#E5383B;display:grid;place-items:center;color:#FFFFFF;font-size:44px;font-weight:300">×</span><b style="font-size:22px">{{ failTitle }}</b><span style="font-size:14px;color:#625C55;max-width:300px">{{ failSub }}</span><button onClick="{{ retry }}" style="margin-top:8px;height:56px;padding:0 28px;border:0;border-radius:16px;background:#141210;color:#FFFFFF;font-size:15px;font-weight:700;cursor:pointer">Try another method</button></div></sc-if>
+
+            <sc-if value="{{ pOk }}" hint-placeholder-val="{{ false }}">
+              <div data-screen-label="09 Receipt & success" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center">
+                <span style="width:104px;height:104px;border-radius:999px;background:#1F9D55;display:grid;place-items:center;transform:scale({{ okS }});transition:transform 480ms cubic-bezier(.3,1.35,.5,1)"><span style="width:48px;height:48px;background:#FFFFFF;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat"></span></span>
+                <b style="font-size:26px">Payment received</b>
+                <span style="font-size:15px;color:#625C55">{{ okSub }}</span>
+                <b style="font-size:22px;display:{{ okChangeD }}">Change {{ okChange }}</b>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px"><sc-for list="{{ rcptOpts }}" as="r" hint-placeholder-count="3"><button onClick="{{ r.onClick }}" style="height:56px;border:1.5px solid {{ r.bc }};border-radius:14px;background:{{ r.bg }};font-size:13px;font-weight:600;cursor:pointer">{{ r.l }}</button></sc-for></div>
+              <button onClick="{{ newSale }}" style="height:64px;border:0;border-radius:18px;background:#F26B1D;color:#FFFFFF;font-size:17px;font-weight:700;cursor:pointer" style-active="transform:scale(.97)">New sale</button>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:40;padding:14px 18px;border-radius:16px;background:#141210;color:#FFFFFF;font-size:14px;font-weight:600;box-shadow:0 16px 40px -8px rgba(20,18,16,.4)">{{ toast }}</div>
+</sc-if>
+</div>
+<div data-bn-links="1" style="position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:60;max-width:calc(100vw - 24px)"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:18px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#141210;color:#FFFFFF"><span style="width:8px;height:8px;border-radius:9px;background:#F26B1D"></span>Linked pages · 24<span style="font-weight:500;color:#A9A39B">▴</span></summary><div style="width:min(460px,calc(100vw - 24px));padding:6px 16px 12px;display:flex;flex-direction:column;max-height:50vh;overflow:auto"><a href="BorNiz Diagrams.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Diagrams</b><span style="color:#45403A">QRIS and split-bill sequences</span></a><a href="BorNiz Operations Guide.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Operations guide</b><span style="color:#45403A">Cashier how-to</span></a><a href="BorNiz Back Office.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Back office (all modules)</b><span style="color:#45403A">Sales, refunds and cash pages are read-only records from the POS</span></a><a href="BorNiz Brand Studio.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Brand Studio</b><span style="color:#45403A">Logo and accent on staff devices</span></a><a href="BorNiz Components.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Components</b><span style="color:#45403A">Used live in the prototype</span></a><a href="BorNiz Customer Display.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Customer display</b><span style="color:#45403A">Mirrors cart &amp; QRIS</span></a><a href="BorNiz Kitchen Display.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Kitchen display</b><span style="color:#45403A">Tickets come from POS</span></a><a href="BorNiz Landing.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Landing site</b><span style="color:#45403A">Demo</span></a><a href="BorNiz Loyalty.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Loyalty</b><span style="color:#45403A">Cashier attaches members and redeems</span></a><a href="BorNiz Manager Dashboard.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Manager</b><span style="color:#45403A">Approvals from cashiers</span></a><a href="BorNiz Menu Studio.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Menu studio</b><span style="color:#45403A">Products, prices and sold-out status</span></a><a href="BorNiz Motion.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Motion</b><span style="color:#45403A">Add to cart, sheet, payment success</span></a><a href="BorNiz PIC.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Shift lead (PIC)</b><span style="color:#45403A">Approves cashier voids, discounts, refunds</span></a><a href="BorNiz POS Patterns.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>POS patterns</b><span style="color:#45403A">Patterns assembled into the register</span></a><a href="BorNiz Shifts.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Shifts</b><span style="color:#45403A">Opens and closes drawer sessions</span></a><a href="BorNiz Roles.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Roles</b><span style="color:#45403A">Permissions decide voids, refunds, discounts</span></a><a href="BorNiz Studios.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Studios</b><span style="color:#45403A">Receipt, customer display, ready notification</span></a><a href="BorNiz System.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>System</b><span style="color:#45403A">Payment failed, printer offline states</span></a><a href="BorNiz Responsive.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Responsive</b><span style="color:#45403A">Tablet landscape layout</span></a><a href="BorNiz Page Spec.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Per-page design system</b><span style="color:#45403A">Has its own design system page</span></a><a href="BorNiz States Gallery.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>States gallery</b><span style="color:#45403A">Offline, declined, approval states</span></a><a href="BorNiz Online Orders.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Online orders</b><span style="color:#45403A">Online inbox: accept / decline</span></a><a href="BorNiz Authority.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Who controls what</b><span style="color:#45403A">Voids, refunds, discounts, cash out start here and follow the ladder</span></a><a href="BorNiz Alerts.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Alerts &amp; notifications</b><span style="color:#45403A">POS banner, inbox and sound</span></a><a href="BorNiz Connections.dc.html" style="margin-top:8px;height:40px;border-radius:12px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:13px;font-weight:700">Open the full connection map →</a></div></details></div>
+<div data-bn-spec="1" style="position:fixed;left:12px;bottom:10px;z-index:61"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:16px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#F26B1D;color:#FFFFFF">◆ Design spec · this page</summary><div style="width:min(420px,calc(100vw - 24px));max-height:65vh;overflow:auto;padding:10px 16px 14px;display:flex;flex-direction:column"><div style="font-size:12px;color:#625C55">Theme: <b style="color:#141210">Light · counter</b></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">COLOR</b><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px"><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:#FAF8F5;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Canvas</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">#FAF8F5</span></div><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:#FFFFFF;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Surface</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">#FFFFFF</span></div><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:#141210;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Ink</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">#141210</span></div><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:#F26B1D;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Ember / pay</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">#F26B1D</span></div><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:#141210;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Rail</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">#141210</span></div><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:#1F9D55;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Paid</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">#1F9D55</span></div><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:#E5383B;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Void</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">#E5383B</span></div></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">TYPE</b><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Total on Charge</span><b style="text-align:right">24 / 700 tabular</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Product name</span><b style="text-align:right">14 / 600</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Price</span><b style="text-align:right">15 / 700 tabular</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Cart line</span><b style="text-align:right">15 / 700</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Labels</span><b style="text-align:right">13 / 600</b></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">SIZE & LAYOUT</b><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Min hit target</span><b style="text-align:right">56px · Charge 72px</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Product tile</span><b style="text-align:right">min 150px · photo 4:3 · radius 20</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Cart panel</span><b style="text-align:right">380px fixed right</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Nav rail</span><b style="text-align:right">88px · items 72×64</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Page padding</span><b style="text-align:right">16–18px · gap 12</b></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">COMPONENTS</b><div style="display:flex;flex-wrap:wrap;gap:4px"><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Product tile + count badge</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Category chips (48px)</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Cart line + qty stepper</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Order type segmented</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Charge button (72px)</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Payment sheet: 6 methods</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Cash numpad + quick amounts</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">PIN pad (72px keys)</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Toast</span></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">STATES</b><div style="display:flex;flex-wrap:wrap;gap:4px"><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Empty cart</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Sold out tile (45%)</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Discount on</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">QRIS waiting / expired</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Card declined</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Processing</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Paid + change</span></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">MOTION</b><div style="display:flex;flex-wrap:wrap;gap:4px"><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Tile press .97 · 80ms</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Badge pop 220ms spring</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Sheet up 320ms out</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Success circle 480ms spring</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">PIN error shake 200ms</span></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">SOUND</b><div style="display:flex;flex-wrap:wrap;gap:4px"><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">sfx-scan on add</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">sfx-pay-success</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">sfx-pay-fail</span></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">RESPONSIVE</b><div style="font-size:12px;line-height:1.45">lg landscape target · md: cart becomes bottom sheet</div><a href="BorNiz Design System.dc.html" style="margin-top:12px;height:38px;border-radius:10px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:12px;font-weight:700">Global foundations →</a></div></details></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const IC = n => `url(https://unpkg.com/lucide-static@0.452.0/icons/${n}.svg) center/contain no-repeat`;
+const idr = n => 'IDR ' + Math.round(n).toLocaleString('en-US');
+const PH = h => `linear-gradient(135deg,oklch(.9 .05 ${h}),oklch(.8 .07 ${h}))`;
+const PRODS = [
+  ['p1', 'Es Kopi Susu Aren', 25000, 'coffee', 60, true], ['p2', 'Americano', 22000, 'coffee', 50, true], ['p3', 'Cappuccino', 28000, 'coffee', 45, true], ['p4', 'Matcha Latte', 30000, 'noncoffee', 140, true],
+  ['p5', 'Teh Tarik', 18000, 'noncoffee', 70, false], ['p6', 'Chocolate', 26000, 'noncoffee', 40, false], ['p7', 'Croissant Almond', 32000, 'pastry', 80, false], ['p8', 'Banana Bread', 28000, 'pastry', 90, false],
+  ['p9', 'Pain au Chocolat', 30000, 'pastry', 55, false, true], ['p10', 'Nasi Goreng Spesial', 38000, 'rice', 30, false], ['p11', 'Ayam Bakar Madu', 42000, 'rice', 20, false], ['p12', 'Air Mineral', 8000, 'other', 220, false],
+];
+const CATS = [['all', 'All'], ['coffee', 'Coffee'], ['noncoffee', 'Non-coffee'], ['pastry', 'Pastry'], ['rice', 'Rice'], ['other', 'Others']];
+const STAFF = [['Rina', 'R', '#F26B1D'], ['Andi', 'A', '#2F6FEB'], ['Sari', 'S', '#1F9D55'], ['Tono', 'T', '#7C3AED']];
+const DEN = [[100000, '100k'], [50000, '50k'], [20000, '20k'], [10000, '10k'], [5000, '5k'], [1000, 'Coins (1k)']];
+
+const CUSTS = [['Dewi Anggraini', '0812 3456 7890', 'Gold', 1240], ['Budi Santoso', '0813 2222 1010', 'Silver', 320], ['Rina Pratiwi', '0857 8888 4321', 'Platinum', 2480]];
+const FP = (n, v) => { const b = window.BN_PRICE ? window.BN_PRICE(n, v) : v; return window.BN_PROMOS ? window.BN_PROMOS.price(n, b) : b; };
+const H86 = n => !!(window.BN86 && window.BN86.has(n, 'sen'));
+class Base extends DCLogic {
+  cartVals(s, T) {
+    const empty = !s.cart.length;
+    return {
+      orderNo: s.orderNo, cartEmpty: empty, cartOp: empty ? .4 : 1,
+      clearCart: () => this.setState({ cart: [], cust: null, disc: 0 }),
+      types: [['dine', 'Dine-in'], ['take', 'Takeaway'], ['deliv', 'Delivery']].map(([k, l]) => ({ l, bg: s.type === k ? '#FFFFFF' : 'transparent', sh: s.type === k ? '0 1px 3px rgba(20,18,16,.15)' : 'none', onClick: () => this.setState({ type: k }) })),
+      table: s.table, tableD: s.type === 'dine' ? 'flex' : 'none', openTable: () => this.setState({ sheet: 'table' }), openCust: () => this.setState({ sheet: 'cust' }),
+      custLabel: s.cust !== null ? `${CUSTS[s.cust][0]} · ${CUSTS[s.cust][2]} · ${CUSTS[s.cust][3].toLocaleString('en-US')} pts` : '+ Add customer', custBg: s.cust !== null ? '#FFF3EB' : '#FFFFFF', custBorder: s.cust !== null ? '#F26B1D' : '#E6E2DC',
+      lines: s.cart.map(c => ({ n: c.n, mods: c.mods, modD: c.mods ? 'block' : 'none', q: c.q, t: idr(c.price * c.q).replace('IDR ', ''), each: '@ ' + (c.price / 1000) + 'k', inc: () => this.setState(st => ({ cart: st.cart.map(x => x.key === c.key ? { ...x, q: x.q + 1 } : x) })), dec: () => this.setState(st => ({ cart: st.cart.map(x => x.key === c.key ? { ...x, q: x.q - 1 } : x).filter(x => x.q > 0) })) })),
+      toggleDisc: () => this.setState(st => ({ disc: st.disc ? 0 : .1 })), discLabel: s.disc ? 'Discount ✓' : 'Discount', discBg: s.disc ? '#E3F5EA' : '#FFFFFF',
+      holdBill: () => { if (empty) return; this.setState(st => ({ bills: [...st.bills, { no: st.orderNo, table: st.type === 'dine' ? st.table : st.type === 'take' ? 'Takeaway' : 'Delivery', cart: st.cart, total: T.total, at: new Date().toTimeString().slice(0, 5), cust: st.cust }], cart: [], cust: null, disc: 0, orderNo: st.orderNo + 1, toast: 'Bill saved to Open bills' })); this.toastOff(); },
+      sendKitchen: () => { if (empty) return; this.setState({ toast: `Sent ${T.items} items to Kitchen & Bar` }); this.toastOff(); },
+      subText: idr(T.sub), discText: idr(T.disc), svcText: idr(T.svc), taxText: idr(T.tax), discRowD: T.disc ? 'flex' : 'none', svcRowD: T.svc ? 'flex' : 'none',
+      chargeBg: empty ? '#CFCAC3' : '#F26B1D', charge: () => { if (!empty) this.setState({ sheet: 'pay', pay: null, tender: '', payState: 'idle' }); },
+    };
+  }
+  toastOff() { clearTimeout(this.tt); this.tt = setTimeout(() => this.setState({ toast: null }), 2600); }
+}
+class Component extends Base {
+  state = { screen: 'pin', who: 0, pin: '', pinErr: '', shake: 0, den: [2, 4, 5, 5, 6, 10], shiftStart: '', view: 'register', cat: 'all', q: '', cart: [], now: new Date(), sheet: null, opt: null, type: 'dine', table: 'T-07', cust: null, disc: 0, pay: null, tender: '', payState: 'idle', bills: [], history: [], toast: null, orderNo: 2048 };
+  componentDidMount() { this.tk = setInterval(() => this.setState({ now: new Date() }), 15000); this.pt = setInterval(() => this.forceUpdate(), 3000); this.qt = setInterval(() => { const s = this.state; if (s.sheet === 'pay' && s.pay === 'qris' && s.payState === 'idle') { const l = (s.qrisLeft ?? 299) - 1; this.setState(l <= 0 ? { payState: 'fail', qrisLeft: 0 } : { qrisLeft: l }); } }, 1000); }
+  componentWillUnmount() { clearInterval(this.tk); }
+  pinPress(k) {
+    const s = this.state;
+    if (k === 'del') return this.setState({ pin: s.pin.slice(0, -1), pinErr: '' });
+    const p = (s.pin + k).slice(0, 4); this.setState({ pin: p, pinErr: '' });
+    if (p.length === 4) setTimeout(() => { if (p === '1234') this.setState({ screen: s.shiftStart ? 'app' : 'open', pin: '' }); else { this.setState({ pinErr: 'Wrong PIN. Try again.' }); [-10, 10, -6, 6, 0].forEach((x, i) => setTimeout(() => this.setState({ shake: x, pin: i === 4 ? '' : this.state.pin }), i * 45)); } }, 180);
+  }
+  add(p, mods) { p = [p[0], p[1], FP(p[1], p[2])];
+    const key = p[0] + '|' + (mods || ''); this.setState(s => { const ex = s.cart.find(c => c.key === key); return { cart: ex ? s.cart.map(c => c.key === key ? { ...c, q: c.q + 1 } : c) : [...s.cart, { key, id: p[0], n: p[1], price: p[2], q: 1, mods: mods || '' }] }; });
+  }
+  finish(method) {
+    const s = this.state, T = this.totals();
+    this.setState({ payState: 'proc' });
+    setTimeout(() => { this.setState(st => ({ payState: 'ok', okIn: false, history: [{ no: st.orderNo, at: new Date().toTimeString().slice(0, 5), method, total: T.total, items: T.items, table: st.type === 'dine' ? st.table : st.type === 'take' ? 'Takeaway' : 'Delivery', status: 'Paid' }, ...st.history], lastChange: method === 'Cash' ? Math.max(0, (+st.tender || 0) - T.total) : 0, lastMethod: method })); setTimeout(() => this.setState({ okIn: true }), 30); }, 700);
+  }
+  more(s, T) {
+    const o = s.opt, extra = o ? (o.size === 'L' ? 5000 : 0) + (o.extraShot ? 6000 : 0) : 0;
+    const tender = +s.tender || 0, change = tender - T.total;
+    const tables = Array.from({ length: 15 }, (_, i) => { const n = 'T-' + String(i + 1).padStart(2, '0'); const st = [2, 4, 7, 9, 12].includes(i + 1) ? 'occ' : [5, 14].includes(i + 1) ? 'res' : 'free'; return { n, st }; });
+    const M = [['Cash', 'Numpad & change', 'banknote', 'F1', 'cash'], ['QRIS', 'All banks & e-wallets', 'qr-code', 'F2', 'qris'], ['Card', 'Debit / credit via EDC', 'credit-card', 'F3', 'card'], ['E-wallet', 'GoPay · OVO · DANA · ShopeePay', 'wallet', 'F4', 'ewallet'], ['Virtual account', 'BCA · BNI · Mandiri · BRI', 'landmark', 'F5', 'va'], ['Split bill', 'Evenly · by item · custom', 'split', 'F6', 'split']];
+    const cardInfo = { card: ['Card · EDC', 'credit-card', 'Tap, insert or swipe on the EDC', 'Amount sent to BCA EDC · Terminal 01'], ewallet: ['E-wallet', 'wallet', 'Push sent to customer app', 'Customer confirms in GoPay, OVO, DANA or ShopeePay'], va: ['Virtual account', 'landmark', 'VA number: 8808 0812 3456 7890', 'Valid 60 minutes. Order stays open until paid.'] }[s.pay] || ['', 'credit-card', '', ''];
+    const n = s.splitN || 2, per = Math.ceil(T.total / n), done = s.splitDone || 0;
+    return {
+      stop: e => e.stopPropagation(), ovOn: !!(s.opt || s.sheet), ovW: s.sheet === 'pay' ? '880px' : s.sheet === 'table' ? '640px' : '520px',
+      closeOv: () => { if (s.payState === 'proc') return; if (s.payState === 'ok') return this.newSale(); this.setState({ opt: null, sheet: null }); },
+      ovOpt: !!s.opt, ovTable: s.sheet === 'table', ovCust: s.sheet === 'cust', ovPay: s.sheet === 'pay',
+      optName: o ? o.p[1] : '', optBase: o ? idr(o.p[2]) : '', optPh: o ? PH(o.p[4]) : '#F2EFEA', optNote: o ? o.note : '', onOptNote: e => this.setState({ opt: { ...o, note: e.target.value } }),
+      optGroups: o ? [['Size', 'size', [['R', 'Regular', ''], ['L', 'Large', '+5k']]], ['Temperature', 'ice', [['Iced', 'Iced', ''], ['Hot', 'Hot', ''], ['Less ice', 'Less ice', '']]], ['Sugar', 'sugar', [['Normal', 'Normal', ''], ['Less', 'Less', ''], ['None', 'No sugar', '']]], ['Extra', 'extraShot', [[false, 'None', ''], [true, 'Extra shot', '+6k']]]].map(([l, k, opts]) => ({ l, opts: opts.map(([val, lab, ex]) => ({ l: lab, extra: ex, bc: o[k] === val || (o[k] === undefined && val === false) ? '#F26B1D' : '#E6E2DC', bg: o[k] === val || (o[k] === undefined && val === false) ? '#FFF3EB' : '#FFFFFF', onClick: () => this.setState({ opt: { ...o, [k]: val } }) })) })) : [],
+      optPrice: o ? idr(o.p[2] + extra) : '', optAdd: () => { const mods = [o.size === 'L' ? 'Large' : '', o.ice, o.sugar !== 'Normal' ? o.sugar + ' sugar' : '', o.extraShot ? 'Extra shot' : '', o.note].filter(Boolean).join(' · '); this.add([o.p[0], o.p[1], o.p[2] + extra], mods); this.setState({ opt: null }); },
+      tables: tables.map(t => ({ n: t.n, sub: t.n === s.table ? 'Selected' : { occ: 'Occupied · 2 bills', res: 'Reserved 19:00', free: 'Free' }[t.st], bg: t.n === s.table ? '#F26B1D' : { occ: '#FFE2CF', res: '#E6EEFD', free: '#FFFFFF' }[t.st], bc: t.n === s.table ? '#F26B1D' : { occ: '#FFC49E', res: '#C8D8F8', free: '#E6E2DC' }[t.st], onClick: () => this.setState({ table: t.n, sheet: null }) })),
+      custs: CUSTS.map(([nm, ph, tier, pts], i) => ({ n: nm, ph, tier, pts: pts.toLocaleString('en-US'), i: nm.split(' ').map(w => w[0]).join(''), bc: s.cust === i ? '#F26B1D' : '#E6E2DC', bg: s.cust === i ? '#FFF3EB' : '#FFFFFF', onClick: () => this.setState({ cust: i, sheet: null }) })),
+      removeCust: () => this.setState({ cust: null, sheet: null }),
+      methods: M.map(([l, sub, ic, key, k]) => ({ l, sub, key, mask: IC(ic), bc: s.pay === k ? '#F26B1D' : '#E6E2DC', bg: s.pay === k ? '#FFF3EB' : '#FFFFFF', onClick: () => { if (s.payState === 'idle' || s.payState === 'fail') this.setState({ pay: k, payState: 'idle', tender: '', qrisLeft: 299, splitN: 2, splitDone: 0 }); } })),
+      pNone: s.payState === 'idle' && !s.pay, pCash: s.payState === 'idle' && s.pay === 'cash', pQris: s.payState === 'idle' && s.pay === 'qris', pCard: s.payState === 'idle' && ['card', 'ewallet', 'va'].includes(s.pay), pSplit: s.payState === 'idle' && s.pay === 'split', pProc: s.payState === 'proc', pFail: s.payState === 'fail', pOk: s.payState === 'ok',
+      quick: [['Exact', T.total], ['100k', 100000], ['150k', 150000], ['200k', 200000]].map(([l, val]) => ({ l, onClick: () => this.setState({ tender: String(val) }) })),
+      tenderText: idr(tender), numKeys: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '000', '0', '⌫'].map(l => ({ l, onClick: () => this.setState(st => ({ tender: l === '⌫' ? st.tender.slice(0, -1) : (st.tender + l).slice(0, 9) })) })),
+      changeText: s.tender ? (change < 0 ? 'Short ' + idr(-change) : idr(change)) : '—', changeC: change < 0 && s.tender ? '#B3261E' : '#156B3A', cashBg: change >= 0 && s.tender ? '#F26B1D' : '#CFCAC3', payCash: () => { if (change >= 0 && s.tender) this.finish('Cash'); },
+      qrisTime: `${Math.floor((s.qrisLeft ?? 299) / 60)}:${String((s.qrisLeft ?? 299) % 60).padStart(2, '0')}`,
+      simPaid: () => this.finish({ qris: 'QRIS', card: 'Card', ewallet: 'GoPay', va: 'BCA VA' }[s.pay] || 'QRIS'), simFail: () => this.setState({ payState: 'fail' }),
+      cardTitle: cardInfo[0], cardMask: IC(cardInfo[1]), cardMsg: cardInfo[2], cardSub: cardInfo[3],
+      splitN: n, splitDec: () => this.setState({ splitN: Math.max(2, n - 1) }), splitInc: () => this.setState({ splitN: Math.min(8, n + 1) }),
+      splits: Array.from({ length: n }, (_, i) => ({ i: i + 1, a: idr(i === n - 1 ? T.total - per * (n - 1) : per), m: i < done ? 'Paid · QRIS' : i === done ? 'Next' : 'Waiting', bg: i < done ? '#E3F5EA' : i === done ? '#FFF3EB' : '#F2EFEA' })),
+      splitBtn: done < n - 1 ? `Pay part ${done + 1} with QRIS` : 'Pay last part', splitNext: () => { if (done < n - 1) this.setState({ splitDone: done + 1 }); else this.finish('Split'); },
+      spinner: React.createElement('span', { style: { width: 48, height: 48, borderRadius: 999, border: '4px solid #FFE2CF', borderTopColor: '#F26B1D', display: 'inline-block', animation: 'bnSpin 700ms linear infinite' } }),
+      failTitle: s.pay === 'qris' ? 'QRIS expired' : 'Payment declined', failSub: s.pay === 'qris' ? 'The code expired before it was paid. Generate a new one or pick another method.' : 'The issuer declined the card (code 51). Ask for another card or method.', retry: () => this.setState({ payState: 'idle', pay: null }),
+      okS: s.okIn ? 1 : .6, okSub: `${idr(T.total)} · ${s.lastMethod || ''} · Order #${s.orderNo}`, okChange: idr(s.lastChange || 0), okChangeD: s.lastChange ? 'block' : 'none',
+      rcptOpts: [['print', 'Print'], ['wa', 'WhatsApp'], ['none', 'No receipt']].map(([k, l]) => ({ l, bc: (s.rcpt || 'print') === k ? '#F26B1D' : '#E6E2DC', bg: (s.rcpt || 'print') === k ? '#FFF3EB' : '#FFFFFF', onClick: () => this.setState({ rcpt: k }) })),
+      newSale: () => this.newSale(),
+      toastOn: !!s.toast, toast: s.toast,
+      ...this.views(s),
+    };
+  }
+  views(s) {
+    const V = s.view, online = [['GF-21', 'GoFood · Rush · 3 items · ready by 14:39', 112000, 'New', 'gf'], ['GR-33', 'GrabFood · Standard · 2 items · ready by 14:45', 74000, 'New', 'gr'], ['SF-07', 'ShopeeFood · Saver · 3 items · ready by 14:48', 82000, 'Cooking', 'sf'], ['QR-T05', 'QR menu · Table 5 · dine-in lane', 64000, 'New', 'qr'], ['WEB-88', 'Web store · Scheduled · fires 14:45 · pickup 15:00', 89000, 'Held', 'web']].filter(o => !s.chF || s.chF === 'all' || o[4] === s.chF);
+    let rows = [], title = '', sub = '', empty = '';
+    if (V === 'bills') { title = 'Open bills'; sub = s.bills.length + ' open'; empty = 'No open bills. Use “Save bill” on an order to park it here.'; rows = s.bills.map((b, i) => ({ tag: b.table.replace('Takeaway', 'TA').replace('Delivery', 'DL'), t: `Order #${b.no}`, sub: `Saved ${b.at} · ${b.cart.reduce((a, c) => a + c.q, 0)} items`, v: idr(b.total), s: 'Open', sb: '#FFF4D6', sf: '#8A5A00', btn: 'Open', btnD: 'block', onClick: () => this.setState(st => ({ cart: b.cart, cust: b.cust, bills: st.bills.filter((_, j) => j !== i), view: 'register' })) })); }
+    if (V === 'history') { title = 'Shift history'; sub = s.history.length + ' transactions'; empty = 'No sales yet this shift.'; rows = s.history.map(h => ({ tag: h.table.slice(0, 5), t: `Order #${h.no} · ${h.method}`, sub: `${h.at} · ${h.items} items`, v: idr(h.total), s: h.status, sb: h.status === 'Paid' ? '#E3F5EA' : '#FDE8E8', sf: h.status === 'Paid' ? '#156B3A' : '#B3261E', btn: 'Refund', btnD: h.status === 'Paid' ? 'block' : 'none', onClick: () => { this.setState(st => ({ history: st.history.map(x => x.no === h.no ? { ...x, status: 'Refund requested' } : x), toast: 'Refund sent to PIC Maya for approval' })); this.toastOff(); } })); }
+    if (V === 'orders') { title = 'Online & QR orders'; sub = 'Sorted by ready-by · accept within the platform window · cancel & refund happen on the platform'; rows = online.map(([id, d, v, st]) => ({ tag: id.split('-')[0], t: id, sub: d, v: idr(v), s: st, sb: st === 'New' ? '#FFF3EB' : st === 'Held' ? '#FFF4D6' : '#E3F5EA', sf: st === 'New' ? '#B04408' : st === 'Held' ? '#8A5A00' : '#156B3A', btn: 'Accept', btnD: st === 'New' ? 'block' : 'none', onClick: () => { this.setState({ toast: `${id} accepted and sent to kitchen` }); this.toastOff(); } })); }
+    const paid = s.history.filter(h => h.status === 'Paid'), sum = paid.reduce((a, h) => a + h.total, 0), by = {}; paid.forEach(h => { by[h.method] = (by[h.method] || 0) + h.total; });
+    return { isOnline: V === 'orders', chChips: [['all', 'All', '#141210'], ['gf', 'GoFood', '#0E8A7E'], ['gr', 'GrabFood', '#7C3AED'], ['sf', 'ShopeeFood', '#B04408'], ['web', 'Web', '#5B5550'], ['qr', 'QR', '#1F4FD8']].map(([k, l, c]) => { const on = (s.chF || 'all') === k; return { l, c, bg: on ? '#141210' : '#FFFFFF', fg: on ? '#FFFFFF' : '#141210', bc: on ? '#141210' : '#E6E2DC', onClick: () => this.setState({ chF: k }) }; }), vList: ['bills', 'history', 'orders'].includes(V), vShift: V === 'shift', listTitle: title, listSub: sub, listRows: rows, listEmpty: !rows.length, emptyTxt: empty,
+      shiftKpis: [['Sales', idr(sum)], ['Transactions', paid.length], ['Avg ticket', paid.length ? idr(sum / paid.length) : '—'], ['Refund requests', s.history.length - paid.length]].map(([l, v]) => ({ l, v })),
+      byMethod: (Object.keys(by).length ? Object.entries(by) : [['No sales yet', 0]]).map(([l, v]) => ({ l, v: idr(v) })),
+      closeShift: () => this.setState({ screen: 'pin', shiftStart: '', view: 'register', toast: 'Shift closed. Z report printed.' }) };
+  }
+  newSale() { this.setState(st => ({ sheet: null, pay: null, payState: 'idle', cart: [], cust: null, disc: 0, tender: '', orderNo: st.orderNo + 1, okIn: false })); }
+  totals() { const s = this.state, sub = s.cart.reduce((a, c) => a + c.price * c.q, 0), disc = Math.round(sub * s.disc), svc = s.type === 'dine' ? Math.round((sub - disc) * .05) : 0, tax = Math.round((sub - disc + svc) * .1); return { sub, disc, svc, tax, total: sub - disc + svc + tax, items: s.cart.reduce((a, c) => a + c.q, 0) }; }
+  renderVals() {
+    const s = this.state, T = this.totals();
+    const hh = s.now.getHours().toString().padStart(2, '0'), mm = s.now.getMinutes().toString().padStart(2, '0');
+    const counts = {}; s.cart.forEach(c => { counts[c.id] = (counts[c.id] || 0) + c.q; });
+    const list = PRODS.filter(p => (s.cat === 'all' || p[3] === s.cat) && (!s.q || p[1].toLowerCase().includes(s.q.toLowerCase())));
+    const v = { sPin: s.screen === 'pin', sOpen: s.screen === 'open', sApp: s.screen === 'app', clock: `${hh}:${mm}`, who: STAFF[s.who][0], shiftStart: s.shiftStart,
+      staff: STAFF.map(([n, i, av], k) => ({ n, i, av, bg: s.who === k ? '#2E2A26' : 'transparent', onClick: () => this.setState({ who: k, pin: '', pinErr: '' }) })),
+      pinDots: [0, 1, 2, 3].map(i => ({ bg: i < s.pin.length ? '#FFFFFF' : 'transparent', bc: s.pinErr ? '#FF8A8C' : '#FFFFFF' })), pinErr: s.pinErr, pinShake: s.shake + 'px',
+      pinKeys: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'].map(l => ({ l, bg: l ? '#2E2A26' : 'transparent', onClick: () => l && this.pinPress(l === '⌫' ? 'del' : l) })),
+      denoms: DEN.map(([val, l], i) => ({ l, q: s.den[i], dec: () => this.setState(st => ({ den: st.den.map((x, j) => j === i ? Math.max(0, x - 1) : x) })), inc: () => this.setState(st => ({ den: st.den.map((x, j) => j === i ? x + 1 : x) })) })),
+      openCash: idr(DEN.reduce((a, [val], i) => a + val * s.den[i], 0)), startShift: () => this.setState({ screen: 'app', shiftStart: `${hh}:${mm}` }),
+      lock: () => this.setState({ screen: 'pin', pin: '' }),
+      rail: [['register', 'Register', 'shopping-bag'], ['bills', 'Open bills', 'clipboard-list', s.bills.length], ['history', 'History', 'receipt', 0], ['orders', 'Online', 'bell', 3], ['shift', 'Shift', 'clock']].map(([k, l, ic, b]) => ({ l, mask: IC(ic), bg: s.view === k ? '#2E2A26' : 'transparent', fg: s.view === k ? '#FFFFFF' : '#A9A39B', badge: b, badgeD: b ? 'block' : 'none', onClick: () => this.setState({ view: k }) })),
+      vRegister: s.view === 'register', q: s.q, onQ: e => this.setState({ q: e.target.value }),
+      cats: CATS.map(([k, l]) => ({ l, bg: s.cat === k ? '#141210' : '#FFFFFF', fg: s.cat === k ? '#FFFFFF' : '#141210', onClick: () => this.setState({ cat: k }) })),
+      prods: list.map(p => { const sold = !!p[6] || H86(p[1]), c = counts[p[0]] || 0; return { n: p[1], p: FP(p[1], p[2]) < p[2] ? idr(FP(p[1], p[2])) + ' · flash' : idr(p[2]), ph: PH(p[4]), c: c || '', bs: c ? 1 : 0, op: sold ? .45 : 1, cur: sold ? 'not-allowed' : 'pointer', soldD: sold ? 'block' : 'none', ring: c ? '0 0 0 2px #F26B1D' : '0 0 0 1px #E6E2DC', onClick: () => { if (sold) return; if (p[5]) this.setState({ opt: { p, size: 'R', ice: 'Iced', sugar: 'Normal', note: '' } }); else this.add(p); } }; }),
+      T, totalText: idr(T.total),
+    };
+    return Object.assign(v, this.cartVals(s, T), this.more ? this.more(s, T) : {});
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&amp;display=swap" rel="stylesheet">
+<style>
+/*bn-type*/h1,h2,h3,b{font-family:'Space Grotesk',system-ui,sans-serif}body{font-variant-numeric:tabular-nums}
+body{margin:0;background:#0C0B0A;color:#F5F2EE;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+*{box-sizing:border-box}
+a{color:#FF9F63;text-decoration:none}
+a:hover{color:#FFC49E;text-decoration:underline}
+button{font-family:inherit}
+@keyframes bnPulse{0%{box-shadow:0 0 0 0 rgba(242,181,68,.5)}70%{box-shadow:0 0 0 18px rgba(242,181,68,0)}100%{box-shadow:0 0 0 0 rgba(242,181,68,0)}}
+</style>
+<script src="./bn-brand.js"></script>
+<script src="./bn-embed.js"></script>
+<script src="./bn-promos.js"></script>
+<script src="./bn-alerts.js"></script>
+</helmet>
+<div style="height:100vh;display:flex;flex-direction:column">
+  <div style="height:52px;flex:none;padding:0 14px;display:flex;align-items:center;gap:8px;background:#1C1A18;border-bottom:1px solid #34302B;overflow-x:auto">
+    <span style="font-size:12px;color:#A9A39B;white-space:nowrap;margin-right:6px">Demo · customer-facing screen</span>
+    <sc-for list="{{ states }}" as="s" hint-placeholder-count="8"><button onClick="{{ s.onClick }}" style="height:34px;padding:0 12px;border:0;border-radius:9px;background:{{ s.bg }};color:{{ s.fg }};font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">{{ s.l }}</button></sc-for>
+  </div>
+  <div style="flex:1;min-height:0;display:grid;place-items:center;padding:16px;background:#0C0B0A">
+    <div style="width:min(100%,calc((100vh - 84px) * 16 / 9));aspect-ratio:16/9;border-radius:18px;overflow:hidden;position:relative;background:var(--bn-ink,#14213D);color:#FFFFFF;font-family:'Instrument Sans',system-ui,sans-serif;container-type:inline-size">
+
+      <sc-if value="{{ sIdle }}" hint-placeholder-val="{{ true }}">
+        <div style="position:absolute;inset:0;background:{{ slideBg }};transition:background 600ms"></div>
+        <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.65),rgba(0,0,0,0) 65%)"></div>
+        <div style="position:absolute;left:6%;top:0;bottom:0;width:50%;display:flex;flex-direction:column;justify-content:center;gap:2cqw">
+          <span style="width:7cqw;height:7cqw;border-radius:1.6cqw;background:#FFFFFF;color:var(--bn-p,#1F4FD8);display:grid;place-items:center;font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-weight:800;font-size:2.4cqw">KB</span>
+          <b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:5.2cqw;line-height:1.02;letter-spacing:-.02em">{{ slideHead }}</b>
+          <span style="font-size:1.8cqw;opacity:.9">{{ slideSub }}</span>
+        </div>
+        <div style="position:absolute;bottom:3cqw;left:6%;display:flex;gap:.8cqw"><sc-for list="{{ dots }}" as="d" hint-placeholder-count="3"><span style="width:{{ d.w }};height:.7cqw;border-radius:9px;background:{{ d.bg }};transition:width 300ms"></span></sc-for></div>
+        <span style="position:absolute;bottom:3cqw;right:4cqw;font-size:1.3cqw;opacity:.75">Scan the table QR to order · Wi-Fi KOPIBIRU-GUEST</span>
+      </sc-if>
+
+      <sc-if value="{{ sCart }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);background:var(--bn-paper,#F7F4EE);color:var(--bn-ink,#14213D)">
+          <div style="padding:4cqw;display:flex;flex-direction:column;gap:1.4cqw;min-height:0">
+            <span style="display:flex;align-items:center;gap:1.2cqw;font-size:1.6cqw;font-weight:600;color:#5B6478"><span style="width:3.6cqw;height:3.6cqw;border-radius:1cqw;background:var(--bn-p,#1F4FD8);color:#FFFFFF;display:grid;place-items:center;font-size:1.2cqw;font-weight:800">KB</span>Kopi Biru · Table 7 · Served by Tono</span>
+            <sc-for list="{{ lines }}" as="l" hint-placeholder-count="3"><div style="display:flex;justify-content:space-between;gap:2cqw;padding:1.3cqw 0;border-bottom:1px solid #E3DED5;font-size:2.2cqw"><span><b>{{ l.q }}×</b> {{ l.n }}<span style="display:block;font-size:1.4cqw;color:#5B6478">{{ l.m }}</span></span><b style="font-variant-numeric:tabular-nums">{{ l.t }}</b></div></sc-for>
+            <div style="margin-top:auto;padding:1.4cqw 1.8cqw;border-radius:1.4cqw;background:var(--bn-acc,#F2B544);font-size:1.6cqw;font-weight:700">Add a Croissant Almond for IDR 20,000 · ask the cashier</div>
+          </div>
+          <div style="background:var(--bn-p,#1F4FD8);color:#FFFFFF;padding:4cqw;display:flex;flex-direction:column;justify-content:flex-end;gap:1.2cqw">
+            <span style="font-size:1.7cqw;opacity:.85">Subtotal {{ sub }} · PB1 {{ tax }}</span>
+            <span style="font-size:1.8cqw;opacity:.9">Total</span>
+            <b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:6cqw;line-height:1;font-variant-numeric:tabular-nums">{{ total }}</b>
+            <span style="margin-top:1cqw;padding:1.2cqw 1.4cqw;border-radius:1.2cqw;background:rgba(255,255,255,.14);font-size:1.5cqw;font-weight:600">Dewi · Gold · earns +{{ pts }} beans</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sMember }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:var(--bn-paper,#F7F4EE);color:var(--bn-ink,#14213D);display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:5cqw;gap:5cqw">
+          <div style="display:flex;flex-direction:column;gap:1.6cqw"><b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:4.4cqw;line-height:1.05">Earn +{{ pts }} beans on this order</b><span style="font-size:1.8cqw;color:#5B6478">Enter your WhatsApp number to join Biru Rewards. Free, takes 5 seconds.</span><div style="height:7cqw;border-radius:1.6cqw;background:#FFFFFF;border:2px solid var(--bn-p,#1F4FD8);display:flex;align-items:center;padding:0 2cqw;font-size:3cqw;font-weight:700;letter-spacing:.06em">0812 3456 78__</div></div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.2cqw"><sc-for list="{{ keypad }}" as="k" hint-placeholder-count="12"><span style="height:7cqw;border-radius:1.6cqw;background:#FFFFFF;border:1px solid #E3DED5;display:grid;place-items:center;font-size:3cqw;font-weight:700">{{ k }}</span></sc-for></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sTip }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:var(--bn-paper,#F7F4EE);color:var(--bn-ink,#14213D);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3cqw;padding:4cqw">
+          <b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:4.4cqw">Add a tip for the team?</b>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.6cqw;width:80%"><sc-for list="{{ tips }}" as="t" hint-placeholder-count="4"><button onClick="{{ t.onClick }}" style="height:12cqw;border:3px solid {{ t.bc }};border-radius:2cqw;background:{{ t.bg }};color:var(--bn-ink,#14213D);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6cqw"><b style="font-size:3.4cqw">{{ t.l }}</b><span style="font-size:1.6cqw;color:#5B6478">{{ t.a }}</span></button></sc-for></div>
+          <span style="font-size:1.6cqw;color:#5B6478">100% of tips go to the afternoon shift pool · PIC Maya</span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sQris }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:#121110;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:4cqw;gap:4cqw">
+          <div style="display:flex;flex-direction:column;gap:1.6cqw">
+            <span style="align-self:flex-start;height:3.6cqw;padding:0 1.6cqw;border-radius:999px;background:#3A2A12;color:#FFC15C;font-size:1.5cqw;font-weight:800;line-height:3.6cqw">Waiting for payment</span>
+            <span style="font-size:2cqw;color:#CFCAC3">Total to pay</span>
+            <b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:6.4cqw;line-height:1;font-variant-numeric:tabular-nums">{{ total }}</b>
+            <span style="font-size:1.8cqw;line-height:1.45;color:#CFCAC3">Open any bank or e-wallet app and scan. GoPay, OVO, DANA, ShopeePay, BCA, Mandiri, BRI and more.</span>
+            <b style="font-size:3.2cqw;color:{{ qrC }};font-variant-numeric:tabular-nums">{{ qrTime }}</b>
+          </div>
+          <div style="justify-self:center;width:30cqw;height:30cqw;border-radius:2.4cqw;background:#FFFFFF;padding:2.2cqw;animation:bnPulse 1.6s infinite;display:flex;flex-direction:column;gap:1cqw"><span style="flex:1;background:repeating-linear-gradient(45deg,#141210 0 .8cqw,#FFFFFF .8cqw 1.6cqw)"></span><span style="text-align:center;color:#141210;font-size:1.4cqw;font-weight:800;letter-spacing:.1em">QRIS · KOPI BIRU</span></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sPaid }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:#1F9D55;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2cqw;text-align:center">
+          <span style="width:16cqw;height:16cqw;border-radius:999px;background:#FFFFFF;display:grid;place-items:center;transform:scale({{ okS }});transition:transform 480ms cubic-bezier(.3,1.35,.5,1)"><span style="width:8cqw;height:8cqw;background:#1F9D55;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat"></span></span>
+          <b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:5.4cqw">Terima kasih, Dewi!</b>
+          <span style="font-size:2.2cqw">{{ total }} paid via QRIS · +{{ pts }} beans · receipt sent to WhatsApp</span>
+          <span style="font-size:1.8cqw;opacity:.9">Your order number is <b>A-12</b>. We’ll notify your phone when it’s ready.</span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sFail }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:#121110;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2cqw;text-align:center">
+          <span style="width:14cqw;height:14cqw;border-radius:999px;background:#E5383B;display:grid;place-items:center;font-size:8cqw;font-weight:300;line-height:1">×</span>
+          <b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:4.6cqw">This code has expired</b>
+          <span style="font-size:2cqw;color:#CFCAC3">No money was taken. Please ask the cashier for a new code.</span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sRate }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:var(--bn-paper,#F7F4EE);color:var(--bn-ink,#14213D);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3cqw">
+          <b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:4.4cqw">How was your visit?</b>
+          <div style="display:flex;gap:2cqw"><sc-for list="{{ faces }}" as="f" hint-placeholder-count="5"><button onClick="{{ f.onClick }}" style="width:12cqw;height:12cqw;border:3px solid {{ f.bc }};border-radius:2.4cqw;background:{{ f.bg }};font-size:5.4cqw;cursor:pointer;transform:scale({{ f.s }});transition:transform 220ms cubic-bezier(.3,1.35,.5,1)">{{ f.e }}</button></sc-for></div>
+          <span style="font-size:1.8cqw;color:#5B6478">{{ rateMsg }}</span>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+<div data-bn-spec="1" style="position:fixed;left:12px;bottom:10px;z-index:61"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:16px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#F26B1D;color:#FFFFFF">◆ Design spec · this page</summary><div style="width:min(420px,calc(100vw - 24px));max-height:65vh;overflow:auto;padding:10px 16px 14px;display:flex;flex-direction:column"><div style="font-size:12px;color:#625C55">Theme: <b style="color:#141210">Merchant brand (Menu Studio) · dark for QRIS</b></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">COLOR</b><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px"><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:var(--bn-p,#1F4FD8);box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Brand primary</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">var(--bn-p,#1F4FD8)</span></div><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:var(--bn-ink,#14213D);box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Brand ink</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">var(--bn-ink,#14213D)</span></div><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:var(--bn-paper,#F7F4EE);box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Paper</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">var(--bn-paper,#F7F4EE)</span></div><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:var(--bn-acc,#F2B544);box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Accent</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">var(--bn-acc,#F2B544)</span></div><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:#121110;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">QRIS bg</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">#121110</span></div><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:#1F9D55;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Paid</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">#1F9D55</span></div><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:#E5383B;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Expired</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">#E5383B</span></div></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">TYPE</b><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Total</span><b style="text-align:right">6–6.4cqw / 800</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Headline</span><b style="text-align:right">4.4–5.4cqw / 800 brand font</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Cart line</span><b style="text-align:right">2.2cqw</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Body</span><b style="text-align:right">1.6–2cqw</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Units</span><b style="text-align:right">cqw: scales with screen size</b></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">SIZE & LAYOUT</b><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Canvas</span><b style="text-align:right">16:9 fixed, scaled to fit, never scrolls</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">QR code</span><b style="text-align:right">30cqw square, white quiet zone</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Tip / rating buttons</span><b style="text-align:right">12cqw</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Keypad keys</span><b style="text-align:right">7cqw</b></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">COMPONENTS</b><div style="display:flex;flex-wrap:wrap;gap:4px"><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Idle slideshow</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Live cart + total panel</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Member join keypad</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Tip picker</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">QRIS panel + timer</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Paid screen</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Expired screen</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Rating faces</span></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">STATES</b><div style="display:flex;flex-wrap:wrap;gap:4px"><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Idle</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Cart updating</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Member attached</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">QRIS waiting / &lt;30s amber</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Paid</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Expired</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Rated low → manager follow-up</span></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">MOTION</b><div style="display:flex;flex-wrap:wrap;gap:4px"><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Slide crossfade 600ms every 4s</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">QR pulse ring 1.6s</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Paid circle 480ms spring</span></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">SOUND</b><div style="display:flex;flex-wrap:wrap;gap:4px"><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Payment received chime</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Optional thank-you sound</span></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">RESPONSIVE</b><div style="font-size:12px;line-height:1.45">md–2xl · 7–15" or TV · landscape</div><a href="BorNiz Design System.dc.html" style="margin-top:12px;height:38px;border-radius:10px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:12px;font-weight:700">Global foundations →</a></div></details></div>
+<div data-bn-links="1" style="position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:60;max-width:calc(100vw - 24px)"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:18px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#141210;color:#FFFFFF"><span style="width:8px;height:8px;border-radius:9px;background:#F26B1D"></span>Linked pages · 10<span style="font-weight:500;color:#A9A39B">▴</span></summary><div style="width:min(460px,calc(100vw - 24px));padding:6px 16px 12px;display:flex;flex-direction:column;max-height:50vh;overflow:auto"><a href="BorNiz POS Register.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>POS Register</b><span style="color:#45403A">Mirrors cart &amp; QRIS</span></a><a href="BorNiz Loyalty.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Loyalty</b><span style="color:#45403A">Member join</span></a><a href="BorNiz Menu Studio.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Menu studio</b><span style="color:#45403A">Brand &amp; slides</span></a><a href="BorNiz System.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>System</b><span style="color:#45403A">Fixed 16:9 canvas rules</span></a><a href="BorNiz Owner Dashboard.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Owner dashboard</b><span style="color:#45403A">Pair displays from Apps</span></a><a href="BorNiz Theming.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Theming &amp; language</b><span style="color:#45403A">Merchant theme on the display</span></a><a href="BorNiz Page Spec.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Per-page design system</b><span style="color:#45403A">Has its own design system page</span></a><a href="BorNiz Design System.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Foundations</b><span style="color:#45403A">Uses foundation tokens</span></a><a href="BorNiz Landing.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Landing site</b><span style="color:#45403A">Opens Customer display</span></a><a href="BorNiz Alerts.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Alerts &amp; notifications</b><span style="color:#45403A">Pay / thanks / failed states</span></a><a href="BorNiz Connections.dc.html" style="margin-top:8px;height:40px;border-radius:12px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:13px;font-weight:700">Open the full connection map →</a></div></details></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const idr = n => 'IDR ' + Math.round(n).toLocaleString('en-US');
+const SLIDES = [['Payday week: 20% off all coffee', 'Until Sunday · every outlet', 'linear-gradient(135deg,#2B4C7E,#0E1A33)'], ['New: Pandan Latte', 'Made with fresh pandan from Bogor · IDR 32,000', 'linear-gradient(135deg,#2F6B45,#0F2A1B)'], ['Join Biru Rewards', '1 bean per IDR 1,000 · free drink every 10 cups', 'linear-gradient(135deg,#B04408,#4F1F06)']];
+const LINES = [[2, 'Es Kopi Susu Aren', 'Iced · less sugar', 25000], [1, 'Croissant Almond', 'Warm', 32000], [1, 'Matcha Latte', 'Oat milk', 30000]];
+class Component extends DCLogic {
+  state = { st: 'idle', slide: 0, left: 299, tip: 1, rate: null, okIn: false };
+  componentDidMount() { this.t = setInterval(() => { const s = this.state; if (s.st === 'idle') this.setState({ slide: s.slide + 1 }); if (s.st === 'qris') { const l = s.left - 1; this.setState(l <= 0 ? { st: 'fail', left: 0 } : { left: l }); } }, 1000); this.sl = 0; }
+  componentWillUnmount() { clearInterval(this.t); }
+  go(st) { this.setState({ st, okIn: false, left: st === 'qris' ? 299 : this.state.left }); if (st === 'paid') setTimeout(() => this.setState({ okIn: true }), 30); }
+  renderVals() {
+    const s = this.state, sub = LINES.reduce((a, l) => a + l[0] * l[3], 0), tax = Math.round(sub * .1), total = sub + tax, pc = window.BN_PROMOS ? window.BN_PROMOS.cards() : [], SL = pc.length ? pc.map(c => [c.t, c.s, c.img ? `url(${c.img}) center/cover` : c.flash ? 'linear-gradient(135deg,#E5383B,#F26B1D)' : SLIDES[0][2]]) : SLIDES, si = Math.floor(s.slide / 4) % SL.length, sl = SL[si];
+    return {
+      states: [['idle', 'Idle / promo'], ['cart', 'Live cart'], ['member', 'Join member'], ['tip', 'Tip'], ['qris', 'QRIS'], ['paid', 'Paid'], ['fail', 'Expired'], ['rate', 'Rate visit']].map(([k, l]) => ({ l, bg: s.st === k ? '#F26B1D' : '#26231F', fg: s.st === k ? '#FFFFFF' : '#CFCAC3', onClick: () => this.go(k) })),
+      sIdle: s.st === 'idle', sCart: s.st === 'cart', sMember: s.st === 'member', sTip: s.st === 'tip', sQris: s.st === 'qris', sPaid: s.st === 'paid', sFail: s.st === 'fail', sRate: s.st === 'rate',
+      slideHead: sl[0], slideSub: sl[1], slideBg: sl[2], dots: SL.map((_, i) => ({ w: i === si ? '3cqw' : '.7cqw', bg: i === si ? '#FFFFFF' : 'rgba(255,255,255,.45)' })),
+      lines: LINES.map(([q, n, m, p]) => ({ q, n, m, t: idr(q * p).replace('IDR ', '') })), sub: idr(sub), tax: idr(tax), total: idr(total), pts: Math.round(total / 1000 * 1.25),
+      keypad: ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'Skip', '0', '⌫'],
+      tips: [['No tip', 0], ['5%', .05], ['10%', .1], ['15%', .15]].map(([l, p], i) => ({ l, a: p ? idr(total * p) : '—', bc: s.tip === i ? 'var(--bn-p,#1F4FD8)' : '#E3DED5', bg: s.tip === i ? 'color-mix(in oklab,var(--bn-p,#1F4FD8) 12%,#fff)' : '#FFFFFF', onClick: () => this.setState({ tip: i }) })),
+      qrTime: `${Math.floor(s.left / 60)}:${String(s.left % 60).padStart(2, '0')}`, qrC: s.left < 30 ? '#FFC15C' : '#FFFFFF', okS: s.okIn ? 1 : .6,
+      faces: ['1', '2', '3', '4', '5'].map((e, i) => ({ e: e + '★', bc: s.rate === i ? 'var(--bn-p,#1F4FD8)' : '#E3DED5', bg: s.rate === i ? 'color-mix(in oklab,var(--bn-p,#1F4FD8) 12%,#fff)' : '#FFFFFF', s: s.rate === i ? 1.08 : 1, onClick: () => this.setState({ rate: i }) })),
+      rateMsg: s.rate === null ? 'Tap a face. It takes one second.' : s.rate >= 3 ? 'Thank you! We’ll send a Google review link to your WhatsApp.' : 'Sorry to hear that. The manager will reach out on WhatsApp today.',
+    };
+  }
+}
+</script>
+</body>
+</html>

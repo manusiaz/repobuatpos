@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<script src="./bn-sitemap.js"></script>
+<script src="./bn-embed.js"></script>
+<style>
+/*bn-type*/h1,h2,h3,b{font-family:'Space Grotesk',system-ui,sans-serif}
+body{margin:0;background:#FAF8F5;color:#141210;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+*{box-sizing:border-box}
+a{color:#D9560B;text-decoration:none}
+a:hover{color:#B04408;text-decoration:underline}
+button,input{font-family:inherit}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column">
+  <header style="max-width:1320px;width:100%;margin:0 auto;padding:40px clamp(16px,3vw,32px) 0;display:flex;flex-direction:column;gap:14px">
+    <span style="font:600 12px/1 'JetBrains Mono',monospace;color:#D9560B;letter-spacing:.08em">OPERATIONS GUIDE</span>
+    <h1 style="margin:0;font-size:clamp(40px,5vw,64px);line-height:.98;letter-spacing:-.04em">How BorNiz runs, end to end</h1>
+    <p style="margin:0;max-width:760px;font-size:16px;line-height:1.55;color:#45403A">Who uses BorNiz, where they log in and what they’re responsible for. How data moves between screens, how to run a normal day, the rules for every area, and what you can do on each of the {{ total }} pages.</p>
+    <div style="display:flex;gap:4px;padding:4px;border-radius:14px;background:#141210;align-self:flex-start;flex-wrap:wrap">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5"><button onClick="{{ t.onClick }}" style="height:40px;padding:0 14px;border:0;border-radius:10px;background:{{ t.bg }};color:{{ t.fg }};font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap">{{ t.l }}</button></sc-for>
+    </div>
+  </header>
+
+  <main style="max-width:1320px;width:100%;margin:0 auto;padding:20px clamp(16px,3vw,32px) 120px;display:flex;flex-direction:column;gap:14px">
+
+    <sc-if value="{{ vRoles }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px">
+        <sc-for list="{{ roles }}" as="r" hint-placeholder-count="9">
+          <div style="padding:18px;border-radius:22px;background:#FFFFFF;border:1px solid #E6E2DC;border-top:6px solid {{ r.c }};display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><b style="font-size:20px;letter-spacing:-.01em">{{ r.n }}</b><span style="font:600 11px/1 'JetBrains Mono',monospace;color:#625C55">{{ r.dev }}</span></div>
+            <span style="font-size:14px;line-height:1.5;color:#45403A">{{ r.job }}</span>
+            <div style="padding:10px 12px;border-radius:12px;background:#FAF8F5;display:flex;flex-direction:column;gap:4px"><span style="font:600 10px/1 'JetBrains Mono',monospace;color:#857E76;letter-spacing:.06em">LOGS IN AT</span><b style="font:600 13px/1.3 'JetBrains Mono',monospace">{{ r.url }}</b><span style="font-size:12px;color:#45403A;line-height:1.4">{{ r.how }}</span></div>
+            <span style="font:600 10px/1 'JetBrains Mono',monospace;color:#857E76;letter-spacing:.06em;padding-top:2px">RESPONSIBLE FOR</span>
+            <sc-for list="{{ r.resp }}" as="x" hint-placeholder-count="4"><span style="display:flex;gap:8px;font-size:13px;line-height:1.4"><b style="color:{{ r.c }}">•</b>{{ x }}</span></sc-for>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:6px;border-top:1px solid #F2EFEA">
+              <div><span style="font:600 10px/1 'JetBrains Mono',monospace;color:#857E76;letter-spacing:.06em">CAN APPROVE</span><br><span style="font-size:12px;line-height:1.45">{{ r.ap }}</span></div>
+              <div><span style="font:600 10px/1 'JetBrains Mono',monospace;color:#857E76;letter-spacing:.06em">SENDS UP TO</span><br><span style="font-size:12px;line-height:1.45">{{ r.up }}</span></div>
+            </div>
+            <a href="{{ r.href }}" style="margin-top:auto;height:40px;border-radius:12px;background:#141210;color:#FFFFFF;display:grid;place-items:center;font-size:13px;font-weight:700">Open {{ r.screen }} →</a>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:18px;border-radius:22px;background:#141210;color:#E6E2DC;display:flex;flex-direction:column;gap:10px">
+        <b style="font-size:18px;color:#FFFFFF">Approval chain</b>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:stretch"><sc-for list="{{ chain }}" as="c" hint-placeholder-count="4"><div style="flex:1;min-width:200px;padding:12px 14px;border-radius:14px;background:#1C1A18;border:1px solid #34302B;display:flex;flex-direction:column;gap:4px"><b style="font-size:15px;color:#FFFFFF">{{ c.n }}</b><span style="font-size:12px;line-height:1.45;color:#CFCAC3">{{ c.d }}</span></div></sc-for></div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vFlows }}" hint-placeholder-val="{{ false }}">
+      <span style="font-size:14px;color:#45403A">Each flow shows who acts, on which screen, and what the next screen sees. Tap a step to open that screen.</span>
+      <sc-for list="{{ flows }}" as="f" hint-placeholder-count="12">
+        <div style="padding:16px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><b style="font-size:17px">{{ f.n }}</b><span style="font-size:12px;color:#625C55">{{ f.d }}</span></div>
+          <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px"><sc-for list="{{ f.steps }}" as="s" hint-placeholder-count="5"><a href="{{ s.href }}" style="flex:none;width:210px;padding:10px 12px;border-radius:14px;background:{{ s.bg }};color:#141210;display:flex;flex-direction:column;gap:4px;text-decoration:none"><span style="display:flex;justify-content:space-between;gap:6px"><span style="font:700 10px/1 'JetBrains Mono',monospace;color:{{ s.c }};letter-spacing:.04em">{{ s.i }} · {{ s.who }}</span><span style="font:500 10px/1 'JetBrains Mono',monospace;color:#857E76">{{ s.scr }}</span></span><b style="font-size:13px;line-height:1.3">{{ s.t }}</b><span style="font-size:11px;line-height:1.35;color:#625C55">{{ s.out }}</span></a></sc-for></div>
+        </div>
+      </sc-for>
+    </sc-if>
+
+    <sc-if value="{{ vHow }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;gap:4px;padding:3px;border-radius:12px;background:#F2EFEA;align-self:flex-start;flex-wrap:wrap"><sc-for list="{{ howRoles }}" as="r" hint-placeholder-count="6"><button onClick="{{ r.onClick }}" style="height:34px;padding:0 12px;border:0;border-radius:9px;background:{{ r.bg }};box-shadow:{{ r.sh }};font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">{{ r.l }}</button></sc-for></div>
+      <sc-for list="{{ how }}" as="p" hint-placeholder-count="5">
+        <div style="padding:16px 18px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px">
+          <div style="display:flex;flex-direction:column;gap:4px"><span style="font:700 11px/1 'JetBrains Mono',monospace;color:#D9560B;letter-spacing:.06em">{{ p.when }}</span><b style="font-size:17px;line-height:1.2">{{ p.t }}</b></div>
+          <div style="display:flex;flex-direction:column;gap:6px"><sc-for list="{{ p.steps }}" as="s" hint-placeholder-count="4"><div style="display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:6px 0;border-top:1px solid #F2EFEA"><span style="width:22px;height:22px;border-radius:999px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font:800 11px/1 'Space Grotesk',sans-serif">{{ s.i }}</span><span style="font-size:14px;line-height:1.45">{{ s.t }}</span><a href="{{ s.href }}" style="font-size:12px;font-weight:700;white-space:nowrap;display:{{ s.hD }}">{{ s.scr }} →</a></div></sc-for></div>
+        </div>
+      </sc-for>
+    </sc-if>
+
+    <sc-if value="{{ vRules }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:12px">
+        <sc-for list="{{ rules }}" as="g" hint-placeholder-count="12">
+          <div style="padding:18px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px"><span style="width:34px;height:34px;flex:none;border-radius:10px;background:{{ g.c }};display:grid;place-items:center"><span style="width:17px;height:17px;background:#FFFFFF;-webkit-mask:{{ g.mask }};mask:{{ g.mask }}"></span></span><b style="font-size:17px">{{ g.n }}</b></div>
+            <sc-for list="{{ g.r }}" as="x" hint-placeholder-count="5"><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:8px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.45"><b style="color:{{ x.c }}">{{ x.m }}</b><span>{{ x.t }}</span></div></sc-for>
+            <span style="font-size:11px;color:#857E76;padding-top:4px">Applies to: {{ g.where }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ vPages }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <input value="{{ q }}" onChange="{{ onQ }}" placeholder="Search any page… e.g. opname, refund, cup sticker" style="flex:1;min-width:260px;height:46px;padding:0 16px;border:1.5px solid #E6E2DC;border-radius:14px;font-size:15px;outline:none;background:#FFFFFF">
+        <div style="display:flex;gap:3px;padding:3px;border-radius:12px;background:#F2EFEA;flex-wrap:wrap"><sc-for list="{{ roleF }}" as="r" hint-placeholder-count="8"><button onClick="{{ r.onClick }}" style="height:34px;padding:0 10px;border:0;border-radius:9px;background:{{ r.bg }};box-shadow:{{ r.sh }};font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">{{ r.l }}</button></sc-for></div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ modeF }}" as="m" hint-placeholder-count="9"><button onClick="{{ m.onClick }}" style="height:30px;padding:0 10px;border:1.5px solid {{ m.bc }};border-radius:999px;background:{{ m.bg }};color:{{ m.fg }};font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap">{{ m.l }} · {{ m.n }}</button></sc-for></div>
+      <span style="font-size:12px;color:#625C55">{{ shown }}</span>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:12px;align-items:start">
+        <div style="border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden;max-height:720px;overflow-y:auto">
+          <sc-for list="{{ pages }}" as="p" hint-placeholder-count="12"><button onClick="{{ p.onClick }}" style="width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:10px 14px;border:0;border-top:1px solid #F2EFEA;background:{{ p.bg }};text-align:left;cursor:pointer;color:#141210"><span style="display:flex;flex-direction:column;gap:2px;min-width:0"><b style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.p }}</b><span style="font-size:11px;color:#625C55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.where }}</span></span><span style="height:22px;padding:0 8px;border-radius:999px;background:{{ p.mb }};color:{{ p.mf }};font-size:10px;font-weight:800;line-height:22px;white-space:nowrap">{{ p.ml }}</span></button></sc-for>
+          <sc-if value="{{ more }}" hint-placeholder-val="{{ false }}"><button onClick="{{ showMore }}" style="width:100%;height:44px;border:0;border-top:1px solid #F2EFEA;background:#FAF8F5;font-size:13px;font-weight:700;cursor:pointer">Show more ({{ left }} left)</button></sc-if>
+        </div>
+        <div style="position:sticky;top:12px;padding:18px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:10px">
+          <span style="font:600 11px/1 'JetBrains Mono',monospace;color:#857E76;letter-spacing:.06em">{{ dWhere }}</span>
+          <b style="font-size:22px;line-height:1.15">{{ dName }}</b>
+          <span style="align-self:flex-start;height:26px;padding:0 10px;border-radius:999px;background:{{ dMb }};color:{{ dMf }};font-size:12px;font-weight:800;line-height:26px">{{ dMl }}</span>
+          <span style="font-size:14px;line-height:1.5;color:#45403A">{{ dWhat }}</span>
+          <sc-for list="{{ dRows }}" as="r" hint-placeholder-count="7"><div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:10px;padding:8px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.45"><span style="color:#625C55;font-weight:600">{{ r.k }}</span><span>{{ r.v }}</span></div></sc-for>
+          <a href="{{ dHref }}" style="height:42px;border-radius:12px;background:#141210;color:#FFFFFF;display:grid;place-items:center;font-size:13px;font-weight:700">Open {{ dScr }} →</a>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+</div>
+<div data-bn-links="1" style="position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:60;max-width:calc(100vw - 24px)"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:18px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#141210;color:#FFFFFF"><span style="width:8px;height:8px;border-radius:9px;background:#F26B1D"></span>Linked pages · 14<span style="font-weight:500;color:#A9A39B">▴</span></summary><div style="width:min(460px,calc(100vw - 24px));padding:6px 16px 12px;display:flex;flex-direction:column;max-height:50vh;overflow:auto"><a href="BorNiz Product.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Product plan</b><span style="color:#45403A">How each persona works day to day</span></a><a href="BorNiz Roles.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Roles</b><span style="color:#45403A">Roles and permissions explained</span></a><a href="BorNiz Shifts.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Shifts</b><span style="color:#45403A">Shift and PIC rules</span></a><a href="BorNiz Connections.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Connections</b><span style="color:#45403A">Flows summarized</span></a><a href="BorNiz Sitemap.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Sitemap</b><span style="color:#45403A">Page logic for every sitemap page</span></a><a href="BorNiz Back Office.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Back office (all modules)</b><span style="color:#45403A">What each module page lets you do</span></a><a href="BorNiz Owner Dashboard.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Owner dashboard</b><span style="color:#45403A">Owner how-to</span></a><a href="BorNiz Manager Dashboard.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Manager</b><span style="color:#45403A">Manager how-to</span></a><a href="BorNiz PIC.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Shift lead (PIC)</b><span style="color:#45403A">PIC how-to and opname rules</span></a><a href="BorNiz POS Register.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>POS Register</b><span style="color:#45403A">Cashier how-to</span></a><a href="BorNiz Kitchen Display.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Kitchen display</b><span style="color:#45403A">Kitchen how-to</span></a><a href="BorNiz Waiter.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Waiter &amp; staff phone</b><span style="color:#45403A">Waiter how-to</span></a><a href="BorNiz Menu Studio.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Menu studio</b><span style="color:#45403A">Menu scope and pricing rules</span></a><a href="BorNiz Design Notes.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Design notes</b><span style="color:#45403A">Rules for build</span></a><a href="BorNiz Connections.dc.html" style="margin-top:8px;height:40px;border-radius:12px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:13px;font-weight:700">Open the full connection map →</a></div></details></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const IC = n => `url(https://unpkg.com/lucide-static@0.452.0/icons/${n}.svg) center/contain no-repeat`;
+const F = n => `BorNiz ${n}.dc.html`;
+const ROLES = [
+  ['owner', 'Owner', '#F26B1D', 'Laptop · phone', 'Owns the business across every outlet. Sets the menu, prices, brand and money rules, and makes the final call on anything big.', 'app.bornis.id/owner', 'Email or WhatsApp number + password, 2FA required. Phone app uses the same account.', ['Global menu, prices and recipes for all outlets', 'Brand, customer pages and promos (Menu Studio, Studios)', 'Payroll, finance, tax, supplier payments', 'Approving what managers send up', 'Plan, billing and who has access'], 'Everything, including refunds > IDR 500k, prices, publishing, payroll, opname > IDR 500k', 'Nobody · final decision', 'Owner Dashboard', 'owner desktop'],
+  ['manager', 'Manager', '#2F6FEB', 'Laptop · tablet', 'Runs one or more outlets day to day with the same tools as the owner, but money and brand decisions above the limit go to the owner.', 'app.bornis.id/manager', 'Email + password, invited by the owner. Sees only assigned outlets.', ['Daily operations: approvals, cash close, stock, tables', 'Rostering, PIC assignment, attendance', 'Outlet menu: availability, local items, local price within ±10%', 'Customization drafts (published by owner)', 'Opname review up to IDR 500k'], 'PIC escalations, discounts > 20%, void/refund IDR 100k–500k, variance ≤ IDR 500k, opname ≤ IDR 500k', 'Owner: prices, publishing, payroll, refunds > IDR 500k, opname > IDR 500k, new menu items', 'Manager Dashboard', 'manager'],
+  ['pic', 'PIC (shift lead)', '#5B8CFF', 'Tablet at the counter', 'One per shift, under the manager. Keeps the floor running: approves small things, counts stock, confirms drawers and hands over.', 'pos.bornis.id → PIC', 'Device is paired to the outlet once. PIC logs in with a 4-digit PIN; the role comes from today’s roster.', ['Approvals within limits on the shift', 'Stock count (opname): blind, photos, locked', 'Drawer count confirmations and float', 'Sold-out (86) list for the outlet', 'Handover checklist and notes'], 'Discount ≤ 20%, void/refund ≤ IDR 100k, cash variance ≤ IDR 50k, another PIC’s opname ≤ IDR 50k', 'Manager', 'PIC', 'pic'],
+  ['cashier', 'Cashier', '#F26B1D', 'POS tablet', 'Takes orders and payments fast. Never changes prices or stock.', 'pos.bornis.id', 'Paired register. 4-digit PIN. Shift must be open to sell.', ['Orders, payments, split bills, open bills', 'Opening and closing own drawer (blind count)', 'Attaching members and redeeming rewards', 'Requesting voids, refunds and discounts'], 'Nothing · requests only', 'PIC (then manager)', 'POS Register', 'cashier'],
+  ['kitchen', 'Kitchen', '#1F9D55', 'Wall tablet / TV', 'Cooks tickets in order and keeps the sold-out list right.', 'kds.bornis.id', 'Paired screen, stays on all day. Staff switch station with PIN.', ['Bump tickets, recall, rush orders', 'Mark items sold out (86) for the outlet', 'Call runners / waiters'], 'Nothing', 'PIC', 'Kitchen Display', 'kitchen'],
+  ['waiter', 'Waiter / runner', '#0E8A7E', 'Phone', 'Serves a section of tables, adds items, runs food, answers calls.', 'pos.bornis.id/waiter', 'Own phone, invited by WhatsApp link. PIN on each shift.', ['Tables in their section', 'Adding items (sold-out items hidden)', 'Serving ready dishes, guest calls, bill requests'], 'Nothing', 'PIC', 'Waiter', 'waiter'],
+  ['customer', 'Guest / customer', '#1F4FD8', 'Own phone · kiosk', 'Orders, pays, tracks and earns points. Sees only the merchant’s brand.', 'order.bornis.id/<store> · display · kiosk', 'No login to order. Phone number + WhatsApp OTP to join loyalty.', ['Ordering and paying (QR menu, kiosk)', 'Loyalty: beans, tiers, rewards', 'Rating the visit'], 'Nothing', '—', 'Self Order', 'customer'],
+  ['admin', 'BorNiz super admin', '#7C3AED', 'Desktop', 'BorNiz staff. Runs the platform: tenants, plans, billing, support, releases. Never sees card data.', 'admin.bornis.id', 'Company SSO + 2FA + IP allowlist. Support access to a tenant is time-boxed and approved by the tenant owner.', ['Tenants, plans and invoices', 'Support tickets', 'Feature flags and releases', 'Audit log'], 'Platform actions only', '—', 'Super Admin', 'admin'],
+];
+const CHAIN = [['Cashier', 'Requests voids, refunds and discounts from the register. Can’t approve anything.'], ['PIC', 'Discount ≤ 20% · void/refund ≤ IDR 100k · cash variance ≤ IDR 50k · signs another PIC’s opname ≤ IDR 50k.'], ['Manager', 'Everything above PIC up to IDR 500k · opname ≤ IDR 500k · outlet menu availability · local items (sent to owner).'], ['Owner', 'Prices, publishing, payroll, refunds > IDR 500k, opname > IDR 500k, new and promoted menu items.']];
+const S = (who, scr, t, out) => ({ who, scr, t, out });
+const FLOWS = [
+  ['Order to payment', 'Counter, table or phone', [S('Cashier', 'POS Register', 'Adds items, picks table or takeaway', 'Ticket sent to the kitchen'), S('Kitchen', 'Kitchen Display', 'Cooks and bumps the ticket', 'Waiter sees Ready'), S('Waiter', 'Waiter', 'Serves, guest asks for the bill', 'Bill on the POS'), S('Cashier', 'POS Register', 'Charges: QRIS, cash, card, e-wallet, VA, split', 'Customer display shows QRIS and Paid'), S('Owner', 'Owner Dashboard', 'Sees the sale live', 'Reports, stock and loyalty update')]],
+  ['QR self-order', 'Guest orders from the table', [S('Guest', 'Self Order', 'Scans the table QR, orders, pays QRIS', 'Order lands in Online on the POS'), S('Kitchen', 'Kitchen Display', 'Ticket appears with table number', 'Status updates on the guest’s phone'), S('Guest', 'Self Order', 'Sees Ready / Served, rates the visit', 'Review goes to the owner')]],
+  ['New menu item · owner', 'Global by default', [S('Owner', 'Menu Studio', 'Adds item, price, photo · All outlets', 'Live on every outlet after publish'), S('Every outlet', 'POS Register', 'Item appears on POS, QR menu, kiosk', 'Outlets can 86 it or set a local price ±10%')]],
+  ['New menu item · manager', 'Outlet-only, owner decides', [S('Manager', 'Back Office', 'Adds item for this outlet, can tick Propose for all', 'Waits for owner'), S('Owner', 'Owner Mobile', 'Approves local, or Make global', 'Item goes live at the outlet or everywhere')]],
+  ['Local price', 'Global item, one outlet', [S('Manager', 'Manager Dashboard', 'Outlet menu → Edit → price within ±10%', 'Sent to owner; old price stays'), S('Owner', 'Owner Mobile', 'Approve price', 'New price on POS, QR, kiosk, receipts at that outlet')]],
+  ['Sold out (86)', 'Per outlet', [S('Kitchen / PIC / Manager', 'Kitchen Display', 'Taps the item', 'Hidden at this outlet only'), S('POS, QR, kiosk, waiter', 'POS Register', 'Item greyed or hidden', 'Other outlets keep selling')]],
+  ['Stock opname', 'Blind count with proof', [S('PIC', 'PIC', 'Counts an area blind, adds photos for differences', 'Count locks on submit'), S('PIC / Manager / Owner', 'Manager Dashboard', 'Approves or asks recount by amount (≤50k PIC · ≤500k manager · >500k owner)', 'Counter can’t approve own count'), S('System', 'Back Office', 'Posts Opname adjustment with counter, approver, photos', 'Stock levels and COGS update')]],
+  ['Shift change', 'Morning → afternoon', [S('Cashier', 'Shifts', 'Blind drawer count, hand over open bills', 'X report to WhatsApp'), S('PIC', 'PIC', 'Confirms drawers, writes notes, passes PIC', 'Next PIC sees notes'), S('Manager', 'Manager Dashboard', 'Cash close per session', 'Z report to owner at day close')]],
+  ['Refund or void', 'Limits decide who approves', [S('Cashier', 'POS Register', 'Requests with a reason', 'Goes to PIC'), S('PIC', 'PIC', 'Approves ≤ IDR 100k, else sends up', 'Manager if bigger'), S('Manager', 'Manager Dashboard', 'Approves ≤ IDR 500k, else Send to owner', 'Owner if bigger'), S('Owner', 'Owner Mobile', 'Approve refund / Reject', 'Logged under every name')]],
+  ['Promo & flash sale', 'Build once, shows everywhere', [S('Owner / Manager', 'Menu Studio', 'Pages → add banner, carousel, flash sale', 'Manager publish → owner'), S('Guests', 'Self Order', 'Promos on QR menu, kiosk, customer display', 'Flash prices at the POS too')]],
+  ['Loyalty', 'Every visit counts', [S('Cashier', 'POS Register', 'Attaches the member', 'Beans earned at payment'), S('Guest', 'Loyalty', 'Sees beans, tier, rewards, stamps', 'Redeems at the counter'), S('Owner', 'Loyalty', 'Tunes earning rules and rewards', 'Applies to all outlets')]],
+  ['Buying stock', 'Request to receipt', [S('Manager', 'Manager Dashboard', 'Purchase request', 'Owner approves above limit'), S('Owner', 'Back Office', 'Purchase order to supplier', 'Supplier delivers'), S('Manager', 'Back Office', 'Goods receipt (full or partial)', 'Stock in, supplier payable created')]],
+  ['Delivery apps', 'GoFood, GrabFood, ShopeeFood', [S('Delivery app', 'POS Register', 'Order arrives in Online', 'Cashier accepts, can’t create or edit'), S('Kitchen', 'Kitchen Display', 'Cooks in the delivery lane', 'Driver picks up'), S('Owner', 'Back Office', 'Sees channel sales · read only', 'Settles with the app')]],
+];
+const HOW = {
+  owner: [['FIRST WEEK', 'Set up', [['Add outlets, tax and opening hours', 'Back Office'], ['Add the menu with photos, recipes and prices', 'Menu Studio'], ['Make it your brand: logo, colors, banner', 'Menu Studio'], ['Invite managers and staff by WhatsApp', 'Back Office'], ['Pair tablets: POS, KDS, customer display, kiosk (Apps → On a tablet)', 'Owner Dashboard'], ['Print table QR codes', 'Menu Studio']]], ['EVERY DAY', 'Check in', [['Open the phone app: live revenue per outlet', 'Owner Mobile'], ['Clear Needs your decision: refunds, prices, opname, new items', 'Owner Mobile'], ['Look at alerts: variance, late orders, low stock', 'Owner Mobile']]], ['WEEKLY', 'Review', [['Sales by outlet, shift and product', 'Owner Dashboard'], ['Margin and menu engineering', 'Back Office'], ['Publish next week’s promos', 'Menu Studio']]], ['MONTHLY', 'Close the month', [['P&L, cash flow, tax (PB1/PPN)', 'Back Office'], ['Run payroll', 'Back Office'], ['Pay suppliers', 'Back Office']]]],
+  manager: [['BEFORE OPENING', 'Get ready', [['Check today’s roster and PIC', 'Shifts'], ['Check low stock and today’s reservations', 'Manager Dashboard'], ['Set 86 for anything not delivered', 'Manager Dashboard']]], ['DURING SERVICE', 'Keep it moving', [['Answer approvals the PIC sends up', 'Manager Dashboard'], ['Watch open orders and tables', 'Manager Dashboard'], ['Fix availability and local items', 'Manager Dashboard']]], ['END OF DAY', 'Close', [['Review each drawer session and variance', 'Manager Dashboard'], ['Review opname sent to you', 'Manager Dashboard'], ['Close the day · Z report goes to the owner', 'Manager Dashboard']]], ['WEEKLY', 'Plan', [['Build and publish next week’s roster', 'Shifts'], ['Purchase requests and receiving', 'Back Office']]]],
+  pic: [['START OF SHIFT', 'Take over', [['Log in with PIN on the PIC tablet', 'PIC'], ['Read handover notes and open bills', 'PIC'], ['Confirm the float in each drawer', 'PIC']]], ['DURING SHIFT', 'Run the floor', [['Approve voids, refunds and discounts within your limits', 'PIC'], ['Keep the sold-out list right', 'PIC'], ['Move people between stations, log breaks', 'PIC']]], ['STOCK COUNT', 'When the manager asks', [['Pick an area and count blind', 'PIC'], ['Submit: the count locks', 'PIC'], ['Photo every line with a difference, then send', 'PIC']]], ['END OF SHIFT', 'Hand over', [['Confirm every drawer count', 'PIC'], ['Finish the 6-step checklist and notes', 'PIC'], ['Pass PIC or close the shift', 'PIC']]]],
+  cashier: [['START', 'Open', [['PIN login', 'POS Register'], ['Count the drawer (blind) to open your shift', 'POS Register']]], ['SELLING', 'Every order', [['Tap products, pick dine-in / takeaway / table', 'POS Register'], ['Attach the member if they have one', 'POS Register'], ['Charge and pick the method', 'POS Register'], ['Need a void, refund or big discount? Request it; PIC approves', 'POS Register']]], ['END', 'Close', [['Count your drawer blind', 'Shifts'], ['Hand open bills to the next cashier', 'Shifts']]]],
+  kitchen: [['ALL DAY', 'Cook', [['Pick your station', 'Kitchen Display'], ['Tap items as done, Bump the ticket', 'Kitchen Display'], ['Ran out? Mark it sold out on the 86 list', 'Kitchen Display'], ['Call a runner when food is ready', 'Kitchen Display']]]],
+  waiter: [['ALL SHIFT', 'Serve', [['Open My tables', 'Waiter'], ['Add items at the table (sold-out hidden)', 'Waiter'], ['Pick up Ready dishes, tap Served', 'Waiter'], ['Answer calls and bill requests', 'Waiter']]]],
+};
+const R = (m, t) => ({ m: m === 'y' ? '✓' : m === 'n' ? '×' : '!', c: m === 'y' ? '#156B3A' : m === 'n' ? '#B3261E' : '#8A5A00', t });
+const RULES = [
+  ['Approvals', 'badge-check', '#2F6FEB', 'POS, PIC, Manager, Owner apps', [R('y', 'Cashier → PIC → Manager → Owner. Each level only within its limits; above that it moves up automatically.'), R('y', 'PIC: discount ≤ 20%, void/refund ≤ IDR 100k, variance ≤ IDR 50k.'), R('y', 'Owner only: prices, publishing, payroll, refunds > IDR 500k.'), R('y', 'Every approval asks for a PIN and logs requester and approver.'), R('n', 'Nobody approves their own request.')]],
+  ['Menu scope', 'utensils', '#F26B1D', 'Menu Studio, Back Office, Manager menu', [R('y', 'Owner adds → All outlets by default (or chosen outlets / one brand). It is a global item.'), R('y', 'Manager adds → this outlet only, always waits for owner OK. Can propose for all outlets.'), R('n', 'Outlets can’t delete a global item; they can hide it or mark it sold out.'), R('y', 'Owner deleting a global item removes it everywhere.'), R('!', 'Franchise lock “Allow outlet-only items” lets the owner turn local items off.')]],
+  ['Prices', 'tag', '#F26B1D', 'Manager menu, Menu Studio, POS', [R('y', 'Global price set by the owner.'), R('y', 'Local price for a global item: within ±10%, needs owner OK.'), R('n', 'Franchise lock “Menu prices” blocks local prices.'), R('y', 'Flash sale prices apply at POS, QR menu and kiosk only while the sale runs.'), R('n', 'Cashiers can’t type a price; open items need PIC approval.')]],
+  ['Sold out (86)', 'ban', '#E5383B', 'KDS, PIC, Manager, POS, QR, kiosk, waiter', [R('y', 'Always per outlet. One list shared by every screen at that outlet.'), R('y', 'Kitchen, PIC and manager can set it.'), R('n', 'Marking sold out never deletes or changes the item.')]],
+  ['Stock opname', 'clipboard-list', '#5B8CFF', 'PIC, Manager, Owner, Back Office', [R('y', 'Counted by the PIC or staff on shift, per area, blind.'), R('y', 'Photo for every line with a difference; manager can require one for every line.'), R('n', 'After submit the count is locked. Corrections are a new recount line; both are kept.'), R('n', 'The counter can’t approve their own count.'), R('y', 'Variance ≤ IDR 50k PIC · ≤ IDR 500k manager · > IDR 500k owner.'), R('y', 'Stock changes only on approval, as an Opname adjustment with counter, approver, photos and time.')]],
+  ['Cash & drawers', 'banknote', '#1F9D55', 'POS, Shifts, PIC, Manager', [R('y', 'Every sale belongs to one drawer session and one shift.'), R('y', 'Counts are blind: expected amount appears only after submit.'), R('!', 'Variance > IDR 10k needs a note; > IDR 50k goes to the manager.'), R('n', 'Drawer totals can’t be typed in by the manager; only confirmed or recounted.')]],
+  ['Shifts & PIC', 'calendar-clock', '#2F6FEB', 'Shifts, PIC, Manager', [R('y', 'One PIC per shift, assigned in the roster by the manager.'), R('y', 'PIC can pass PIC to another person on shift; manager is notified.'), R('y', 'Clock-in with PIN + selfie; late after 10 minutes.')]],
+  ['Refunds & voids', 'rotate-ccw', '#B3261E', 'POS, PIC, Manager, Owner', [R('y', 'Start at the POS with a reason.'), R('y', 'Limits as in Approvals; owner for > IDR 500k.'), R('n', 'Never edited or deleted after payment; a refund is a new record.')]],
+  ['Delivery & online orders', 'bike', '#E5A000', 'POS Online inbox, KDS, Back Office', [R('y', 'Orders come in from the app; the outlet accepts or rejects.'), R('n', 'Back office can’t create or edit delivery orders; they are read only.'), R('y', 'Sold out syncs out to the apps.')]],
+  ['Promos & loyalty', 'award', '#E0A93B', 'Menu Studio, Loyalty, POS', [R('y', 'Promos are built once in Menu Studio → Pages and show on every customer screen.'), R('y', 'Points are earned at payment from one ledger; every change has a row.'), R('n', 'Balance can’t go negative; manual adjustments need a reason.')]],
+  ['Customization', 'palette', '#7C3AED', 'Menu Studio, Brand Studio, Studios', [R('y', 'Manager can design; publishing needs the owner.'), R('n', 'Status colors, payment marks, legal lines and error screens are locked.'), R('n', 'Publish is blocked below 4.5:1 contrast.'), R('y', 'Every publish is a version; any version can be restored.')]],
+  ['Devices & login', 'smartphone', '#45403A', 'All apps', [R('y', 'Shared devices are paired once to an outlet with a 6-digit code.'), R('y', 'People log in with a PIN on shared devices; owners and managers with password + 2FA.'), R('y', 'Apps launcher (⌘K) opens any app the role can use; nobody types URLs.')]],
+  ['Data & audit', 'scroll-text', '#141210', 'Everywhere', [R('y', 'Every change keeps who, when, from where and before/after.'), R('n', 'Nothing financial or stock-related is ever deleted; it’s reversed with a new record.'), R('y', 'Reports are calculated; they are export only.')]],
+];
+const ROLE_OF = { owner: 'Owner', manager: 'Manager', pic: 'PIC', cashier: 'Cashier', kitchen: 'Kitchen', customer: 'Customer', admin: 'Super admin', Public: 'Public', system: 'System' };
+const SCR = { owner: 'Back Office', manager: 'Back Office', pic: 'PIC', cashier: 'POS Register', kitchen: 'Kitchen Display', admin: 'Super Admin', Public: 'Landing', system: 'States Gallery' };
+const DATA = [
+  [/(opname|stock count)/i, 'PIC counts on shift', 'Stock levels after approval · COGS · Back Office stock card'],
+  [/(stock|inventory|waste|transfer|goods receipt|batch|warehouse|unit conversion|kartu)/i, 'POS sales, goods receipts, transfers, waste, approved opname', 'Stock on every channel, low-stock alerts, COGS'],
+  [/(purchase|supplier|po |payable)/i, 'Purchase requests from managers', 'Goods receipt, supplier payables, cash flow'],
+  [/(product|menu|catalog|variant|modifier|bundle|combo|recipe|price list|barcode|label)/i, 'Owner (global) and managers (local, owner OK)', 'POS, QR menu, kiosk, customer display, KDS, receipts'],
+  [/(sales|transaction|order|receipt|refund|void|tips|channel)/i, 'POS, QR menu, kiosk, waiter, delivery apps', 'Reports, finance, loyalty, stock'],
+  [/(customer|member|loyalty|reward|points|gift card|deposit|kasbon|referral)/i, 'POS member attach, QR menu sign-up, loyalty app', 'Loyalty balance, campaigns, reports'],
+  [/(promo|voucher|flash|banner|campaign|broadcast)/i, 'Owner / manager in Menu Studio or Back Office', 'QR menu, kiosk, customer display, POS prices'],
+  [/(employee|team|payroll|commission|attendance|timesheet|leave|overtime|roster|shift|pic)/i, 'Roster, clock-ins, POS sales per person', 'Payroll, shift reports, permissions'],
+  [/(p&l|cash flow|expense|tax|bank|budget|forecast|royalt|asset|accounting|finance)/i, 'Sales, costs, payroll, settlements', 'Reports, accounting sync, owner dashboard'],
+  [/(table|reservation|floor|qr generator|booking|queue)/i, 'Managers, guests booking online', 'POS table picker, waiter app, QR menu'],
+  [/(report|export|analytics|kpi|comparison|insight)/i, 'Calculated from all records', 'Export, scheduled email / WhatsApp'],
+  [/(settings|device|printer|edc|receipt designer|payment method|hours|api|webhook|security|language)/i, 'Owner (manager for own outlet)', 'Every app at the outlets it applies to'],
+];
+const OTHER = { Public: 'public', customer: 'guest', cashier: 'opscreen', kitchen: 'opscreen', pic: 'opscreen', waiter: 'opscreen', system: 'state', admin: 'platform' };
+const XUI = { account: ['Sign-in / setup flow', '#E3F5EA', '#156B3A'], public: ['Public page · read only', '#F2EFEA', '#45403A'], guest: ['Guest screen', '#E6EEFD', '#1F4FD8'], opscreen: ['Operational screen', '#FFF3EB', '#B04408'], state: ['State / template', '#F2EFEA', '#625C55'], platform: ['Platform action · audited', '#EFE7FD', '#5B2BB5'] };
+const ACT = { cashier: 'Sell, take payment, open/close own drawer, request voids and refunds. Prices and stock can’t be changed here.', kitchen: 'Bump tickets, recall, mark sold out (86) for this outlet, call runners.', pic: 'Approve within PIC limits, count stock blind, confirm drawers, hand over.', waiter: 'Add items to own tables, serve ready dishes, answer calls.' };
+const PROTO_OF = { cashier: 'POS Register', kitchen: 'Kitchen Display', pic: 'PIC', waiter: 'Waiter', customer: 'Self Order', Public: 'Landing', admin: 'Super Admin', system: 'States Gallery' };
+class Component extends DCLogic {
+  state = { tab: 'roles', hr: 'owner', q: '', rf: 'all', mf: 'all', lim: 80, sel: null };
+  allPages() {
+    if (this._all) return this._all;
+    const SM = window.BN_SITEMAP || [], out = [];
+    SM.forEach(([role, dom, grp, secs]) => Object.entries(secs).forEach(([t, ps]) => ps.forEach(p => out.push({ role, dom, grp, t, p, mode: (role === 'owner' || role === 'manager') ? (window.BN_MODE ? window.BN_MODE(p, t) : 'read') : role === 'Public' && !/marketing/i.test(grp) ? 'account' : OTHER[role] || 'opscreen' }))));
+    if (SM.length) this._all = out; return out;
+  }
+  logic(x) {
+    if (XUI[x.mode]) {
+      let scrN = PROTO_OF[x.role] || 'Sitemap';
+      if (x.role === 'customer') scrN = /kiosk/i.test(x.t + x.p) ? 'Kiosk' : /display|idle|rate your visit/i.test(x.grp + x.p) ? 'Customer Display' : /member|point|reward|loyal|voucher|referral/i.test(x.p) ? 'Loyalty' : 'Self Order';
+      if (x.role === 'Public') scrN = /(login|register|password|otp|2fa|onboarding|plan|checkout|outlet|register|pin)/i.test(x.p) ? 'Auth' : 'Landing';
+      if (x.role === 'system') scrN = /(template|receipt|ticket print|email|whatsapp|waba)/i.test(x.p) ? 'Studios' : /mobile/i.test(x.p) ? 'Owner Mobile' : 'States Gallery';
+      if (x.role === 'cashier' && /shift|drawer|handover|clock/i.test(x.t + x.p)) scrN = 'Shifts';
+      if (x.role === 'pic' && /roster|schedule/i.test(x.p)) scrN = 'Shifts';
+      const M = {
+        account: ['Sign in, or set up the business: profile, outlet, tax, products, team, plan. Device pages pair a register and sign staff in with a PIN.', 'The person signing in. During onboarding the owner creates the first records; they can be edited later in Back Office / Settings.', 'What the owner types; plan and payment from checkout', 'Creates the tenant, outlet, tax settings, products, staff invites and subscription; device pairing for POS', 'Flow (stepper)'],
+        public: ['Content written and published by BorNiz. Visitors only read and sign up.', 'Nobody at the merchant. BorNiz marketing team.', 'BorNiz content', 'Sign-ups go to Auth & onboarding', 'Marketing page'],
+        guest: ['What the guest sees on their phone, kiosk or the customer display. The guest acts (orders, pays, joins, rates); they can’t edit any data.', 'Nobody on this screen. The merchant customizes look, sections and promos in Menu Studio.', 'Menu, prices, promos and brand from Menu Studio; order status from POS / KDS', 'Orders to POS & KDS, payments, loyalty, reviews', 'Guest screen (merchant-branded)'],
+        opscreen: [ACT[x.role] || 'Task screen for this role.', ACT[x.role] ? 'This role does the action; limits and approvals apply. Settings come from the back office.' : 'This role, within its limits.', x.role === 'kitchen' ? 'Orders from POS, QR menu, kiosk, waiter, delivery apps' : x.role === 'pic' ? 'Requests from cashiers, roster, drawer sessions, stock' : 'Menu, prices and promos from Menu Studio; outlet settings', x.role === 'kitchen' ? 'Order status to POS, waiter, guest phone; 86 to every channel' : 'Sales, stock, shift reports, approvals', 'Operational screen (touch)'],
+        state: ['A system state or a template shown inside other screens (empty, error, offline, receipts, messages).', 'Nobody edits the state itself. Message and receipt templates are edited in Studios.', 'Triggered by the app it appears in', 'Nothing; it only explains what happened', 'State / template'],
+        platform: ['BorNiz staff console. Every action is audited and support access to a tenant is time-boxed.', 'BorNiz super admin (SSO + 2FA). Tenants can’t see or change this.', 'All tenants, plans, invoices, tickets', 'Tenant plans, billing, feature flags', 'Admin table + detail'],
+      }[x.mode];
+      return { UI: XUI[x.mode], scr: [scrN, F(scrN)], what: M[0], who: M[1], from: M[2], to: M[3], tpl: M[4] };
+    }
+    const UI = (window.BN_MODEUI || {})[x.mode] || ['Page', '#F2EFEA', '#45403A', ''];
+    const scr = (window.BN_SCREEN && window.BN_SCREEN(x.p, x.t)) || (window.BN_STUDIO && window.BN_STUDIO(x.p, x.t)) || [SCR[x.role] || 'Sitemap', F(SCR[x.role] || 'Sitemap')];
+    const d = DATA.find(([re]) => re.test(x.p + ' ' + x.t)) || [null, 'Entered on this page', 'Pages that read this module'];
+    const mgr = x.role === 'manager', own = x.role === 'owner';
+    const who = { edit: own ? 'Owner (all outlets). Managers edit their outlets; price, publish and payroll changes go to the owner.' : mgr ? 'Manager for assigned outlets. Price, publishing, payroll and refunds > IDR 500k go to the owner.' : 'This role, within its limits.', read: 'Nobody. Calculated from records; export only.', record: 'Nobody here. Created at the POS, QR menu, kiosk, waiter app or delivery app; corrections are new records.', approve: 'The approver for the amount: PIC → manager → owner. Requests come from the role below.', settings: own ? 'Owner. Managers change outlet-level settings for their outlets.' : 'Owner or manager for their outlet.', studio: 'Owner and manager design it; manager publish waits for owner OK.', screen: 'Done on its own screen: ' + scr[0] + '.', incoming: 'Comes from outside (delivery app, review, message). Accept, reply or reject only; never created here.' }[x.mode] || 'See the screen.';
+    const what = { edit: 'Create, edit and archive records. Every change is logged and updates the pages that use it.', read: 'Numbers and lists calculated from what happens in the apps. Filter, compare and export.', record: 'History of what happened at the counter or online. View, filter, export.', approve: 'A queue of requests. Approve, reject, ask recount or send up.', settings: 'Configuration grouped by section. Saving applies to the outlets it covers.', studio: 'Designed visually with a live preview, then published.', screen: 'This task has a dedicated screen built for it.', incoming: 'An inbox of things that arrive from outside BorNiz.' }[x.mode] || '';
+    return { UI, scr, who, what, from: d[1], to: d[2] };
+  }
+  renderVals() {
+    const s = this.state, all = this.allPages();
+    if (!all.length && !this._wait) { this._wait = setInterval(() => { if (window.BN_SITEMAP) { clearInterval(this._wait); this.forceUpdate(); } }, 150); }
+    const TABS = [['roles', 'Roles & login'], ['flows', 'Connections'], ['how', 'How to operate'], ['rules', 'Rules'], ['pages', 'Page logic · ' + all.length]];
+    const base = { total: all.length || '600+', tabs: TABS.map(([k, l]) => ({ l, bg: s.tab === k ? '#F26B1D' : 'transparent', fg: s.tab === k ? '#FFFFFF' : '#CFCAC3', onClick: () => this.setState({ tab: k }) })), vRoles: s.tab === 'roles', vFlows: s.tab === 'flows', vHow: s.tab === 'how', vRules: s.tab === 'rules', vPages: s.tab === 'pages' };
+    base.roles = ROLES.map(([k, n, c, dev, job, url, how, resp, ap, up, screen]) => ({ n, c, dev, job, url, how, resp, ap, up, screen, href: F(screen) }));
+    base.chain = CHAIN.map(([n, d]) => ({ n, d }));
+    const RC = { Owner: '#F26B1D', Manager: '#2F6FEB', PIC: '#5B8CFF', Cashier: '#F26B1D', Kitchen: '#1F9D55', Waiter: '#0E8A7E', Guest: '#1F4FD8', Guests: '#1F4FD8', System: '#141210' };
+    base.flows = FLOWS.map(([n, d, steps]) => ({ n, d, steps: steps.map((x, i) => { const r0 = x.who.split(/[ /,]/)[0]; const c = RC[r0] || '#45403A'; return { i: i + 1, who: x.who.toUpperCase(), scr: x.scr, t: x.t, out: '→ ' + x.out, href: F(x.scr), c, bg: '#FAF8F5' }; }) }));
+    base.howRoles = Object.keys(HOW).map(k => ({ l: ROLE_OF[k] || k, bg: s.hr === k ? '#FFFFFF' : 'transparent', sh: s.hr === k ? '0 1px 3px rgba(20,18,16,.15)' : 'none', onClick: () => this.setState({ hr: k }) }));
+    base.how = HOW[s.hr].map(([when, t, steps]) => ({ when, t, steps: steps.map(([tx, scr], i) => ({ i: i + 1, t: tx, scr, href: F(scr), hD: scr ? 'block' : 'none' })) }));
+    base.rules = RULES.map(([n, ic, c, where, r]) => ({ n, c, where, mask: IC(ic), r }));
+    const q = s.q.trim().toLowerCase();
+    const byRole = all.filter(x => s.rf === 'all' || x.role === s.rf);
+    const list = byRole.filter(x => (s.mf === 'all' || x.mode === s.mf) && (!q || (x.p + ' ' + x.t + ' ' + x.grp).toLowerCase().includes(q)));
+    const modes = {}; byRole.forEach(x => { modes[x.mode] = (modes[x.mode] || 0) + 1; });
+    const UIs = Object.assign({}, window.BN_MODEUI || {}, XUI);
+    base.q = s.q; base.onQ = e => this.setState({ q: e.target.value, lim: 80 });
+    base.roleF = [['all', 'All'], ...Object.keys(ROLE_OF).map(k => [k, ROLE_OF[k]])].filter(([k]) => k === 'all' || all.some(x => x.role === k)).map(([k, l]) => ({ l, bg: s.rf === k ? '#FFFFFF' : 'transparent', sh: s.rf === k ? '0 1px 3px rgba(20,18,16,.15)' : 'none', onClick: () => this.setState({ sel: null, rf: k, lim: 80 }) }));
+    base.modeF = [['all', 'All modes', byRole.length], ...Object.entries(modes).map(([k, n]) => [k, (UIs[k] || [k])[0], n])].map(([k, l, n]) => ({ l, n, bg: s.mf === k ? '#141210' : '#FFFFFF', fg: s.mf === k ? '#FFFFFF' : '#141210', bc: s.mf === k ? '#141210' : '#E6E2DC', onClick: () => this.setState({ sel: null, mf: k, lim: 80 }) }));
+    base.shown = `Showing ${Math.min(s.lim, list.length)} of ${list.length} pages`;
+    base.pages = list.slice(0, s.lim).map((x, i) => { const u = UIs[x.mode] || ['Page', '#F2EFEA', '#45403A']; const key = x.role + '|' + x.t + '|' + x.p; return { p: x.p, where: (ROLE_OF[x.role] || x.role) + ' · ' + x.t, ml: u[0], mb: u[1], mf: u[2], bg: s.sel === key ? '#FFF3EB' : 'transparent', onClick: () => this.setState({ sel: key }) }; });
+    base.more = list.length > s.lim; base.left = list.length - s.lim; base.showMore = () => this.setState({ lim: s.lim + 120 });
+    const cur = all.find(x => x.role + '|' + x.t + '|' + x.p === s.sel) || list[0] || all[0];
+    if (cur) { const L = this.logic(cur); Object.assign(base, { dWhere: ((ROLE_OF[cur.role] || cur.role) + ' · ' + cur.grp + ' · ' + cur.t).toUpperCase(), dName: cur.p, dMl: L.UI[0], dMb: L.UI[1], dMf: L.UI[2], dWhat: L.what, dHref: L.scr[1], dScr: L.scr[0],
+      dRows: [['Who changes it', L.who], ['Data comes from', L.from], ['Updates', L.to], ['Logs in at', cur.dom], ['Template', L.tpl ? L.tpl : /settings/i.test(cur.t) ? 'Settings' : cur.mode === 'approve' ? 'Approval queue' : cur.mode === 'read' ? 'Report' : cur.mode === 'studio' || cur.mode === 'screen' ? 'Dedicated screen' : 'List + detail drawer'], ['Rule', cur.mode === 'guest' ? 'Guests never edit data. Everything they see is set by the merchant.' : cur.mode === 'public' ? 'Read only for visitors.' : cur.mode === 'account' ? 'Owner sets this up once; changes later happen in Back Office / Settings. PIN login never shows prices or reports.' : cur.mode === 'opscreen' ? 'Actions are limited by role; above the limit it goes to PIC → manager → owner.' : cur.mode === 'state' ? 'Shown automatically; not a page you navigate to.' : cur.mode === 'platform' ? 'Audited; never shows card data.' : cur.mode === 'record' || cur.mode === 'read' ? 'Read only. Nothing here is typed in by hand.' : cur.mode === 'approve' ? 'Nobody approves their own request.' : 'Every change is logged with who and when.']].map(([k, v]) => ({ k, v })) }); }
+    else Object.assign(base, { dWhere: '', dName: 'Loading pages…', dMl: '', dMb: '#F2EFEA', dMf: '#45403A', dWhat: '', dHref: '#', dScr: '', dRows: [] });
+    return base;
+  }
+}
+</script>
+</body>
+</html>

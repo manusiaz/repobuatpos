@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+/*bn-type*/h1,h2,h3,b{font-family:'Space Grotesk',system-ui,sans-serif}body{font-variant-numeric:tabular-nums}
+body{margin:0;background:#FAF8F5;color:#141210;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#D9560B;text-decoration:none}
+a:hover{color:#B04408;text-decoration:underline}
+button{font-family:inherit}
+@keyframes bnSpin{to{transform:rotate(360deg)}}
+@keyframes bnLive{0%{box-shadow:0 0 0 0 rgba(242,107,29,.45)}70%{box-shadow:0 0 0 10px rgba(242,107,29,0)}100%{box-shadow:0 0 0 0 rgba(242,107,29,0)}}
+</style>
+<script src="./bn-embed.js"></script>
+</helmet>
+
+<div style="display:flex;flex-direction:column;min-height:100vh">
+<div style="position:sticky;top:0;z-index:40;background:rgba(250,248,245,.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #E6E2DC">
+  <div style="max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px);height:64px;display:flex;align-items:center;gap:20px">
+    <span style="font-size:22px;font-weight:700;letter-spacing:-.03em">BorNiz</span>
+    <div style="display:flex;gap:4px;overflow-x:auto;font-size:14px;font-weight:500;min-width:0">
+      <a href="BorNiz Design System.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Foundations</a>
+      <a href="BorNiz Components.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Components</a>
+      <a href="BorNiz POS Patterns.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">POS patterns</a>
+      <a href="BorNiz System.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">System</a>
+      <a href="BorNiz Responsive.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Responsive</a>
+      <a href="BorNiz Theming.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Theming</a>
+      <a href="BorNiz Brand Studio.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Customization</a>
+      <a href="BorNiz Menu Studio.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Menu studio</a>
+      <a href="BorNiz Motion.dc.html" style="padding:8px 12px;border-radius:10px;color:#141210;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC;white-space:nowrap">Motion</a>
+      <a href="BorNiz Design Notes.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Design notes</a>
+      <a href="BorNiz States Gallery.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">States </a>
+      <a href="BorNiz Sitemap.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Sitemap</a>
+    </div>
+    <div style="margin-left:auto;flex:none;display:flex;gap:6px">
+      <button onClick="{{ toggleSlow }}" style="height:38px;padding:0 12px;border:1.5px solid {{ slowBorder }};border-radius:999px;background:{{ slowBg }};color:{{ slowFg }};font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">{{ slowLabel }}</button>
+      <button onClick="{{ toggleReduce }}" style="height:38px;padding:0 12px;border:1.5px solid {{ redBorder }};border-radius:999px;background:{{ redBg }};color:{{ redFg }};font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">{{ redLabel }}</button>
+    </div>
+  </div>
+</div>
+
+<main style="max-width:1280px;width:100%;margin:0 auto;padding:56px clamp(20px,4vw,40px) 120px;display:flex;flex-direction:column;gap:72px">
+
+<header style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:32px;align-items:end">
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">Motion system</span>
+    <h1 style="margin:0;font-size:clamp(44px,6vw,76px);line-height:.98;font-weight:700;letter-spacing:-.045em">Fast to answer.<br>Quiet at work.</h1>
+  </div>
+  <p style="margin:0;font-size:17px;line-height:1.55;color:#45403A;text-wrap:pretty">BorNiz motion confirms a tap, shows where things went, and celebrates exactly one moment: getting paid. It never makes a cashier wait. The whole system is five durations and four curves, and every demo on this page uses them.</p>
+</header>
+
+<section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+  <sc-for list="{{ principles }}" as="p" hint-placeholder-count="3">
+    <div style="padding:24px;border-radius:24px;background:{{ p.bg }};color:{{ p.fg }};display:flex;flex-direction:column;gap:10px;min-height:200px">
+      <span style="font:600 12px/1 'JetBrains Mono',ui-monospace,monospace;opacity:.7">{{ p.n }}</span>
+      <span style="font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.1">{{ p.t }}</span>
+      <span style="font-size:14px;line-height:1.5;opacity:.85;margin-top:auto">{{ p.d }}</span>
+    </div>
+  </sc-for>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px"><span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">01 — Tokens</span><h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Five durations</h2></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
+    <sc-for list="{{ durations }}" as="d" hint-placeholder-count="5">
+      <div style="padding:18px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:34px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums">{{ d.ms }}</span><span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ d.token }}</span></div>
+        <div style="height:30px;border-radius:999px;background:#F2EFEA;position:relative;overflow:hidden"><span style="position:absolute;top:5px;left:5px;width:20px;height:20px;border-radius:999px;background:#F26B1D;transform:translateX({{ d.x }});transition:{{ d.t }}"></span></div>
+        <span style="font-size:13px;line-height:1.4;color:#45403A">{{ d.use }}</span>
+      </div>
+    </sc-for>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px"><h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Four curves</h2></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px">
+    <sc-for list="{{ curves }}" as="c" hint-placeholder-count="4">
+      <div style="padding:18px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:18px;font-weight:700">{{ c.name }}</span><span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ c.token }}</span></div>
+        <div style="height:120px;border-radius:14px;background:#FAF8F5;position:relative"><canvas ref="{{ c.ref }}" style="position:absolute;inset:0;width:100%;height:100%"></canvas></div>
+        <div style="height:30px;border-radius:999px;background:#F2EFEA;position:relative;overflow:hidden"><span style="position:absolute;top:5px;left:5px;width:20px;height:20px;border-radius:999px;background:#141210;transform:translateX({{ c.x }});transition:{{ c.t }}"></span></div>
+        <span style="font:400 11px/1.3 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ c.val }}</span>
+        <span style="font-size:13px;line-height:1.4;color:#45403A">{{ c.use }}</span>
+      </div>
+    </sc-for>
+  </div>
+  <div style="padding:16px 18px;border-radius:16px;background:#FFF3EB;color:#4F1F06;font-size:14px;line-height:1.5"><b>Rule of thumb:</b> things that appear use ease-out, things that leave use ease-in at 0.7× the duration, things that move across the screen use in-out, and only pops use spring.</div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
+    <div style="display:flex;flex-direction:column;gap:8px"><span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">02 — In context</span><h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">One sale, start to finish</h2><p style="margin:0;max-width:620px;font-size:15px;line-height:1.5;color:#45403A">Tap products, then Charge, pick QRIS and watch the payment land. The panel on the right shows the exact choreography of the last action.</p></div>
+    <button onClick="{{ resetSale }}" style="height:44px;padding:0 16px;border:1px solid #E6E2DC;border-radius:12px;background:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer">Reset sale</button>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;align-items:start">
+    <div style="border-radius:28px;background:#141210;padding:10px;grid-column:span 2;min-width:0">
+      <div style="height:480px;border-radius:20px;background:#FAF8F5;display:flex;overflow:hidden;position:relative">
+        <div style="flex:1;min-width:0;padding:18px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;gap:6px"><span style="height:38px;padding:0 16px;border-radius:999px;background:#141210;color:#FFFFFF;font-size:13px;font-weight:600;line-height:38px">All</span><span style="height:38px;padding:0 16px;border-radius:999px;background:#F2EFEA;font-size:13px;font-weight:600;line-height:38px">Coffee</span><span style="height:38px;padding:0 16px;border-radius:999px;background:#F2EFEA;font-size:13px;font-weight:600;line-height:38px">Pastry</span></div>
+          <div style="flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));grid-auto-rows:min-content;gap:10px">
+            <sc-for list="{{ tiles }}" as="t" hint-placeholder-count="3">
+              <button onClick="{{ t.onClick }}" style="position:relative;border:0;padding:0;border-radius:18px;background:#FFFFFF;box-shadow:{{ t.ring }};overflow:hidden;text-align:left;cursor:pointer;display:flex;flex-direction:column;transition:transform 140ms cubic-bezier(.2,.8,.2,1),box-shadow 140ms" style-active="transform:scale(.97);transition:transform 80ms cubic-bezier(.2,.8,.2,1)">
+                <span style="aspect-ratio:4/3;background:repeating-linear-gradient(135deg,#F2EFEA 0 8px,#E6E2DC 8px 9px)"></span>
+                <span style="padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px"><span style="font-size:14px;font-weight:600">{{ t.n }}</span><span style="font-size:15px;font-weight:700">{{ t.p }}</span></span>
+                <span style="position:absolute;top:8px;right:8px;min-width:26px;height:26px;padding:0 7px;border-radius:999px;background:#F26B1D;color:#FFFFFF;font-size:12px;font-weight:700;line-height:26px;text-align:center;transform:scale({{ t.bs }});transition:{{ t.bt }}">{{ t.c }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="width:300px;flex:none;background:#FFFFFF;border-left:1px solid #E6E2DC;padding:18px;display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:16px;font-weight:700;margin-bottom:4px">Order · T-07</span>
+          <sc-for list="{{ lines }}" as="l" hint-placeholder-count="3">
+            <div style="display:grid;grid-template-rows:{{ l.rows }};transition:{{ l.rt }}"><div style="overflow:hidden"><div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px dashed #E6E2DC;font-size:14px;opacity:{{ l.op }};transform:translateY({{ l.y }});transition:{{ l.ot }}"><span><b>{{ l.q }}×</b> {{ l.n }}</span><b style="font-variant-numeric:tabular-nums">{{ l.t }}</b></div></div></div>
+          </sc-for>
+          <span style="font-size:13px;color:#857E76;display:{{ emptyD }}">Tap a product to add it.</span>
+          <div style="margin-top:auto;display:flex;justify-content:space-between;align-items:baseline;padding:10px 0"><span style="font-size:14px;color:#625C55">Total</span>
+            <span style="display:inline-flex;font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2;height:1.2em;overflow:hidden;white-space:pre">
+              <sc-for list="{{ roll }}" as="c" hint-placeholder-count="10"><span style="display:inline-flex;flex-direction:column;transform:translateY({{ c.y }});transition:{{ c.t }}"><sc-for list="{{ c.ds }}" as="d" hint-placeholder-count="1"><span style="height:1.2em">{{ d }}</span></sc-for></span></sc-for>
+            </span>
+          </div>
+          <button onClick="{{ charge }}" style="height:64px;border:0;border-radius:18px;background:{{ chargeBg }};color:#FFFFFF;font-size:17px;font-weight:700;cursor:pointer;transition:background 140ms,transform 140ms cubic-bezier(.2,.8,.2,1)" style-active="transform:scale(.97);transition:transform 80ms">Charge</button>
+        </div>
+        <div onClick="{{ closeSheet }}" style="position:absolute;inset:0;background:#141210;opacity:{{ scrimOp }};pointer-events:{{ sheetPe }};transition:{{ scrimT }}"></div>
+        <div style="position:absolute;left:50%;bottom:0;width:min(520px,92%);border-radius:28px 28px 0 0;background:#FFFFFF;padding:12px 22px 24px;display:flex;flex-direction:column;gap:14px;transform:translate(-50%,{{ sheetY }});transition:{{ sheetT }};min-height:300px">
+          <span style="align-self:center;width:40px;height:5px;border-radius:9px;background:#CFCAC3"></span>
+          <sc-if value="{{ payIdle }}" hint-placeholder-val="{{ true }}">
+            <span style="font-size:20px;font-weight:700">Pay {{ totalText }}</span>
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px"><sc-for list="{{ methods }}" as="m" hint-placeholder-count="3"><button onClick="{{ m.onClick }}" style="height:84px;border:2px solid #E6E2DC;border-radius:18px;background:#FFFFFF;font-size:15px;font-weight:700;cursor:pointer;transition:border-color 140ms,transform 140ms" style-hover="border-color:#F26B1D" style-active="transform:scale(.97)">{{ m.label }}</button></sc-for></div>
+          </sc-if>
+          <sc-if value="{{ payProc }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px 0">{{ spinner }}<span style="font-size:16px;font-weight:600">Waiting for QRIS payment…</span></div>
+          </sc-if>
+          <sc-if value="{{ payOk }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:8px 0">
+              <span style="width:96px;height:96px;border-radius:999px;background:#1F9D55;display:grid;place-items:center;transform:scale({{ okScale }});transition:{{ okT }}"><span style="width:44px;height:44px;background:#FFFFFF;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat;transform:scale({{ chkScale }});transition:{{ chkT }}"></span></span>
+              <span style="font-size:22px;font-weight:700;opacity:{{ okTxtOp }};transform:translateY({{ okTxtY }});transition:{{ okTxtT }}">Payment received</span>
+              <button onClick="{{ resetSale }}" style="height:52px;padding:0 28px;border:0;border-radius:16px;background:#141210;color:#FFFFFF;font-size:15px;font-weight:700;cursor:pointer;opacity:{{ okTxtOp }};transition:{{ okTxtT }}">New sale</button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+    <div style="padding:20px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px;min-width:0">
+      <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55;letter-spacing:.06em">LAST ACTION</span>
+      <span style="font-size:22px;font-weight:700;letter-spacing:-.01em">{{ evTitle }}</span>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:4px;position:relative;padding-top:18px">
+        <div style="position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76"><span>0</span><span>200</span><span>400</span><span>600ms</span></div>
+        <sc-for list="{{ evTracks }}" as="t" hint-placeholder-count="4">
+          <div style="display:flex;flex-direction:column;gap:4px;padding:6px 0;border-top:1px solid #F2EFEA">
+            <div style="display:flex;justify-content:space-between;gap:8px;font-size:13px"><b>{{ t.label }}</b><span style="font:400 11px/1.4 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ t.spec }}</span></div>
+            <div style="height:10px;border-radius:999px;background:#FAF8F5;position:relative"><span style="position:absolute;top:0;bottom:0;left:{{ t.l }};width:{{ t.w }};border-radius:999px;background:{{ t.c }}"></span></div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:#625C55;margin-top:4px"><span style="display:flex;gap:5px;align-items:center"><span style="width:10px;height:10px;border-radius:3px;background:#F26B1D"></span>ease-out</span><span style="display:flex;gap:5px;align-items:center"><span style="width:10px;height:10px;border-radius:3px;background:#857E76"></span>ease-in</span><span style="display:flex;gap:5px;align-items:center"><span style="width:10px;height:10px;border-radius:3px;background:#2F6FEB"></span>in-out</span><span style="display:flex;gap:5px;align-items:center"><span style="width:10px;height:10px;border-radius:3px;background:#1F9D55"></span>spring</span></div>
+    </div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px"><span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">03 — Pattern library</span><h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Twelve patterns, looping</h2><p style="margin:0;max-width:620px;font-size:15px;line-height:1.5;color:#45403A">Each card loops its pattern with the exact spec underneath. Turn on Slow ×4 in the header to inspect the curves.</p></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px">
+
+    <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden;display:flex;flex-direction:column"><div style="height:150px;background:#FAF8F5;display:grid;place-items:center"><span style="height:56px;padding:0 28px;border-radius:16px;background:#F26B1D;color:#FFFFFF;font-size:16px;font-weight:700;line-height:56px;transform:scale({{ pPress }});transition:{{ pPressT }}">Charge</span></div><div style="padding:14px 16px;display:flex;flex-direction:column;gap:4px"><b style="font-size:15px">Press</b><span style="font:400 11px/1.4 'JetBrains Mono',ui-monospace,monospace;color:#625C55">scale .97 · 80ms out · release 140ms out</span></div></div>
+
+    <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden;display:flex;flex-direction:column"><div style="height:150px;background:#FAF8F5;display:grid;place-items:center"><span style="width:60px;height:36px;border-radius:999px;background:{{ pSwBg }};position:relative;transition:background 140ms"><span style="position:absolute;top:4px;left:4px;width:28px;height:28px;border-radius:999px;background:#FFFFFF;box-shadow:0 1px 3px rgba(20,18,16,.25);transform:translateX({{ pSwX }});transition:{{ pSwT }}"></span></span></div><div style="padding:14px 16px;display:flex;flex-direction:column;gap:4px"><b style="font-size:15px">Switch</b><span style="font:400 11px/1.4 'JetBrains Mono',ui-monospace,monospace;color:#625C55">knob x · 220ms in-out · track color 140ms</span></div></div>
+
+    <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden;display:flex;flex-direction:column"><div style="height:150px;background:#FAF8F5;display:grid;place-items:center"><div style="position:relative;display:flex;gap:0;border-bottom:1px solid #E6E2DC"><span style="width:76px;height:40px;display:grid;place-items:center;font-size:14px;font-weight:600;color:{{ pTab0 }};transition:color 140ms">All</span><span style="width:76px;height:40px;display:grid;place-items:center;font-size:14px;font-weight:600;color:#857E76">Paid</span><span style="width:76px;height:40px;display:grid;place-items:center;font-size:14px;font-weight:600;color:{{ pTab2 }};transition:color 140ms">Void</span><span style="position:absolute;bottom:-1px;left:0;width:76px;height:3px;border-radius:3px;background:#F26B1D;transform:translateX({{ pTabX }});transition:{{ pTabT }}"></span></div></div><div style="padding:14px 16px;display:flex;flex-direction:column;gap:4px"><b style="font-size:15px">Tab indicator</b><span style="font:400 11px/1.4 'JetBrains Mono',ui-monospace,monospace;color:#625C55">shared indicator slides · 220ms in-out</span></div></div>
+
+    <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden;display:flex;flex-direction:column"><div style="height:150px;background:#FAF8F5;display:grid;place-items:center"><span style="position:relative;width:56px;height:56px;border-radius:16px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC;display:grid;place-items:center"><span style="width:24px;height:24px;background:#141210;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/bell.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/bell.svg) center/contain no-repeat"></span><span style="position:absolute;top:-6px;right:-6px;min-width:24px;height:24px;border-radius:999px;background:#F26B1D;color:#FFFFFF;font-size:12px;font-weight:700;line-height:24px;text-align:center;box-shadow:0 0 0 3px #FAF8F5;transform:scale({{ pBadge }});transition:{{ pBadgeT }}">3</span></span></div><div style="padding:14px 16px;display:flex;flex-direction:column;gap:4px"><b style="font-size:15px">Badge pop</b><span style="font:400 11px/1.4 'JetBrains Mono',ui-monospace,monospace;color:#625C55">scale 0→1 · 220ms spring · out 140ms in</span></div></div>
+
+    <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden;display:flex;flex-direction:column"><div style="height:150px;background:#FAF8F5;position:relative;overflow:hidden"><div style="position:absolute;top:18px;left:18px;right:18px;padding:12px 14px;border-radius:14px;background:#141210;color:#FFFFFF;font-size:13px;font-weight:600;box-shadow:0 12px 24px -8px rgba(20,18,16,.4);opacity:{{ pToastOp }};transform:translateY({{ pToastY }});transition:{{ pToastT }}">New order · Table 7 · IDR 112,000</div></div><div style="padding:14px 16px;display:flex;flex-direction:column;gap:4px"><b style="font-size:15px">Toast</b><span style="font:400 11px/1.4 'JetBrains Mono',ui-monospace,monospace;color:#625C55">y −12→0 + fade · 220ms out · exit 150ms in</span></div></div>
+
+    <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden;display:flex;flex-direction:column"><div style="height:150px;background:#FAF8F5;position:relative;overflow:hidden;display:grid;place-items:center"><div style="position:absolute;inset:0;background:#141210;opacity:{{ pModalScrim }};transition:{{ pModalScrimT }}"></div><div style="position:relative;width:150px;height:86px;border-radius:18px;background:#FFFFFF;box-shadow:0 18px 30px -10px rgba(20,18,16,.4);opacity:{{ pModalOp }};transform:scale({{ pModalS }});transition:{{ pModalT }};padding:12px;display:flex;flex-direction:column;gap:6px"><span style="width:70%;height:10px;border-radius:5px;background:#141210"></span><span style="width:90%;height:8px;border-radius:5px;background:#E6E2DC"></span><span style="margin-top:auto;height:24px;border-radius:8px;background:#F26B1D"></span></div></div><div style="padding:14px 16px;display:flex;flex-direction:column;gap:4px"><b style="font-size:15px">Dialog</b><span style="font:400 11px/1.4 'JetBrains Mono',ui-monospace,monospace;color:#625C55">scale .96→1 + fade · 220ms out · scrim .55</span></div></div>
+
+    <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden;display:flex;flex-direction:column"><div style="height:150px;background:#FAF8F5;position:relative;overflow:hidden"><div style="position:absolute;inset:0;background:#141210;opacity:{{ pSheetScrim }};transition:{{ pSheetScrimT }}"></div><div style="position:absolute;left:12px;right:12px;bottom:0;height:96px;border-radius:20px 20px 0 0;background:#FFFFFF;padding:10px 14px;display:flex;flex-direction:column;gap:8px;transform:translateY({{ pSheetY }});transition:{{ pSheetT }}"><span style="align-self:center;width:32px;height:4px;border-radius:9px;background:#CFCAC3"></span><span style="width:60%;height:10px;border-radius:5px;background:#141210"></span><span style="height:28px;border-radius:9px;background:#F26B1D"></span></div></div><div style="padding:14px 16px;display:flex;flex-direction:column;gap:4px"><b style="font-size:15px">Bottom sheet</b><span style="font:400 11px/1.4 'JetBrains Mono',ui-monospace,monospace;color:#625C55">y 100%→0 · 320ms out · exit 220ms in</span></div></div>
+
+    <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden;display:flex;flex-direction:column"><div style="height:150px;background:#FAF8F5;position:relative;padding:22px"><div style="position:absolute;inset:22px;display:flex;gap:12px;align-items:center;opacity:{{ pSkelOp }};transition:{{ pSkelT }}"><span style="width:52px;height:52px;border-radius:14px;background:#E6E2DC"></span><span style="flex:1;display:flex;flex-direction:column;gap:8px"><span style="width:80%;height:12px;border-radius:6px;background:#E6E2DC"></span><span style="width:50%;height:12px;border-radius:6px;background:#E6E2DC"></span></span></div><div style="position:absolute;inset:22px;display:flex;gap:12px;align-items:center;opacity:{{ pContentOp }};transition:{{ pSkelT }}"><span style="width:52px;height:52px;border-radius:14px;background:#FFE2CF;color:#84340A;display:grid;place-items:center;font-weight:700">DA</span><span style="flex:1;display:flex;flex-direction:column;gap:4px"><b style="font-size:14px">Dewi Anggraini</b><span style="font-size:12px;color:#625C55">Gold · 1,240 pts</span></span></div></div><div style="padding:14px 16px;display:flex;flex-direction:column;gap:4px"><b style="font-size:15px">Skeleton → content</b><span style="font:400 11px/1.4 'JetBrains Mono',ui-monospace,monospace;color:#625C55">crossfade · 220ms out · shimmer off if &lt; 300ms</span></div></div>
+
+    <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden;display:flex;flex-direction:column"><div style="height:150px;background:#FAF8F5;display:grid;place-items:center"><span style="display:inline-flex;font-size:36px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2;height:1.2em;overflow:hidden;white-space:pre"><sc-for list="{{ pRoll }}" as="c" hint-placeholder-count="8"><span style="display:inline-flex;flex-direction:column;transform:translateY({{ c.y }});transition:{{ c.t }}"><sc-for list="{{ c.ds }}" as="d" hint-placeholder-count="1"><span style="height:1.2em">{{ d }}</span></sc-for></span></sc-for></span></div><div style="padding:14px 16px;display:flex;flex-direction:column;gap:4px"><b style="font-size:15px">Number roll</b><span style="font:400 11px/1.4 'JetBrains Mono',ui-monospace,monospace;color:#625C55">digits slide · 320ms out · 20ms stagger per digit</span></div></div>
+
+    <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden;display:flex;flex-direction:column"><div style="height:150px;background:#FAF8F5;padding:16px 20px;display:flex;flex-direction:column;justify-content:center"><div style="height:36px;border-bottom:1px solid #E6E2DC;display:flex;align-items:center;font-size:13px">2× Es Kopi Susu Aren</div><div style="display:grid;grid-template-rows:{{ pListRows }};transition:{{ pListT }}"><div style="overflow:hidden"><div style="height:36px;border-bottom:1px solid #E6E2DC;display:flex;align-items:center;font-size:13px;font-weight:600;color:#B04408;opacity:{{ pListOp }};transition:{{ pListOpT }}">1× Croissant Almond</div></div></div><div style="height:36px;display:flex;align-items:center;font-size:13px">1× Air Mineral</div></div><div style="padding:14px 16px;display:flex;flex-direction:column;gap:4px"><b style="font-size:15px">List insert</b><span style="font:400 11px/1.4 'JetBrains Mono',ui-monospace,monospace;color:#625C55">height 220ms out, then fade 140ms · neighbors push</span></div></div>
+
+    <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden;display:flex;flex-direction:column"><div style="height:150px;background:#FAF8F5;display:grid;place-items:center"><span style="height:52px;width:200px;padding:0 14px;border-radius:14px;border:1.5px solid {{ pErrBorder }};background:#FFFFFF;display:flex;align-items:center;font-size:20px;letter-spacing:.3em;transform:translateX({{ pErrX }});transition:transform 50ms linear,border-color 140ms">••••</span></div><div style="padding:14px 16px;display:flex;flex-direction:column;gap:4px"><b style="font-size:15px">Error nudge</b><span style="font:400 11px/1.4 'JetBrains Mono',ui-monospace,monospace;color:#625C55">x ±6 → ±3 → 0 · 200ms · never on destructive confirm</span></div></div>
+
+    <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden;display:flex;flex-direction:column"><div style="height:150px;background:#FAF8F5;display:grid;place-items:center"><span style="height:32px;padding:0 14px;border-radius:999px;background:#FFF3EB;color:#B04408;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px">{{ liveDot }}Live · 3 outlets</span></div><div style="padding:14px 16px;display:flex;flex-direction:column;gap:4px"><b style="font-size:15px">Live pulse (ambient)</b><span style="font:400 11px/1.4 'JetBrains Mono',ui-monospace,monospace;color:#625C55">ring 0→10px fade · 1600ms loop · only Live and QRIS timer</span></div></div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px"><span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">04 — By surface</span><h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">How much motion, where</h2></div>
+  <div style="border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:auto">
+    <div style="min-width:860px">
+      <div style="display:grid;grid-template-columns:1.2fr repeat(5,1fr);padding:12px 18px;background:#F2EFEA;font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55;letter-spacing:.06em;text-transform:uppercase"><span>Surface</span><span>Page change</span><span>Overlays</span><span>Feedback</span><span>Celebrate</span><span>Ambient</span></div>
+      <sc-for list="{{ matrix }}" as="r" hint-placeholder-count="6">
+        <div style="display:grid;grid-template-columns:1.2fr repeat(5,1fr);padding:14px 18px;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.35;gap:8px;align-items:center">
+          <b style="font-size:14px">{{ r.s }}</b>
+          <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="5"><span style="display:flex;gap:6px;align-items:flex-start"><span style="flex:none;margin-top:4px;width:8px;height:8px;border-radius:9px;background:{{ c.dot }}"></span>{{ c.t }}</span></sc-for>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+  <div style="padding:22px;border-radius:24px;background:#141210;color:#E6E2DC;display:flex;flex-direction:column;gap:10px">
+    <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#FF9F63;letter-spacing:.08em">05 — HANDOFF</span>
+    <span style="font-size:20px;font-weight:700;color:#FFFFFF">Tokens for developers</span>
+    <pre style="margin:0;font:400 12px/1.65 'JetBrains Mono',ui-monospace,monospace;white-space:pre-wrap">{{ code }}</pre>
+  </div>
+  <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:8px">
+    <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em">06 — GUARDRAILS</span>
+    <sc-for list="{{ rules }}" as="r" hint-placeholder-count="10"><div style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;padding:8px 0;border-top:1px solid #F2EFEA;font-size:14px;line-height:1.45"><span style="font-weight:700;color:{{ r.c }}">{{ r.m }}</span><span>{{ r.t }}</span></div></sc-for>
+  </div>
+</section>
+
+</main>
+</div>
+<div data-bn-links="1" style="position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:60;max-width:calc(100vw - 24px)"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:18px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#141210;color:#FFFFFF"><span style="width:8px;height:8px;border-radius:9px;background:#F26B1D"></span>Linked pages · 15<span style="font-weight:500;color:#A9A39B">▴</span></summary><div style="width:min(460px,calc(100vw - 24px));padding:6px 16px 12px;display:flex;flex-direction:column;max-height:50vh;overflow:auto"><a href="BorNiz Brand Studio.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Brand Studio</b><span style="color:#45403A">Staff brand tokens</span></a><a href="BorNiz Components.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Components</b><span style="color:#45403A">Press, switch, toast timings</span></a><a href="BorNiz Design Notes.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Design notes</b><span style="color:#45403A">Alternatives and rules</span></a><a href="BorNiz Design System.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Foundations</b><span style="color:#45403A">Motion tokens live alongside color and type</span></a><a href="BorNiz Loyalty.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Loyalty</b><span style="color:#45403A">Points and tier progress animation</span></a><a href="BorNiz Menu Studio.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Menu studio</b><span style="color:#45403A">Merchant theme tokens</span></a><a href="BorNiz POS Register.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>POS Register</b><span style="color:#45403A">Add to cart, sheet, payment success</span></a><a href="BorNiz Studios.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Studios</b><span style="color:#45403A">Clients choose animation level</span></a><a href="BorNiz POS Patterns.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>POS patterns</b><span style="color:#45403A">Motion tokens</span></a><a href="BorNiz System.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>System</b><span style="color:#45403A">Motion tokens</span></a><a href="BorNiz Responsive.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Responsive</b><span style="color:#45403A">Motion tokens</span></a><a href="BorNiz Theming.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Theming &amp; language</b><span style="color:#45403A">Light/dark and merchant brand</span></a><a href="BorNiz States Gallery.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>States gallery</b><span style="color:#45403A">States to build</span></a><a href="BorNiz Sitemap.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Sitemap</b><span style="color:#45403A">Listed in the sitemap</span></a><a href="BorNiz Roles.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Roles</b><span style="color:#45403A">Motion tokens</span></a><a href="BorNiz Connections.dc.html" style="margin-top:8px;height:40px;border-radius:12px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:13px;font-weight:700">Open the full connection map →</a></div></details></div>
+<div data-bn-spec="1" style="position:fixed;left:12px;bottom:10px;z-index:61"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:16px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#F26B1D;color:#FFFFFF">◆ Design spec · this page</summary><div style="width:min(420px,calc(100vw - 24px));max-height:65vh;overflow:auto;padding:10px 16px 14px;display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Covers</span><b style="text-align:right">Durations, curves, choreography</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Page type</span><b style="text-align:right">Design-system documentation</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Theme</span><b style="text-align:right">Light doc · paper #FAF8F5</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Container</span><b style="text-align:right">max 1280px · fluid padding</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Type</span><b style="text-align:right">H1 clamp 44–88 · section 36–44 · body 15–17</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Cards</span><b style="text-align:right">radius 20–24 · 1px #E6E2DC</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Nav</span><b style="text-align:right">Sticky top nav to every DS page</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Rule</span><b style="text-align:right">Live demos use the real tokens</b></div><a href="BorNiz Page Templates.dc.html" style="margin-top:12px;height:38px;border-radius:10px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:12px;font-weight:700">Page templates →</a></div></details></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const EZ = { out: [.2, .8, .2, 1], in: [.4, 0, 1, 1], inOut: [.65, 0, .35, 1], spring: [.3, 1.35, .5, 1] };
+const css = k => `cubic-bezier(${EZ[k].join(',')})`;
+const ECOL = { out: '#F26B1D', in: '#857E76', inOut: '#2F6FEB', spring: '#1F9D55', linear: '#CFCAC3', none: '#CFCAC3' };
+const PROD = [['Es Kopi Susu Aren', 25000], ['Croissant Almond', 32000], ['Matcha Latte', 30000]];
+const EV = {
+  idle: ['Waiting for a tap', []],
+  add: ['Add to cart', [['Tile press', 'scale .97', 0, 80, 'out'], ['Badge pop', 'scale 0→1', 0, 220, 'spring'], ['Cart line in', 'height, then fade', 40, 220, 'out'], ['Total roll', 'digits slide', 60, 320, 'out']]],
+  charge: ['Open payment', [['Scrim', 'opacity 0 → .4', 0, 220, 'out'], ['Sheet up', 'y 100% → 0', 0, 320, 'out']]],
+  proc: ['Waiting for QRIS', [['Methods → spinner', 'crossfade', 0, 140, 'out'], ['Spinner', 'rotate loop', 0, 600, 'linear']]],
+  ok: ['Payment received', [['Circle', 'scale .6 → 1', 0, 480, 'spring'], ['Check', 'scale 0 → 1', 120, 220, 'spring'], ['Title + button', 'fade, y 8 → 0', 180, 220, 'out'], ['Sound', 'sfx-pay-success', 0, 380, 'none']]],
+  reset: ['Back to a new sale', [['Sheet down', 'y 0 → 100%', 0, 220, 'in'], ['Scrim', 'opacity → 0', 0, 150, 'in'], ['Lines out', 'fade + height', 0, 150, 'in'], ['Total roll', 'digits slide', 40, 320, 'out']]],
+};
+function bez(p, t) { const [x1, y1, x2, y2] = p; const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx, cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by; return [((ax * t + bx) * t + cx) * t, ((ay * t + by) * t + cy) * t]; }
+function rollOf(str, F, R, delay0 = 0) { return str.split('').map((ch, i) => /\d/.test(ch) ? { ds: '0123456789'.split(''), y: (-1.2 * +ch) + 'em', t: R ? 'none' : `transform ${320 * F}ms ${css('out')} ${(delay0 + i * 20) * F}ms` } : { ds: [ch], y: '0em', t: 'none' }); }
+
+class Component extends DCLogic {
+  state = { on: false, press: false, slow: false, reduce: false, counts: [0, 0, 0], sheet: false, pay: 'idle', okIn: false, ev: 'idle', err: 0 };
+  refsC = [React.createRef(), React.createRef(), React.createRef(), React.createRef()];
+  F() { return this.state.slow ? 4 : 1; }
+  componentDidMount() { this.loop(); this.draw(); this.rz = () => this.draw(); window.addEventListener('resize', this.rz); }
+  componentWillUnmount() { clearTimeout(this.lt); clearTimeout(this.pt); clearTimeout(this.pay1); window.removeEventListener('resize', this.rz); }
+  loop = () => { const F = this.F(); this.setState(s => ({ on: !s.on, press: true })); this.pt = setTimeout(() => this.setState({ press: false }), 160 * F); if (!this.state.on) [6, -6, 3, -3, 0].forEach((x, i) => setTimeout(() => this.setState({ err: x }), (260 + i * 40) * F)); this.lt = setTimeout(this.loop, 1700 * F); };
+  draw() {
+    this.refsC.forEach((r, i) => { const cv = r.current; if (!cv) return; const k = ['out', 'in', 'inOut', 'spring'][i]; const w = cv.clientWidth, h = cv.clientHeight, d = window.devicePixelRatio || 1; cv.width = w * d; cv.height = h * d; const g = cv.getContext('2d'); g.scale(d, d); g.clearRect(0, 0, w, h);
+      const pad = 14, top = 22, bot = 18, X = x => pad + x * (w - pad * 2), Y = y => h - bot - y * (h - top - bot);
+      g.strokeStyle = '#E6E2DC'; g.lineWidth = 1; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(X(0), Y(1)); g.lineTo(X(1), Y(1)); g.moveTo(X(0), Y(0)); g.lineTo(X(1), Y(0)); g.stroke(); g.setLineDash([]);
+      g.strokeStyle = ECOL[k]; g.lineWidth = 3; g.lineCap = 'round'; g.beginPath(); for (let t = 0; t <= 1.0001; t += .01) { const [x, y] = bez(EZ[k], t); t === 0 ? g.moveTo(X(x), Y(y)) : g.lineTo(X(x), Y(y)); } g.stroke(); });
+  }
+  add(i) { const s = this.state; if (s.sheet) return; this.setState({ counts: s.counts.map((c, j) => j === i ? c + 1 : c), ev: 'add' }); }
+  renderVals() {
+    const s = this.state, F = this.F(), R = s.reduce, on = s.on;
+    const tr = (prop, ms, ease, delay = 0) => R ? `opacity ${120 * F}ms linear` : prop.split(',').map(p => `${p} ${ms * F}ms ${ease === 'linear' ? 'linear' : css(ease)} ${delay * F}ms`).join(',');
+    const mv = v => R ? 'none' : v;
+    const total = s.counts.reduce((a, c, i) => a + c * PROD[i][1], 0);
+    const totalStr = ('IDR ' + total.toLocaleString('en-US')).padStart(11, ' ');
+    const ev = EV[s.ev];
+    const spinner = React.createElement('span', { style: { width: 44, height: 44, borderRadius: 999, border: '4px solid #FFE2CF', borderTopColor: '#F26B1D', display: 'inline-block', animation: `bnSpin ${700 * F}ms linear infinite` } });
+    const liveDot = React.createElement('span', { style: { width: 8, height: 8, borderRadius: 9, background: '#F26B1D', display: 'inline-block', animation: R ? 'none' : `bnLive ${1600 * F}ms ${css('out')} infinite` } });
+    const pressIn = s.press && on;
+    const enterOrExit = (inMs, ease = 'out') => on ? [inMs, ease] : [Math.round(inMs * .7), 'in'];
+    const [tMs, tE] = enterOrExit(220), [sMs, sE] = enterOrExit(320), [bMs] = enterOrExit(220);
+    return {
+      toggleSlow: () => this.setState({ slow: !s.slow }), slowLabel: s.slow ? 'Slow ×4: on' : 'Slow ×4', slowBg: s.slow ? '#141210' : '#FFFFFF', slowFg: s.slow ? '#FFFFFF' : '#141210', slowBorder: s.slow ? '#141210' : '#E6E2DC',
+      toggleReduce: () => this.setState({ reduce: !R }), redLabel: R ? 'Reduced motion: on' : 'Reduced motion', redBg: R ? '#141210' : '#FFFFFF', redFg: R ? '#FFFFFF' : '#141210', redBorder: R ? '#141210' : '#E6E2DC',
+      principles: [['01', 'Answer in 80ms', 'Every tap gets a visible response before the finger lifts. Nothing important waits on an animation.', '#141210', '#FFFFFF'], ['02', 'Show where it went', 'Items fly toward the cart, sheets rise from the button that opened them, exits leave the way they came.', '#FFFFFF', '#141210'], ['03', 'Celebrate once', 'Only a received payment gets a spring and a sound. Kitchen and register stay calm all shift.', '#F26B1D', '#FFFFFF']].map(([n, t, d, bg, fg]) => ({ n, t, d, bg, fg: bg === '#FFFFFF' ? '#141210' : fg })).map(p => ({ ...p, bg: p.bg === '#FFFFFF' ? '#FFFFFF' : p.bg })),
+      durations: [['80ms', '--dur-instant', 'Press feedback, key taps, checkbox tick', 80], ['140ms', '--dur-fast', 'Hover, color change, every exit of a 200ms element', 140], ['220ms', '--dur-base', 'Most UI: tabs, switch, toast, dialog, page fade', 220], ['320ms', '--dur-slow', 'Large surfaces: sheets, drawers, number roll', 320], ['480ms', '--dur-celebrate', 'Payment success. Nothing else.', 480]].map(([ms, token, use, v]) => ({ ms, token, use, x: on && !R ? 'calc(var(--w,0px) + 100%)' : '0px', t: R ? 'none' : `transform ${v * F}ms ${css('out')}` })).map(d => ({ ...d, x: on && !R ? '140px' : '0px' })),
+      curves: [['Ease out', '--ease-out', 'Anything appearing or arriving', 'out'], ['Ease in', '--ease-in', 'Anything leaving, at 0.7× duration', 'in'], ['In-out', '--ease-in-out', 'Moving across the screen: indicators, reorder', 'inOut'], ['Spring', '--ease-spring', 'Pops only: badge, payment success', 'spring']].map(([name, token, use, k], i) => ({ name, token, use, val: css(k), ref: this.refsC[i], x: on && !R ? '160px' : '0px', t: R ? 'none' : `transform ${480 * F}ms ${css(k)}` })),
+      tiles: PROD.map(([n, p], i) => ({ n, p: 'IDR ' + p.toLocaleString('en-US'), c: s.counts[i] || '', bs: s.counts[i] ? 1 : 0, bt: R ? 'none' : `transform ${220 * F}ms ${css('spring')}`, ring: s.counts[i] ? '0 0 0 2px #F26B1D' : '0 0 0 1px #E6E2DC', onClick: () => this.add(i) })),
+      lines: PROD.map(([n, p], i) => { const c = s.counts[i]; return { n, q: c, t: (c * p).toLocaleString('en-US'), rows: c ? '1fr' : '0fr', op: c ? 1 : 0, y: c && !R ? '0px' : (R ? '0px' : '8px'), rt: R ? 'none' : (c ? `grid-template-rows ${220 * F}ms ${css('out')} ${40 * F}ms` : `grid-template-rows ${150 * F}ms ${css('in')}`), ot: c ? `opacity ${140 * F}ms ${css('out')} ${140 * F}ms,transform ${220 * F}ms ${css('out')} ${60 * F}ms` : `opacity ${100 * F}ms ${css('in')}` }; }),
+      emptyD: total ? 'none' : 'block', roll: rollOf(totalStr, F, R, 60), totalText: 'IDR ' + total.toLocaleString('en-US'),
+      chargeBg: total ? '#F26B1D' : '#CFCAC3', charge: () => { if (!total) return; this.setState({ sheet: true, ev: 'charge' }); },
+      closeSheet: () => { if (s.pay !== 'idle') return; this.setState({ sheet: false, ev: 'reset' }); },
+      scrimOp: s.sheet ? .4 : 0, sheetPe: s.sheet ? 'auto' : 'none', scrimT: s.sheet ? `opacity ${220 * F}ms ${css('out')}` : `opacity ${150 * F}ms ${css('in')}`,
+      sheetY: s.sheet || R ? (s.sheet ? '0%' : '110%') : '110%', sheetT: R ? `opacity 120ms` : (s.sheet ? `transform ${320 * F}ms ${css('out')}` : `transform ${220 * F}ms ${css('in')}`),
+      payIdle: s.pay === 'idle', payProc: s.pay === 'proc', payOk: s.pay === 'ok', spinner,
+      methods: ['QRIS', 'Cash', 'Card'].map(label => ({ label, onClick: () => { this.setState({ pay: 'proc', ev: 'proc' }); this.pay1 = setTimeout(() => { this.setState({ pay: 'ok', okIn: false, ev: 'ok' }); setTimeout(() => this.setState({ okIn: true }), 30); }, 1100 * F); } })),
+      okScale: s.okIn || R ? 1 : .6, okT: R ? 'none' : `transform ${480 * F}ms ${css('spring')}`, chkScale: s.okIn || R ? 1 : 0, chkT: R ? 'none' : `transform ${220 * F}ms ${css('spring')} ${120 * F}ms`, okTxtOp: s.okIn ? 1 : 0, okTxtY: s.okIn || R ? '0px' : '8px', okTxtT: `opacity ${220 * F}ms ${css('out')} ${180 * F}ms,transform ${220 * F}ms ${css('out')} ${180 * F}ms`,
+      resetSale: () => { clearTimeout(this.pay1); this.setState({ sheet: false, pay: 'idle', okIn: false, counts: [0, 0, 0], ev: 'reset' }); },
+      evTitle: ev[0], evTracks: ev[1].map(([label, spec, d, ms, k]) => ({ label, spec: `${spec} · ${ms}ms ${k === 'none' ? '' : k}${d ? ' · +' + d : ''}`, l: (d / 600 * 100) + '%', w: Math.max(3, Math.min(100 - d / 6, ms / 600 * 100)) + '%', c: ECOL[k] })),
+      pPress: pressIn && !R ? .97 : 1, pPressT: R ? 'none' : (pressIn ? `transform ${80 * F}ms ${css('out')}` : `transform ${140 * F}ms ${css('out')}`),
+      pSwBg: on ? '#F26B1D' : '#CFCAC3', pSwX: on && !R ? '24px' : (R && on ? '24px' : '0px'), pSwT: R ? 'none' : `transform ${220 * F}ms ${css('inOut')}`,
+      pTabX: on ? '152px' : '0px', pTabT: R ? 'none' : `transform ${220 * F}ms ${css('inOut')}`, pTab0: on ? '#857E76' : '#141210', pTab2: on ? '#141210' : '#857E76',
+      pBadge: on ? 1 : 0, pBadgeT: R ? `transform 0ms` : (on ? `transform ${220 * F}ms ${css('spring')}` : `transform ${140 * F}ms ${css('in')}`),
+      pToastOp: on ? 1 : 0, pToastY: on || R ? '0px' : '-12px', pToastT: tr('opacity,transform', tMs, tE),
+      pModalScrim: on ? .55 : 0, pModalScrimT: `opacity ${tMs * F}ms ${css(tE)}`, pModalOp: on ? 1 : 0, pModalS: on || R ? 1 : .96, pModalT: tr('opacity,transform', tMs, tE),
+      pSheetScrim: on ? .35 : 0, pSheetScrimT: `opacity ${(on ? 220 : 150) * F}ms ${css(on ? 'out' : 'in')}`, pSheetY: on ? '0%' : '110%', pSheetT: R ? 'none' : `transform ${sMs * F}ms ${css(sE)}`,
+      pSkelOp: on ? 0 : 1, pContentOp: on ? 1 : 0, pSkelT: `opacity ${220 * F}ms ${css('out')}`,
+      pRoll: rollOf(on ? 'IDR 107,000' : ' IDR 82,000', F, R),
+      pListRows: on ? '1fr' : '0fr', pListT: R ? 'none' : (on ? `grid-template-rows ${220 * F}ms ${css('out')}` : `grid-template-rows ${150 * F}ms ${css('in')} ${80 * F}ms`), pListOp: on ? 1 : 0, pListOpT: on ? `opacity ${140 * F}ms ${css('out')} ${200 * F}ms` : `opacity ${80 * F}ms ${css('in')}`,
+      pErrX: R ? '0px' : s.err + 'px', pErrBorder: s.err !== 0 ? '#E5383B' : '#CFCAC3',
+      liveDot,
+      matrix: [['Marketing site', [['fade + rise 8px', 'g'], ['standard', 'g'], ['standard', 'g'], ['none', 'r'], ['hero video only', 'y']]], ['Owner & manager dashboard', [['fade 220ms', 'g'], ['standard', 'g'], ['standard', 'g'], ['none', 'r'], ['Live badge, charts 300ms', 'y']]], ['POS register', [['crossfade 100ms', 'y'], ['sheet + dialog only', 'g'], ['press, badge, roll', 'g'], ['payment success', 'g'], ['none', 'r']]], ['Kitchen display', [['none', 'r'], ['none', 'r'], ['bump flash, ticket in', 'y'], ['none', 'r'], ['late ticket border only', 'y']]], ['Customer display', [['crossfade 400ms', 'g'], ['none', 'r'], ['cart line in', 'g'], ['payment success', 'g'], ['idle slideshow', 'g']]], ['Self-order & kiosk', [['push 280ms', 'g'], ['sheets', 'g'], ['standard', 'g'], ['order placed', 'g'], ['kiosk attract pulse', 'y']]]].map(([s2, cells]) => ({ s: s2, cells: cells.map(([t, k]) => ({ t, dot: { g: '#1F9D55', y: '#E5A000', r: '#E5383B' }[k] })) })),
+      code: `:root {\n  --dur-instant: 80ms;   --dur-fast: 140ms;\n  --dur-base: 220ms;     --dur-slow: 320ms;\n  --dur-celebrate: 480ms; --exit-ratio: .7;\n  --ease-out:    cubic-bezier(.2,.8,.2,1);\n  --ease-in:     cubic-bezier(.4,0,1,1);\n  --ease-in-out: cubic-bezier(.65,0,.35,1);\n  --ease-spring: cubic-bezier(.3,1.35,.5,1);\n  --press-scale: .97;  --stagger: 24ms;\n}\n/* Framer Motion / Reanimated equivalent */\nspring = { stiffness: 520, damping: 32, mass: 1 }`,
+      rules: [['✓', '#156B3A', 'Animate transform and opacity only (plus grid-template-rows for height).'], ['✓', '#156B3A', 'Exits are 0.7× the entrance and use ease-in.'], ['✓', '#156B3A', 'Every animation can be interrupted. Tapping again reverses it from where it is.'], ['✓', '#156B3A', 'Stagger lists by 24ms, capped at 6 items (max 144ms).'], ['✓', '#156B3A', 'Sound and visual cues fire in the same frame.'], ['×', '#B3261E', 'Never block input while something animates.'], ['×', '#B3261E', 'No spring on errors, voids, refunds or anything destructive.'], ['×', '#B3261E', 'No looping motion on the register except the Live dot and the QRIS timer.'], ['×', '#B3261E', 'Do not animate live data ticks, except charts (300ms).'], ['×', '#B3261E', 'Nothing longer than 480ms, except chart draw-in (600ms).']].map(([m, c, t]) => ({ m, c, t })),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&amp;display=swap" rel="stylesheet">
+<style>
+/*bn-type*/h1,h2,h3,b{font-family:'Space Grotesk',system-ui,sans-serif}body{font-variant-numeric:tabular-nums}
+body{margin:0;background:#F2EFEA;color:#141210;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+*{box-sizing:border-box}
+a{color:#D9560B;text-decoration:none}
+a:hover{color:#B04408;text-decoration:underline}
+button,input,select,textarea{font-family:inherit}
+input[type=range]{accent-color:#F26B1D}
+</style>
+<script src="./bn-brand.js"></script>
+<script src="./bn-launcher.js?role=owner"></script>
+<script src="./bn-embed.js"></script>
+</helmet>
+<div style="height:100vh;display:flex;flex-direction:column;min-width:0">
+  <div style="height:60px;flex:none;background:#FFFFFF;border-bottom:1px solid #E6E2DC;display:flex;align-items:center;gap:14px;padding:0 16px;min-width:0">
+    <span style="font-size:20px;font-weight:700;letter-spacing:-.03em;flex:none">BorNiz</span>
+    <div style="display:flex;gap:4px;overflow-x:auto;font-size:13px;font-weight:500;min-width:0">
+      <a href="BorNiz Design System.dc.html" style="padding:8px 10px;border-radius:9px;color:#45403A;white-space:nowrap">Foundations</a>
+      <a href="BorNiz Brand Studio.dc.html" style="padding:8px 10px;border-radius:9px;color:#45403A;white-space:nowrap">Brand studio</a>
+      <a href="BorNiz Menu Studio.dc.html" style="padding:8px 10px;border-radius:9px;color:#45403A;white-space:nowrap">Menu studio</a>
+      <a href="BorNiz Studios.dc.html" style="padding:8px 10px;border-radius:9px;color:#141210;background:#F2EFEA;white-space:nowrap">More studios</a>
+      <a href="BorNiz Sitemap.dc.html" style="padding:8px 10px;border-radius:9px;color:#45403A;white-space:nowrap">Sitemap</a>
+    </div>
+    <span style="margin-left:auto;font-size:12px;color:#625C55;white-space:nowrap;flex:none">{{ saveText }}</span>
+    <button onClick="{{ publish }}" style="flex:none;height:38px;padding:0 16px;border:0;border-radius:11px;background:#F26B1D;color:#FFFFFF;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap" style-active="transform:scale(.97)">{{ pubLabel }}</button>
+  </div>
+  <div style="flex:1;min-height:0;display:flex">
+    <aside style="width:256px;flex:none;background:#FFFFFF;border-right:1px solid #E6E2DC;overflow:auto;padding:12px 10px 24px;display:flex;flex-direction:column;gap:14px">
+      <sc-for list="{{ groups }}" as="g" hint-placeholder-count="5">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <span style="font-size:11px;font-weight:700;letter-spacing:.05em;color:#857E76;padding:4px 10px 6px;display:flex;justify-content:space-between"><span>{{ g.name }}</span><span>{{ g.count }}</span></span>
+          <sc-for list="{{ g.tools }}" as="t" hint-placeholder-count="6"><button onClick="{{ t.onClick }}" style="height:38px;padding:0 10px;border:0;border-radius:10px;background:{{ t.bg }};color:{{ t.fg }};display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;cursor:pointer;text-align:left"><span style="width:16px;height:16px;flex:none;background:currentColor;-webkit-mask:{{ t.mask }};mask:{{ t.mask }}"></span><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.name }}</span><span style="height:18px;padding:0 6px;border-radius:999px;background:{{ t.planBg }};color:{{ t.planFg }};font-size:10px;font-weight:700;line-height:18px;display:{{ t.planD }}">{{ t.plan }}</span></button></sc-for>
+        </div>
+      </sc-for>
+    </aside>
+    <main style="flex:1;min-width:0;overflow:auto;display:flex;flex-direction:column">
+      <div style="padding:20px 28px 0;display:flex;flex-direction:column;gap:6px">
+        <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">{{ tool.group }}</span>
+        <span style="font-size:26px;font-weight:700;letter-spacing:-.02em">{{ tool.name }}</span>
+        <span style="font-size:14px;line-height:1.5;color:#45403A;max-width:640px">{{ tool.desc }}</span>
+      </div>
+      <div style="flex:1;padding:24px 28px 40px;display:flex;justify-content:center;align-items:flex-start">
+        <sc-if value="{{ is_cup }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:20px">
+            <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+              <sc-for list="{{ cupList }}" as="c" hint-placeholder-count="3">
+                <div style="width:{{ cupW }};height:{{ cupH }};background:#FFFFFF;border-radius:6px;box-shadow:0 10px 24px -10px rgba(20,18,16,.35);padding:10px 12px;font:500 12px/1.3 'JetBrains Mono',ui-monospace,monospace;color:#141210;display:flex;flex-direction:column;gap:4px;position:relative">
+                  <div style="display:flex;align-items:center;gap:6px"><span style="width:22px;height:22px;border-radius:5px;background:#141210;color:#FFFFFF;display:{{ cupLogoD }};place-items:center;font-size:9px;font-weight:800">KB</span><b style="font-size:13px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.n }}</b><span style="min-width:34px;height:22px;border-radius:5px;border:1.5px solid #141210;display:{{ cupQD }};place-items:center;font-weight:800">{{ c.q }}</span></div>
+                  <span style="display:{{ cupModsD }};font-size:11px">{{ c.m }}</span>
+                  <span style="display:{{ cupNameD }};font-size:15px;font-weight:800;margin-top:auto">{{ c.who }}</span>
+                  <span style="font-size:10px;border-top:1px dashed #141210;padding-top:4px">{{ cupFoot }} · {{ c.i }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <span style="font-size:12px;color:#625C55">One label per cup. 3 drinks in order #A-12 shown.</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_kticket }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;justify-content:center">
+            <div style="width:300px;background:#FFFFFF;box-shadow:0 10px 24px -10px rgba(20,18,16,.35);padding:16px 14px;font:500 13px/1.4 'JetBrains Mono',ui-monospace,monospace;color:#141210;display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:{{ ktTableFs }}">T-07</b><span style="text-align:right">{{ ktStation }}<br>14:32 · Rina</span></div>
+              <span style="border-top:2px solid #141210"></span>
+              <sc-for list="{{ ktItems }}" as="k" hint-placeholder-count="2"><div style="display:flex;flex-direction:column;gap:4px"><b style="font-size:{{ ktFs }}">{{ k.q }} × {{ k.n }}</b><span style="display:{{ k.noteD }};align-self:flex-start;padding:2px 6px;background:{{ k.noteBg }};color:{{ k.noteFg }};font-weight:700">» {{ k.note }}</span></div></sc-for>
+              <span style="border-top:2px solid #141210"></span>
+              <span>Dine-in · 2 pax · #2048</span>
+              <span style="display:{{ ktCutD }};text-align:center;font-size:11px;color:#857E76">— — — cut — — —</span>
+            </div>
+            <div style="width:220px;display:{{ ktDupD }};flex-direction:column;gap:8px;padding:14px;border-radius:14px;background:#FFFFFF;border:1px dashed #CFCAC3;font-size:12px;color:#45403A"><b style="font-size:13px;color:#141210">Expo copy</b>All stations on one ticket, printed at the pass.</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_coupon }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+            <div style="width:300px;background:#FFFFFF;box-shadow:0 10px 24px -10px rgba(20,18,16,.35);padding:16px 14px 18px;font:500 12px/1.45 'JetBrains Mono',ui-monospace,monospace;color:#141210;display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;justify-content:space-between"><span>2× Es Kopi Susu Aren</span><span>50,000</span></div>
+              <div style="display:flex;justify-content:space-between"><span>1× Croissant Almond</span><span>32,000</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:14px;border-top:1px dashed #141210;padding-top:6px"><b>TOTAL</b><b>90,200</b></div>
+              <span style="text-align:center;padding:6px 0">Terima kasih!</span>
+              <div style="border:2px dashed #141210;border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center">
+                <span style="font-size:11px;letter-spacing:.1em">– COUPON</span>
+                <b style="font-size:15px">{{ cpHead }}</b>
+                <b style="font-size:20px;line-height:1.1">{{ cpOffer }}</b>
+                <span style="padding:4px 10px;background:#141210;color:#FFFFFF;font-size:16px;font-weight:800;letter-spacing:.12em">{{ cpCode }}-7Q2</span>
+                <span style="display:{{ cpBarD }};width:180px;height:36px;background:repeating-linear-gradient(90deg,#141210 0 2px,transparent 2px 4px,#141210 4px 5px,transparent 5px 8px)"></span>
+                <span style="font-size:10px">{{ cpMin }} · {{ cpExp }}</span>
+              </div>
+            </div>
+            <span style="font-size:12px;color:#625C55">{{ cpRule }}</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_letter }}" hint-placeholder-val="{{ false }}">
+          <div style="width:440px;aspect-ratio:1/1.414;background:#FFFFFF;box-shadow:0 14px 30px -12px rgba(20,18,16,.35);padding:30px 32px;display:flex;flex-direction:column;gap:16px;font-size:11px;color:var(--bn-ink,#14213D)">
+            <div style="display:flex;flex-direction:{{ ltDir }};align-items:{{ ltJ }};justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:3px solid {{ ltAc }};text-align:{{ ltAlign }}">
+              <span style="width:44px;height:44px;flex:none;border-radius:10px;background:{{ ltAc }};color:#FFFFFF;display:grid;place-items:center;font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-weight:800;font-size:15px">KB</span>
+              <div style="display:flex;flex-direction:column;gap:2px;flex:1"><b style="font-size:14px">{{ ltCo }}</b><span>{{ ltAddr }}</span><span>{{ ltNpwp }}</span></div>
+            </div>
+            <div style="display:flex;justify-content:space-between"><div style="display:flex;flex-direction:column;gap:2px"><b style="font-size:18px;font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif)">INVOICE</b><span>INV/2026/10/0142</span></div><div style="display:flex;flex-direction:column;gap:2px;text-align:right"><span>Bill to</span><b>PT Sinar Kantor</b><span>10 Oct 2026</span></div></div>
+            <div style="display:flex;flex-direction:column">
+              <div style="display:grid;grid-template-columns:1fr 50px 80px;padding:6px 8px;background:{{ ltAc }};color:#FFFFFF;font-weight:700"><span>Item</span><span>Qty</span><span style="text-align:right">Amount</span></div>
+              <div style="display:grid;grid-template-columns:1fr 50px 80px;padding:6px 8px;border-bottom:1px solid #E3DED5"><span>Coffee catering · 40 cups</span><span>1</span><span style="text-align:right">1,200,000</span></div>
+              <div style="display:grid;grid-template-columns:1fr 50px 80px;padding:6px 8px;border-bottom:1px solid #E3DED5"><span>Pastry box</span><span>20</span><span style="text-align:right">640,000</span></div>
+              <div style="display:grid;grid-template-columns:1fr 80px;padding:8px;font-weight:800;font-size:13px"><span style="text-align:right;padding-right:10px">Total</span><span style="text-align:right">IDR 1,840,000</span></div>
+            </div>
+            <div style="margin-top:auto;display:{{ ltSignD }};justify-content:flex-end"><div style="width:140px;height:70px;border-bottom:1px solid var(--bn-ink,#14213D);display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;color:#5B6478">Signature &amp; stamp</div></div>
+            <span style="padding-top:10px;border-top:1px solid #E3DED5;text-align:center;color:#5B6478">{{ ltFoot }}</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_pmenu }}" hint-placeholder-val="{{ false }}">
+          <div style="width:{{ pmW }};height:{{ pmH }};background:var(--bn-paper,#F7F4EE);box-shadow:0 14px 30px -12px rgba(20,18,16,.35);padding:28px;display:flex;flex-direction:column;gap:16px;color:var(--bn-ink,#14213D);overflow:hidden">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:13px;font-weight:800;letter-spacing:.2em">KOPI BIRU</span><span style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:32px;font-weight:800">{{ pmTitle }}</span></div>
+            <div style="display:grid;grid-template-columns:{{ pmCols }};gap:16px 20px;align-content:start">
+              <sc-for list="{{ pmCats }}" as="c" hint-placeholder-count="3">
+                <div style="display:flex;flex-direction:column;gap:6px"><b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:16px;color:var(--bn-p,#1F4FD8);border-bottom:2px solid var(--bn-p,#1F4FD8);padding-bottom:4px">{{ c.c }}</b>
+                  <sc-for list="{{ c.items }}" as="i" hint-placeholder-count="3"><div style="display:flex;gap:8px;align-items:center;font-size:12px"><span style="display:{{ pmPhotoD }};width:28px;height:28px;flex:none;border-radius:6px;background:repeating-linear-gradient(135deg,#ECE7DE 0 5px,#E3DED5 5px 6px)"></span><span style="flex:1;min-width:0">{{ i.n }}</span><b style="display:{{ pmPriceD }}">{{ i.p }}</b></div></sc-for>
+                </div>
+              </sc-for>
+            </div>
+            <span style="margin-top:auto;text-align:center;font-size:10px;color:#5B6478">{{ pmNote }} · Prices in thousand rupiah</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_rcpt }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+            <div style="width:{{ rcW }};background:#FFFFFF;box-shadow:0 10px 24px -10px rgba(20,18,16,.35);padding:16px 14px;font:500 12px/1.45 'JetBrains Mono',ui-monospace,monospace;color:#141210;display:flex;flex-direction:column;gap:5px">
+              <b style="text-align:center;font-size:14px">{{ rcH1 }}</b><span style="text-align:center">{{ rcH2 }}</span>
+              <span style="border-top:1px dashed #141210"></span>
+              <div style="display:flex;justify-content:space-between"><span>2× Es Kopi Susu</span><span>50,000</span></div>
+              <div style="display:flex;justify-content:space-between"><span>1× Croissant</span><span>32,000</span></div>
+              <div style="display:flex;justify-content:space-between;border-top:1px dashed #141210;padding-top:5px"><b>TOTAL</b><b>90,200</b></div>
+              <span style="text-align:center;padding-top:6px">{{ rcF1 }}</span><span style="text-align:center">Wi-Fi {{ rcWifi }}</span>
+            </div>
+            <span style="height:26px;padding:0 10px;border-radius:999px;background:#F2EFEA;font-size:12px;font-weight:600;line-height:26px">{{ rcTag }}</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ is_msg }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:12px">
+            <sc-if value="{{ msgWa }}" hint-placeholder-val="{{ true }}">
+              <div style="width:340px;border-radius:28px;background:#141210;padding:8px">
+                <div style="border-radius:22px;overflow:hidden;background:#ECE5DD;display:flex;flex-direction:column;min-height:520px">
+                  <div style="height:56px;background:#075E54;color:#FFFFFF;display:flex;align-items:center;gap:10px;padding:0 14px"><span style="width:34px;height:34px;border-radius:999px;background:var(--bn-p,#1F4FD8);display:grid;place-items:center;font-size:12px;font-weight:800">KB</span><span style="display:flex;flex-direction:column"><b style="font-size:14px">Kopi Biru ✓</b><span style="font-size:11px;opacity:.8">Business account</span></span></div>
+                  <div style="flex:1;padding:14px;display:flex;flex-direction:column;gap:8px">
+                    <span style="align-self:center;padding:4px 10px;border-radius:8px;background:#FFFFFF;font-size:11px;color:#5B6478">Today</span>
+                    <div style="max-width:86%;border-radius:10px;background:#FFFFFF;box-shadow:0 1px 1px rgba(0,0,0,.1);overflow:hidden">
+                      <span style="display:{{ msgImgD }};height:130px;background:var(--bn-banner,linear-gradient(135deg,#2B4C7E,#14213D))"></span>
+                      <div style="padding:8px 10px;font-size:13px;line-height:1.45;white-space:pre-wrap;color:#141210">{{ msgBody }}</div>
+                      <div style="padding:0 10px 6px;text-align:right;font-size:10px;color:#857E76">14:34</div>
+                      <div style="border-top:1px solid #E6E2DC;height:40px;display:grid;place-items:center;color:#027EB5;font-size:13px;font-weight:600">{{ msgBtn }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ msgEmail }}" hint-placeholder-val="{{ false }}">
+              <div style="width:480px;border-radius:14px;background:#FFFFFF;box-shadow:0 14px 30px -12px rgba(20,18,16,.3);overflow:hidden">
+                <div style="padding:12px 16px;border-bottom:1px solid #E6E2DC;font-size:12px;color:#625C55;display:flex;flex-direction:column;gap:3px"><span><b style="color:#141210">Kopi Biru</b> &lt;hello@kopibiru.id&gt;</span><b style="font-size:14px;color:#141210">{{ msgSubj }}</b></div>
+                <span style="display:{{ msgImgD }};height:150px;background:var(--bn-banner,linear-gradient(135deg,#2B4C7E,#14213D))"></span>
+                <div style="padding:22px;display:flex;flex-direction:column;gap:14px;color:var(--bn-ink,#14213D)"><span style="font-size:14px;line-height:1.6;white-space:pre-wrap">{{ msgBody }}</span><span style="align-self:flex-start;height:44px;padding:0 20px;border-radius:999px;background:var(--bn-p,#1F4FD8);color:#FFFFFF;font-size:14px;font-weight:700;line-height:44px">{{ msgBtn }}</span><span style="font-size:11px;color:#5B6478;border-top:1px solid #E3DED5;padding-top:12px">Kopi Biru · Jl. Asia Afrika 8, Jakarta · Unsubscribe</span></div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ msgSms }}" hint-placeholder-val="{{ false }}">
+              <div style="width:320px;border-radius:24px;background:#FFFFFF;box-shadow:0 14px 30px -12px rgba(20,18,16,.3);padding:18px;display:flex;flex-direction:column;gap:10px"><b style="font-size:13px;text-align:center">KOPIBIRU</b><div style="align-self:flex-start;max-width:90%;padding:10px 12px;border-radius:16px;background:#E9E9EB;font-size:13px;line-height:1.45">{{ msgSmsBody }} kopibiru.id/r/x8</div><span style="font-size:11px;color:#857E76;text-align:center">160 characters max · link shortened</span></div>
+            </sc-if>
+            <span style="height:26px;padding:0 10px;border-radius:999px;background:#E3F5EA;color:#156B3A;font-size:12px;font-weight:700;line-height:26px">Meta category: {{ msgCat }} · Approved</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_flow }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:24px;flex-wrap:wrap;justify-content:center;align-items:flex-start;width:100%">
+            <div style="width:340px;display:flex;flex-direction:column;align-items:center">
+              <sc-for list="{{ flNodes }}" as="n" hint-placeholder-count="4">
+                <div style="width:100%;padding:14px;border-radius:16px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;gap:12px;align-items:center"><span style="width:38px;height:38px;flex:none;border-radius:11px;background:{{ n.c }};display:grid;place-items:center"><span style="width:18px;height:18px;background:#FFFFFF;-webkit-mask:{{ n.mask }};mask:{{ n.mask }}"></span></span><span style="display:flex;flex-direction:column;gap:2px;min-width:0"><b style="font-size:12px;color:#625C55;text-transform:uppercase;letter-spacing:.04em">{{ n.k }}</b><span style="font-size:14px;font-weight:600">{{ n.d }}</span></span></div>
+                <span style="width:2px;height:18px;background:#CFCAC3"></span>
+              </sc-for>
+              <span style="height:30px;padding:0 12px;border-radius:999px;background:#141210;color:#FFFFFF;font-size:12px;font-weight:700;line-height:30px">End</span>
+            </div>
+            <div style="width:300px;display:flex;flex-direction:column;gap:12px">
+              <div style="padding:14px;border-radius:16px;background:#ECE5DD;display:flex;flex-direction:column;gap:6px"><span style="font-size:11px;font-weight:700;color:#45403A">MESSAGE PREVIEW</span><div style="border-radius:10px;background:#FFFFFF;padding:10px;font-size:13px;line-height:1.45;white-space:pre-wrap">{{ flMsg }}</div><div style="border-radius:10px;background:#FFFFFF;height:38px;display:grid;place-items:center;color:#027EB5;font-size:13px;font-weight:600">{{ flBtn }}</div></div>
+              <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px"><sc-for list="{{ flStats }}" as="x" hint-placeholder-count="4"><div style="padding:12px;border-radius:14px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:4px"><span style="font-size:11px;color:#625C55">{{ x.l }}</span><b style="font-size:20px">{{ x.n }}</b></div></sc-for></div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ is_voucher }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
+            <sc-if value="{{ vcTicket }}" hint-placeholder-val="{{ true }}"><div style="width:380px;height:150px;display:flex;filter:drop-shadow(0 12px 20px rgba(20,33,61,.25))"><div style="flex:1;background:{{ vcBg }};color:#FFFFFF;border-radius:18px 0 0 18px;padding:20px;display:flex;flex-direction:column;justify-content:center;gap:6px;-webkit-mask:radial-gradient(circle at 100% 50%,transparent 12px,#000 12.5px);mask:radial-gradient(circle at 100% 50%,transparent 12px,#000 12.5px)"><b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:26px;line-height:1">{{ vcTitle }}</b><span style="font-size:13px;opacity:.9">{{ vcVal }}</span><span style="font-size:11px;opacity:.75">{{ vcExp }}</span></div><div style="width:110px;background:#FFFFFF;border-radius:0 18px 18px 0;border-left:2px dashed {{ vcBg }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--bn-ink,#14213D)"><span style="font-size:10px;font-weight:700;letter-spacing:.08em">CODE</span><b style="font-size:18px;letter-spacing:.08em">{{ vcCode }}</b></div></div></sc-if>
+            <sc-if value="{{ vcCard }}" hint-placeholder-val="{{ false }}"><div style="width:320px;border-radius:22px;background:#FFFFFF;box-shadow:0 14px 30px -12px rgba(20,33,61,.3);overflow:hidden"><div style="height:120px;background:{{ vcBg }};display:flex;align-items:flex-end;padding:16px;color:#FFFFFF"><b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:26px">{{ vcTitle }}</b></div><div style="padding:16px;display:flex;flex-direction:column;gap:10px;color:var(--bn-ink,#14213D)"><span style="font-size:14px">{{ vcVal }}</span><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;color:#5B6478">{{ vcExp }}</span><span style="height:34px;padding:0 14px;border-radius:999px;background:{{ vcBg }};color:#FFFFFF;font-size:13px;font-weight:700;line-height:34px">Use {{ vcCode }}</span></div></div></div></sc-if>
+            <sc-if value="{{ vcStamp }}" hint-placeholder-val="{{ false }}"><div style="width:340px;border-radius:22px;background:#FFFFFF;box-shadow:0 14px 30px -12px rgba(20,33,61,.3);padding:20px;display:flex;flex-direction:column;gap:14px;color:var(--bn-ink,#14213D)"><div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:22px">{{ vcTitle }}</b><span style="font-size:12px;color:#5B6478">6 / 10</span></div><div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px"><sc-for list="{{ vcStamps }}" as="x" hint-placeholder-count="10"><span style="aspect-ratio:1;border-radius:999px;border:2px solid {{ vcBg }};background:{{ x.bg }};color:{{ x.fg }};display:grid;place-items:center;font-size:14px">✓</span></sc-for></div><span style="font-size:12px;color:#5B6478">{{ vcVal }} · {{ vcExp }}</span></div></sc-if>
+            <span style="font-size:12px;color:#625C55">Same design appears in self-order, e-receipt and WhatsApp.</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_gift }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
+            <div style="width:380px;aspect-ratio:1.586;border-radius:20px;background:{{ gcBg }};color:{{ gcFg }};border:{{ gcBorder }};box-shadow:0 18px 36px -14px rgba(20,33,61,.45);padding:22px;display:flex;flex-direction:column;justify-content:space-between">
+              <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:18px">Kopi Biru</b><span style="font-size:11px;font-weight:700;letter-spacing:.1em">GIFT CARD</span></div>
+              <b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:38px;line-height:1">{{ gcAmt }}</b>
+              <div style="display:flex;justify-content:space-between;align-items:flex-end;font-size:12px;gap:10px"><span style="opacity:.85">•••• 4821</span><span>{{ gcFrom }}</span></div>
+            </div>
+            <div style="width:380px;padding:14px 16px;border-radius:16px;background:#FFFFFF;border:1px solid #E6E2DC;font-size:14px;line-height:1.5;color:var(--bn-ink,#14213D)">“{{ gcMsg }}”</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_push }}" hint-placeholder-val="{{ false }}">
+          <div style="width:340px;height:560px;border-radius:40px;background:#141210;padding:9px">
+            <div style="height:100%;border-radius:32px;background:linear-gradient(180deg,#2B4C7E,#0E1A33);padding:60px 12px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#FFFFFF">
+              <span style="font-size:15px;font-weight:600;opacity:.85">Friday, 10 October</span><span style="font-size:68px;font-weight:300;line-height:1;margin-bottom:30px">14:34</span>
+              <div style="width:100%;border-radius:20px;background:rgba(255,255,255,.82);backdrop-filter:blur(10px);color:#141210;padding:12px 14px;display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#45403A"><span style="width:20px;height:20px;border-radius:6px;background:var(--bn-p,#1F4FD8);color:#FFFFFF;display:grid;place-items:center;font-size:8px;font-weight:800">KB</span>KOPI BIRU<span style="margin-left:auto">{{ puWhen }}</span></div>
+                <b style="font-size:14px">{{ puTitle }}</b><span style="font-size:13px;line-height:1.4">{{ puBody }}</span>
+                <span style="display:{{ puImgD }};height:120px;border-radius:12px;background:repeating-linear-gradient(135deg,#ECE7DE 0 8px,#E3DED5 8px 9px)"></span>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_referral }}" hint-placeholder-val="{{ false }}">
+          <div style="width:340px;border-radius:32px;background:#141210;padding:8px">
+            <div style="border-radius:26px;overflow:hidden;background:var(--bn-paper,#F7F4EE);color:var(--bn-ink,#14213D);display:flex;flex-direction:column">
+              <div style="padding:34px 22px 26px;background:{{ rfBg }};color:#FFFFFF;display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center"><span style="font-size:40px">★</span><b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:28px;line-height:1.05">{{ rfHead }}</b></div>
+              <div style="padding:20px;display:flex;flex-direction:column;gap:10px">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div style="padding:12px;border-radius:14px;background:#FFFFFF;border:1px solid #E3DED5;display:flex;flex-direction:column;gap:4px"><span style="font-size:11px;color:#5B6478">You get</span><b style="font-size:13px">{{ rfYou }}</b></div><div style="padding:12px;border-radius:14px;background:#FFFFFF;border:1px solid #E3DED5;display:flex;flex-direction:column;gap:4px"><span style="font-size:11px;color:#5B6478">Friend gets</span><b style="font-size:13px">{{ rfFriend }}</b></div></div>
+                <div style="height:48px;border-radius:14px;border:1.5px dashed #CFCAC3;display:flex;align-items:center;justify-content:space-between;padding:0 14px;font:600 13px/1 'JetBrains Mono',ui-monospace,monospace">kopibiru.id/r/DEWI25<span style="color:{{ rfBg }}">Copy</span></div>
+                <span style="height:50px;border-radius:14px;background:#25D366;color:#FFFFFF;display:grid;place-items:center;font-size:14px;font-weight:700">Share on WhatsApp</span>
+                <span style="font-size:11px;color:#5B6478;text-align:center">{{ rfCap }} · 3 joined so far</span>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_loyalty }}" hint-placeholder-val="{{ false }}">
+          <div style="width:380px;display:flex;flex-direction:column;gap:12px;color:var(--bn-ink,#14213D)">
+            <div style="padding:18px;border-radius:20px;background:#FFFFFF;border:1px solid #E3DED5;display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;color:#5B6478">How it works</span><b style="font-size:18px">{{ lyRule }}</b><span style="font-size:13px;color:#5B6478">{{ lyExp }}</span></div>
+            <div style="display:{{ lyTiersD }};grid-template-columns:repeat(3,minmax(0,1fr));gap:8px"><div style="padding:12px;border-radius:14px;background:#E9EBEF;font-size:12px"><b>Silver</b><br>0 pts</div><div style="padding:12px;border-radius:14px;background:#F8E7B9;font-size:12px"><b>Gold</b><br>1,000 pts</div><div style="padding:12px;border-radius:14px;background:var(--bn-ink,#14213D);color:#FFFFFF;font-size:12px"><b>Platinum</b><br>2,000 pts</div></div>
+            <span style="font-size:12px;font-weight:700;letter-spacing:.04em;color:#5B6478;padding-top:4px">REWARDS</span>
+            <sc-for list="{{ lyRewards }}" as="r" hint-placeholder-count="3"><div style="padding:12px;border-radius:16px;background:#FFFFFF;border:1px solid #E3DED5;display:flex;gap:12px;align-items:center"><span style="width:52px;height:52px;flex:none;border-radius:12px;background:repeating-linear-gradient(135deg,#ECE7DE 0 6px,#E3DED5 6px 7px)"></span><b style="flex:1;font-size:14px">{{ r.n }}</b><span style="height:30px;padding:0 12px;border-radius:999px;background:var(--bn-p,#1F4FD8);color:#FFFFFF;font-size:12px;font-weight:700;line-height:30px">{{ r.p }}</span></div></sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ is_fonts }}" hint-placeholder-val="{{ false }}">
+          <div style="width:440px;padding:26px;border-radius:22px;background:var(--bn-paper,#F7F4EE);border:1px solid #E3DED5;display:flex;flex-direction:column;gap:14px;color:var(--bn-ink,#14213D)">
+            <span style="font-family:{{ fnHead }};font-size:{{ fnH }};line-height:1;font-weight:800;letter-spacing:-.02em">Brewed slow, served fast.</span>
+            <span style="font-family:{{ fnBody }};font-size:{{ fnB }};line-height:1.55;color:#5B6478">Single-origin coffee and fresh pastry. Order from your table, pay with QRIS, and earn beans on every cup.</span>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:16px;background:#FFFFFF"><span style="font-family:{{ fnBody }};font-size:{{ fnB }};font-weight:600">Es Kopi Susu Aren</span><b style="font-family:{{ fnHead }};font-size:18px">IDR 25,000</b></div>
+            <div style="display:flex;gap:8px;font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#5B6478"><span>H: {{ fnHeadName }}</span><span>·</span><span>Body: {{ fnBodyName }}</span></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_icons }}" hint-placeholder-val="{{ false }}">
+          <div style="width:420px;padding:22px;border-radius:22px;background:#FFFFFF;border:1px solid #E3DED5;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px">
+            <sc-for list="{{ icList }}" as="i" hint-placeholder-count="12"><div style="display:flex;flex-direction:column;align-items:center;gap:6px"><span style="width:60px;height:60px;border-radius:{{ icR }};background:{{ icBg }};display:grid;place-items:center"><span style="width:{{ icSize }};height:{{ icSize }};background:{{ icFg }};-webkit-mask:{{ i.mask }};mask:{{ i.mask }}"></span></span><span style="font-size:10px;color:#5B6478">{{ i.n }}</span></div></sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_appicon }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:flex-start">
+            <div style="width:220px;height:300px;border-radius:30px;background:linear-gradient(180deg,#8FA9E8,#2B4C7E);padding:22px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px 12px;align-content:start">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><span style="width:52px;height:52px;border-radius:{{ aiR }};background:{{ aiBg }};color:#FFFFFF;display:grid;place-items:center;font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-weight:800;font-size:18px">{{ aiInit }}</span><span style="font-size:10px;color:#FFFFFF;white-space:nowrap">{{ aiName }}</span></div>
+              <span style="width:52px;height:52px;border-radius:22%;background:rgba(255,255,255,.3)"></span><span style="width:52px;height:52px;border-radius:22%;background:rgba(255,255,255,.3)"></span><span style="width:52px;height:52px;border-radius:22%;background:rgba(255,255,255,.3)"></span><span style="width:52px;height:52px;border-radius:22%;background:rgba(255,255,255,.3)"></span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;width:320px">
+              <div style="border-radius:12px;background:#DEE1E6;padding:6px 6px 0"><div style="height:34px;border-radius:10px 10px 0 0;background:#FFFFFF;display:flex;align-items:center;gap:8px;padding:0 12px;width:200px"><span style="width:16px;height:16px;border-radius:4px;background:{{ aiBg }};color:#FFFFFF;display:grid;place-items:center;font-size:7px;font-weight:800">{{ aiInit }}</span><span style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ aiName }} · Menu</span></div></div>
+              <div style="border-radius:14px;background:#FFFFFF;border:1px solid #E3DED5;overflow:hidden"><div style="aspect-ratio:1.9;background:linear-gradient(135deg,{{ aiBg }},var(--bn-ink,#14213D));display:flex;align-items:flex-end;padding:16px;color:#FFFFFF"><b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:22px;line-height:1.05">{{ aiOg }}</b></div><div style="padding:10px 12px;display:flex;flex-direction:column;gap:2px"><span style="font-size:11px;color:#5B6478">order.kopibiru.id</span><b style="font-size:13px">{{ aiOg }}</b></div></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_sounds }}" hint-placeholder-val="{{ false }}">
+          <div style="width:420px;display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ sdList }}" as="x" hint-placeholder-count="4"><div style="padding:14px;border-radius:16px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;align-items:center;gap:12px;opacity:{{ x.op }}"><button onClick="{{ x.play }}" style="width:44px;height:44px;flex:none;border:0;border-radius:12px;background:#141210;display:grid;place-items:center;cursor:pointer" style-active="transform:scale(.94)"><span style="width:18px;height:18px;background:#FFFFFF;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/play.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/play.svg) center/contain no-repeat"></span></button><span style="display:flex;flex-direction:column;gap:2px"><b style="font-size:14px">{{ x.n }}</b><span style="font-size:12px;color:#625C55">{{ x.d }}</span></span></div></sc-for>
+            <span style="font-size:12px;color:#625C55;text-align:center">Volume {{ sdVol }} · tap play to hear it</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_lang }}" hint-placeholder-val="{{ false }}">
+          <div style="width:340px;border-radius:32px;background:#141210;padding:8px">
+            <div style="border-radius:26px;background:var(--bn-paper,#F7F4EE);color:var(--bn-ink,#14213D);padding:18px;display:flex;flex-direction:column;gap:14px;min-height:420px">
+              <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ lgChips }}" as="c" hint-placeholder-count="2"><span style="height:28px;padding:0 10px;border-radius:999px;background:#FFFFFF;border:1px solid #E3DED5;font-size:12px;font-weight:700;line-height:26px">{{ c.l }}</span></sc-for></div>
+              <b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:24px">{{ lgCat }}</b>
+              <div style="border-radius:18px;background:#FFFFFF;overflow:hidden"><span style="display:block;aspect-ratio:1.6;background:repeating-linear-gradient(135deg,#ECE7DE 0 8px,#E3DED5 8px 9px)"></span><div style="padding:14px;display:flex;flex-direction:column;gap:6px"><b style="font-size:16px">{{ lgName }}</b><span style="font-size:13px;color:#5B6478;line-height:1.4">{{ lgDesc }}</span><div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><b>IDR 25,000</b><span style="height:38px;padding:0 16px;border-radius:999px;background:var(--bn-p,#1F4FD8);color:#FFFFFF;font-size:13px;font-weight:700;line-height:38px">{{ lgAdd }}</span></div></div></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_white }}" hint-placeholder-val="{{ false }}">
+          <div style="width:380px;padding:20px;border-radius:22px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;gap:14px;align-items:center"><span style="width:84px;height:84px;flex:none;border-radius:22%;background:{{ wlBg }};color:#FFFFFF;display:grid;place-items:center;font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-weight:800;font-size:28px">KB</span><div style="display:flex;flex-direction:column;gap:3px;min-width:0"><b style="font-size:18px">{{ wlName }}</b><span style="font-size:13px;color:#625C55">{{ wlSub }}</span><span style="align-self:flex-start;margin-top:6px;height:30px;padding:0 18px;border-radius:999px;background:#2F6FEB;color:#FFFFFF;font-size:13px;font-weight:700;line-height:30px">GET</span></div></div>
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px"><span style="aspect-ratio:9/16;border-radius:12px;background:linear-gradient(180deg,{{ wlBg }},var(--bn-ink,#14213D))"></span><span style="aspect-ratio:9/16;border-radius:12px;background:var(--bn-paper,#F7F4EE);border:1px solid #E3DED5"></span><span style="aspect-ratio:9/16;border-radius:12px;background:var(--bn-paper,#F7F4EE);border:1px solid #E3DED5"></span></div>
+            <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">{{ wlBundle }} · iOS 15+ · Android 9+</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ is_domain }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;align-items:flex-start">
+            <div style="width:420px;border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden">
+              <div style="padding:12px 16px;background:#F2EFEA;font-size:12px;font-weight:700">DNS records</div>
+              <sc-for list="{{ dmRows }}" as="r" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:56px 80px minmax(0,1fr) 76px;gap:8px;padding:12px 16px;border-top:1px solid #F2EFEA;align-items:center;font:500 12px/1.3 'JetBrains Mono',ui-monospace,monospace"><b>{{ r.t }}</b><span>{{ r.n }}</span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.val }}</span><span style="justify-self:end;padding:3px 8px;border-radius:999px;background:{{ r.sb }};color:{{ r.sf }};font:700 11px/1.3 'Instrument Sans',system-ui,sans-serif">{{ r.s }}</span></div></sc-for>
+            </div>
+            <div style="width:300px;padding:22px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:10px">
+              <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">https://{{ dmUrl }}</span>
+              <b style="font-size:20px">Sign in to Kopi Biru</b>
+              <span style="display:{{ dmSsoD }};height:46px;border-radius:12px;border:1.5px solid #E6E2DC;place-items:center;font-size:14px;font-weight:600">{{ dmSso }}</span>
+              <div style="display:{{ dmPassD }};flex-direction:column;gap:8px"><span style="height:44px;border-radius:12px;border:1.5px solid #E6E2DC;padding:0 12px;font-size:13px;line-height:42px;color:#857E76">Email</span><span style="height:44px;border-radius:12px;border:1.5px solid #E6E2DC;padding:0 12px;font-size:13px;line-height:42px;color:#857E76">Password</span><span style="height:46px;border-radius:12px;background:var(--bn-p,#1F4FD8);color:#FFFFFF;display:grid;place-items:center;font-size:14px;font-weight:700">Sign in</span></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_embed }}" hint-placeholder-val="{{ false }}">
+          <div style="width:340px;border-radius:32px;background:#141210;padding:8px">
+            <div style="position:relative;border-radius:26px;background:var(--bn-paper,#F7F4EE);color:var(--bn-ink,#14213D);padding:18px;display:flex;flex-direction:column;gap:12px;min-height:520px">
+              <b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:22px">Kopi Biru</b>
+              <div style="display:{{ emRvD }};flex-direction:column;gap:8px;padding:14px;border-radius:16px;background:#FFFFFF;border:1px solid #E3DED5"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:14px">Google Reviews</b><span style="font-size:13px;font-weight:700">4.8 ★ · 1,204</span></div><span style="font-size:13px;line-height:1.45;color:#5B6478">“Best aren latte in Senayan. QR ordering is super fast.” — Dewi</span></div>
+              <div style="display:{{ emIgD }};grid-template-columns:repeat(3,1fr);gap:4px"><span style="aspect-ratio:1;background:repeating-linear-gradient(135deg,#ECE7DE 0 6px,#E3DED5 6px 7px)"></span><span style="aspect-ratio:1;background:repeating-linear-gradient(135deg,#ECE7DE 0 6px,#E3DED5 6px 7px)"></span><span style="aspect-ratio:1;background:repeating-linear-gradient(135deg,#ECE7DE 0 6px,#E3DED5 6px 7px)"></span><span style="aspect-ratio:1;background:repeating-linear-gradient(135deg,#ECE7DE 0 6px,#E3DED5 6px 7px)"></span><span style="aspect-ratio:1;background:repeating-linear-gradient(135deg,#ECE7DE 0 6px,#E3DED5 6px 7px)"></span><span style="aspect-ratio:1;background:repeating-linear-gradient(135deg,#ECE7DE 0 6px,#E3DED5 6px 7px)"></span></div>
+              <span style="height:110px;border-radius:16px;background:repeating-linear-gradient(135deg,#ECE7DE 0 8px,#E3DED5 8px 9px)"></span>
+              <span style="position:absolute;right:16px;bottom:16px;width:56px;height:56px;border-radius:999px;background:#25D366;display:{{ emWaD }};place-items:center;box-shadow:0 10px 20px -6px rgba(37,211,102,.6)"><span style="width:26px;height:26px;background:#FFFFFF;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/message-circle.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/message-circle.svg) center/contain no-repeat"></span></span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_emaild }}" hint-placeholder-val="{{ false }}">
+          <div style="width:520px;display:flex;flex-direction:column;gap:12px">
+            <div style="padding:14px 16px;border-radius:16px;background:#FFFFFF;border:1px solid #E6E2DC;font-size:13px"><span style="color:#625C55">Receipts and campaigns will come from</span><br><b style="font-size:15px">{{ edFrom }}</b></div>
+            <div style="border-radius:16px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden"><sc-for list="{{ edRows }}" as="r" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:60px 54px minmax(0,1fr) 90px;gap:8px;padding:12px 16px;border-top:1px solid #F2EFEA;align-items:center;font:500 12px/1.3 'JetBrains Mono',ui-monospace,monospace"><b style="font-family:'Instrument Sans',system-ui,sans-serif">{{ r.k }}</b><span>{{ r.t }}</span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.n }} → {{ r.val }}</span><span style="justify-self:end;padding:3px 8px;border-radius:999px;background:{{ r.sb }};color:{{ r.sf }};font:700 11px/1.3 'Instrument Sans',system-ui,sans-serif">{{ r.s }}</span></div></sc-for></div>
+            <span style="align-self:flex-start;height:42px;padding:0 18px;border-radius:12px;background:#141210;color:#FFFFFF;font-size:13px;font-weight:700;line-height:42px">Verify again</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_kit }}" hint-placeholder-val="{{ false }}">
+          <div style="width:460px;padding:20px;border-radius:22px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+            <span style="font-size:13px;color:#625C55">Found in <b style="color:#141210">{{ kitSrc }}</b></span>
+            <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px"><sc-for list="{{ kitColors }}" as="c" hint-placeholder-count="5"><div style="display:flex;flex-direction:column;gap:6px"><span style="height:56px;border-radius:12px;background:{{ c.c }};box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)"></span><span style="font-size:11px;font-weight:600">{{ c.n }}</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">{{ c.c }}</span></div></sc-for></div>
+            <sc-for list="{{ kitFonts }}" as="f" hint-placeholder-count="2"><div style="display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid #F2EFEA;font-size:13px"><span style="color:#625C55">{{ f.n }}</span><b>{{ f.f }}</b></div></sc-for>
+            <div style="display:flex;gap:8px"><span style="height:56px;width:56px;border-radius:12px;background:var(--bn-p,#1F4FD8);color:#FFFFFF;display:grid;place-items:center;font-weight:800">KB</span><span style="height:56px;width:56px;border-radius:12px;background:var(--bn-ink,#14213D);color:#FFFFFF;display:grid;place-items:center;font-weight:800">KB</span><span style="flex:1;font-size:12px;color:#625C55;align-self:center">2 logos found: color and mono</span></div>
+            <span style="height:46px;border-radius:12px;background:#F26B1D;color:#FFFFFF;display:grid;place-items:center;font-size:14px;font-weight:700">Apply to Brand &amp; Menu Studio</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_auto }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:16px;background:#FFFFFF;border:1px solid #E6E2DC"><span style="width:48px;height:48px;border-radius:12px;background:var(--bn-p,#1F4FD8);color:#FFFFFF;display:grid;place-items:center;font-weight:800">KB</span><span style="font-size:13px">Built from <b>{{ atSrc }}</b></span></div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+              <sc-for list="{{ atOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.onClick }}" style="width:180px;border:0;padding:0;border-radius:18px;overflow:hidden;background:#FFFFFF;box-shadow:{{ o.ring }};cursor:pointer;text-align:left"><div style="height:100px;background:{{ o.p0 }};padding:12px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px"><span style="width:60%;height:10px;border-radius:5px;background:{{ o.p2 }}"></span><span style="width:70px;height:26px;border-radius:999px;background:{{ o.p1 }}"></span></div><div style="padding:10px 12px;display:flex;justify-content:space-between;align-items:center"><b style="font-size:13px">{{ o.l }}</b><span style="display:flex;gap:4px"><span style="width:14px;height:14px;border-radius:4px;background:{{ o.p0 }}"></span><span style="width:14px;height:14px;border-radius:4px;background:{{ o.p1 }}"></span><span style="width:14px;height:14px;border-radius:4px;background:{{ o.p2 }}"></span></span></div></button></sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_anim }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:14px">
+            <div style="width:240px;border-radius:20px;background:#FFFFFF;border:1px solid #E3DED5;overflow:hidden;cursor:pointer;transition:transform {{ anT }},box-shadow {{ anT }}" style-hover="transform:{{ anHover }};box-shadow:0 18px 30px -14px rgba(20,33,61,.35)"><span style="display:block;aspect-ratio:1.3;background:repeating-linear-gradient(135deg,#ECE7DE 0 8px,#E3DED5 8px 9px)"></span><div style="padding:12px 14px;display:flex;justify-content:space-between"><b style="font-size:14px">Matcha Latte</b><b style="font-size:14px">30k</b></div></div>
+            <span style="max-width:340px;text-align:center;font-size:13px;line-height:1.5;color:#45403A">{{ anDesc }}</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ is_widgets }}" hint-placeholder-val="{{ false }}">
+          <div style="width:100%;max-width:760px;padding:18px;border-radius:22px;background:#FAF8F5;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+            <b style="font-size:18px">{{ wgRole }}</b>
+            <div style="display:grid;grid-template-columns:{{ wgCols }};gap:10px">
+              <sc-for list="{{ wgList }}" as="w" hint-placeholder-count="6"><div style="grid-column:{{ w.span }};min-height:110px;padding:14px;border-radius:16px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-size:12px;color:#625C55;font-weight:600">{{ w.l }}</span><span style="display:flex;gap:2px"><button onClick="{{ w.up }}" style="width:24px;height:24px;border:0;border-radius:6px;background:#F2EFEA;cursor:pointer;opacity:{{ w.upOp }};font-size:12px">↑</button><button onClick="{{ w.dn }}" style="width:24px;height:24px;border:0;border-radius:6px;background:#F2EFEA;cursor:pointer;opacity:{{ w.dnOp }};font-size:12px">↓</button></span></div><b style="font-size:22px;letter-spacing:-.02em">{{ w.val }}</b><span style="margin-top:auto;height:28px;border-radius:8px;background:linear-gradient(180deg,rgba(242,107,29,.18),rgba(242,107,29,0));border-top:2px solid #F26B1D"></span></div></sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_terms }}" hint-placeholder-val="{{ false }}">
+          <div style="width:100%;max-width:680px;height:360px;border-radius:20px;background:#FAF8F5;border:1px solid #E6E2DC;display:flex;overflow:hidden">
+            <div style="width:190px;flex:none;background:#FFFFFF;border-right:1px solid #E6E2DC;padding:14px 10px;display:flex;flex-direction:column;gap:2px"><b style="font-size:17px;padding:0 10px 10px">BorNiz</b><sc-for list="{{ tmNav }}" as="n" hint-placeholder-count="6"><span style="height:38px;padding:0 10px;border-radius:10px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:#45403A"><span style="width:16px;height:16px;background:currentColor;-webkit-mask:{{ n.mask }};mask:{{ n.mask }}"></span>{{ n.l }}</span></sc-for></div>
+            <div style="flex:1;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0"><span style="font-size:12px;color:#625C55">{{ tmCrumb }}</span><b style="font-size:20px">{{ tmCust }}: Dewi Anggraini</b><div style="padding:14px;border-radius:14px;background:#FFFFFF;border:1px solid #E6E2DC;font-size:13px;line-height:1.6">{{ tmMem }} · Gold tier<br>Last visit: {{ tmOut }} Senayan, 2 days ago</div></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_fields }}" hint-placeholder-val="{{ false }}">
+          <div style="width:420px;padding:20px;border-radius:22px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+            <b style="font-size:18px">{{ cfTitle }}</b>
+            <sc-for list="{{ cfBase }}" as="f" hint-placeholder-count="2"><label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;font-weight:600;color:#45403A">{{ f.k }}</span><span style="height:42px;border-radius:12px;border:1.5px solid #E6E2DC;padding:0 12px;font-size:14px;line-height:40px">{{ f.val }}</span></label></sc-for>
+            <span style="font-size:11px;font-weight:700;letter-spacing:.05em;color:#D9560B;padding-top:6px;border-top:1px solid #F2EFEA">CUSTOM FIELDS</span>
+            <sc-for list="{{ cfCustom }}" as="f" hint-placeholder-count="3"><label style="display:flex;flex-direction:column;gap:6px"><span style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:#45403A"><span>{{ f.n }}</span><span style="color:#857E76;font-weight:500">{{ f.t }}</span></span><span style="height:42px;border-radius:12px;border:1.5px dashed #F2B5A0;background:#FFF8F3;padding:0 12px;font-size:14px;line-height:40px;color:#625C55">{{ f.val }}</span></label></sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_roleth }}" hint-placeholder-val="{{ false }}">
+          <div style="width:420px;border-radius:22px;background:{{ rtBg }};color:{{ rtFg }};border:1px solid {{ rtBorder }};padding:16px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:16px">{{ rtRole }} · Senayan</b><span style="height:26px;padding:0 10px;border-radius:999px;background:{{ rtA }};color:#FFFFFF;font-size:11px;font-weight:700;line-height:26px">{{ rtRole }}</span></div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"><span style="height:{{ rtH }};border-radius:14px;background:{{ rtSurf }};border:1px solid {{ rtBorder }}"></span><span style="height:{{ rtH }};border-radius:14px;background:{{ rtSurf }};border:1px solid {{ rtBorder }}"></span><span style="height:{{ rtH }};border-radius:14px;background:{{ rtSurf }};border:1px solid {{ rtBorder }}"></span></div>
+            <div style="display:flex;gap:8px"><span style="flex:1;height:{{ rtH }};border-radius:14px;background:{{ rtSurf }};border:1px solid {{ rtBorder }};font-size:14px;font-weight:600;display:grid;place-items:center">Hold</span><span style="flex:2;height:{{ rtH }};border-radius:14px;background:{{ rtA }};color:#FFFFFF;font-size:15px;font-weight:700;display:grid;place-items:center">Charge IDR 87,000</span></div>
+            <div style="display:flex;gap:6px"><span style="height:24px;padding:0 9px;border-radius:999px;background:#E3F5EA;color:#156B3A;font-size:11px;font-weight:700;line-height:24px">Paid</span><span style="height:24px;padding:0 9px;border-radius:999px;background:#FDE8E8;color:#B3261E;font-size:11px;font-weight:700;line-height:24px">Void</span><span style="font-size:11px;opacity:.7;line-height:24px">Status colors stay fixed</span></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_lock }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:auto;max-width:100%">
+            <div style="display:grid;grid-template-columns:120px repeat(7,64px);padding:10px 14px;background:#F2EFEA;font-size:11px;font-weight:700;color:#45403A"><span></span><sc-for list="{{ lkHead }}" as="h" hint-placeholder-count="7"><span style="text-align:center">{{ h.l }}</span></sc-for></div>
+            <sc-for list="{{ lkRows }}" as="r" hint-placeholder-count="4"><div style="display:grid;grid-template-columns:120px repeat(7,64px);padding:10px 14px;border-top:1px solid #F2EFEA;align-items:center"><b style="font-size:13px">{{ r.o }}</b><sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="7"><span style="justify-self:center;width:32px;height:32px;border-radius:9px;background:{{ c.bg }};display:grid;place-items:center"><span style="width:15px;height:15px;background:{{ c.c }};-webkit-mask:{{ c.mask }};mask:{{ c.mask }}"></span></span></sc-for></div></sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_approve }}" hint-placeholder-val="{{ false }}">
+          <div style="width:480px;display:flex;flex-direction:column;gap:10px">
+            <span style="font-size:13px;color:#45403A">{{ apRule }}</span>
+            <sc-for list="{{ apList }}" as="a" hint-placeholder-count="3"><div style="padding:14px;border-radius:16px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:10px"><div style="display:flex;justify-content:space-between;gap:10px"><b style="font-size:14px">{{ a.what }}</b><span style="font-size:12px;color:#857E76;white-space:nowrap">{{ a.when }}</span></div><span style="font-size:12px;color:#625C55">Requested by {{ a.who }}</span><sc-if value="{{ apOn }}" hint-placeholder-val="{{ true }}"><div style="display:flex;gap:6px"><span style="height:36px;padding:0 14px;border-radius:10px;background:#1F9D55;color:#FFFFFF;font-size:13px;font-weight:700;line-height:36px">Approve</span><span style="height:36px;padding:0 14px;border-radius:10px;background:#F2EFEA;font-size:13px;font-weight:600;line-height:36px">Preview</span><span style="height:36px;padding:0 14px;border-radius:10px;background:#FDE8E8;color:#B3261E;font-size:13px;font-weight:600;line-height:36px">Reject</span></div></sc-if></div></sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_staging }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;align-items:flex-start">
+            <div style="width:320px;padding:18px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:10px"><b style="font-size:16px">Preview link</b><div style="height:44px;border-radius:12px;background:#F2EFEA;padding:0 12px;display:flex;align-items:center;justify-content:space-between;font:500 12px/1 'JetBrains Mono',ui-monospace,monospace">preview.bornis.id/kb/v14-7Qx<span style="color:#D9560B;font-family:'Instrument Sans',system-ui,sans-serif;font-weight:700">Copy</span></div><span style="display:{{ stPassD }};font-size:12px;color:#45403A;gap:6px">– Password: biru-v14</span><span style="font-size:12px;color:#625C55">{{ stExp }}</span><span style="width:110px;height:110px;align-self:center;border-radius:12px;background:repeating-linear-gradient(45deg,#141210 0 5px,#FFFFFF 5px 10px);border:8px solid #FFFFFF;box-shadow:0 0 0 1px #E6E2DC"></span></div>
+            <div style="width:300px;border-radius:28px;background:#141210;padding:8px"><div style="border-radius:22px;overflow:hidden;background:var(--bn-paper,#F7F4EE);min-height:360px"><div style="display:{{ stBanD }};padding:8px;background:#E5A000;color:#141210;font-size:12px;font-weight:700;text-align:center">Preview · v14 · not live</div><div style="height:160px;background:var(--bn-banner,linear-gradient(135deg,#2B4C7E,#14213D))"></div><div style="padding:16px;display:flex;flex-direction:column;gap:8px"><b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:22px">Kopi Biru</b><span style="height:12px;width:70%;border-radius:6px;background:#E3DED5"></span><span style="height:12px;width:50%;border-radius:6px;background:#E3DED5"></span></div></div></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_ab }}" hint-placeholder-val="{{ false }}">
+          <div style="width:520px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div style="padding:16px;border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between"><b>Variant A</b><span style="font-size:12px;color:#625C55">{{ abA }} traffic</span></div><span style="height:80px;border-radius:12px;background:var(--bn-banner,linear-gradient(135deg,#2B4C7E,#14213D))"></span><span style="font-size:12px;color:#625C55">{{ abMetric }}</span><b style="font-size:24px">{{ abValA }}</b><span style="height:8px;border-radius:9px;background:#F2EFEA;overflow:hidden"><span style="display:block;height:100%;width:{{ abWA }};background:#857E76"></span></span></div>
+              <div style="padding:16px;border-radius:18px;background:#FFFFFF;border:2px solid #F26B1D;display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between"><b>Variant B</b><span style="font-size:12px;color:#625C55">{{ abB }} traffic</span></div><span style="height:80px;border-radius:12px;background:var(--bn-p,#1F4FD8)"></span><span style="font-size:12px;color:#625C55">{{ abMetric }}</span><b style="font-size:24px">{{ abValB }}</b><span style="height:8px;border-radius:9px;background:#F2EFEA;overflow:hidden"><span style="display:block;height:100%;width:{{ abWB }};background:#F26B1D"></span></span></div>
+            </div>
+            <span style="padding:12px 14px;border-radius:14px;background:#E3F5EA;color:#156B3A;font-size:13px;font-weight:600">{{ abDur }}</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_stats }}" hint-placeholder-val="{{ false }}">
+          <div style="width:520px;display:flex;flex-direction:column;gap:12px">
+            <div style="padding:18px;border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:8px"><b style="font-size:15px">Funnel</b><sc-for list="{{ saFunnel }}" as="f" hint-placeholder-count="5"><div style="display:grid;grid-template-columns:110px minmax(0,1fr) 64px;gap:10px;align-items:center;font-size:13px"><span>{{ f.l }}</span><span style="height:22px;border-radius:6px;background:#F2EFEA;overflow:hidden"><span style="display:block;height:100%;width:{{ f.w }};background:{{ f.c }};border-radius:6px"></span></span><b style="text-align:right">{{ f.n }}</b></div></sc-for></div>
+            <div style="padding:18px;border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:6px"><b style="font-size:15px">Most-clicked sections</b><sc-for list="{{ saTop }}" as="t" hint-placeholder-count="4"><div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #F2EFEA;font-size:13px"><span>{{ t.l }}</span><b>{{ t.n }}</b></div></sc-for></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_hooks }}" hint-placeholder-val="{{ false }}">
+          <div style="width:520px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ hkEvents }}" as="e" hint-placeholder-count="3"><span style="height:28px;padding:0 10px;border-radius:8px;background:#141210;color:#FFFFFF;font:500 12px/28px 'JetBrains Mono',ui-monospace,monospace">{{ e.e }}</span></sc-for></div>
+            <pre style="margin:0;padding:16px;border-radius:16px;background:#141210;color:#E6E2DC;font:400 12px/1.6 'JetBrains Mono',ui-monospace,monospace;white-space:pre-wrap">POST {{ hkUrl }}
+{{ hkJson }}</pre>
+            <div style="border-radius:16px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden"><div style="display:grid;grid-template-columns:150px 1fr 60px;padding:10px 14px;font:500 12px/1.3 'JetBrains Mono',ui-monospace,monospace"><span>theme.published</span><span style="color:#625C55">14:32:08</span><b style="color:#156B3A">200</b></div><div style="display:grid;grid-template-columns:150px 1fr 60px;padding:10px 14px;border-top:1px solid #F2EFEA;font:500 12px/1.3 'JetBrains Mono',ui-monospace,monospace"><span>order.paid</span><span style="color:#625C55">14:30:51</span><b style="color:#156B3A">200</b></div><div style="display:grid;grid-template-columns:150px 1fr 60px;padding:10px 14px;border-top:1px solid #F2EFEA;font:500 12px/1.3 'JetBrains Mono',ui-monospace,monospace"><span>menu.updated</span><span style="color:#625C55">13:02:17</span><b style="color:#B3261E">500 · retry 2/5</b></div></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_industry }}" hint-placeholder-val="{{ false }}">
+          <div style="width:100%;max-width:720px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px"><sc-for list="{{ inAll }}" as="t" hint-placeholder-count="5"><button onClick="{{ t.onClick }}" style="border:0;padding:0;border-radius:14px;overflow:hidden;background:#FFFFFF;box-shadow:{{ t.ring }};cursor:pointer;text-align:left"><span style="display:flex;height:60px;background:{{ t.c }};align-items:flex-end;padding:8px 10px;color:#FFFFFF;font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-weight:800">{{ t.b }}</span><span style="display:block;padding:8px 10px;font-size:11px;font-weight:600;line-height:1.3">{{ t.n }}</span></button></sc-for></div>
+            <div style="padding:20px;border-radius:20px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;gap:18px;flex-wrap:wrap"><div style="width:160px;height:220px;flex:none;border-radius:18px;background:linear-gradient(180deg,{{ inBg }},var(--bn-ink,#14213D));color:#FFFFFF;padding:14px;display:flex;align-items:flex-end;font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:20px;font-weight:800">{{ inBrand }}</div><div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:8px"><b style="font-size:17px">{{ inName }}</b><sc-for list="{{ inFeats }}" as="f" hint-placeholder-count="4"><span style="display:flex;gap:8px;font-size:13px;padding:6px 0;border-top:1px solid #F2EFEA"><b style="color:#1F9D55">✓</b>{{ f.f }}</span></sc-for><span style="margin-top:auto;align-self:flex-start;height:42px;padding:0 18px;border-radius:12px;background:#F26B1D;color:#FFFFFF;font-size:13px;font-weight:700;line-height:42px">Apply template</span></div></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ is_wait }}" hint-placeholder-val="{{ false }}">
+          <div style="width:360px;border-radius:40px;background:#141210;padding:9px">
+            <div style="height:720px;border-radius:32px;background:var(--bn-paper,#F7F4EE);color:var(--bn-ink,#14213D);overflow:auto;display:flex;flex-direction:column;gap:12px;padding:0 0 18px">
+              <div style="padding:22px 18px 18px;background:var(--bn-ink,#14213D);color:#FFFFFF;display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:16px">Kopi Biru</b><span style="font:600 12px/1 'JetBrains Mono',ui-monospace,monospace;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,.12)">#A-12 · T-07</span></div>
+                <b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:24px;line-height:1.1">{{ wtGreet }}</b>
+                <span style="font-size:14px;opacity:.85">{{ wtSt }}</span>
+                <sc-if value="{{ wtSteps_ }}" hint-placeholder-val="{{ true }}"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px"><sc-for list="{{ wtSteps }}" as="x" hint-placeholder-count="3"><div style="display:flex;flex-direction:column;gap:6px"><span style="height:6px;border-radius:9px;background:{{ x.bg }}"></span><span style="font-size:11px;color:#C9D1E2">{{ x.l }}</span></div></sc-for></div></sc-if>
+                <sc-if value="{{ wtBar_ }}" hint-placeholder-val="{{ false }}"><span style="height:10px;border-radius:9px;background:rgba(255,255,255,.18);overflow:hidden"><span style="display:block;height:100%;width:{{ wtBar }};background:var(--bn-acc,#F2B544);border-radius:9px;transition:width 600ms cubic-bezier(.2,.8,.2,1)"></span></span></sc-if>
+                <sc-if value="{{ wtRing_ }}" hint-placeholder-val="{{ false }}"><span style="align-self:center;width:110px;height:110px;border-radius:999px;background:{{ wtRing }};display:grid;place-items:center"><span style="width:88px;height:88px;border-radius:999px;background:var(--bn-ink,#14213D);display:grid;place-items:center;font-size:22px;font-weight:800">{{ wtPct }}</span></span></sc-if>
+                <span style="display:{{ wtEtaD }};font-size:13px;font-weight:700;color:var(--bn-acc,#F2B544)">{{ wtEta }}</span>
+              </div>
+              <div style="padding:0 14px;display:flex;flex-direction:column;gap:10px">
+                <sc-if value="{{ p_upsell }}" hint-placeholder-val="{{ true }}"><div style="padding:12px;border-radius:18px;background:#FFFFFF;border:1px solid #E3DED5;display:flex;gap:12px;align-items:center"><span style="width:56px;height:56px;flex:none;border-radius:14px;background:repeating-linear-gradient(135deg,#ECE7DE 0 6px,#E3DED5 6px 7px)"></span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:14px">Add a warm croissant?</b><span style="font-size:12px;color:#5B6478">Served with your drinks · IDR 32,000</span></span><span style="height:36px;padding:0 14px;border-radius:999px;background:var(--bn-p,#1F4FD8);color:#FFFFFF;font-size:13px;font-weight:700;line-height:36px">Add</span></div></sc-if>
+                <sc-if value="{{ p_loyal }}" hint-placeholder-val="{{ true }}"><div style="padding:14px;border-radius:18px;background:#FFFFFF;border:1px solid #E3DED5;display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;font-size:13px"><b>+82 beans on this order</b><span style="color:#5B6478">1,322 / 2,000</span></div><span style="height:8px;border-radius:9px;background:#E3DED5;overflow:hidden"><span style="display:block;height:100%;width:66%;background:var(--bn-acc,#F2B544)"></span></span><span style="font-size:12px;color:#5B6478">678 beans to Platinum: a free drink every month.</span></div></sc-if>
+                <sc-if value="{{ p_ad }}" hint-placeholder-val="{{ false }}"><div style="position:relative;border-radius:18px;overflow:hidden;background:linear-gradient(135deg,#E8F3E8,#CFE6D2);padding:16px;display:flex;flex-direction:column;gap:6px"><span style="position:absolute;top:10px;right:10px;font-size:10px;font-weight:700;color:#3B6B45;letter-spacing:.06em">SPONSORED</span><b style="font-size:16px;color:#1E4D2B">{{ wtAd }}</b><span style="font-size:13px;color:#2F5D3A">Fresh milk in every latte. Get 1 liter for IDR 18k at the counter.</span></div></sc-if>
+                <sc-if value="{{ p_wifi }}" hint-placeholder-val="{{ true }}"><div style="padding:12px 14px;border-radius:18px;background:#FFFFFF;border:1px solid #E3DED5;display:flex;align-items:center;gap:12px"><span style="width:38px;height:38px;border-radius:12px;background:#E6EEFD;display:grid;place-items:center"><span style="width:18px;height:18px;background:var(--bn-p,#1F4FD8);-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/wifi.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/wifi.svg) center/contain no-repeat"></span></span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:13px">KOPIBIRU-GUEST</b><span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#5B6478">senayan8</span></span><span style="font-size:12px;font-weight:700;color:var(--bn-p,#1F4FD8)">Connect</span></div></sc-if>
+                <sc-if value="{{ p_music }}" hint-placeholder-val="{{ true }}"><div style="padding:12px 14px;border-radius:18px;background:var(--bn-ink,#14213D);color:#FFFFFF;display:flex;align-items:center;gap:12px"><span style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--bn-acc,#F2B544),#E07A2E)"></span><span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:11px;opacity:.7">Now playing in store</span><b style="font-size:13px">Sore — Kopi Biru Mornings</b></span><span style="font-size:12px;font-weight:700;color:#1ED760">Open</span></div></sc-if>
+                <sc-if value="{{ p_game }}" hint-placeholder-val="{{ false }}"><div style="height:130px;border-radius:18px;background:var(--bn-p,#1F4FD8);color:#FFFFFF;position:relative;overflow:hidden;padding:14px"><b style="font-size:14px">Catch the beans · 12</b><span style="position:absolute;left:40px;top:50px;color:#F2B544"><span style="display:inline-block;width:22px;height:22px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/coffee.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/coffee.svg) center/contain no-repeat"></span></span><span style="position:absolute;left:150px;top:40px;font-size:20px">•</span><span style="position:absolute;left:230px;top:70px;font-size:20px">•</span><span style="position:absolute;left:120px;bottom:12px;width:60px;height:10px;border-radius:9px;background:var(--bn-acc,#F2B544)"></span><span style="position:absolute;right:12px;top:14px;font-size:11px;opacity:.8">Top score: free cookie</span></div></sc-if>
+                <sc-if value="{{ p_story }}" hint-placeholder-val="{{ true }}"><div style="border-radius:18px;background:#FFFFFF;border:1px solid #E3DED5;overflow:hidden"><span style="display:block;height:110px;background:repeating-linear-gradient(135deg,#ECE7DE 0 8px,#E3DED5 8px 9px)"></span><div style="padding:12px 14px;display:flex;flex-direction:column;gap:4px"><b style="font-size:14px">Behind the bar</b><span style="font-size:12px;line-height:1.45;color:#5B6478">Your aren sugar comes from a farmers’ co-op in Banten. Rina is making your latte right now.</span></div></div></sc-if>
+                <sc-if value="{{ p_promo }}" hint-placeholder-val="{{ true }}"><div style="padding:14px;border-radius:18px;background:var(--bn-acc,#F2B544);color:var(--bn-ink,#14213D);display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="display:flex;flex-direction:column;gap:2px"><b style="font-size:14px">Next visit: 15% off</b><span style="font-size:12px">Saved to your account automatically</span></span><span style="font:800 13px/1 'JetBrains Mono',ui-monospace,monospace">BIRU15</span></div></sc-if>
+                <sc-if value="{{ p_ig }}" hint-placeholder-val="{{ false }}"><div style="height:52px;border-radius:16px;background:linear-gradient(90deg,#F58529,#DD2A7B,#8134AF);color:#FFFFFF;display:grid;place-items:center;font-size:14px;font-weight:700">Follow @kopibiru for a free upsize</div></sc-if>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_ready }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:flex-start">
+            <div style="width:340px;border-radius:40px;background:#141210;padding:9px">
+              <div style="position:relative;height:640px;border-radius:32px;background:var(--bn-p,#1F4FD8);color:#FFFFFF;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center">
+                <span style="display:{{ rdConf }};position:absolute;inset:0;background-image:radial-gradient(circle,var(--bn-acc,#F2B544) 3px,transparent 3.5px),radial-gradient(circle,#FFFFFF 2px,transparent 2.5px),radial-gradient(circle,#FF8FA3 2.5px,transparent 3px);background-size:70px 90px,50px 60px,90px 70px;background-position:0 0,20px 30px,40px 10px;opacity:.7"></span>
+                <span style="position:relative;width:110px;height:110px;border-radius:999px;background:#FFFFFF;color:var(--bn-p,#1F4FD8);display:grid;place-items:center"><span style="display:inline-block;width:52px;height:52px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/coffee.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/coffee.svg) center/contain no-repeat"></span></span>
+                <b style="position:relative;font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:30px;line-height:1.05">{{ rdHead }}</b>
+                <span style="position:relative;font-size:15px;line-height:1.45;opacity:.9">{{ rdSub }}</span>
+                <span style="position:relative;padding:12px 18px;border-radius:16px;background:rgba(255,255,255,.14);font:800 30px/1 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.06em">A-12</span>
+                <span style="position:relative;font-size:12px;opacity:.8">{{ rdIcon }}</span>
+                <span style="position:relative;margin-top:10px;width:100%;height:54px;border-radius:16px;background:var(--bn-acc,#F2B544);color:var(--bn-ink,#14213D);display:grid;place-items:center;font-size:15px;font-weight:800">{{ rdCta }}</span>
+              </div>
+            </div>
+            <div style="width:320px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ rdChannels }}" as="c" hint-placeholder-count="5"><span style="height:26px;padding:0 10px;border-radius:999px;background:{{ c.bg }};color:{{ c.fg }};font-size:11px;font-weight:700;line-height:26px">{{ c.l }}</span></sc-for></div>
+              <div style="display:{{ rdPushD }};padding:12px 14px;border-radius:18px;background:#FFFFFF;border:1px solid #E6E2DC;flex-direction:column;gap:4px"><span style="font-size:11px;color:#625C55;display:flex;gap:6px"><b style="color:#141210">KOPI BIRU</b>now</span><b style="font-size:14px">{{ rdHead }}</b><span style="font-size:13px;color:#45403A">{{ rdSub }}</span></div>
+              <div style="display:{{ rdWaD }};padding:12px;border-radius:18px;background:#ECE5DD;flex-direction:column;gap:8px"><span style="font-size:11px;font-weight:700;color:#075E54">WhatsApp · Kopi Biru ✓</span><div style="border-radius:10px;background:#FFFFFF;padding:10px;font-size:13px;line-height:1.45">{{ rdHead }} {{ rdSub }}</div><span style="align-self:center;font-size:11px;color:#5B6478">1 hour later</span><div style="border-radius:10px;background:#FFFFFF;padding:10px;font-size:13px;line-height:1.45">{{ rdLater }}</div><div style="border-radius:10px;background:#FFFFFF;height:36px;display:grid;place-items:center;color:#027EB5;font-size:13px;font-weight:600">Rate your visit</div></div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ is_board }}" hint-placeholder-val="{{ false }}">
+          <div style="width:100%;max-width:820px;border-radius:18px;background:#141210;padding:10px">
+            <div style="aspect-ratio:16/9;border-radius:10px;background:{{ bdBg }};color:{{ bdFg }};padding:3%;display:flex;flex-direction:column;gap:12px;overflow:hidden">
+              <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:24px">Kopi Biru</b><span style="font-size:12px;opacity:.7">Prices in thousand rupiah</span></div>
+              <div style="flex:1;display:grid;grid-template-columns:{{ bdCols }};gap:20px;min-height:0">
+                <sc-for list="{{ bdCats }}" as="c" hint-placeholder-count="3"><div style="display:flex;flex-direction:column;gap:6px;min-width:0"><b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:20px;color:{{ bdAc }};border-bottom:2px solid {{ bdAc }};padding-bottom:4px">{{ c.c }}</b><sc-for list="{{ c.items }}" as="i" hint-placeholder-count="3"><div style="display:flex;justify-content:space-between;gap:8px;font-size:15px;opacity:{{ i.op }}"><span style="text-decoration:{{ i.td }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.n }} <span style="display:{{ i.bD }};font-size:10px;padding:1px 5px;border-radius:4px;background:#E5383B;color:#FFFFFF">SOLD OUT</span></span><b>{{ i.p }}</b></div></sc-for></div></sc-for>
+              </div>
+              <div style="display:{{ bdPromoD }};padding:10px 14px;border-radius:10px;background:{{ bdAc }};color:var(--bn-ink,#14213D);font-size:15px;font-weight:800">Payday week: 20% off all coffee · until Sunday</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_queue }}" hint-placeholder-val="{{ false }}">
+          <div style="width:100%;max-width:820px;border-radius:18px;background:#141210;padding:10px">
+            <div style="aspect-ratio:16/9;border-radius:10px;background:{{ quBg }};color:#FFFFFF;display:grid;grid-template-columns:1fr 1fr;overflow:hidden">
+              <div style="padding:5%;display:flex;flex-direction:column;gap:10px"><span style="font-size:20px;font-weight:700;opacity:.8">Preparing</span><sc-for list="{{ quPrep }}" as="q" hint-placeholder-count="4"><b style="font:800 30px/1.2 'JetBrains Mono',ui-monospace,monospace;opacity:.75">{{ q.n }}</b></sc-for></div>
+              <div style="padding:5%;background:#1F9D55;display:flex;flex-direction:column;gap:10px"><span style="font-size:20px;font-weight:700">Ready · please pick up</span><sc-for list="{{ quReady }}" as="q" hint-placeholder-count="2"><b style="font:800 44px/1.15 'JetBrains Mono',ui-monospace,monospace">{{ q.n }}</b></sc-for><div style="margin-top:auto;display:{{ quAdD }};padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.2);font-size:13px;font-weight:600">Add a croissant for 20k while you wait</div></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ is_qrpay }}" hint-placeholder-val="{{ false }}">
+          <div style="width:340px;border-radius:40px;background:#141210;padding:9px"><div style="border-radius:32px;background:var(--bn-paper,#F7F4EE);color:var(--bn-ink,#14213D);padding:20px;display:flex;flex-direction:column;align-items:center;gap:14px;min-height:600px">
+            <div style="display:{{ qpBrandD }};align-self:stretch;align-items:center;gap:10px"><span style="width:34px;height:34px;border-radius:10px;background:var(--bn-p,#1F4FD8);color:#FFFFFF;display:grid;place-items:center;font-size:12px;font-weight:800">KB</span><b style="font-size:15px">Kopi Biru · Table 7</b></div>
+            <span style="font-size:13px;color:#5B6478;margin-top:10px">Total to pay</span><b style="font-size:34px;letter-spacing:-.02em">IDR 90,200</b>
+            <div style="width:230px;height:230px;border-radius:22px;background:#FFFFFF;padding:16px;box-shadow:0 10px 24px -10px rgba(20,33,61,.3)"><span style="display:block;width:100%;height:100%;background:repeating-linear-gradient(45deg,#141210 0 6px,#FFFFFF 6px 12px)"></span></div>
+            <span style="font-size:13px;text-align:center;line-height:1.45;color:#45403A">Scan with any bank or e-wallet app. Paying on this phone? Save the QR and open it in your app.</span>
+            <b style="font-size:18px">{{ qpTimer }}</b>
+            <span style="display:{{ qpSaveD }};width:100%;height:50px;border-radius:14px;background:#141210;color:#FFFFFF;place-items:center;font-size:14px;font-weight:700">Save QR to gallery</span>
+          </div></div>
+        </sc-if>
+
+        <sc-if value="{{ is_split }}" hint-placeholder-val="{{ false }}">
+          <div style="width:340px;border-radius:40px;background:#141210;padding:9px"><div style="border-radius:32px;background:var(--bn-paper,#F7F4EE);color:var(--bn-ink,#14213D);padding:20px;display:flex;flex-direction:column;gap:12px;min-height:600px">
+            <b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:22px">Table 7 · split bill</b>
+            <sc-for list="{{ spPeople }}" as="p" hint-placeholder-count="3"><div style="padding:12px 14px;border-radius:16px;background:#FFFFFF;border:1px solid #E3DED5;display:flex;align-items:center;gap:10px"><b style="width:44px;font-size:13px">{{ p.n }}</b><b style="flex:1;font-size:14px">{{ p.a }}</b><span style="height:24px;padding:0 9px;border-radius:999px;background:{{ p.b }};color:{{ p.f }};font-size:11px;font-weight:700;line-height:24px">{{ p.s }}</span></div></sc-for>
+            <sc-if value="{{ spItems }}" hint-placeholder-val="{{ true }}"><div style="padding:12px 14px;border-radius:16px;background:#FFFFFF;border:1.5px solid var(--bn-p,#1F4FD8);display:flex;flex-direction:column;gap:8px;font-size:13px"><b>Your items</b><span style="display:flex;justify-content:space-between"><span>☑ 1× Matcha Latte</span><span>30,000</span></span><span style="display:flex;justify-content:space-between"><span>☑ ½ Croissant (shared)</span><span>16,000</span></span></div></sc-if>
+            <div style="display:{{ spTipD }};gap:6px"><span style="flex:1;height:40px;border-radius:12px;background:#FFFFFF;border:1px solid #E3DED5;display:grid;place-items:center;font-size:13px">No tip</span><span style="flex:1;height:40px;border-radius:12px;background:var(--bn-p,#1F4FD8);color:#FFFFFF;display:grid;place-items:center;font-size:13px;font-weight:700">5%</span><span style="flex:1;height:40px;border-radius:12px;background:#FFFFFF;border:1px solid #E3DED5;display:grid;place-items:center;font-size:13px">10%</span></div>
+            <span style="margin-top:auto;height:54px;border-radius:16px;background:var(--bn-p,#1F4FD8);color:#FFFFFF;display:grid;place-items:center;font-size:15px;font-weight:800">Pay my share · QRIS</span>
+          </div></div>
+        </sc-if>
+
+        <sc-if value="{{ is_track }}" hint-placeholder-val="{{ false }}">
+          <div style="width:340px;border-radius:40px;background:#141210;padding:9px"><div style="border-radius:32px;background:var(--bn-paper,#F7F4EE);color:var(--bn-ink,#14213D);overflow:hidden;display:flex;flex-direction:column;min-height:600px">
+            <div style="display:{{ tkMapD }};position:relative;height:250px;background:#E6EEF9"><span style="position:absolute;left:10%;right:10%;top:60%;height:4px;background:var(--bn-p,#1F4FD8);border-radius:4px"></span><span style="position:absolute;left:{{ tkBike }};top:calc(60% - 15px);width:34px;height:34px;border-radius:999px;background:var(--bn-acc,#F2B544);display:grid;place-items:center;font-size:16px;transition:left 600ms cubic-bezier(.65,0,.35,1)"></span><span style="position:absolute;right:8%;top:calc(60% - 30px);font-size:24px"></span></div>
+            <div style="padding:20px;display:flex;flex-direction:column;gap:12px"><b style="font-size:20px">{{ tkTitle }}</b><span style="font-size:14px;color:#5B6478">{{ tkEta }}</span>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px"><sc-for list="{{ tkSteps }}" as="x" hint-placeholder-count="4"><div style="display:flex;flex-direction:column;gap:6px"><span style="height:6px;border-radius:9px;background:{{ x.c }}"></span><span style="font-size:10px;color:#5B6478">{{ x.l }}</span></div></sc-for></div>
+              <div style="display:{{ tkDrvD }};padding:12px;border-radius:16px;background:#FFFFFF;border:1px solid #E3DED5;align-items:center;gap:10px"><span style="width:40px;height:40px;border-radius:999px;background:#E6EEFD;display:grid;place-items:center;font-weight:800">AR</span><span style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-size:14px">Agus R. · Kopi Biru courier</b><span style="font-size:12px;color:#5B6478">B 4821 KBR</span></span><span style="height:36px;padding:0 14px;border-radius:999px;background:#1F9D55;color:#FFFFFF;font-size:13px;font-weight:700;line-height:36px">Call</span></div>
+            </div>
+          </div></div>
+        </sc-if>
+
+        <sc-if value="{{ is_closed }}" hint-placeholder-val="{{ false }}">
+          <div style="width:340px;border-radius:40px;background:#141210;padding:9px"><div style="border-radius:32px;background:var(--bn-paper,#F7F4EE);color:var(--bn-ink,#14213D);padding:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;min-height:560px">
+            <span style="width:84px;height:84px;border-radius:999px;background:#E6EEFD;display:grid;place-items:center"><span style="width:38px;height:38px;background:var(--bn-p,#1F4FD8);-webkit-mask:{{ clIcon }};mask:{{ clIcon }}"></span></span>
+            <b style="font-family:var(--bn-font,'Space Grotesk',system-ui,sans-serif);font-size:26px;line-height:1.1">{{ clTitle }}</b>
+            <span style="font-size:14px;line-height:1.5;color:#5B6478">{{ clMsg }}</span>
+            <span style="display:{{ clPreD }};width:100%;height:52px;border-radius:16px;background:var(--bn-p,#1F4FD8);color:#FFFFFF;place-items:center;font-size:15px;font-weight:800">Pre-order for later</span>
+            <span style="font-size:13px;font-weight:600;color:var(--bn-p,#1F4FD8)">See opening hours</span>
+          </div></div>
+        </sc-if>
+      </div>
+    </main>
+    <aside style="width:300px;flex:none;background:#FFFFFF;border-left:1px solid #E6E2DC;overflow:auto;padding:16px 16px 28px;display:flex;flex-direction:column;gap:14px">
+      <span style="font-size:11px;font-weight:700;letter-spacing:.05em;color:#857E76">SETTINGS</span>
+      <sc-for list="{{ fields }}" as="f" hint-placeholder-count="6">
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <sc-if value="{{ f.isHead }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;font-weight:700;letter-spacing:.05em;color:#857E76;padding-top:8px;border-top:1px solid #F2EFEA">{{ f.label }}</span></sc-if>
+          <sc-if value="{{ f.hasLabel }}" hint-placeholder-val="{{ true }}"><span style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:#45403A"><span>{{ f.label }}</span><span style="color:#857E76;font-weight:500">{{ f.hint }}</span></span></sc-if>
+          <sc-if value="{{ f.isText }}" hint-placeholder-val="{{ true }}"><input value="{{ f.value }}" onChange="{{ f.onChange }}" placeholder="{{ f.ph }}" style="height:40px;padding:0 12px;border:1.5px solid #E6E2DC;border-radius:10px;font-size:14px;outline:none;min-width:0" style-focus="border-color:#F26B1D"></sc-if>
+          <sc-if value="{{ f.isArea }}" hint-placeholder-val="{{ false }}"><textarea value="{{ f.value }}" onChange="{{ f.onChange }}" rows="5" style="padding:10px 12px;border:1.5px solid #E6E2DC;border-radius:10px;font-size:13px;line-height:1.5;outline:none;resize:vertical" style-focus="border-color:#F26B1D"></textarea></sc-if>
+          <sc-if value="{{ f.isSeg }}" hint-placeholder-val="{{ false }}"><div style="display:grid;grid-template-columns:{{ f.cols }};gap:4px;padding:3px;border-radius:11px;background:#F2EFEA"><sc-for list="{{ f.opts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.onClick }}" style="height:32px;padding:0 4px;border:0;border-radius:8px;background:{{ o.bg }};box-shadow:{{ o.sh }};font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ o.l }}</button></sc-for></div></sc-if>
+          <sc-if value="{{ f.isRange }}" hint-placeholder-val="{{ false }}"><input type="range" min="{{ f.min }}" max="{{ f.max }}" step="{{ f.step }}" value="{{ f.value }}" onChange="{{ f.onChange }}"></sc-if>
+          <sc-if value="{{ f.isToggle }}" hint-placeholder-val="{{ false }}"><button onClick="{{ f.onClick }}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:36px;padding:0 2px;border:0;background:none;cursor:pointer;font-size:13px;color:#141210;text-align:left"><span>{{ f.text }}</span><span style="flex:none;width:40px;height:24px;border-radius:999px;background:{{ f.track }};position:relative;transition:background 140ms"><span style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:999px;background:#FFFFFF;transform:translateX({{ f.x }});transition:transform 220ms cubic-bezier(.65,0,.35,1)"></span></span></button></sc-if>
+          <sc-if value="{{ f.isSwatch }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:8px;flex-wrap:wrap"><sc-for list="{{ f.opts }}" as="o" hint-placeholder-count="5"><button onClick="{{ o.onClick }}" title="{{ o.l }}" style="width:32px;height:32px;border-radius:10px;border:0;background:{{ o.c }};box-shadow:{{ o.ring }};cursor:pointer"></button></sc-for></div></sc-if>
+          <sc-if value="{{ f.isNote }}" hint-placeholder-val="{{ false }}"><span style="padding:10px 12px;border-radius:10px;background:{{ f.bg }};color:{{ f.fg }};font-size:12px;line-height:1.45">{{ f.text }}</span></sc-if>
+        </div>
+      </sc-for>
+    </aside>
+  </div>
+</div>
+<div data-bn-links="1" style="position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:60;max-width:calc(100vw - 24px)"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:18px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#141210;color:#FFFFFF"><span style="width:8px;height:8px;border-radius:9px;background:#F26B1D"></span>Linked pages · 18<span style="font-weight:500;color:#A9A39B">▴</span></summary><div style="width:min(460px,calc(100vw - 24px));padding:6px 16px 12px;display:flex;flex-direction:column;max-height:50vh;overflow:auto"><a href="BorNiz Back Office.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Back office (all modules)</b><span style="color:#45403A">Customization pages open Studios</span></a><a href="BorNiz Brand Studio.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Brand Studio</b><span style="color:#45403A">Fonts, icons, app icon, domain</span></a><a href="BorNiz Design System.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Foundations</b><span style="color:#45403A">Uses foundation tokens</span></a><a href="BorNiz Loyalty.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Loyalty</b><span style="color:#45403A">Rules, vouchers, gift cards, WhatsApp</span></a><a href="BorNiz Manager Dashboard.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Manager</b><span style="color:#45403A">Customize</span></a><a href="BorNiz Menu Studio.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Menu studio</b><span style="color:#45403A">Receipt, display, waiting and ready screens</span></a><a href="BorNiz Motion.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Motion</b><span style="color:#45403A">Clients choose animation level</span></a><a href="BorNiz Owner Dashboard.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Owner dashboard</b><span style="color:#45403A">Customize</span></a><a href="BorNiz Owner Mobile.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Owner mobile</b><span style="color:#45403A">Customize</span></a><a href="BorNiz POS Register.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>POS Register</b><span style="color:#45403A">Receipt, customer display, ready notification</span></a><a href="BorNiz Page Spec.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Per-page design system</b><span style="color:#45403A">Has its own design system page</span></a><a href="BorNiz Roles.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Roles</b><span style="color:#45403A">Theme per role and approvals</span></a><a href="BorNiz Self Order.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Self-order</b><span style="color:#45403A">Waiting &amp; ready screens</span></a><a href="BorNiz Shifts.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Shifts</b><span style="color:#45403A">Shift widgets on dashboards, WA roster</span></a><a href="BorNiz Sitemap.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Sitemap</b><span style="color:#45403A">Listed in the sitemap</span></a><a href="BorNiz System.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>System</b><span style="color:#45403A">Closed, paused and sold-out screens</span></a><a href="BorNiz Super Admin.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Super admin</b><span style="color:#45403A">Plan gating of studio features</span></a><a href="BorNiz Alerts.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Alerts &amp; notifications</b><span style="color:#45403A">Guest WhatsApp templates and automations</span></a><a href="BorNiz Connections.dc.html" style="margin-top:8px;height:40px;border-radius:12px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:13px;font-weight:700">Open the full connection map →</a></div></details></div>
+<div data-bn-spec="1" style="position:fixed;left:12px;bottom:10px;z-index:61"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:16px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#F26B1D;color:#FFFFFF">◆ Design spec · this page</summary><div style="width:min(420px,calc(100vw - 24px));max-height:65vh;overflow:auto;padding:10px 16px 14px;display:flex;flex-direction:column"><div style="font-size:12px;color:#625C55">Theme: <b style="color:#141210">Editor chrome light · previews use merchant theme</b></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">COLOR</b><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px"><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:#FFFFFF;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Chrome</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">#FFFFFF</span></div><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:#F2EFEA;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Canvas</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">#F2EFEA</span></div><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:#F26B1D;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Active</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">#F26B1D</span></div><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:#FFF3EB;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Pro badge</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">#FFF3EB</span></div><div style="display:flex;flex-direction:column;gap:3px"><span style="height:28px;border-radius:8px;background:#F2EFEA;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)"></span><span style="font-size:10px;font-weight:600">Note</span><span style="font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">#F2EFEA</span></div></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">TYPE</b><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Studio title</span><b style="text-align:right">26 / 700</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Setting label</span><b style="text-align:right">13 / 600</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Group header</span><b style="text-align:right">11 / 700 caps</b></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">SIZE & LAYOUT</b><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Left list</span><b style="text-align:right">252px</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Settings panel</span><b style="text-align:right">300px</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Controls</span><b style="text-align:right">36–40px</b></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">COMPONENTS</b><div style="display:flex;flex-wrap:wrap;gap:4px"><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Tool list grouped</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Segmented / toggle / swatch / range / text / note fields</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Preview stage</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Plan badge (Pro / Ent)</span></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">STATES</b><div style="display:flex;flex-wrap:wrap;gap:4px"><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Draft saved</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Published</span><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Locked by plan</span></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">MOTION</b><div style="display:flex;flex-wrap:wrap;gap:4px"><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Preview updates instantly; no animation on settings</span></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">SOUND</b><div style="display:flex;flex-wrap:wrap;gap:4px"><span style="padding:4px 8px;border-radius:8px;background:#F2EFEA;font-size:11px;font-weight:600">Sound studio previews only</span></div><b style="display:block;margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:#857E76">RESPONSIVE</b><div style="font-size:12px;line-height:1.45">lg+ editor · previews show their own breakpoints</div><a href="BorNiz Design System.dc.html" style="margin-top:12px;height:38px;border-radius:10px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:12px;font-weight:700">Global foundations →</a></div></details></div>
+<div data-bn-mgr="1" style="position:fixed;bottom:54px;left:50%;transform:translateX(-50%);z-index:59;max-width:calc(100vw - 24px);padding:7px 12px;border-radius:999px;background:#E6EEFD;color:#1F4FB5;font:600 11px/1.3 'Instrument Sans',system-ui,sans-serif;box-shadow:0 6px 16px -8px rgba(20,18,16,.3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none">Owner &amp; manager can edit · manager’s Publish sends to owner for approval</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const IC = n => `url(https://unpkg.com/lucide-static@0.452.0/icons/${n}.svg) center/contain no-repeat`;
+const TH = { bg: '#F7F4EE', surface: '#FFFFFF', text: '#14213D', muted: '#5B6478', primary: 'var(--bn-p,#1F4FD8)', accent: '#F2B544', border: '#E3DED5' };
+const PLAN = { pro: ['PRO', '#FFF3EB', '#B04408'], ent: ['ENT', '#141210', '#FFFFFF'] };
+// [id, group, name, icon, plan, desc, defaults]
+const TOOLS = [
+  ['cup', 'PRINT', 'Cup sticker & drink label', 'cup-soda', '', 'Labels printed per drink on a 40–58mm label printer, so baristas and customers can tell orders apart.', { size: '50x30', name: true, mods: true, queue: true, logo: true, foot: 'Enjoy, {name}!' }],
+  ['kticket', 'PRINT', 'Kitchen ticket & stations', 'chef-hat', '', 'Layout of printed kitchen tickets and which items print at which station.', { station: 'grill', fs: 'l', table: true, notes: true, cut: true, dup: false }],
+  ['coupon', 'PRINT', 'Coupon on receipt', 'ticket-percent', 'pro', 'Prints a bounce-back coupon under the receipt to bring guests back.', { head: 'Come back this week', offer: '15% off your next coffee', code: 'BIRU15', exp: '7', min: 'Min. spend IDR 50,000', bar: true, rule: 'every' }],
+  ['letter', 'PRINT', 'Letterhead, invoices & PDF reports', 'file-text', '', 'Header and footer used on invoices, purchase orders and exported PDF reports.', { co: 'PT Kopi Biru Nusantara', addr: 'Jl. Asia Afrika 8, Senayan, Jakarta 10270', npwp: '01.234.567.8-901.000', pos: 'left', accent: 'primary', foot: 'Thank you for your business.', sign: true }],
+  ['pmenu', 'PRINT', 'Printed menu (PDF)', 'book-open', '', 'Generates a print-ready menu from your catalog, so prices are never out of date.', { layout: '2col', paper: 'A4', photos: false, prices: true, title: 'Menu', note: 'Prices include PB1 10%.' }],
+  ['rcpt', 'PRINT', 'Receipt template per outlet', 'receipt', '', 'Each outlet can override the header, footer and Wi-Fi on its receipts.', { outlet: 'senayan', paper: '80', h1: 'Kopi Biru Senayan', h2: 'Jl. Asia Afrika 8', f1: 'Terima kasih!', wifi: 'KOPIBIRU-SNY · senayan8', inherit: true }],
+];
+const OUTLETS = { senayan: ['Kopi Biru Senayan', 'Jl. Asia Afrika 8', 'KOPIBIRU-SNY · senayan8'], kemang: ['Kopi Biru Kemang', 'Jl. Kemang Raya 41', 'KOPIBIRU-KMG · kemang41'], bsd: ['Kopi Biru BSD', 'Jl. Pahlawan Seribu, BSD', 'KOPIBIRU-BSD · bsdcity'] };
+
+const MSG = {
+  thanks: ['Thank you for visiting', 'Hi {name}, terima kasih sudah mampir ke Kopi Biru {outlet} hari ini!\n\nKami harap {item} kamu enak. Boleh kasih rating 10 detik?', 'Rate your visit', 'UTILITY'],
+  receipt: ['E-receipt', 'Hi {name}, ini struk digital kamu dari Kopi Biru {outlet}.\n\nTotal: {total}\nPoin didapat: +{points}', 'View receipt', 'UTILITY'],
+  ready: ['Order ready', 'Hi {name}, pesanan #{order} sudah siap diambil di counter Kopi Biru {outlet}.', 'Show my order', 'UTILITY'],
+  remind: ['Reservation reminder', 'Hi {name}, reminder reservasi kamu besok jam {time} untuk {pax} orang di Kopi Biru {outlet}.', 'Manage booking', 'UTILITY'],
+  winback: ['We miss you', 'Hi {name}, sudah 30 hari nih! Ada kopi gratis buat kamu minggu ini, tinggal tunjukkan kode {code}.', 'Claim free coffee', 'MARKETING'],
+  bday: ['Happy birthday', 'Selamat ulang tahun, {name}! Diskon 20% buat kamu sepanjang bulan ini.', 'See my gift', 'MARKETING'],
+};
+const VARS = { name: 'Dewi', outlet: 'Senayan', item: 'Es Kopi Susu Aren', total: 'IDR 90,200', points: '90', order: 'A-12', time: '19:00', pax: '4', code: 'MISSU' };
+const fill = t => t.replace(/\{(\w+)\}/g, (m, k) => VARS[k] ?? m);
+const MKT = [
+  ['msg', 'MARKETING', 'WA, email & SMS templates', 'message-square-text', '', 'Write once, send on WhatsApp Business (WABA), email or SMS. WhatsApp templates are submitted to Meta for approval.', { ch: 'wa', tpl: 'thanks', lang: 'id', img: true, body: MSG.thanks[1], btn: MSG.thanks[2] }],
+  ['flow', 'MARKETING', 'Automations (WABA)', 'workflow', 'pro', 'Sends the right message after the right moment, like a thank-you on WhatsApp after a guest pays.', { trig: 'paid', delay: 2, cond: 'all', ch: 'wa', tpl: 'thanks', fallback: true, quiet: true, cap: true }],
+  ['voucher', 'MARKETING', 'Voucher & promo design', 'ticket', '', 'Design how vouchers look in the self-order app, on e-receipts and in WhatsApp.', { style: 'ticket', title: 'Free Croissant', val: 'with any coffee', code: 'PAGI', color: 'primary', exp: '31 Oct 2026' }],
+  ['gift', 'MARKETING', 'Gift card design', 'gift', 'pro', 'Digital and printed gift cards customers can buy and send.', { style: 'brand', amt: '200000', msg: 'Happy birthday, Rina! Coffee is on me.', from: 'Dewi', color: 'primary' }],
+  ['push', 'MARKETING', 'Push notifications', 'bell-ring', 'ent', 'Notifications for the member app: promos, points and order status.', { title: 'Your order is ready', body: 'Pick up order A-12 at the Senayan counter.', img: false, link: 'order', when: 'now' }],
+  ['referral', 'MARKETING', 'Referral program page', 'users-round', 'pro', 'Members share a link. Both people get a reward after the friend’s first purchase.', { head: 'Give 25k, get 25k', you: 'IDR 25,000 credit', friend: 'IDR 25,000 off first order', cap: '10', color: 'primary' }],
+  ['loyalty', 'MARKETING', 'Loyalty rules & rewards', 'award', '', 'How customers earn points and what they can redeem.', { rate: 1, per: '1000', exp: '12', tiers: true, r1: 'Free Americano · 150', r2: 'Croissant · 200', r3: 'Tote bag · 800' }],
+];
+const PLAT = [
+  ['fonts', 'PLATFORM', 'Custom fonts', 'type', 'pro', 'Upload your own font files or pick from the library. Used on every customer-facing surface.', { head: 'bricolage', body: 'system', scale: 100, upload: 'KopiSans-Bold.woff2' }],
+  ['icons', 'PLATFORM', 'Icon style', 'shapes', '', 'One icon style across the menu, kiosk and member app.', { style: 'outline', stroke: 2, shape: 'rounded', color: 'primary' }],
+  ['appicon', 'PLATFORM', 'Favicon, app icon & share image', 'app-window', '', 'What customers see in browser tabs, on their home screen and when a link is shared.', { name: 'Kopi Biru', bg: 'primary', shape: 'squircle', og: 'Order ahead at Kopi Biru' }],
+  ['sounds', 'PLATFORM', 'Custom sounds', 'volume-2', 'pro', 'Order chime, payment sound and customer display sounds.', { chime: 'bell', pay: 'default', vol: 70, kds: true, disp: true }],
+  ['lang', 'PLATFORM', 'Languages & translations', 'languages', '', 'Add languages and edit any string. Customers switch language on the menu.', { def: 'id', prev: 'en', en: true, zh: false, ja: false, ko: false, t1: 'Es Kopi Susu Aren', t2: 'Iced coffee with palm sugar' }],
+  ['white', 'PLATFORM', 'White-label app', 'smartphone', 'ent', 'Your own member app on the App Store and Google Play, built on BorNiz.', { name: 'Kopi Biru', sub: 'Order ahead & earn beans', bundle: 'id.kopibiru.app', color: 'primary' }],
+  ['domain', 'PLATFORM', 'Custom domain & SSO', 'globe', 'ent', 'Serve the menu and dashboard from your own domain, and sign staff in with company accounts.', { menu: 'order.kopibiru.id', dash: 'admin.kopibiru.id', sso: 'google', enforce: false }],
+  ['embed', 'PLATFORM', 'Embeds & widgets', 'code', 'pro', 'Add third-party widgets to your menu and store pages.', { wa: true, reviews: true, ig: false, code: '<!-- Custom script -->' }],
+  ['emaild', 'PLATFORM', 'Email sender domain', 'at-sign', 'pro', 'Send receipts and campaigns from your own address instead of no-reply@bornis.id.', { from: 'Kopi Biru', addr: 'hello@kopibiru.id' }],
+  ['kit', 'PLATFORM', 'Import brand kit', 'download', '', 'Pull colors, fonts and logos from a file you already have.', { src: 'figma', url: 'figma.com/file/kopibiru-brand' }],
+  ['auto', 'PLATFORM', 'Auto theme from logo', 'wand-sparkles', '', 'Upload a logo or photo and get three theme options built from its colors.', { src: 'logo', mood: 'bold', pick: 0 }],
+  ['anim', 'PLATFORM', 'Animation style', 'sparkles', '', 'How much movement customers see on the menu and kiosk.', { level: 'subtle', reduce: true }],
+];
+const FONTS = { bricolage: ["'Space Grotesk',system-ui,sans-serif", 'Bricolage Grotesque'], serif: ["Georgia,'Times New Roman',serif", 'Georgia'], system: ["'Instrument Sans',system-ui,sans-serif", 'System UI'], upload: ["'Space Grotesk',system-ui,sans-serif", 'Kopi Sans (uploaded)'] };
+const PALS = { bold: [['#1F4FD8', '#F2B544', '#14213D'], ['#14213D', '#F2B544', '#F7F4EE'], ['#2563EB', '#FDE68A', '#0F172A']], soft: [['#8FA9E8', '#F7DFA8', '#2B3A5C'], ['#C7D4F2', '#F2B544', '#14213D'], ['#E7ECF8', '#9BB3EE', '#1E293B']], dark: [['#0E1A33', '#F2B544', '#E3E8F3'], ['#141210', '#5B8CFF', '#F5F2EE'], ['#1B2540', '#FFB020', '#FFFFFF']] };
+const WG = [['w_rev', 'Revenue today'], ['w_live', 'Live orders'], ['w_trend', 'Revenue trend'], ['w_mix', 'Payment mix'], ['w_top', 'Top products'], ['w_stock', 'Low stock'], ['w_staff', 'Staff on shift'], ['w_alert', 'Alerts']];
+const GOV = [
+  ['widgets', 'WORKSPACE', 'Dashboard widgets', 'layout-dashboard', '', 'Choose and order the widgets each role sees on its home dashboard.', { role: 'owner', cols: 3, w_rev: true, w_live: true, w_trend: true, w_mix: true, w_top: true, w_stock: true, w_staff: false, w_alert: true, order: WG.map(w => w[0]) }],
+  ['terms', 'WORKSPACE', 'Terminology', 'whole-word', '', 'Rename modules to match how your business talks. Changes apply across the dashboard, POS and reports.', { outlet: 'Cabang', table: 'Meja', customer: 'Pelanggan', member: 'Sahabat Biru', shift: 'Shift', product: 'Menu' }],
+  ['fields', 'WORKSPACE', 'Custom fields', 'list-plus', 'pro', 'Add your own fields to products and customers. They show on forms, filters and exports.', { ent: 'customer', f1: 'Company', t1: 'text', f2: 'Preferred drink', t2: 'select', f3: 'Allergies', t3: 'tags', req: false }],
+  ['roleth', 'WORKSPACE', 'Theme per role', 'user-cog', 'pro', 'Give each role its own accent and density so devices are easy to tell apart.', { role: 'cashier', accent: 'ember', density: 'touch', dark: false }],
+  ['lock', 'GOVERNANCE', 'Franchise brand lock', 'lock', 'ent', 'Head office locks brand elements. Outlets can only change what is unlocked.', { logo: true, colors: true, fonts: true, prices: false, promos: false, photos: false, receipt: true }],
+  ['approve', 'GOVERNANCE', 'Change approvals', 'badge-check', 'pro', 'Managers edit every studio like the owner; price changes and publishing wait for the owner’s OK.', { rule: 'owner', notify: true }],
+  ['staging', 'GOVERNANCE', 'Staging & preview link', 'link-2', '', 'Share an unpublished version with your team or a designer before it goes live.', { exp: '7', pass: true, banner: true }],
+  ['ab', 'GOVERNANCE', 'A/B testing', 'split', 'pro', 'Show two versions of a page or section and keep the one that sells more.', { split: 50, metric: 'checkout', dur: '14' }],
+  ['stats', 'GOVERNANCE', 'Menu analytics', 'chart-no-axes-column', '', 'See which sections and items get clicked, added to cart and paid.', { per: '7d', page: 'home' }],
+  ['hooks', 'GOVERNANCE', 'Webhooks & API', 'webhook', 'ent', 'Notify your own systems when themes, menus or orders change.', { url: 'https://hooks.kopibiru.id/bornis', e1: true, e2: true, e3: false, e4: true }],
+  ['industry', 'TEMPLATES', 'Industry templates', 'layout-template', '', 'Starter setups per business type: pages, sections, POS layout and receipt.', { pick: 'fnb' }],
+];
+const IND = [['fnb', 'F&B · café, resto, bar, bakery', 'Kopi Biru', '#1F4FD8', ['QR menu with photos', 'Table & floor plan', 'Kitchen display routing', 'Cup stickers']], ['retail', 'Retail · fashion, minimarket', 'Rumah Kain', '#7A3E2B', ['Size × color variants', 'Barcode & label printing', 'Exchange flow', 'Online catalog']], ['salon', 'Salon & spa', 'Lumière', '#7D3C98', ['Booking per stylist', 'Service duration', 'Commission per service', 'Deposit on booking']], ['laundry', 'Laundry', 'Bersih Kilat', '#0E8A7E', ['Order by kg or item', 'Status tracking link', 'Pickup & delivery', 'WhatsApp ready alert']], ['court', 'Food court & multi-tenant', 'Pasar Rasa', '#C2410C', ['One cart, many tenants', 'Settlement per tenant', 'Shared table QR', 'Tenant KDS']]];
+const CUST = [
+  ['wait', 'CUSTOMER SCREENS', 'Waiting screen', 'hourglass', '', 'What guests see on their phone while the order is being prepared. Fill the wait with hospitality, not a spinner.', { prog: 'steps', eta: true, greet: 'Sit back, {name}. We’re brewing.', p_upsell: true, p_loyal: true, p_wifi: true, p_music: true, p_game: false, p_story: true, p_promo: true, p_ig: false, p_ad: false, adby: 'Susu Segar Lembang', step: 1 }],
+  ['ready', 'CUSTOMER SCREENS', 'Order ready & enjoy', 'party-popper', '', 'The moment the order is ready: notification, ready screen and the after-meal follow-up.', { head: 'Selamat menikmati, {name}!', sub: 'Pesanan #{order} siap di counter Senayan.', where: 'pickup', c_page: true, c_push: true, c_wa: true, c_disp: true, c_vibe: true, cta: 'rate', confetti: true, later: 'Terima kasih sudah mampir. Sampai jumpa lagi!' }],
+  ['board', 'CUSTOMER SCREENS', 'Menu board (TV)', 'tv', 'pro', 'Digital menu boards for TVs above the counter. Prices and sold-out items update live.', { layout: '3col', theme: 'dark', rotate: true, sold: 'strike', promo: true }],
+  ['queue', 'CUSTOMER SCREENS', 'Queue & pickup screen', 'list-ordered', '', 'Shows preparing and ready numbers on a TV near the pickup counter.', { names: false, sound: true, ad: true, theme: 'dark' }],
+  ['qrpay', 'CUSTOMER SCREENS', 'QRIS payment on phone', 'qr-code', '', 'The payment page guests see after checking out from the QR menu.', { timer: '15', save: true, brand: true }],
+  ['split', 'CUSTOMER SCREENS', 'Split bill from phone', 'split', 'pro', 'Each guest at the table scans and pays their own items or share.', { mode: 'items', tip: true }],
+  ['track', 'CUSTOMER SCREENS', 'Delivery tracking', 'bike', '', 'Live tracking page sent by WhatsApp for delivery orders.', { stage: 2, map: true, driver: true }],
+  ['closed', 'CUSTOMER SCREENS', 'Closed, offline & sold out', 'store', '', 'What guests see when the store is closed, ordering is paused or an item runs out.', { state: 'closed', msg: 'Kami buka lagi besok jam 07:00.', pre: true }],
+];
+const vfill = (t, n = 'Dewi') => t.replace('{name}', n).replace('{order}', 'A-12');
+class Component extends DCLogic {
+  moreTools4() { return CUST; }
+  fieldsMore4(id, F) {
+    return {
+      wait: [F.seg('Simulate step', 'step', [[0, 'Received'], [1, 'Preparing'], [2, 'Almost']]), F.seg('Progress style', 'prog', [['steps', 'Steps'], ['bar', 'Bar'], ['ring', 'Ring']]), F.toggle('Show estimated time', 'eta'), F.text('Greeting', 'greet'), F.head('PLACEMENTS WHILE WAITING'), F.toggle('Add-on suggestion (ready with your order)', 'p_upsell'), F.toggle('Points progress', 'p_loyal'), F.toggle('Wi-Fi card', 'p_wifi'), F.toggle('Now playing in store', 'p_music'), F.toggle('Mini game: catch the beans', 'p_game'), F.toggle('Brand story / behind the bar', 'p_story'), F.toggle('Promo for next visit', 'p_promo'), F.toggle('Follow on Instagram', 'p_ig'), F.toggle('Sponsored partner placement', 'p_ad'), F.text('Partner name', 'adby'), F.note('Placements reorder in Menu Studio → Pages. Sponsored slots can be sold to partner brands and are capped at one per order.')],
+      ready: [F.text('Headline', 'head'), F.text('Subtext', 'sub'), F.seg('Order is', 'where', [['pickup', 'Pickup'], ['table', 'Served'], ['delivery', 'Delivered']]), F.head('NOTIFY THROUGH'), F.toggle('Ready screen on phone', 'c_page'), F.toggle('Push notification', 'c_push'), F.toggle('WhatsApp (WABA)', 'c_wa'), F.toggle('Queue / customer display', 'c_disp'), F.toggle('Sound + vibrate on phone', 'c_vibe'), F.head('AFTER'), F.seg('Main action', 'cta', [['rate', 'Rate'], ['reorder', 'Reorder'], ['share', 'Share']]), F.toggle('Confetti', 'confetti'), F.text('Message 1 hour later', 'later'), F.note('Set the follow-up flow in Automations (WABA).')],
+      board: [F.seg('Layout', 'layout', [['3col', '3 columns'], ['2col', '2 + promo'], ['hero', 'Hero item']]), F.seg('Theme', 'theme', [['dark', 'Dark'], ['brand', 'Brand'], ['light', 'Light']]), F.toggle('Rotate categories every 15s', 'rotate'), F.seg('Sold-out items', 'sold', [['strike', 'Strike'], ['hide', 'Hide'], ['badge', 'Badge']]), F.toggle('Promo strip', 'promo')],
+      queue: [F.toggle('Show first names', 'names'), F.toggle('Chime when a number is ready', 'sound'), F.toggle('Promo slot', 'ad'), F.seg('Theme', 'theme', [['dark', 'Dark'], ['brand', 'Brand']])],
+      qrpay: [F.seg('QR valid for', 'timer', [['5', '5 min'], ['15', '15 min'], ['30', '30 min']]), F.toggle('Save QR to gallery button', 'save'), F.toggle('Brand header', 'brand')],
+      split: [F.seg('Split by', 'mode', [['items', 'Items'], ['even', 'Evenly'], ['amount', 'Amount']]), F.toggle('Ask for tip', 'tip')],
+      track: [F.seg('Simulate stage', 'stage', [[0, 'Confirmed'], [1, 'Cooking'], [2, 'On the way'], [3, 'Arrived']]), F.toggle('Live map', 'map'), F.toggle('Driver name & call', 'driver')],
+      closed: [F.seg('State', 'state', [['closed', 'Closed'], ['busy', 'Paused'], ['soldout', 'Sold out']]), F.text('Message', 'msg'), F.toggle('Allow pre-order for later', 'pre')],
+    }[id] || null;
+  }
+  previewMore4(id, v) {
+    if (id === 'wait') { const st = +v.step; return { wtGreet: vfill(v.greet), wtSteps: ['Received', 'Preparing', 'Ready'].map((l, i) => ({ l, bg: i <= st ? '#1F4FD8' : '#E3DED5', fg: i <= st ? '#14213D' : '#8B93A5' })), wtBar: ['20%', '60%', '88%'][st], wtSt: ['We got your order', 'Your drinks are being made', 'Almost ready'][st], wtEta: ['About 9 min', 'About 6 min', 'About 1 min'][st], wtEtaD: v.eta ? 'block' : 'none', wtSteps_: v.prog === 'steps', wtBar_: v.prog === 'bar', wtRing_: v.prog === 'ring', wtRing: `conic-gradient(#1F4FD8 0 ${[20, 60, 88][st]}%,#E3DED5 0)`, wtPct: [20, 60, 88][st] + '%', p_upsell: v.p_upsell, p_loyal: v.p_loyal, p_wifi: v.p_wifi, p_music: v.p_music, p_game: v.p_game, p_story: v.p_story, p_promo: v.p_promo, p_ig: v.p_ig, p_ad: v.p_ad, wtAd: v.adby }; }
+    if (id === 'ready') { const C = { rate: 'Rate your visit', reorder: 'Order again', share: 'Share on Instagram' }[v.cta]; return { rdHead: vfill(v.head), rdSub: vfill(v.sub), rdCta: C, rdIcon: { pickup: 'Show this at the counter', table: 'Your order is on its way to Table 7', delivery: 'Delivered to your door' }[v.where], rdLater: v.later, rdChannels: [['Phone screen', v.c_page], ['Push', v.c_push], ['WhatsApp', v.c_wa], ['Display', v.c_disp], ['Vibrate', v.c_vibe]].map(([l, on]) => ({ l, bg: on ? '#E3F5EA' : '#F2EFEA', fg: on ? '#156B3A' : '#A9A39B' })), rdPushD: v.c_push ? 'flex' : 'none', rdWaD: v.c_wa ? 'flex' : 'none', rdConf: v.confetti ? 'block' : 'none' }; }
+    if (id === 'board') { const D = { dark: ['#0E1A33', '#FFFFFF', '#F2B544'], brand: ['#1F4FD8', '#FFFFFF', '#F2B544'], light: ['#F7F4EE', '#14213D', '#1F4FD8'] }[v.theme]; return { bdBg: D[0], bdFg: D[1], bdAc: D[2], bdCols: v.layout === '3col' ? 'repeat(3,1fr)' : v.layout === '2col' ? '1fr 1fr 1.1fr' : '1.4fr 1fr 1fr', bdPromoD: v.promo ? 'block' : 'none', bdHero: v.layout === 'hero', bdCats: [['Coffee', [['Es Kopi Susu Aren', '25', false], ['Americano', '22', false], ['Cappuccino', '28', false], ['Matcha Latte', '30', true]]], ['Pastry', [['Croissant Almond', '32', false], ['Banana Bread', '28', false], ['Pain au Choc', '30', true]]], ['Rice', [['Nasi Goreng', '38', false], ['Ayam Bakar', '42', false]]]].map(([c, it]) => ({ c, items: it.filter(x => !(x[2] && v.sold === 'hide')).map(([n, p, so]) => ({ n, p, td: so && v.sold === 'strike' ? 'line-through' : 'none', op: so ? .45 : 1, bD: so && v.sold === 'badge' ? 'inline' : 'none' })) })) }; }
+    if (id === 'queue') return { quBg: v.theme === 'dark' ? '#0E1A33' : '#1F4FD8', quPrep: ['A-14', 'A-15', 'A-16', 'B-03'].map((n, i) => ({ n: v.names ? n + ' · ' + ['Budi', 'Sari', 'Rio', 'Ana'][i] : n })), quReady: ['A-12', 'A-13'].map((n, i) => ({ n: v.names ? n + ' · ' + ['Dewi', 'Tono'][i] : n })), quAdD: v.ad ? 'flex' : 'none' };
+    if (id === 'qrpay') return { qpTimer: v.timer + ':00', qpSaveD: v.save ? 'grid' : 'none', qpBrandD: v.brand ? 'flex' : 'none' };
+    if (id === 'split') return { spMode: v.mode, spItems: v.mode === 'items', spEven: v.mode !== 'items', spTipD: v.tip ? 'flex' : 'none', spPeople: [['Dewi', 'IDR 57,000', 'Paid', '#E3F5EA', '#156B3A'], ['Budi', 'IDR 41,000', 'Paying', '#FFF4D6', '#8A5A00'], ['You', 'IDR 46,000', 'Your share', '#E6EEFD', '#1F4FD8']].map(([n, a, s, b, f]) => ({ n, a: v.mode === 'even' ? 'IDR 48,000' : a, s, b, f })) };
+    if (id === 'track') { const st = +v.stage; return { tkSteps: ['Confirmed', 'Cooking', 'On the way', 'Arrived'].map((l, i) => ({ l, c: i <= st ? '#1F4FD8' : '#E3DED5' })), tkTitle: ['Order confirmed', 'Being prepared', 'Rider is on the way', 'Your order has arrived'][st], tkEta: ['Arrives 14:55', 'Arrives 14:55', 'Arrives in 8 min', 'Delivered 14:52'][st], tkMapD: v.map ? 'block' : 'none', tkDrvD: v.driver && st >= 2 ? 'flex' : 'none', tkBike: ['10%', '10%', '55%', '86%'][st] }; }
+    if (id === 'closed') return { clTitle: { closed: 'We’re closed right now', busy: 'Orders paused for a moment', soldout: 'Sold out' }[v.state], clMsg: v.state === 'busy' ? 'The kitchen is catching up. Ordering reopens in about 10 minutes.' : v.state === 'soldout' ? 'Croissant Almond is sold out for today. Try Pain au Chocolat instead?' : v.msg, clPreD: v.pre && v.state !== 'soldout' ? 'grid' : 'none', clIcon: IC({ closed: 'moon', busy: 'timer', soldout: 'package-x' }[v.state]) };
+    return {};
+  }
+  moreTools3() { return GOV.concat(this.moreTools4 ? this.moreTools4() : []); }
+  moveW(k, d) { const v = this.state.v.widgets || this.def('widgets'), o = [...v.order], i = o.indexOf(k), j = i + d; if (j < 0 || j >= o.length) return; [o[i], o[j]] = [o[j], o[i]]; this.setState(s => ({ cur: 'widgets', v: { ...s.v, widgets: { ...v, order: o } } })); }
+  fieldsMore3(id, F, v) {
+    const m = {
+      widgets: [F.seg('Role', 'role', [['owner', 'Owner'], ['manager', 'Manager'], ['pic', 'PIC'], ['cashier', 'Cashier']]), F.seg('Columns', 'cols', [[2, '2'], [3, '3'], [4, '4']]), F.head('WIDGETS'), ...WG.map(([k, l]) => F.toggle(l, k)), F.note('Use the arrows on each widget to reorder. Drag-and-drop works the same in the live dashboard.')],
+      terms: [F.text('Outlet', 'outlet'), F.text('Table', 'table'), F.text('Customer', 'customer'), F.text('Member', 'member'), F.text('Shift', 'shift'), F.text('Product', 'product'), F.note('Reports, exports and API keep the original names, so integrations do not break.')],
+      fields: [F.seg('Add fields to', 'ent', [['customer', 'Customers'], ['product', 'Products']]), F.text('Field 1', 'f1'), F.seg('Type', 't1', [['text', 'Text'], ['number', 'Number'], ['date', 'Date']]), F.text('Field 2', 'f2'), F.seg('Type', 't2', [['select', 'Dropdown'], ['text', 'Text'], ['toggle', 'Yes/No']]), F.text('Field 3', 'f3'), F.seg('Type', 't3', [['tags', 'Tags'], ['text', 'Text'], ['date', 'Date']]), F.toggle('Field 1 is required', 'req')],
+      roleth: [F.seg('Role', 'role', [['owner', 'Owner'], ['manager', 'Manager'], ['pic', 'PIC'], ['cashier', 'Cashier'], ['kitchen', 'Kitchen']]), F.swatch('Accent', 'accent', [['ember', '#F26B1D', 'Ember'], ['blue', '#2F6FEB', 'Blue'], ['green', '#1F9D55', 'Green'], ['violet', '#7C3AED', 'Violet']]), F.seg('Density', 'density', [['touch', 'Touch'], ['comfy', 'Comfy'], ['dense', 'Dense']]), F.toggle('Dark mode', 'dark'), F.note('Status colors (paid, void, late) never change, so they mean the same on every device.')],
+      lock: [F.toggle('Logo', 'logo'), F.toggle('Brand colors', 'colors'), F.toggle('Fonts', 'fonts'), F.toggle('Menu prices', 'prices'), F.toggle('Promos', 'promos'), F.toggle('Product photos', 'photos'), F.toggle('Receipt design', 'receipt'), F.note('Locked = set by head office only. Unlocked items can be changed per outlet in Menu Studio → Publish.')],
+      approve: [F.seg('Who approves', 'rule', [['owner', 'Owner'], ['two', 'Two people'], ['none', 'No approval']]), F.toggle('Notify approvers on WhatsApp', 'notify'), F.note('Price changes always need approval when Menu prices are unlocked for outlets.')],
+      staging: [F.seg('Link expires', 'exp', [['1', '1 day'], ['7', '7 days'], ['30', '30 days']]), F.toggle('Password protect', 'pass'), F.toggle('Show "Preview" banner', 'banner'), F.note('Orders placed on a preview link are test orders and are never charged.')],
+      ab: [F.range('Traffic to B', 'split', 10, 90, 5, '%'), F.seg('Winner by', 'metric', [['checkout', 'Checkouts'], ['aov', 'Avg order'], ['click', 'Clicks']]), F.seg('Run for', 'dur', [['7', '7 days'], ['14', '14 days'], ['30', '30 days']]), F.note('Set up variants in Menu Studio → Pages → section → Visibility → A/B test.')],
+      stats: [F.seg('Period', 'per', [['today', 'Today'], ['7d', '7 days'], ['30d', '30 days']]), F.seg('Page', 'page', [['home', 'Home'], ['menu', 'Menu'], ['promo', 'Promo']])],
+      hooks: [F.text('Endpoint URL', 'url'), F.toggle('theme.published', 'e1'), F.toggle('menu.updated', 'e2'), F.toggle('price.changed', 'e3'), F.toggle('order.paid', 'e4'), F.note('Each request is signed with HMAC-SHA256 in the X-BorNiz-Signature header. Failed deliveries retry 5 times.')],
+      industry: [F.seg('Business type', 'pick', IND.map(([k, n]) => [k, n.split(' ')[0]])), F.note('Applying a template sets up pages, POS layout, receipt and recommended settings. Your products and data are kept.')],
+    }[id];
+    return m || this.fieldsMore4(id, F, v);
+  }
+  previewMore3(id, v) {
+    if (id === 'widgets') { const on = v.order.filter(k => v[k]); return { wgCols: `repeat(${v.cols},minmax(0,1fr))`, wgRole: { owner: 'Owner home', manager: 'Manager home · Senayan + Kemang', pic: 'PIC home · my shift', cashier: 'Cashier home' }[v.role], wgList: on.map((k, i) => ({ l: WG.find(w => w[0] === k)[1], big: ['w_trend', 'w_top'].includes(k), span: ['w_trend'].includes(k) && v.cols > 2 ? 'span 2' : 'span 1', up: () => this.moveW(k, -1), dn: () => this.moveW(k, 1), upOp: i ? 1 : .3, dnOp: i < on.length - 1 ? 1 : .3, val: { w_rev: 'IDR 4,3 jt', w_live: '12 open', w_trend: '', w_mix: 'QRIS 46%', w_top: 'Es Kopi Susu', w_stock: '4 items', w_staff: '7 on shift', w_alert: '2 voids' }[k] })) }; }
+    if (id === 'terms') return { tmNav: [['store', v.outlet], ['armchair', v.table], ['users', v.customer], ['award', v.member], ['clock', v.shift], ['package', v.product]].map(([ic, l]) => ({ l, mask: IC(ic) })), tmCrumb: `${v.outlet} Senayan › ${v.table} 7 › Order #2048`, tmCust: v.customer, tmMem: v.member, tmOut: v.outlet };
+    if (id === 'fields') return { cfTitle: v.ent === 'customer' ? 'Edit customer' : 'Edit product', cfBase: (v.ent === 'customer' ? [['Name', 'Dewi Anggraini'], ['WhatsApp', '0812 3456 7890']] : [['Name', 'Es Kopi Susu Aren'], ['Price', 'IDR 25,000']]).map(([k, val]) => ({ k, val })), cfCustom: [[v.f1, v.t1, v.req], [v.f2, v.t2, false], [v.f3, v.t3, false]].filter(f => f[0]).map(([n, t, r]) => ({ n: n + (r ? ' *' : ''), t: { text: 'Text', number: 'Number', date: 'Date', select: 'Dropdown', toggle: 'Yes / No', tags: 'Tags' }[t], val: { text: 'PT Sinar Kantor', number: '0', date: 'dd/mm/yyyy', select: 'Oat milk latte ▾', toggle: 'No', tags: 'Peanuts  ·  + add' }[t] })) };
+    if (id === 'roleth') { const A = { ember: '#F26B1D', blue: '#2F6FEB', green: '#1F9D55', violet: '#7C3AED' }[v.accent]; return { rtA: A, rtBg: v.dark ? '#121110' : '#FAF8F5', rtSurf: v.dark ? '#1C1A18' : '#FFFFFF', rtFg: v.dark ? '#F5F2EE' : '#141210', rtBorder: v.dark ? '#34302B' : '#E6E2DC', rtH: { touch: '56px', comfy: '48px', dense: '40px' }[v.density], rtRole: { owner: 'Owner', manager: 'Manager', pic: 'PIC', cashier: 'Cashier', kitchen: 'Kitchen' }[v.role] }; }
+    if (id === 'lock') { const els = [['logo', 'Logo'], ['colors', 'Colors'], ['fonts', 'Fonts'], ['prices', 'Prices'], ['promos', 'Promos'], ['photos', 'Photos'], ['receipt', 'Receipt']]; return { lkHead: els.map(([, l]) => ({ l })), lkRows: ['Head office', 'Senayan', 'Kemang', 'BSD'].map((o, i) => ({ o, cells: els.map(([k]) => { const locked = v[k] && i > 0; return { mask: IC(i === 0 ? 'pencil' : locked ? 'lock' : 'pencil'), c: i === 0 ? '#1F9D55' : locked ? '#B3261E' : '#1F9D55', bg: i === 0 ? '#E3F5EA' : locked ? '#FDE8E8' : '#E3F5EA' }; }) })) }; }
+    if (id === 'approve') return { apRule: { owner: 'Owner approves every change', two: 'Owner + one more admin must approve', none: 'Changes go live without approval' }[v.rule], apList: [['Andi (Manager · Kemang)', 'Price: Es Kopi Susu 25k → 27k', '10 min ago'], ['Sari (Manager · BSD)', 'New promo banner “Weekend 2+1”', '1 h ago'], ['Rio (Designer)', 'Menu Studio theme v14', 'Yesterday']].map(([who, what, when]) => ({ who, what, when })), apOn: v.rule !== 'none' };
+    if (id === 'staging') return { stExp: { '1': 'Expires tomorrow', '7': 'Expires in 7 days', '30': 'Expires in 30 days' }[v.exp], stPassD: v.pass ? 'flex' : 'none', stBanD: v.banner ? 'block' : 'none' };
+    if (id === 'ab') return { abA: 100 - v.split + '%', abB: v.split + '%', abMetric: { checkout: 'Checkout rate', aov: 'Avg order value', click: 'Click rate' }[v.metric], abValA: { checkout: '42%', aov: 'IDR 61k', click: '18%' }[v.metric], abValB: { checkout: '49%', aov: 'IDR 66k', click: '23%' }[v.metric], abWA: { checkout: '42%', aov: '61%', click: '18%' }[v.metric], abWB: { checkout: '49%', aov: '66%', click: '23%' }[v.metric], abDur: `Day 9 of ${v.dur} · 95% confidence B wins` };
+    if (id === 'stats') { const k = { today: 1, '7d': 7, '30d': 30 }[v.per]; return { saFunnel: [['Visits', 1240], ['Viewed item', 980], ['Added to cart', 620], ['Checkout', 470], ['Paid', 438]].map(([l, n], i) => ({ l, n: (n * k).toLocaleString('en-US'), w: Math.round(n / 1240 * 100) + '%', c: i === 4 ? '#F26B1D' : '#141210' })), saTop: [['Hero · Order now', '31%'], ['Best sellers grid', '24%'], ['Promo banner', '12%'], ['Free canvas · button', '6%']].map(([l, n]) => ({ l, n })) }; }
+    if (id === 'hooks') return { hkEvents: [['theme.published', v.e1], ['menu.updated', v.e2], ['price.changed', v.e3], ['order.paid', v.e4]].filter(e => e[1]).map(([e]) => ({ e })), hkJson: `{\n  "event": "theme.published",\n  "tenant": "kopibiru",\n  "version": 14,\n  "by": "owner@kopibiru.id",\n  "at": "2026-10-10T14:32:08+07:00"\n}`, hkUrl: v.url };
+    if (id === 'industry') { const t = IND.find(x => x[0] === v.pick); return { inName: t[1], inBrand: t[2], inBg: t[3], inFeats: t[4].map(f => ({ f })), inAll: IND.map(([k, n, b, c]) => ({ n, b, c, ring: k === v.pick ? '0 0 0 3px #F26B1D' : '0 0 0 1px #E6E2DC', onClick: () => this.set('pick', k) })) }; }
+    return this.previewMore4 ? this.previewMore4(id, v) : {};
+  }
+  moreTools() { return PLAT.concat(this.moreTools3 ? this.moreTools3() : []); }
+  tone(hz) { try { const c = this.ac || (this.ac = new (window.AudioContext || window.webkitAudioContext)()); const v = (this.state.v.sounds || {}).vol ?? 70; hz.forEach((f, i) => { const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + i * .13; o.type = 'sine'; o.frequency.value = f; o.connect(g); g.connect(c.destination); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.25 * v / 100, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + .3); o.start(t); o.stop(t + .32); }); } catch (e) {} }
+  fieldsMore2(id, F, v) {
+    const SW = [['primary', TH.primary, 'Primary'], ['accent', TH.accent, 'Accent'], ['dark', TH.text, 'Dark']];
+    const m = {
+      fonts: [F.seg('Headings', 'head', [['bricolage', 'Bricolage'], ['serif', 'Serif'], ['upload', 'Uploaded']]), F.seg('Body', 'body', [['system', 'System'], ['serif', 'Serif'], ['bricolage', 'Bricolage']]), F.range('Size scale', 'scale', 85, 120, 5, '%'), F.text('Uploaded file', 'upload'), F.note('Accepts WOFF2, WOFF, TTF and OTF up to 2 MB. Make sure your font license allows web use.', 'warn')],
+      icons: [F.seg('Style', 'style', [['outline', 'Outline'], ['filled', 'Filled'], ['duo', 'Duotone']]), F.range('Stroke', 'stroke', 1, 3, .5, 'px'), F.seg('Container', 'shape', [['none', 'None'], ['rounded', 'Rounded'], ['circle', 'Circle']]), F.swatch('Color', 'color', SW), F.note('Upload an SVG set to replace individual icons (category icons, dietary badges).')],
+      appicon: [F.text('App name', 'name'), F.swatch('Background', 'bg', SW), F.seg('Shape', 'shape', [['squircle', 'Squircle'], ['circle', 'Circle'], ['square', 'Square']]), F.text('Share title', 'og'), F.note('We generate favicon.ico, 180px Apple touch icon, 512px PWA icon and a 1200×630 share image.')],
+      sounds: [F.seg('New order chime', 'chime', [['default', 'Default'], ['bell', 'Bell'], ['marimba', 'Marimba'], ['upload', 'Upload']]), F.seg('Payment sound', 'pay', [['default', 'Default'], ['coin', 'Coin'], ['off', 'Off']]), F.range('Volume', 'vol', 0, 100, 5, '%'), F.toggle('Kitchen display chime', 'kds'), F.toggle('Customer display sounds', 'disp'), F.note('Uploads: MP3 or OGG, under 2 seconds, max 300 KB.')],
+      lang: [F.seg('Default language', 'def', [['id', 'Indonesia'], ['en', 'English']]), F.toggle('English', 'en'), F.toggle('中文 Chinese', 'zh'), F.toggle('日本語 Japanese', 'ja'), F.toggle('한국어 Korean', 'ko'), F.seg('Preview', 'prev', [['id', 'ID'], ['en', 'EN'], ['zh', 'ZH'], ['ja', 'JA']]), F.head('EDIT A STRING'), F.text('Item name (EN)', 't1'), F.text('Description (EN)', 't2'), F.note('Missing translations fall back to the default language. Auto-translate fills new languages as a draft.')],
+      white: [F.text('App name', 'name'), F.text('Subtitle', 'sub'), F.text('Bundle ID', 'bundle'), F.swatch('Brand color', 'color', SW), F.note('BorNiz builds, signs and submits the app. You need an Apple Developer and Google Play account in your company name.', 'warn')],
+      domain: [F.text('Menu & store domain', 'menu'), F.text('Dashboard domain', 'dash'), F.seg('Staff sign-in', 'sso', [['none', 'Password'], ['google', 'Google'], ['ms', 'Microsoft'], ['saml', 'SAML']]), F.toggle('Require SSO for all staff', 'enforce'), F.note('SSL certificates are issued and renewed automatically.')],
+      embed: [F.toggle('WhatsApp chat button', 'wa'), F.toggle('Google Reviews widget', 'reviews'), F.toggle('Instagram feed', 'ig'), F.area('Custom HTML / script (head)', 'code'), F.note('Custom scripts run on menu and store pages only, never on checkout or payment pages.', 'warn')],
+      emaild: [F.text('From name', 'from'), F.text('From address', 'addr'), F.note('Add the 3 DNS records at your domain provider, then click Verify. Usually takes under 1 hour.')],
+      kit: [F.seg('Source', 'src', [['figma', 'Figma'], ['canva', 'Canva'], ['json', 'JSON tokens'], ['pdf', 'PDF guide']]), F.text('Link or file', 'url'), F.note('We read styles from the file and show what we found. Nothing changes until you apply.')],
+      auto: [F.seg('Build from', 'src', [['logo', 'Logo'], ['photo', 'Cover photo']]), F.seg('Mood', 'mood', [['bold', 'Bold'], ['soft', 'Soft'], ['dark', 'Dark']]), F.seg('Pick option', 'pick', [[0, 'A'], [1, 'B'], [2, 'C']]), F.note('Every option passes the 4.5:1 contrast check before it is offered.')],
+      anim: [F.seg('Level', 'level', [['none', 'None'], ['subtle', 'Subtle'], ['playful', 'Playful']]), F.toggle('Respect device reduced-motion setting', 'reduce'), F.note('Hover the card on the right to preview. Payment success always animates, even on None, as a short fade.')],
+    }[id];
+    return m || (this.fieldsMore3 ? this.fieldsMore3(id, F, v) : null);
+  }
+  previewMore2(id, v) {
+    const COL = { primary: TH.primary, accent: TH.accent, dark: TH.text };
+    if (id === 'fonts') return { fnHead: FONTS[v.head][0], fnBody: FONTS[v.body][0], fnHeadName: FONTS[v.head][1], fnBodyName: FONTS[v.body][1], fnH: Math.round(40 * v.scale / 100) + 'px', fnB: Math.round(15 * v.scale / 100) + 'px' };
+    if (id === 'icons') { const c = COL[v.color]; return { icList: ['coffee', 'cup-soda', 'croissant', 'utensils', 'ice-cream-cone', 'leaf', 'flame', 'wheat', 'milk', 'beef', 'fish', 'salad'].map(n => ({ mask: IC(n), n })), icFg: v.style === 'filled' ? '#FFFFFF' : c, icBg: v.style === 'filled' ? c : v.style === 'duo' ? c + '22' : 'transparent', icR: { none: '0', rounded: '14px', circle: '999px' }[v.shape], icBox: v.shape === 'none' && v.style === 'outline' ? '0 0 0 0 transparent' : '0 0 0 0 transparent', icSize: 20 + v.stroke * 2 + 'px' }; }
+    if (id === 'appicon') return { aiBg: COL[v.bg], aiR: { squircle: '22%', circle: '999px', square: '6px' }[v.shape], aiName: v.name, aiOg: v.og, aiInit: v.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() };
+    if (id === 'sounds') return { sdList: [['New order', v.chime === 'upload' ? 'order-chime.mp3' : v.chime, { default: [880, 1320], bell: [1046, 1568, 1318], marimba: [523, 659, 784, 1046], upload: [700, 900] }[v.chime]], ['Payment received', v.pay, v.pay === 'off' ? [] : v.pay === 'coin' ? [1568, 2093] : [523, 659, 784]], ['Kitchen: new ticket', v.kds ? 'on' : 'off', v.kds ? [660, 880] : []], ['Customer display: thank you', v.disp ? 'on' : 'off', v.disp ? [784, 1046] : []]].map(([n, d, hz]) => ({ n, d, op: hz.length ? 1 : .4, play: () => this.tone(hz) })), sdVol: v.vol + '%' };
+    if (id === 'lang') { const L = { id: ['Es Kopi Susu Aren', 'Kopi susu dingin dengan gula aren', 'Tambah', 'Kopi'], en: [v.t1, v.t2, 'Add', 'Coffee'], zh: ['棕榈糖冰奶咖', '加棕榈糖的冰咖啡', '添加', '咖啡'], ja: ['パームシュガー・アイスラテ', 'パームシュガー入りアイスコーヒー', '追加', 'コーヒー'] }[v.prev]; return { lgName: L[0], lgDesc: L[1], lgAdd: L[2], lgCat: L[3], lgChips: [['ID', true], ['EN', v.en], ['中文', v.zh], ['日本語', v.ja], ['한국어', v.ko]].filter(x => x[1]).map(([l]) => ({ l })) }; }
+    if (id === 'white') return { wlName: v.name, wlSub: v.sub, wlBundle: v.bundle, wlBg: COL[v.color] };
+    if (id === 'domain') return { dmRows: [['CNAME', v.menu.split('.')[0], 'menu.bornis.id', true], ['CNAME', v.dash.split('.')[0], 'app.bornis.id', !!v.dash], ['TXT', '_bornis', 'verify=kb-8f21c', true]].map(([t, n, val, ok]) => ({ t, n, val, s: ok ? 'Verified' : 'Pending', sb: ok ? '#E3F5EA' : '#FFF4D6', sf: ok ? '#156B3A' : '#8A5A00' })), dmUrl: v.dash, dmSso: { none: '', google: 'Continue with Google', ms: 'Continue with Microsoft', saml: 'Continue with company SSO' }[v.sso], dmSsoD: v.sso === 'none' ? 'none' : 'grid', dmPassD: v.enforce && v.sso !== 'none' ? 'none' : 'flex' };
+    if (id === 'embed') return { emWaD: v.wa ? 'grid' : 'none', emRvD: v.reviews ? 'flex' : 'none', emIgD: v.ig ? 'grid' : 'none' };
+    if (id === 'emaild') { const d = (v.addr.split('@')[1] || 'yourdomain.com'); return { edFrom: `${v.from} <${v.addr}>`, edRows: [['TXT', d, 'v=spf1 include:mail.bornis.id ~all', 'SPF', true], ['CNAME', 'bn1._domainkey.' + d, 'dkim1.bornis.id', 'DKIM', true], ['TXT', '_dmarc.' + d, 'v=DMARC1; p=none', 'DMARC', false]].map(([t, n, val, k, ok]) => ({ t, n, val, k, s: ok ? 'Verified' : 'Not found', sb: ok ? '#E3F5EA' : '#FDE8E8', sf: ok ? '#156B3A' : '#B3261E' })) }; }
+    if (id === 'kit') return { kitSrc: { figma: 'Figma file', canva: 'Canva brand kit', json: 'tokens.json', pdf: 'Brand guidelines.pdf' }[v.src], kitColors: [['Primary', '#1F4FD8'], ['Accent', '#F2B544'], ['Ink', '#14213D'], ['Paper', '#F7F4EE'], ['Muted', '#5B6478']].map(([n, c]) => ({ n, c })), kitFonts: [['Headings', 'Bricolage Grotesque 800'], ['Body', 'Inter 400 · replaced with System UI']].map(([n, f]) => ({ n, f })) };
+    if (id === 'auto') { const ps = PALS[v.mood]; return { atSrc: v.src === 'logo' ? 'Logo' : 'Cover photo', atOpts: ps.map((p, i) => ({ l: 'Option ' + 'ABC'[i], p0: p[0], p1: p[1], p2: p[2], ring: +v.pick === i ? '0 0 0 3px #F26B1D' : '0 0 0 1px #E6E2DC', onClick: () => this.set('pick', i) })) }; }
+    if (id === 'anim') return { anHover: { none: 'none', subtle: 'translateY(-4px)', playful: 'translateY(-8px) rotate(-2deg) scale(1.03)' }[v.level], anT: { none: '0ms', subtle: '220ms cubic-bezier(.2,.8,.2,1)', playful: '420ms cubic-bezier(.3,1.35,.5,1)' }[v.level], anDesc: { none: 'No entrance or hover motion. Instant state changes only.', subtle: 'Fade and rise 8px on enter, small lift on hover. Default.', playful: 'Spring pops, tilt on hover, confetti on order placed.' }[v.level] };
+    return this.previewMore3 ? this.previewMore3(id, v) : {};
+  }
+  extraTools() { return MKT.concat(this.moreTools ? this.moreTools() : []); }
+  fieldsMore(id, F, v) {
+    const SW = [['primary', TH.primary, 'Primary'], ['accent', TH.accent, 'Accent'], ['dark', TH.text, 'Dark']];
+    const m = {
+      msg: [F.seg('Channel', 'ch', [['wa', 'WhatsApp'], ['email', 'Email'], ['sms', 'SMS']]), F.seg('Template', 'tpl', [['thanks', 'Thanks'], ['receipt', 'Receipt'], ['ready', 'Ready'], ['winback', 'Win-back']]), F.seg('Language', 'lang', [['id', 'Indonesia'], ['en', 'English']]), F.toggle('Header image', 'img'), F.area('Message', 'body'), F.text('Button', 'btn'), F.note('Variables: {name} {outlet} {item} {total} {points} {order} {code}. Marketing templates need opt-in from the customer.'), F.note('Meta status: ' + (MSG[v.tpl] || MSG.thanks)[3] + ' · Approved', 'info')],
+      flow: [F.seg('Trigger', 'trig', [['paid', 'After payment'], ['visit', 'Visit ends'], ['idle', '30 days away'], ['bday', 'Birthday']]), F.range('Wait', 'delay', 0, 48, 1, ' h'), F.seg('Only if', 'cond', [['all', 'Everyone'], ['member', 'Members'], ['first', 'First visit'], ['phone', 'Has phone']]), F.seg('Send via', 'ch', [['wa', 'WhatsApp'], ['email', 'Email'], ['both', 'Both']]), F.seg('Template', 'tpl', [['thanks', 'Thanks'], ['receipt', 'Receipt'], ['winback', 'Win-back'], ['bday', 'Birthday']]), F.toggle('Fall back to email if WA fails', 'fallback'), F.toggle('Quiet hours 21:00–08:00', 'quiet'), F.toggle('Max 1 message per guest per day', 'cap'), F.note('WABA charges per conversation. Utility messages sent within 24h of a visit cost less than marketing messages.', 'warn')],
+      voucher: [F.seg('Style', 'style', [['ticket', 'Ticket'], ['card', 'Card'], ['stamp', 'Stamp']]), F.text('Title', 'title'), F.text('Detail', 'val'), F.text('Code', 'code'), F.text('Expires', 'exp'), F.swatch('Color', 'color', SW)],
+      gift: [F.seg('Design', 'style', [['brand', 'Brand'], ['photo', 'Photo'], ['minimal', 'Minimal']]), F.seg('Amount', 'amt', [['100000', '100k'], ['200000', '200k'], ['500000', '500k']]), F.area('Message', 'msg'), F.text('From', 'from'), F.swatch('Color', 'color', SW), F.note('Sold at the POS and online. Balance is redeemable at every outlet.')],
+      push: [F.text('Title', 'title'), F.area('Body', 'body'), F.toggle('Image', 'img'), F.seg('Opens', 'link', [['order', 'Order'], ['promo', 'Promo'], ['menu', 'Menu'], ['points', 'Points']]), F.seg('Send', 'when', [['now', 'Now'], ['sched', 'Schedule'], ['auto', 'Automation']])],
+      referral: [F.text('Headline', 'head'), F.text('You get', 'you'), F.text('Friend gets', 'friend'), F.range('Max referrals per member', 'cap', 1, 50, 1), F.swatch('Color', 'color', SW), F.note('Reward is released after the friend’s first paid order of at least IDR 30,000.')],
+      loyalty: [F.range('Points earned', 'rate', 1, 5, 1, ' pt'), F.seg('per', 'per', [['1000', 'IDR 1k'], ['5000', 'IDR 5k'], ['10000', 'IDR 10k']]), F.seg('Points expire after', 'exp', [['6', '6 mo'], ['12', '12 mo'], ['never', 'Never']]), F.toggle('Tiers (Silver, Gold, Platinum)', 'tiers'), F.head('REWARDS CATALOG'), F.text('Reward 1', 'r1'), F.text('Reward 2', 'r2'), F.text('Reward 3', 'r3'), F.note('Card design and tier names live in Menu Studio → Member.')],
+    }[id];
+    return m || (this.fieldsMore2 ? this.fieldsMore2(id, F, v) : null);
+  }
+  previewMore(id, v) {
+    const COL = { primary: TH.primary, accent: TH.accent, dark: TH.text };
+    if (id === 'msg') { const t = MSG[v.tpl] || MSG.thanks; return { msgWa: v.ch === 'wa', msgEmail: v.ch === 'email', msgSms: v.ch === 'sms', msgBody: fill(v.body), msgBtn: v.btn, msgImgD: v.img ? 'block' : 'none', msgSubj: t[0] + ' · Kopi Biru', msgCat: t[3], msgSmsBody: fill(v.body).replace(/\n+/g, ' ').slice(0, 155) + (fill(v.body).length > 155 ? '…' : '') }; }
+    if (id === 'flow') { const t = MSG[v.tpl] || MSG.thanks; return { flNodes: [['zap', 'Trigger', { paid: 'Payment completed at POS', visit: 'Table closed / order completed', idle: 'No visit in 30 days', bday: 'Customer birthday, 09:00' }[v.trig], '#141210'], ['clock', 'Wait', v.delay ? `${v.delay} hour${v.delay > 1 ? 's' : ''}${v.quiet ? ' · respects quiet hours' : ''}` : 'Send immediately', '#857E76'], ['filter', 'Condition', { all: 'Everyone with a phone or email', member: 'Members only', first: 'First visit only', phone: 'Has a WhatsApp number' }[v.cond], '#2F6FEB'], ['send', 'Send', `${{ wa: 'WhatsApp', email: 'Email', both: 'WhatsApp + email' }[v.ch]} · “${t[0]}”`, '#1F9D55']].concat(v.fallback && v.ch === 'wa' ? [['mail', 'If WA fails', 'Send the same message by email', '#E5A000']] : []).map(([ic, k, d, c]) => ({ mask: IC(ic), k, d, c })), flMsg: fill(t[1]), flBtn: t[2], flStats: [['Sent (30d)', '1,284'], ['Read', '91%'], ['Rated', '38%'], ['Came back', '24%']].map(([l, n]) => ({ l, n })) }; }
+    if (id === 'voucher') return { vcBg: COL[v.color], vcTitle: v.title, vcVal: v.val, vcCode: v.code, vcExp: 'Valid until ' + v.exp, vcTicket: v.style === 'ticket', vcCard: v.style === 'card', vcStamp: v.style === 'stamp', vcStamps: Array.from({ length: 10 }, (_, i) => ({ bg: i < 6 ? COL[v.color] : 'transparent', fg: i < 6 ? '#FFFFFF' : COL[v.color] })) };
+    if (id === 'gift') return { gcBg: v.style === 'photo' ? 'linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.55)),repeating-linear-gradient(135deg,#8C7A62 0 12px,#7B6A54 12px 13px)' : v.style === 'minimal' ? '#FFFFFF' : `linear-gradient(135deg,${COL[v.color]},#14213D)`, gcFg: v.style === 'minimal' ? '#14213D' : '#FFFFFF', gcBorder: v.style === 'minimal' ? '1px solid #E3DED5' : 'none', gcAmt: 'IDR ' + (+v.amt).toLocaleString('en-US'), gcMsg: v.msg, gcFrom: 'From ' + v.from };
+    if (id === 'push') return { puTitle: v.title, puBody: v.body, puImgD: v.img ? 'block' : 'none', puWhen: { now: 'now', sched: 'Mon 08:00', auto: 'now' }[v.when] };
+    if (id === 'referral') return { rfBg: COL[v.color], rfHead: v.head, rfYou: v.you, rfFriend: v.friend, rfCap: `You can invite up to ${v.cap} friends` };
+    if (id === 'loyalty') return { lyRule: `${v.rate} point${v.rate > 1 ? 's' : ''} per IDR ${(+v.per).toLocaleString('en-US')}`, lyExp: v.exp === 'never' ? 'Points never expire' : `Points expire after ${v.exp} months`, lyTiersD: v.tiers ? 'grid' : 'none', lyRewards: [v.r1, v.r2, v.r3].filter(Boolean).map(r => { const [n, p] = r.split('·').map(x => x.trim()); return { n, p: (p || '—') + ' pts' }; }) };
+    return this.previewMore2 ? this.previewMore2(id, v) : {};
+  }
+  constructor(p) { super(p); const v = {}; this.tools().forEach(t => { v[t[0]] = { ...t[6] }; }); this.state = { cur: 'cup', v, saved: true, published: false }; }
+  tools() { return TOOLS.concat(this.extraTools ? this.extraTools() : []); }
+  def(id) { const t = this.tools().find(x => x[0] === id); return t ? { ...t[6] } : {}; }
+  set(k, val) { this.setState(s => { const cur = { ...(s.v[s.cur] || this.def(s.cur)), [k]: val }; if (s.cur === 'msg' && k === 'tpl' && MSG[val]) { cur.body = MSG[val][1]; cur.btn = MSG[val][2]; } return { v: { ...s.v, [s.cur]: cur }, saved: false, published: false }; }); clearTimeout(this.st); this.st = setTimeout(() => this.setState({ saved: true }), 800); }
+  F() {
+    const B = { isHead: false, hasLabel: true, isText: false, isArea: false, isSeg: false, isRange: false, isToggle: false, isSwatch: false, isNote: false, hint: '', ph: '' };
+    const v = this.state.v[this.state.cur] || this.def(this.state.cur), S = k => val => this.set(k, val);
+    return {
+      head: l => ({ ...B, isHead: true, hasLabel: false, label: l }),
+      text: (label, k, ph = '') => ({ ...B, isText: true, label, value: v[k] ?? '', ph, onChange: e => S(k)(e.target.value) }),
+      area: (label, k) => ({ ...B, isArea: true, label, value: v[k] ?? '', onChange: e => S(k)(e.target.value) }),
+      seg: (label, k, opts) => ({ ...B, isSeg: true, label, cols: `repeat(${opts.length},minmax(0,1fr))`, opts: opts.map(([val, l]) => ({ l, bg: String(v[k]) === String(val) ? '#FFFFFF' : 'transparent', sh: String(v[k]) === String(val) ? '0 1px 3px rgba(20,18,16,.15)' : 'none', onClick: () => S(k)(val) })) }),
+      range: (label, k, min, max, step, unit = '') => ({ ...B, isRange: true, label, min, max, step, value: v[k], hint: v[k] + unit, onChange: e => S(k)(+e.target.value) }),
+      toggle: (text, k) => ({ ...B, isToggle: true, hasLabel: false, text, track: v[k] ? '#F26B1D' : '#CFCAC3', x: v[k] ? '16px' : '0px', onClick: () => S(k)(!v[k]) }),
+      swatch: (label, k, opts) => ({ ...B, isSwatch: true, label, opts: opts.map(([val, c, l]) => ({ c, l, ring: v[k] === val ? '0 0 0 2px #FFFFFF,0 0 0 4px #F26B1D' : '0 0 0 1px #E6E2DC', onClick: () => S(k)(val) })) }),
+      note: (text, tone) => ({ ...B, isNote: true, hasLabel: false, text, bg: tone === 'warn' ? '#FFF4D6' : '#F2EFEA', fg: tone === 'warn' ? '#5C3D00' : '#45403A' }),
+    };
+  }
+  fieldsPrint(id, F) {
+    const SW = [['primary', TH.primary, 'Primary'], ['accent', TH.accent, 'Accent'], ['dark', TH.text, 'Dark']];
+    return {
+      cup: [F.seg('Label size', 'size', [['40x30', '40×30'], ['50x30', '50×30'], ['58', '58 roll']]), F.toggle('Customer name', 'name'), F.toggle('Modifiers (sugar, ice, size)', 'mods'), F.toggle('Queue number', 'queue'), F.toggle('Logo', 'logo'), F.text('Footer line', 'foot'), F.note('Use {name}, {table} or {queue} as placeholders. Prints automatically when a drink is sent to the bar.')],
+      kticket: [F.seg('Preview station', 'station', [['grill', 'Grill'], ['bar', 'Bar'], ['pastry', 'Pastry']]), F.seg('Item text size', 'fs', [['m', 'Medium'], ['l', 'Large'], ['xl', 'XL']]), F.toggle('Large table number', 'table'), F.toggle('Highlight notes (inverted)', 'notes'), F.toggle('Auto-cut per ticket', 'cut'), F.toggle('Print a copy for expo', 'dup'), F.head('ROUTING'), F.note('Coffee, Tea, Non-coffee → Bar · Rice, Noodles, Grill → Grill · Pastry, Cake → Pastry. Edit routes in Settings → Devices.')],
+      coupon: [F.text('Headline', 'head'), F.text('Offer', 'offer'), F.text('Code', 'code'), F.range('Valid for', 'exp', 1, 30, 1, ' days'), F.text('Condition', 'min'), F.seg('Print when', 'rule', [['every', 'Every receipt'], ['member', 'Members'], ['over', 'Over 100k']]), F.toggle('Barcode for scanning', 'bar'), F.note('Each coupon gets a unique code, so redemptions are tracked in Promos & vouchers.')],
+      letter: [F.text('Company name', 'co'), F.text('Address', 'addr'), F.text('NPWP', 'npwp'), F.seg('Logo position', 'pos', [['left', 'Left'], ['center', 'Center']]), F.swatch('Accent', 'accent', SW), F.text('Footer', 'foot'), F.toggle('Signature & stamp area', 'sign'), F.note('Applies to invoices, POs, transfer notes and every PDF exported from Reports.')],
+      pmenu: [F.text('Title', 'title'), F.seg('Layout', 'layout', [['1col', '1 column'], ['2col', '2 columns'], ['tri', 'Trifold']]), F.seg('Paper', 'paper', [['A4', 'A4'], ['A3', 'A3'], ['DL', 'DL']]), F.toggle('Product photos', 'photos'), F.toggle('Prices', 'prices'), F.text('Footnote', 'note'), F.note('Updates automatically when you change prices. Download as PDF or send to print.')],
+      rcpt: [F.seg('Outlet', 'outlet', [['senayan', 'Senayan'], ['kemang', 'Kemang'], ['bsd', 'BSD']]), F.toggle('Inherit from brand receipt', 'inherit'), F.seg('Paper', 'paper', [['58', '58 mm'], ['80', '80 mm']]), F.text('Header line 1', 'h1'), F.text('Header line 2', 'h2'), F.text('Footer', 'f1'), F.text('Wi-Fi', 'wifi'), F.note('Brand-level receipt design lives in Menu Studio → Receipt. Overrides here apply to one outlet only.')],
+    }[id];
+  }
+  previewPrint(id, v) {
+    const COL = { primary: TH.primary, accent: TH.accent, dark: TH.text };
+    if (id === 'cup') return { cupList: [['Es Kopi Susu Aren', 'Iced · less sugar · L', 'Dewi', '1/3'], ['Matcha Latte', 'Hot · oat milk', 'Dewi', '2/3'], ['Americano', 'Iced · no sugar', 'Dewi', '3/3']].map(([n, m, who, i]) => ({ n, m, who, i, q: 'A-12' })), cupW: { '40x30': '200px', '50x30': '250px', '58': '290px' }[v.size], cupH: { '40x30': '150px', '50x30': '150px', '58': '180px' }[v.size], cupNameD: v.name ? 'block' : 'none', cupModsD: v.mods ? 'block' : 'none', cupQD: v.queue ? 'grid' : 'none', cupLogoD: v.logo ? 'grid' : 'none', cupFoot: v.foot.replace('{name}', 'Dewi').replace('{table}', 'T-07').replace('{queue}', 'A-12') };
+    if (id === 'kticket') { const items = { grill: [['2', 'Nasi Goreng Spesial', 'no egg, extra spicy'], ['1', 'Ayam Bakar Madu', '']], bar: [['2', 'Es Kopi Susu Aren', 'less sugar'], ['1', 'Matcha Latte', 'oat milk, hot']], pastry: [['1', 'Croissant Almond', 'warm up'], ['2', 'Banana Bread', '']] }[v.station]; return { ktStation: v.station.toUpperCase(), ktItems: items.map(([q, n, note]) => ({ q, n, note, noteD: note ? 'block' : 'none', noteBg: v.notes ? '#141210' : 'transparent', noteFg: v.notes ? '#FFFFFF' : '#141210' })), ktFs: { m: '14px', l: '17px', xl: '21px' }[v.fs], ktTableFs: v.table ? '34px' : '16px', ktCutD: v.cut ? 'block' : 'none', ktDupD: v.dup ? 'flex' : 'none' }; }
+    if (id === 'coupon') return { cpHead: v.head, cpOffer: v.offer, cpCode: v.code, cpExp: `Valid until ${new Date(Date.now() + v.exp * 864e5).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`, cpMin: v.min, cpBarD: v.bar ? 'block' : 'none', cpRule: { every: 'Printed on every receipt', member: 'Printed for members only', over: 'Printed when the bill is over IDR 100,000' }[v.rule] };
+    if (id === 'letter') return { ltCo: v.co, ltAddr: v.addr, ltNpwp: 'NPWP ' + v.npwp, ltJ: v.pos === 'center' ? 'center' : 'flex-start', ltDir: v.pos === 'center' ? 'column' : 'row', ltAlign: v.pos === 'center' ? 'center' : 'left', ltAc: COL[v.accent], ltFoot: v.foot, ltSignD: v.sign ? 'flex' : 'none' };
+    if (id === 'pmenu') return { pmW: { A4: '420px', A3: '520px', DL: '260px' }[v.paper], pmH: { A4: '594px', A3: '735px', DL: '520px' }[v.paper], pmCols: v.layout === '1col' || v.paper === 'DL' ? 'minmax(0,1fr)' : v.layout === 'tri' ? 'repeat(3,minmax(0,1fr))' : 'repeat(2,minmax(0,1fr))', pmTitle: v.title, pmNote: v.note, pmPhotoD: v.photos ? 'block' : 'none', pmPriceD: v.prices ? 'inline' : 'none',
+      pmCats: [['Coffee', [['Es Kopi Susu Aren', '25'], ['Americano', '22'], ['Cappuccino', '28'], ['Matcha Latte', '30']]], ['Pastry', [['Croissant Almond', '32'], ['Banana Bread', '28'], ['Pain au Chocolat', '30']]], ['Rice bowls', [['Nasi Goreng Spesial', '38'], ['Ayam Bakar Madu', '42']]]].map(([c, it]) => ({ c, items: it.map(([n, p]) => ({ n, p })) })) };
+    if (id === 'rcpt') { const o = OUTLETS[v.outlet]; return { rcW: v.paper === '58' ? '230px' : '300px', rcH1: v.inherit ? o[0] : v.h1, rcH2: v.inherit ? o[1] : v.h2, rcF1: v.f1, rcWifi: v.inherit ? o[2] : v.wifi, rcTag: v.inherit ? 'Inherited from brand · ' + v.outlet : 'Custom for ' + v.outlet }; }
+    return {};
+  }
+  renderVals() {
+    const s = this.state, all = this.tools(), t = all.find(x => x[0] === s.cur), v = s.v[s.cur] || { ...t[6] }, F = this.F();
+    const groupNames = [...new Set(all.map(x => x[1]))];
+    const fields = (this.fieldsPrint(s.cur, F) || (this.fieldsMore && this.fieldsMore(s.cur, F, v)) || []);
+    const pv = Object.assign({}, this.previewPrint(s.cur, v), this.previewMore ? this.previewMore(s.cur, v) : {});
+    const flags = {}; all.forEach(x => { flags['is_' + x[0]] = s.cur === x[0]; });
+    return {
+      ...pv, ...flags, th: TH,
+      groups: groupNames.map(g => { const ts = all.filter(x => x[1] === g); return { name: g, count: ts.length, tools: ts.map(([id, , name, ic, plan]) => ({ name, mask: IC(ic), bg: s.cur === id ? '#FFF3EB' : 'transparent', fg: s.cur === id ? '#B04408' : '#141210', plan: plan ? PLAN[plan][0] : '', planBg: plan ? PLAN[plan][1] : 'transparent', planFg: plan ? PLAN[plan][2] : '#000', planD: plan ? 'inline-block' : 'none', onClick: () => this.setState({ cur: id }) })) }; }),
+      tool: { group: t[1] + ' STUDIO', name: t[2], desc: t[5] }, fields,
+      saveText: s.published ? 'Published' : s.saved ? 'Draft saved' : 'Saving…', pubLabel: s.published ? 'Published' : 'Publish', publish: () => this.setState({ published: true, saved: true }),
+    };
+  }
+}
+</script>
+</body>
+</html>

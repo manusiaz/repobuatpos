@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+/*bn-type*/h1,h2,h3,b{font-family:'Space Grotesk',system-ui,sans-serif}body{font-variant-numeric:tabular-nums}
+body{margin:0;background:#FAF8F5;color:#141210;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#D9560B;text-decoration:none}
+a:hover{color:#B04408;text-decoration:underline}
+input,textarea,button{font-family:inherit}
+@keyframes bnPulse{0%{box-shadow:0 0 0 0 rgba(242,107,29,.5)}100%{box-shadow:0 0 0 14px rgba(242,107,29,0)}}
+</style>
+<script src="./bn-embed.js"></script>
+</helmet>
+
+<div style="display:flex;flex-direction:column;min-height:100vh">
+<div style="position:sticky;top:0;z-index:40;background:rgba(250,248,245,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #E6E2DC">
+  <div style="max-width:1320px;margin:0 auto;padding:0 clamp(20px,4vw,40px);height:64px;display:flex;align-items:center;gap:24px">
+    <span style="font-size:22px;font-weight:700;letter-spacing:-.03em">BorNiz</span>
+    <div style="display:flex;gap:4px;overflow-x:auto;font-size:14px;font-weight:500">
+      <a href="BorNiz Design System.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Foundations</a>
+      <a href="BorNiz Components.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Components</a>
+      <a href="BorNiz POS Patterns.dc.html" style="padding:8px 12px;border-radius:10px;color:#141210;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC;white-space:nowrap">POS patterns</a>
+      <a href="BorNiz System.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">System</a>
+      <a href="BorNiz Responsive.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Responsive</a>
+      <a href="BorNiz Theming.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Theming</a>
+      <a href="BorNiz Brand Studio.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Customization</a>
+      <a href="BorNiz Menu Studio.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Menu studio</a>
+      <a href="BorNiz Motion.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Motion</a>
+      <a href="BorNiz Design Notes.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Design notes</a>
+      <a href="BorNiz States Gallery.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">States </a>
+      <a href="BorNiz Sitemap.dc.html" style="padding:8px 12px;border-radius:10px;color:#45403A;white-space:nowrap">Sitemap</a>
+    </div>
+  </div>
+</div>
+
+<main style="max-width:1320px;width:100%;margin:0 auto;padding:48px clamp(20px,4vw,40px) 120px;display:flex;flex-direction:column;gap:64px">
+
+<header style="display:flex;flex-direction:column;gap:14px">
+  <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">POS patterns</span>
+  <h1 style="margin:0;font-size:clamp(44px,6vw,72px);line-height:1;font-weight:700;letter-spacing:-.04em">Counter, floor &amp; kitchen</h1>
+  <p style="margin:0;max-width:680px;font-size:17px;line-height:1.55;color:#45403A">Composite patterns that only exist in a POS: table picker, floor plan editor, delivery kanban, modifier sheet, open bills, member lookup, cash count, receipts, kitchen tickets, customer display, kiosk, queue and reservations.</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:14px;font-weight:600">
+    <a href="#tables" style="height:36px;padding:0 14px;border-radius:999px;background:#141210;color:#FFFFFF;display:flex;align-items:center">P1 Table picker</a>
+    <a href="#editor" style="height:36px;padding:0 14px;border-radius:999px;background:#F2EFEA;color:#141210;display:flex;align-items:center">P2 Floor editor</a>
+    <a href="#kanban" style="height:36px;padding:0 14px;border-radius:999px;background:#F2EFEA;color:#141210;display:flex;align-items:center">P3 Order kanban</a>
+    <a href="#modifier" style="height:36px;padding:0 14px;border-radius:999px;background:#F2EFEA;color:#141210;display:flex;align-items:center">P4 Modifiers</a>
+    <a href="#bills" style="height:36px;padding:0 14px;border-radius:999px;background:#F2EFEA;color:#141210;display:flex;align-items:center">P5 Open bills &amp; member</a>
+    <a href="#cash" style="height:36px;padding:0 14px;border-radius:999px;background:#F2EFEA;color:#141210;display:flex;align-items:center">P6 Cash count</a>
+    <a href="#print" style="height:36px;padding:0 14px;border-radius:999px;background:#F2EFEA;color:#141210;display:flex;align-items:center">P7 Receipts &amp; tickets</a>
+    <a href="#displays" style="height:36px;padding:0 14px;border-radius:999px;background:#F2EFEA;color:#141210;display:flex;align-items:center">P8 Displays &amp; kiosk</a>
+    <a href="#queue" style="height:36px;padding:0 14px;border-radius:999px;background:#F2EFEA;color:#141210;display:flex;align-items:center">P9 Queue &amp; reservations</a>
+  </div>
+</header>
+
+<section id="tables" style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">P1 — Table picker · cashier &amp; waiter</span>
+      <h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Pick a table</h2>
+      <p style="margin:0;max-width:640px;font-size:15px;line-height:1.5;color:#45403A">This screen opens when you choose Dine-in. Every table shows its live status, guest count, elapsed time and bill amount. Tap a table to open its panel. Merge mode joins two tables into one bill.</p>
+    </div>
+  </div>
+
+  <div style="border-radius:28px;background:#141210;padding:10px">
+    <div style="border-radius:20px;background:#FAF8F5;overflow:hidden;display:flex;flex-direction:column;min-height:720px">
+      <div style="height:72px;flex:none;padding:0 18px;background:#FFFFFF;border-bottom:1px solid #E6E2DC;display:flex;align-items:center;gap:14px">
+        <span style="font-size:22px;font-weight:700;letter-spacing:-.02em">Tables</span>
+        <div style="display:flex;padding:4px;border-radius:16px;background:#F2EFEA;gap:2px">
+          <sc-for list="{{ zones }}" as="z" hint-placeholder-count="3">
+            <button onClick="{{ z.onClick }}" style="height:44px;padding:0 16px;border:0;border-radius:12px;background:{{ z.bg }};box-shadow:{{ z.shadow }};font-size:15px;font-weight:600;color:#141210;cursor:pointer;display:flex;gap:8px;align-items:center;white-space:nowrap">{{ z.label }}<span style="font-size:12px;font-weight:700;color:#625C55">{{ z.free }}/{{ z.total }}</span></button>
+          </sc-for>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+          <sc-for list="{{ tFilters }}" as="f" hint-placeholder-count="4">
+            <button onClick="{{ f.onClick }}" style="height:44px;padding:0 14px;border:1.5px solid {{ f.border }};border-radius:999px;background:{{ f.bg }};color:{{ f.fg }};font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap">{{ f.label }}</button>
+          </sc-for>
+        </div>
+        <button onClick="{{ toggleMerge }}" style="height:48px;padding:0 16px;border:2px solid {{ mergeBorder }};border-radius:14px;background:{{ mergeBg }};color:{{ mergeFg }};font-size:15px;font-weight:600;cursor:pointer;display:flex;gap:8px;align-items:center;white-space:nowrap"><span style="width:18px;height:18px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/merge.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/merge.svg) center/contain no-repeat"></span>{{ mergeLabel }}</button>
+      </div>
+
+      <div style="flex:1;display:flex;min-height:0">
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+          <div style="padding:12px 18px;display:flex;gap:18px;align-items:center;flex-wrap:wrap;font-size:13px;font-weight:500;color:#45403A;border-bottom:1px solid #F2EFEA">
+            <span style="display:flex;gap:6px;align-items:center"><span style="width:14px;height:14px;border-radius:5px;background:#FFFFFF;box-shadow:inset 0 0 0 2px #141210"></span>Available</span>
+            <span style="display:flex;gap:6px;align-items:center"><span style="width:14px;height:14px;border-radius:5px;background:#F26B1D"></span>Occupied</span>
+            <span style="display:flex;gap:6px;align-items:center"><span style="width:14px;height:14px;border-radius:5px;background:#141210"></span>Bill requested</span>
+            <span style="display:flex;gap:6px;align-items:center"><span style="width:14px;height:14px;border-radius:5px;background:#E6EEFD;box-shadow:inset 0 0 0 2px #2F6FEB"></span>Reserved</span>
+            <span style="display:flex;gap:6px;align-items:center"><span style="width:14px;height:14px;border-radius:5px;background:#FFF4D6;box-shadow:inset 0 0 0 2px #E5A000"></span>Needs cleaning</span>
+            <span style="margin-left:auto;display:flex;gap:16px;color:#141210;font-weight:600"><span>Occupancy {{ occ }}</span><span>Guests {{ guestsNow }}</span><span>Avg turn 48m</span></span>
+          </div>
+          <div style="flex:1;overflow:auto;position:relative">
+            <div onClick="{{ clearSel }}" style="position:relative;min-width:860px;height:600px;margin:0;background-image:radial-gradient(#E6E2DC 1.2px,transparent 1.2px);background-size:24px 24px">
+              <sc-if value="{{ isIndoor }}" hint-placeholder-val="{{ true }}">
+                <div style="position:absolute;right:2%;top:30%;width:44px;height:200px;border-radius:12px;background:#F2EFEA;display:grid;place-items:center"><span style="writing-mode:vertical-rl;font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76;letter-spacing:.1em">KITCHEN · PASS</span></div>
+                <div style="position:absolute;left:44%;bottom:0;width:120px;height:14px;border-radius:8px 8px 0 0;background:#CFCAC3;display:grid;place-items:center;font:500 9px/1 'JetBrains Mono',ui-monospace,monospace;color:#45403A">ENTRANCE</div>
+              </sc-if>
+              <sc-for list="{{ tables }}" as="t" hint-placeholder-count="10">
+                <button onClick="{{ t.onClick }}" aria-label="{{ t.aria }}" style="position:absolute;left:{{ t.left }};top:{{ t.top }};width:{{ t.ww }};height:{{ t.wh }};border:0;padding:0;background:transparent;cursor:pointer;opacity:{{ t.op }};transform:scale({{ t.scale }});transition:transform 200ms cubic-bezier(.34,1.56,.64,1),opacity 200ms">
+                  <sc-for list="{{ t.chairs }}" as="c" hint-placeholder-count="4">
+                    <span style="position:absolute;left:{{ c.l }};top:{{ c.t }};width:{{ c.w }};height:{{ c.h }};border-radius:6px;background:{{ c.bg }};transition:background 200ms"></span>
+                  </sc-for>
+                  <span style="position:absolute;left:14px;top:14px;right:14px;bottom:14px;border-radius:{{ t.radius }};background:{{ t.bg }};color:{{ t.fg }};box-shadow:{{ t.ring }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:background 200ms,box-shadow 160ms">
+                    <span style="font-size:{{ t.idSize }};font-weight:700;letter-spacing:-.02em;line-height:1">{{ t.id }}</span>
+                    <span style="font-size:11px;font-weight:600;opacity:.9;line-height:1.1;white-space:nowrap">{{ t.line1 }}</span>
+                    <span style="font-size:12px;font-weight:700;line-height:1;white-space:nowrap;display:{{ t.amtD }}">{{ t.amt }}</span>
+                  </span>
+                  <span style="position:absolute;top:2px;right:2px;width:12px;height:12px;border-radius:9px;background:#F26B1D;box-shadow:0 0 0 2px #FFFFFF;display:{{ t.pingD }};animation:bnPulse 1.4s infinite"></span>
+                  <span style="position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);height:20px;padding:0 8px;border-radius:999px;background:#FFFFFF;border:1.5px dashed #F26B1D;color:#B04408;font-size:10px;font-weight:700;line-height:17px;white-space:nowrap;display:{{ t.mergeD }}">{{ t.mergeLabel }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <aside style="flex:none;width:340px;border-left:1px solid #E6E2DC;background:#FFFFFF;display:flex;flex-direction:column">
+          <sc-if value="{{ noSel }}" hint-placeholder-val="{{ true }}">
+            <div style="flex:1;display:flex;flex-direction:column;gap:14px;padding:22px">
+              <span style="font-size:20px;font-weight:700">Select a table</span>
+              <span style="font-size:14px;line-height:1.5;color:#625C55">{{ hintText }}</span>
+              <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+                <span style="font-size:12px;font-weight:600;color:#625C55">NEEDS ATTENTION</span>
+                <sc-for list="{{ attention }}" as="a" hint-placeholder-count="3">
+                  <button onClick="{{ a.onClick }}" style="min-height:56px;padding:10px 12px;border:1px solid #E6E2DC;border-radius:14px;background:#FFFFFF;display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left" style-hover="background:#FAF8F5">
+                    <span style="width:40px;height:40px;flex:none;border-radius:12px;background:{{ a.bg }};color:{{ a.fg }};display:grid;place-items:center;font-size:13px;font-weight:700">{{ a.id }}</span>
+                    <span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:14px;font-weight:600;color:#141210">{{ a.title }}</span><span style="font-size:12px;color:#625C55">{{ a.sub }}</span></span>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column">
+              <div style="padding:20px 22px 16px;border-bottom:1px solid #F2EFEA;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:30px;font-weight:700;letter-spacing:-.03em">{{ sel.id }}</span><span style="height:28px;padding:0 12px;border-radius:999px;background:{{ sel.badgeBg }};color:{{ sel.badgeFg }};font-size:13px;font-weight:600;line-height:28px">{{ sel.statusLabel }}</span></div>
+                <span style="font-size:14px;color:#625C55">{{ sel.meta }}</span>
+              </div>
+              <div style="flex:1;padding:18px 22px;display:flex;flex-direction:column;gap:14px;overflow:auto">
+                <sc-if value="{{ sel.isFree }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:10px">
+                    <span style="font-size:13px;font-weight:600">Guests</span>
+                    <div style="display:flex;align-items:center;justify-content:space-between;border-radius:16px;background:#F2EFEA;padding:4px">
+                      <button onClick="{{ guestDec }}" aria-label="Fewer guests" style="width:56px;height:56px;border:0;border-radius:12px;background:#FFFFFF;font-size:24px;cursor:pointer" style-active="transform:scale(.92)">−</button>
+                      <span style="font-size:32px;font-weight:700;font-variant-numeric:tabular-nums">{{ guestPick }}</span>
+                      <button onClick="{{ guestInc }}" aria-label="More guests" style="width:56px;height:56px;border:0;border-radius:12px;background:#141210;color:#FFFFFF;font-size:24px;cursor:pointer" style-active="transform:scale(.92)">+</button>
+                    </div>
+                    <span style="font-size:12px;color:{{ guestWarnColor }}">{{ guestWarn }}</span>
+                    <span style="font-size:13px;font-weight:600;margin-top:4px">Server</span>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                      <sc-for list="{{ servers }}" as="s" hint-placeholder-count="3"><button onClick="{{ s.onClick }}" style="height:44px;padding:0 14px;border:1.5px solid {{ s.border }};border-radius:999px;background:{{ s.bg }};font-size:14px;font-weight:600;cursor:pointer">{{ s.name }}</button></sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ sel.hasOrder }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">
+                      <div style="padding:10px;border-radius:12px;background:#F2EFEA;display:flex;flex-direction:column;gap:4px"><span style="font-size:11px;color:#625C55">Guests</span><span style="font-size:18px;font-weight:700">{{ sel.guests }}</span></div>
+                      <div style="padding:10px;border-radius:12px;background:#F2EFEA;display:flex;flex-direction:column;gap:4px"><span style="font-size:11px;color:#625C55">Seated</span><span style="font-size:18px;font-weight:700;color:{{ sel.timeColor }}">{{ sel.mins }}m</span></div>
+                      <div style="padding:10px;border-radius:12px;background:#F2EFEA;display:flex;flex-direction:column;gap:4px"><span style="font-size:11px;color:#625C55">Server</span><span style="font-size:18px;font-weight:700">{{ sel.server }}</span></div>
+                    </div>
+                    <sc-for list="{{ sel.items }}" as="it" hint-placeholder-count="3">
+                      <div style="display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:8px;padding:8px 0;border-bottom:1px dashed #E6E2DC;font-size:14px"><b>{{ it.q }}×</b><span>{{ it.n }}<span style="display:block;font-size:12px;color:{{ it.stColor }}">{{ it.st }}</span></span><span style="font-weight:600;font-variant-numeric:tabular-nums">{{ it.p }}</span></div>
+                    </sc-for>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:4px"><span style="font-size:14px;color:#625C55">Bill so far</span><span style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums">{{ sel.amt }}</span></div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ sel.isRes }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:14px;border-radius:16px;background:#E6EEFD;display:flex;flex-direction:column;gap:6px;color:#163A85">
+                    <span style="font-size:17px;font-weight:700">{{ sel.resName }}</span>
+                    <span style="font-size:14px">{{ sel.resTime }} · {{ sel.resPax }} guests</span>
+                    <span style="font:400 13px/1 'JetBrains Mono',ui-monospace,monospace">+62 812-7788-1020</span>
+                    <span style="font-size:13px;line-height:1.4">"{{ sel.resNote }}"</span>
+                  </div>
+                  <span style="font-size:13px;color:#625C55">The table is held until 15 minutes after the booking time, then released automatically.</span>
+                </sc-if>
+                <sc-if value="{{ sel.isClean }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:14px;border-radius:16px;background:#FFF4D6;color:#5C3D00;font-size:14px;line-height:1.45">Paid 6 min ago by Dewi A. (QRIS, IDR 254,000). Clear and wipe the table before seating new guests.</div>
+                </sc-if>
+              </div>
+              <div style="padding:16px 22px 22px;border-top:1px solid #F2EFEA;display:flex;flex-direction:column;gap:8px">
+                <button onClick="{{ primaryAction }}" style="height:64px;border:0;border-radius:18px;background:{{ sel.ctaBg }};color:#FFFFFF;font-size:17px;font-weight:700;cursor:pointer;transition:transform 80ms" style-active="transform:scale(.97)">{{ sel.cta }}</button>
+                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">
+                  <sc-for list="{{ sel.secondary }}" as="b" hint-placeholder-count="3"><button onClick="{{ b.onClick }}" style="height:48px;border:0;border-radius:14px;background:#F2EFEA;font-size:13px;font-weight:600;cursor:pointer" style-active="transform:scale(.95)">{{ b.label }}</button></sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </aside>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="editor" style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">P2 — Floor plan editor · owner / manager</span>
+    <h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Arrange the room</h2>
+    <p style="margin:0;max-width:640px;font-size:15px;line-height:1.5;color:#45403A">Drag tables onto the floor; they snap to an 8px grid. Pick a shape from the palette and set seats and the table name on the right. Changes publish to every register in the outlet.</p>
+  </div>
+  <div style="border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;overflow:hidden;display:flex;min-height:480px">
+    <div style="flex:none;width:168px;border-right:1px solid #E6E2DC;padding:16px;display:flex;flex-direction:column;gap:8px">
+      <span style="font-size:12px;font-weight:600;color:#625C55">ADD TABLE</span>
+      <sc-for list="{{ palette }}" as="p" hint-placeholder-count="5">
+        <button onClick="{{ p.onClick }}" style="height:56px;border:1px solid #E6E2DC;border-radius:14px;background:#FFFFFF;display:flex;align-items:center;gap:10px;padding:0 10px;cursor:pointer" style-hover="border-color:#F26B1D" style-active="transform:scale(.96)">
+          <span style="width:{{ p.w }};height:{{ p.h }};border-radius:{{ p.r }};background:#F2EFEA;box-shadow:inset 0 0 0 2px #141210;flex:none"></span>
+          <span style="font-size:13px;font-weight:600">{{ p.label }}</span>
+        </button>
+      </sc-for>
+      <span style="font-size:12px;font-weight:600;color:#625C55;margin-top:8px">ADD OBJECT</span>
+      <button style="height:44px;border:1px dashed #CFCAC3;border-radius:12px;background:#FFFFFF;font-size:13px;font-weight:600">Wall / bar / pillar</button>
+    </div>
+    <div onPointerMove="{{ edMove }}" onPointerUp="{{ edUp }}" onPointerLeave="{{ edUp }}" style="flex:1;min-width:0;position:relative;overflow:hidden;background-color:#FAF8F5;background-image:linear-gradient(#EFEBE5 1px,transparent 1px),linear-gradient(90deg,#EFEBE5 1px,transparent 1px);background-size:24px 24px;touch-action:none">
+      <sc-for list="{{ edTables }}" as="t" hint-placeholder-count="5">
+        <div onPointerDown="{{ t.onDown }}" style="position:absolute;left:{{ t.x }};top:{{ t.y }};width:{{ t.w }};height:{{ t.h }};border-radius:{{ t.r }};background:#FFFFFF;box-shadow:{{ t.ring }};display:grid;place-items:center;cursor:grab;user-select:none;transform:scale({{ t.scale }});transition:box-shadow 120ms,transform 160ms cubic-bezier(.34,1.56,.64,1)">
+          <span style="display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font-size:16px;font-weight:700">{{ t.id }}</span><span style="font-size:11px;color:#625C55">{{ t.seats }} seats</span></span>
+        </div>
+      </sc-for>
+      <span style="position:absolute;left:12px;bottom:12px;padding:6px 10px;border-radius:10px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC;font:400 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">{{ edHint }}</span>
+    </div>
+    <div style="flex:none;width:260px;border-left:1px solid #E6E2DC;padding:18px;display:flex;flex-direction:column;gap:14px">
+      <span style="font-size:12px;font-weight:600;color:#625C55">PROPERTIES</span>
+      <label style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:600">Name</span><input value="{{ edSelId }}" onChange="{{ edRename }}" style="height:48px;padding:0 14px;border:1.5px solid #CFCAC3;border-radius:12px;font-size:16px;font-weight:600;outline:none" style-focus="border-color:#F26B1D;box-shadow:0 0 0 4px #FFE2CF"></label>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:600">Seats</span>
+        <div style="display:flex;align-items:center;justify-content:space-between;border-radius:14px;background:#F2EFEA;padding:4px"><button onClick="{{ edSeatDec }}" style="width:44px;height:44px;border:0;border-radius:10px;background:#FFFFFF;font-size:20px;cursor:pointer">−</button><span style="font-size:22px;font-weight:700">{{ edSelSeats }}</span><button onClick="{{ edSeatInc }}" style="width:44px;height:44px;border:0;border-radius:10px;background:#141210;color:#FFFFFF;font-size:20px;cursor:pointer">+</button></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:600">Zone</span><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;border-radius:14px;background:#F2EFEA"><span style="height:40px;border-radius:10px;background:#FFFFFF;display:grid;place-items:center;font-size:13px;font-weight:600;box-shadow:0 1px 3px rgba(20,18,16,.12)">Indoor</span><span style="height:40px;border-radius:10px;display:grid;place-items:center;font-size:13px;font-weight:600;color:#625C55">Outdoor</span><span style="height:40px;border-radius:10px;display:grid;place-items:center;font-size:13px;font-weight:600;color:#625C55">Rooftop</span></div></div>
+      <label style="display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:500">Bookable online<span style="width:52px;height:32px;border-radius:999px;background:#F26B1D;position:relative"><span style="position:absolute;top:3px;left:23px;width:26px;height:26px;border-radius:999px;background:#FFFFFF"></span></span></label>
+      <button onClick="{{ edDelete }}" style="margin-top:auto;height:48px;border:0;border-radius:14px;background:#FDE8E8;color:#B3261E;font-size:14px;font-weight:600;cursor:pointer">Delete table</button>
+      <button style="height:52px;border:0;border-radius:14px;background:#F26B1D;color:#FFFFFF;font-size:15px;font-weight:700">Publish layout</button>
+    </div>
+  </div>
+</section>
+
+<section id="kanban" style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">P3 — Order kanban · delivery &amp; online</span>
+    <h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Orders from every channel</h2>
+    <p style="margin:0;max-width:640px;font-size:15px;line-height:1.5;color:#45403A">GoFood, GrabFood, ShopeeFood and BorNiz Online orders land in one board. Drag a card, or tap its action, to move it forward. The accept timer goes ink → amber → red. Channel tags are text until the official marks are supplied.</p>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+    <sc-for list="{{ kcols }}" as="col" hint-placeholder-count="4">
+      <div onDragOver="{{ col.onOver }}" onDrop="{{ col.onDrop }}" onDragLeave="{{ col.onLeave }}" style="border-radius:24px;background:{{ col.bg }};box-shadow:{{ col.ring }};padding:14px;display:flex;flex-direction:column;gap:10px;min-height:420px;transition:background 140ms,box-shadow 140ms">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 6px"><span style="font-size:15px;font-weight:700;letter-spacing:.02em">{{ col.label }}</span><span style="min-width:28px;height:28px;padding:0 8px;border-radius:999px;background:#FFFFFF;font-size:13px;font-weight:700;line-height:28px;text-align:center">{{ col.count }}</span></div>
+        <sc-for list="{{ col.cards }}" as="c" hint-placeholder-count="2">
+          <div draggable="true" onDragStart="{{ c.onDrag }}" style="border-radius:18px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC;padding:14px;display:flex;flex-direction:column;gap:10px;cursor:grab;transition:transform 120ms,box-shadow 120ms" style-hover="box-shadow:0 0 0 1px #CFCAC3,0 8px 20px -8px rgba(20,18,16,.18)">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+              <span style="height:24px;padding:0 10px;border-radius:999px;background:{{ c.chBg }};color:{{ c.chFg }};font-size:12px;font-weight:700;line-height:24px">{{ c.ch }}</span>
+              <span style="font:500 13px/1 'JetBrains Mono',ui-monospace,monospace;color:#45403A">{{ c.id }}</span>
+            </div>
+            <span style="font-size:14px;line-height:1.4">{{ c.items }}</span>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#625C55"><span>{{ c.meta }}</span><span style="font:600 12px/1 'JetBrains Mono',ui-monospace,monospace;padding:4px 6px;border-radius:6px;background:#F2EFEA;display:{{ c.otpD }}">OTP {{ c.otp }}</span></div>
+            <button onClick="{{ c.onAdvance }}" style="height:48px;border:0;border-radius:14px;background:{{ c.btnBg }};color:#FFFFFF;font-size:14px;font-weight:700;cursor:pointer;display:{{ c.btnD }};justify-content:space-between;align-items:center;padding:0 14px" style-active="transform:scale(.97)"><span>{{ c.btn }}</span><span style="font-variant-numeric:tabular-nums">{{ c.timer }}</span></button>
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section id="modifier" style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">P4 — Variant &amp; modifier sheet</span>
+    <h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Make it how they like it</h2>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px;align-items:start">
+    <div style="border-radius:28px;background:#FFFFFF;box-shadow:0 24px 60px -12px rgba(20,18,16,.25),0 0 0 1px #E6E2DC;overflow:hidden;display:flex;flex-direction:column;max-width:560px">
+      <div style="display:flex;gap:14px;padding:18px;border-bottom:1px solid #F2EFEA">
+        <div style="width:88px;height:88px;flex:none;border-radius:18px;background:repeating-linear-gradient(135deg,#F2EFEA 0 8px,#E6E2DC 8px 9px);display:grid;place-items:center;font:400 10px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76">photo</div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:4px"><span style="font-size:21px;font-weight:700">Es Kopi Susu Aren</span><span style="font-size:13px;line-height:1.4;color:#625C55">Espresso, fresh milk, palm sugar</span><span style="font-size:17px;font-weight:700;margin-top:auto">IDR 25,000</span></div>
+      </div>
+      <div style="padding:6px 18px 12px;display:flex;flex-direction:column">
+        <sc-for list="{{ modGroups }}" as="g" hint-placeholder-count="4">
+          <div style="padding:14px 0;border-bottom:1px solid #F2EFEA;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:15px;font-weight:700">{{ g.name }}</span><span style="height:24px;padding:0 10px;border-radius:999px;background:{{ g.tagBg }};color:{{ g.tagFg }};font-size:11px;font-weight:700;line-height:24px">{{ g.tag }}</span></div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px">
+              <sc-for list="{{ g.opts }}" as="o" hint-placeholder-count="3">
+                <button onClick="{{ o.onClick }}" style="min-height:52px;padding:8px 12px;border:2px solid {{ o.border }};border-radius:14px;background:{{ o.bg }};display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;cursor:{{ o.cursor }};opacity:{{ o.op }};transition:border-color 120ms,background 120ms" style-active="transform:scale(.96)"><span style="font-size:14px;font-weight:600;color:#141210">{{ o.label }}</span><span style="font-size:12px;color:#625C55">{{ o.price }}</span></button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:14px 18px 18px;border-top:1px solid #F2EFEA;display:flex;gap:10px;align-items:center">
+        <div style="display:flex;align-items:center;border-radius:16px;background:#F2EFEA;padding:4px"><button onClick="{{ modQtyDec }}" style="width:48px;height:48px;border:0;border-radius:12px;background:#FFFFFF;font-size:20px;cursor:pointer">−</button><span style="width:44px;text-align:center;font-size:20px;font-weight:700">{{ modQty }}</span><button onClick="{{ modQtyInc }}" style="width:48px;height:48px;border:0;border-radius:12px;background:#141210;color:#FFFFFF;font-size:20px;cursor:pointer">+</button></div>
+        <button onClick="{{ modAdd }}" style="flex:1;height:56px;border:0;border-radius:16px;background:{{ modCtaBg }};color:#FFFFFF;font-size:16px;font-weight:700;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:0 18px;transform:translateX({{ modShake }});transition:transform 50ms linear,background 140ms"><span>{{ modCta }}</span><span style="font-variant-numeric:tabular-nums">{{ modTotal }}</span></button>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:10px">
+        <span style="font-size:17px;font-weight:600">Rules</span>
+        <span style="font-size:14px;line-height:1.55;color:#45403A">Required groups have no default, so the cashier has to ask. If a required group is missing, tapping Add shakes the button and turns that group's tag red. Single-choice groups behave like radios; multi-choice groups show the max ("Up to 3"). Price deltas always show a sign. Options marked out of stock stay visible but crossed out.</span>
+      </div>
+      <div style="padding:22px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:10px">
+        <span style="font-size:17px;font-weight:600">In the cart</span>
+        <sc-for list="{{ modCart }}" as="c" hint-placeholder-count="1">
+          <div style="display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:10px;padding:10px 0;border-top:1px dashed #E6E2DC;font-size:14px"><b>{{ c.q }}×</b><span>Es Kopi Susu Aren<span style="display:block;font-size:12px;color:#625C55">{{ c.mods }}</span></span><b style="font-variant-numeric:tabular-nums">{{ c.total }}</b></div>
+        </sc-for>
+        <sc-if value="{{ modCartEmpty }}" hint-placeholder-val="{{ true }}"><span style="font-size:13px;color:#857E76">Items you add appear here with their modifiers.</span></sc-if>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="bills" style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">P5 — Open bills &amp; member lookup</span>
+    <h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Saved orders, known customers</h2>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="padding:20px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:19px;font-weight:600">Open bills</span><span style="font-size:13px;color:#625C55">6 open · IDR 1,4 jt</span></div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+        <sc-for list="{{ openBills }}" as="b" hint-placeholder-count="6">
+          <button style="padding:14px;border:1px solid #E6E2DC;border-radius:18px;background:#FFFFFF;display:flex;flex-direction:column;gap:8px;text-align:left;cursor:pointer;transition:transform 80ms" style-hover="border-color:#F26B1D" style-active="transform:scale(.97)">
+            <div style="display:flex;justify-content:space-between;width:100%;align-items:center"><span style="font-size:18px;font-weight:700">{{ b.name }}</span><span style="height:22px;padding:0 8px;border-radius:999px;background:{{ b.tbg }};color:{{ b.tfg }};font-size:11px;font-weight:700;line-height:22px">{{ b.type }}</span></div>
+            <span style="font-size:12px;color:#625C55">{{ b.meta }}</span>
+            <span style="font-size:17px;font-weight:700;font-variant-numeric:tabular-nums">{{ b.amt }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+    <div style="padding:20px;border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:flex;flex-direction:column;gap:14px">
+      <span style="font-size:19px;font-weight:600">Member attached to order</span>
+      <div style="border-radius:22px;background:#141210;color:#FFFFFF;padding:20px;display:flex;flex-direction:column;gap:16px;position:relative;overflow:hidden">
+        <span style="position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:999px;background:#F26B1D;opacity:.9"></span>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative"><span style="font-size:20px;font-weight:700;letter-spacing:-.02em">BorNiz Rewards</span><span style="height:26px;padding:0 10px;border-radius:999px;background:#FFFFFF;color:#141210;font-size:12px;font-weight:700;line-height:26px">GOLD</span></div>
+        <div style="display:flex;flex-direction:column;gap:4px;position:relative"><span style="font-size:22px;font-weight:700">Dewi Anggraini</span><span style="font:400 13px/1 'JetBrains Mono',ui-monospace,monospace;color:#CFCAC3">+62 812-••••-7890 · since 2024</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;position:relative"><div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;color:#CFCAC3">Points</span><span style="font-size:30px;font-weight:700;color:#FF9F63">1,240</span></div><span style="font-size:12px;color:#CFCAC3;text-align:right">760 pts to Platinum</span></div>
+        <div style="height:6px;border-radius:999px;background:#45403A;overflow:hidden;position:relative"><div style="width:62%;height:100%;background:#F26B1D"></div></div>
+      </div>
+      <span style="font-size:13px;font-weight:600">Available for this order</span>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="padding:12px 14px;border-radius:14px;border:2px solid #F26B1D;background:#FFF3EB;display:flex;justify-content:space-between;align-items:center;font-size:14px"><span><b>Birthday month</b> · 20% off drinks</span><span style="font-weight:700;color:#B04408">Applied</span></div>
+        <div style="padding:12px 14px;border-radius:14px;border:1.5px solid #E6E2DC;display:flex;justify-content:space-between;align-items:center;font-size:14px"><span>Redeem 500 pts · IDR 25,000 off</span><span style="font-weight:600;color:#D9560B">Use</span></div>
+        <div style="padding:12px 14px;border-radius:14px;border:1.5px solid #E6E2DC;display:flex;justify-content:space-between;align-items:center;font-size:14px;color:#857E76"><span>Free pastry · min. IDR 100,000</span><span>IDR 18,100 more</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="cash" style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">P6 — Open / close shift · cash count</span>
+    <h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Count the drawer</h2>
+  </div>
+  <div style="border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:0;overflow:hidden">
+    <div style="padding:22px;display:flex;flex-direction:column;gap:8px">
+      <span style="font-size:13px;font-weight:600;color:#625C55">BANKNOTES &amp; COINS · Kemang · Shift 2 · Rina W.</span>
+      <sc-for list="{{ denoms }}" as="d" hint-placeholder-count="11">
+        <div style="display:grid;grid-template-columns:110px minmax(0,1fr) 120px;gap:12px;align-items:center;padding:4px 0">
+          <span style="height:40px;border-radius:10px;background:{{ d.bg }};display:grid;place-items:center;font-size:14px;font-weight:700;color:{{ d.fg }}">{{ d.label }}</span>
+          <div style="display:flex;align-items:center;gap:4px">
+            <button onClick="{{ d.dec }}" style="width:44px;height:44px;border:0;border-radius:12px;background:#F2EFEA;font-size:20px;cursor:pointer" style-active="transform:scale(.92)">−</button>
+            <span style="width:52px;text-align:center;font-size:18px;font-weight:700;font-variant-numeric:tabular-nums">{{ d.n }}</span>
+            <button onClick="{{ d.inc }}" style="width:44px;height:44px;border:0;border-radius:12px;background:#F2EFEA;font-size:20px;cursor:pointer" style-active="transform:scale(.92)">+</button>
+          </div>
+          <span style="text-align:right;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;color:{{ d.sumColor }}">{{ d.sum }}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="padding:22px;background:#FAF8F5;border-left:1px solid #E6E2DC;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:15px">
+        <div style="display:flex;justify-content:space-between"><span style="color:#625C55">Opening cash</span><span style="font-weight:600">IDR 500,000</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:#625C55">Cash sales · 42</span><span style="font-weight:600">IDR 2,415,000</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:#625C55">Cash refunds · 1</span><span style="font-weight:600">− IDR 38,000</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:#625C55">Pay-outs (petty cash)</span><span style="font-weight:600">− IDR 32,000</span></div>
+        <div style="height:1px;background:#E6E2DC"></div>
+        <div style="display:flex;justify-content:space-between;font-size:17px"><span style="font-weight:600">Expected in drawer</span><span style="font-weight:700">IDR 2,845,000</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:17px"><span style="font-weight:600">Counted</span><span style="font-weight:700;font-variant-numeric:tabular-nums">{{ counted }}</span></div>
+      </div>
+      <div style="padding:18px;border-radius:18px;background:{{ varBg }};color:{{ varFg }};display:flex;flex-direction:column;gap:4px;transition:background 200ms">
+        <span style="font-size:13px;font-weight:600">{{ varLabel }}</span>
+        <span style="font-size:34px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums">{{ variance }}</span>
+        <span style="font-size:13px;line-height:1.4">{{ varHelp }}</span>
+      </div>
+      <label style="display:flex;flex-direction:column;gap:6px;display:{{ varNoteD }}"><span style="font-size:13px;font-weight:600">Reason for variance <span style="color:#B3261E">*</span></span><input placeholder="e.g. change given twice on #TRX-2039" style="height:52px;padding:0 14px;border:1.5px solid #CFCAC3;border-radius:14px;font-size:15px;outline:none"></label>
+      <button style="margin-top:auto;height:64px;border:0;border-radius:18px;background:#141210;color:#FFFFFF;font-size:17px;font-weight:700">Close shift &amp; print report</button>
+    </div>
+  </div>
+</section>
+
+<section id="print" style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">P7 — Thermal receipts &amp; kitchen tickets</span>
+    <h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">On paper</h2>
+    <p style="margin:0;max-width:640px;font-size:15px;line-height:1.5;color:#45403A">ESC/POS printers support monospace text only: 32 characters per line on 58mm paper, 48 on 80mm. Amounts are right-aligned and dashed rules separate sections. Kitchen tickets print the table and items at double size.</p>
+  </div>
+  <div style="padding:32px;border-radius:28px;background:#E6E2DC;display:flex;gap:28px;flex-wrap:wrap;justify-content:center;align-items:flex-start">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+      <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#45403A">58MM · 32 COL</span>
+      <div style="width:236px;filter:drop-shadow(0 8px 16px rgba(20,18,16,.15))">
+        <div style="background:#FFFFFF;padding:18px 14px 10px;font:400 11px/1.45 'JetBrains Mono',ui-monospace,monospace;color:#141210;display:flex;flex-direction:column;gap:6px">
+          <div style="text-align:center;display:flex;flex-direction:column;gap:2px"><b style="font-size:14px">KOPI KENANGAN SENJA</b><span>Jl. Kemang Raya 12, Jakarta</span><span>NPWP 01.234.567.8-901.000</span></div>
+          <span style="border-top:1px dashed #141210"></span>
+          <div style="display:flex;justify-content:space-between"><span>#TRX-2048</span><span>10/10/26 14:32</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Kasir: Rina</span><span>Meja T-07</span></div>
+          <span style="border-top:1px dashed #141210"></span>
+          <div style="display:flex;flex-direction:column"><span>Es Kopi Susu Aren</span><div style="display:flex;justify-content:space-between"><span>  2 x 25,000</span><span>50,000</span></div><span>  - less sugar</span></div>
+          <div style="display:flex;flex-direction:column"><span>Croissant Almond</span><div style="display:flex;justify-content:space-between"><span>  1 x 32,000</span><span>32,000</span></div></div>
+          <span style="border-top:1px dashed #141210"></span>
+          <div style="display:flex;justify-content:space-between"><span>Subtotal</span><span>82,000</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Disc. Member</span><span>-4,100</span></div>
+          <div style="display:flex;justify-content:space-between"><span>PB1 10%</span><span>7,790</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:14px"><b>TOTAL</b><b>85,690</b></div>
+          <div style="display:flex;justify-content:space-between"><span>QRIS</span><span>85,690</span></div>
+          <span style="border-top:1px dashed #141210"></span>
+          <div style="align-self:center;width:84px;height:84px;background:repeating-linear-gradient(45deg,#141210 0 4px,#FFFFFF 4px 8px)"></div>
+          <div style="text-align:center">Scan for digital receipt<br>&amp; rate your visit<br><br>Terima kasih!</div>
+        </div>
+        <div style="height:10px;background:radial-gradient(circle at 6px 0,transparent 6px,#FFFFFF 6.5px) 0 0/12px 10px repeat-x"></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+      <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#45403A">80MM · 48 COL</span>
+      <div style="width:316px;filter:drop-shadow(0 8px 16px rgba(20,18,16,.15))">
+        <div style="background:#FFFFFF;padding:20px 16px 12px;font:400 12px/1.45 'JetBrains Mono',ui-monospace,monospace;color:#141210;display:flex;flex-direction:column;gap:6px">
+          <div style="text-align:center;display:flex;flex-direction:column;gap:2px"><b style="font-size:16px">KOPI KENANGAN SENJA</b><span>Jl. Kemang Raya 12, Jakarta Selatan</span><span>0812-3456-7890 · @kenangansenja</span></div>
+          <span style="border-top:1px dashed #141210"></span>
+          <div style="display:flex;justify-content:space-between"><span>No  #TRX-2048</span><span>Sat 10 Oct 2026 14:32</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Kasir Rina W.</span><span>Dine-in · T-07 · 2 pax</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Member Dewi A. (Gold)</span><span>+86 pts</span></div>
+          <span style="border-top:1px dashed #141210"></span>
+          <div style="display:grid;grid-template-columns:28px 1fr auto;gap:6px"><span>2</span><span>Es Kopi Susu Aren<br>- iced, less sugar</span><span>50,000</span></div>
+          <div style="display:grid;grid-template-columns:28px 1fr auto;gap:6px"><span>1</span><span>Croissant Almond<br>- warm up</span><span>32,000</span></div>
+          <span style="border-top:1px dashed #141210"></span>
+          <div style="display:flex;justify-content:space-between"><span>Subtotal</span><span>82,000</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Birthday month 20% (drinks)</span><span>-10,000</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Service charge 5%</span><span>3,600</span></div>
+          <div style="display:flex;justify-content:space-between"><span>PB1 10%</span><span>7,560</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:17px;padding:4px 0"><b>TOTAL</b><b>IDR 83,160</b></div>
+          <div style="display:flex;justify-content:space-between"><span>Tunai</span><span>100,000</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Kembali</span><span>16,840</span></div>
+          <span style="border-top:1px dashed #141210"></span>
+          <div style="text-align:center">Wi-Fi: SENJA-GUEST · kopisenja<br>Struk digital dikirim ke WhatsApp<br>Powered by BorNiz</div>
+        </div>
+        <div style="height:10px;background:radial-gradient(circle at 6px 0,transparent 6px,#FFFFFF 6.5px) 0 0/12px 10px repeat-x"></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+      <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#45403A">KITCHEN TICKET · 80MM</span>
+      <div style="width:316px;filter:drop-shadow(0 8px 16px rgba(20,18,16,.15))">
+        <div style="background:#FFFFFF;padding:18px 16px 12px;font:400 13px/1.4 'JetBrains Mono',ui-monospace,monospace;color:#141210;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:30px;line-height:1">T-07</b><span>DINE-IN</span></div>
+          <div style="display:flex;justify-content:space-between"><span>#1042 · Rina</span><span>14:32</span></div>
+          <div style="background:#141210;color:#FFFFFF;text-align:center;padding:4px;font-weight:700">BAR · 2 items</div>
+          <div style="display:flex;flex-direction:column;gap:2px"><b style="font-size:20px">2 x ES KOPI SUSU AREN</b><span>   &gt; ICED</span><span>   &gt; LESS SUGAR</span></div>
+          <span style="border-top:2px dashed #141210"></span>
+          <div style="background:#141210;color:#FFFFFF;text-align:center;padding:4px;font-weight:700">KITCHEN · 1 item</div>
+          <div style="display:flex;flex-direction:column;gap:2px"><b style="font-size:20px">1 x CROISSANT ALMOND</b><span>   &gt; WARM UP</span><span>   ** ALLERGY: NO NUTS TOPPING **</span></div>
+          <span style="border-top:2px dashed #141210"></span>
+          <span style="text-align:center">-- course 1 of 1 --</span>
+        </div>
+        <div style="height:10px;background:radial-gradient(circle at 6px 0,transparent 6px,#FFFFFF 6.5px) 0 0/12px 10px repeat-x"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="displays" style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">P8 — Customer display &amp; kiosk</span>
+      <h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Facing the customer</h2>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onClick="{{ cdIdle }}" style="height:44px;padding:0 16px;border:0;border-radius:12px;background:{{ cdIdleBg }};color:{{ cdIdleFg }};font-size:14px;font-weight:600;cursor:pointer">Idle</button>
+      <button onClick="{{ cdCart }}" style="height:44px;padding:0 16px;border:0;border-radius:12px;background:{{ cdCartBg }};color:{{ cdCartFg }};font-size:14px;font-weight:600;cursor:pointer">Live cart</button>
+      <button onClick="{{ cdAdd }}" style="height:44px;padding:0 16px;border:1px solid #E6E2DC;border-radius:12px;background:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer" style-active="transform:scale(.96)">+ Add item</button>
+    </div>
+  </div>
+  <div style="border-radius:28px;background:#141210;padding:10px">
+    <div style="border-radius:20px;background:#121110;color:#F5F2EE;aspect-ratio:16/9;max-height:620px;width:100%;position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;display:flex;opacity:{{ idleOp }};transition:opacity 400ms cubic-bezier(.2,0,0,1)">
+        <div style="flex:1.4;background:repeating-linear-gradient(135deg,#1C1A18 0 10px,#26231F 10px 11px);display:grid;place-items:center;font:400 13px/1.4 'JetBrains Mono',ui-monospace,monospace;color:#857E76;text-align:center">promo image / video loop<br>(crossfade every 8s)</div>
+        <div style="flex:1;padding:6%;display:flex;flex-direction:column;justify-content:center;gap:16px">
+          <span style="font-size:clamp(16px,1.6vw,22px);font-weight:600;color:#F8823A">Kopi Kenangan Senja</span>
+          <span style="font-size:clamp(32px,4vw,60px);font-weight:700;letter-spacing:-.03em;line-height:1">Payday deal: 20% off all coffee</span>
+          <span style="font-size:clamp(14px,1.3vw,18px);color:#A9A39B;line-height:1.5">Show your member QR to the cashier to earn points.</span>
+        </div>
+      </div>
+      <div style="position:absolute;inset:0;display:flex;opacity:{{ cartOp }};transition:opacity 400ms cubic-bezier(.2,0,0,1)">
+        <div style="flex:1;padding:4%;display:flex;flex-direction:column;gap:10px;overflow:hidden">
+          <span style="font-size:clamp(14px,1.4vw,18px);font-weight:600;color:#A9A39B">Your order · Table 7</span>
+          <sc-for list="{{ cdItems }}" as="i" hint-placeholder-count="3">
+            <div style="display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid #34302B;font-size:clamp(15px,1.6vw,22px);transform:translateX({{ i.x }});opacity:{{ i.op }};transition:transform 320ms cubic-bezier(.05,.7,.1,1),opacity 200ms;background:{{ i.flash }}">
+              <b>{{ i.q }}×</b><span>{{ i.n }}</span><b style="font-variant-numeric:tabular-nums">{{ i.p }}</b>
+            </div>
+          </sc-for>
+        </div>
+        <div style="flex:none;width:38%;background:#1C1A18;padding:4%;display:flex;flex-direction:column;gap:12px;justify-content:flex-end">
+          <div style="display:flex;justify-content:space-between;font-size:clamp(13px,1.3vw,17px);color:#A9A39B"><span>Subtotal</span><span>{{ cdSub }}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:clamp(13px,1.3vw,17px);color:#A9A39B"><span>PB1 10%</span><span>{{ cdTax }}</span></div>
+          <div style="height:1px;background:#34302B"></div>
+          <span style="font-size:clamp(14px,1.4vw,18px);color:#A9A39B">Total</span>
+          <span style="font-size:clamp(34px,4.6vw,72px);font-weight:700;letter-spacing:-.03em;line-height:1;color:#FFFFFF;font-variant-numeric:tabular-nums">{{ cdTotal }}</span>
+          <span style="font-size:clamp(12px,1.2vw,15px);color:#F8823A">Dewi earns +{{ cdPts }} pts</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+    <div style="border-radius:28px;background:#141210;padding:8px;max-width:340px;justify-self:center;width:100%">
+      <div style="border-radius:22px;background:#F26B1D;color:#FFFFFF;aspect-ratio:9/16;padding:28px 22px;display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden">
+        <span style="font-size:18px;font-weight:700">Kopi Kenangan Senja</span>
+        <div style="flex:1;border-radius:20px;background:repeating-linear-gradient(135deg,#F8823A 0 10px,#FF9F63 10px 11px);display:grid;place-items:center;font:400 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#84340A">hero product</div>
+        <span style="font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1">Order here,<br>skip the line.</span>
+        <span style="height:64px;border-radius:999px;background:#FFFFFF;color:#141210;display:grid;place-items:center;font-size:18px;font-weight:700;animation:bnPulse 1.6s infinite">Tap to start</span>
+        <span style="text-align:center;font-size:13px">English · Bahasa Indonesia</span>
+      </div>
+    </div>
+    <div style="border-radius:28px;background:#141210;padding:8px;max-width:340px;justify-self:center;width:100%">
+      <div style="border-radius:22px;background:#FFFFFF;aspect-ratio:9/16;padding:28px 22px;display:flex;flex-direction:column;gap:14px">
+        <span style="font-size:22px;font-weight:700;letter-spacing:-.02em">Where will you eat?</span>
+        <div style="flex:1;display:flex;flex-direction:column;gap:10px">
+          <span style="flex:1;border-radius:22px;background:#141210;color:#FFFFFF;display:flex;flex-direction:column;justify-content:flex-end;padding:18px;gap:4px"><b style="font-size:24px">Dine in</b><span style="font-size:13px;color:#CFCAC3">We'll bring it to your table</span></span>
+          <span style="flex:1;border-radius:22px;background:#F2EFEA;display:flex;flex-direction:column;justify-content:flex-end;padding:18px;gap:4px"><b style="font-size:24px">Take away</b><span style="font-size:13px;color:#625C55">Packed and ready at the counter</span></span>
+        </div>
+      </div>
+    </div>
+    <div style="border-radius:28px;background:#141210;padding:8px;max-width:340px;justify-self:center;width:100%">
+      <div style="border-radius:22px;background:#121110;color:#FFFFFF;aspect-ratio:9/16;padding:28px 22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center">
+        <span style="width:64px;height:64px;border-radius:999px;background:#1F9D55;display:grid;place-items:center"><span style="width:32px;height:32px;background:#FFFFFF;-webkit-mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.452.0/icons/check.svg) center/contain no-repeat"></span></span>
+        <span style="font-size:16px;color:#A9A39B">Your order number</span>
+        <span style="font-size:96px;font-weight:700;letter-spacing:-.04em;line-height:1;color:#F8823A">047</span>
+        <span style="font-size:15px;line-height:1.5;color:#CFCAC3">We'll call this number when it's ready.<br>About 8 minutes.</span>
+        <span style="margin-top:12px;font-size:13px;color:#857E76">Receipt sent to WhatsApp</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="queue" style="display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font:500 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#D9560B;letter-spacing:.08em;text-transform:uppercase">P9 — Queue caller &amp; reservation timeline</span>
+    <h2 style="margin:0;font-size:40px;line-height:1.05;font-weight:700;letter-spacing:-.03em">Who's next</h2>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px">
+    <div style="border-radius:24px;background:#121110;color:#FFFFFF;padding:24px;display:flex;flex-direction:column;gap:16px">
+      <span style="font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#A9A39B;letter-spacing:.08em">PICKUP SCREEN</span>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px">
+        <div style="display:flex;flex-direction:column;gap:8px"><span style="font-size:14px;font-weight:600;color:#6EE7A0">READY</span><span style="font-size:72px;font-weight:700;letter-spacing:-.04em;line-height:1;color:#FFFFFF;transform:scale({{ qScale }});transform-origin:left;transition:transform 420ms cubic-bezier(.34,1.56,.64,1)">{{ qNow }}</span><span style="font-size:13px;color:#A9A39B">{{ qPrev }}</span></div>
+        <div style="display:flex;flex-direction:column;gap:8px"><span style="font-size:14px;font-weight:600;color:#FFC15C">PREPARING</span><div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ qWait }}" as="q" hint-placeholder-count="5"><span style="height:40px;padding:0 12px;border-radius:12px;background:#26231F;font-size:18px;font-weight:700;line-height:40px">{{ q }}</span></sc-for></div></div>
+      </div>
+      <button onClick="{{ qNext }}" style="margin-top:auto;height:56px;border:0;border-radius:16px;background:#F8823A;color:#141210;font-size:16px;font-weight:700;cursor:pointer" style-active="transform:scale(.97)">Call next number</button>
+    </div>
+    <div style="border-radius:24px;background:#FFFFFF;border:1px solid #E6E2DC;padding:20px;display:flex;flex-direction:column;gap:12px;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:19px;font-weight:600">Reservations · tonight</span><span style="font:400 12px/1 'JetBrains Mono',ui-monospace,monospace;color:#625C55">now 18:40</span></div>
+      <div style="overflow-x:auto">
+        <div style="min-width:560px;display:flex;flex-direction:column;gap:4px;position:relative">
+          <div style="display:grid;grid-template-columns:48px repeat(6,minmax(0,1fr));font:400 11px/1 'JetBrains Mono',ui-monospace,monospace;color:#857E76;padding-bottom:4px"><span></span><span>17:00</span><span>18:00</span><span>19:00</span><span>20:00</span><span>21:00</span><span>22:00</span></div>
+          <sc-for list="{{ resRows }}" as="r" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:48px minmax(0,1fr);align-items:center;height:44px">
+              <span style="font-size:13px;font-weight:700">{{ r.t }}</span>
+              <div style="position:relative;height:36px;border-radius:10px;background:#FAF8F5">
+                <sc-for list="{{ r.blocks }}" as="b" hint-placeholder-count="1"><span style="position:absolute;top:2px;bottom:2px;left:{{ b.l }};width:{{ b.w }};border-radius:8px;background:{{ b.bg }};color:{{ b.fg }};font-size:12px;font-weight:600;padding:0 8px;display:flex;align-items:center;white-space:nowrap;overflow:hidden">{{ b.label }}</span></sc-for>
+              </div>
+            </div>
+          </sc-for>
+          <span style="position:absolute;top:18px;bottom:0;left:calc(48px + (100% - 48px) * 0.2778);width:2px;background:#F26B1D"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+<div data-bn-links="1" style="position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:60;max-width:calc(100vw - 24px)"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:18px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#141210;color:#FFFFFF"><span style="width:8px;height:8px;border-radius:9px;background:#F26B1D"></span>Linked pages · 15<span style="font-weight:500;color:#A9A39B">▴</span></summary><div style="width:min(460px,calc(100vw - 24px));padding:6px 16px 12px;display:flex;flex-direction:column;max-height:50vh;overflow:auto"><a href="BorNiz Brand Studio.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Brand Studio</b><span style="color:#45403A">Staff brand tokens</span></a><a href="BorNiz Components.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Components</b><span style="color:#45403A">Composed into counter patterns</span></a><a href="BorNiz Design Notes.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Design notes</b><span style="color:#45403A">Alternatives and rules</span></a><a href="BorNiz Design System.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Foundations</b><span style="color:#45403A">Counter patterns</span></a><a href="BorNiz Loyalty.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Loyalty</b><span style="color:#45403A">Member lookup and redeem patterns</span></a><a href="BorNiz Menu Studio.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Menu studio</b><span style="color:#45403A">Merchant theme tokens</span></a><a href="BorNiz Motion.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Motion</b><span style="color:#45403A">Motion tokens</span></a><a href="BorNiz PIC.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Shift lead (PIC)</b><span style="color:#45403A">Approval and cash patterns use the PIC</span></a><a href="BorNiz POS Register.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>POS Register</b><span style="color:#45403A">Patterns assembled into the register</span></a><a href="BorNiz Shifts.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Shifts</b><span style="color:#45403A">Drawer count and PIN pad patterns</span></a><a href="BorNiz System.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>System</b><span style="color:#45403A">Breakpoints, z-index, a11y</span></a><a href="BorNiz Responsive.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Responsive</b><span style="color:#45403A">Layout per breakpoint</span></a><a href="BorNiz Theming.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Theming &amp; language</b><span style="color:#45403A">Light/dark and merchant brand</span></a><a href="BorNiz States Gallery.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>States gallery</b><span style="color:#45403A">States to build</span></a><a href="BorNiz Sitemap.dc.html" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;padding:9px 0;border-top:1px solid #F2EFEA;font-size:13px;line-height:1.4;color:#141210"><b>Sitemap</b><span style="color:#45403A">Listed in the sitemap</span></a><a href="BorNiz Connections.dc.html" style="margin-top:8px;height:40px;border-radius:12px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:13px;font-weight:700">Open the full connection map →</a></div></details></div>
+<div data-bn-spec="1" style="position:fixed;left:12px;bottom:10px;z-index:61"><details style="width:max-content;max-width:calc(100vw - 24px);border-radius:16px;background:#FFFFFF;box-shadow:0 0 0 1px #E6E2DC,0 18px 40px -12px rgba(20,18,16,.35);overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#141210"><summary style="list-style:none;cursor:pointer;height:36px;padding:0 14px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;background:#F26B1D;color:#FFFFFF">◆ Design spec · this page</summary><div style="width:min(420px,calc(100vw - 24px));max-height:65vh;overflow:auto;padding:10px 16px 14px;display:flex;flex-direction:column"><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Covers</span><b style="text-align:right">Counter-specific composed patterns</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Page type</span><b style="text-align:right">Design-system documentation</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Theme</span><b style="text-align:right">Light doc · paper #FAF8F5</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Container</span><b style="text-align:right">max 1280px · fluid padding</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Type</span><b style="text-align:right">H1 clamp 44–88 · section 36–44 · body 15–17</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Cards</span><b style="text-align:right">radius 20–24 · 1px #E6E2DC</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Nav</span><b style="text-align:right">Sticky top nav to every DS page</b></div><div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #F2EFEA;font-size:12px"><span style="color:#45403A">Rule</span><b style="text-align:right">Live demos use the real tokens</b></div><a href="BorNiz Page Templates.dc.html" style="margin-top:12px;height:38px;border-radius:10px;background:#FFF3EB;color:#B04408;display:grid;place-items:center;font-size:12px;font-weight:700">Page templates →</a></div></details></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const fmt = v => 'IDR ' + Math.round(v).toLocaleString('en-US');
+const SIZES = { sq2: [72, 72, '14px'], sq4: [96, 96, '16px'], rd2: [72, 72, '999px'], rd4: [100, 100, '999px'], long6: [184, 84, '16px'], long8: [244, 84, '16px'], bar1: [52, 52, '999px'] };
+const T0 = [
+  ['T1', 'in', 5, 8, 'sq2', 2, 'free'], ['T2', 'in', 19, 8, 'sq2', 2, 'occ', 2, 34, 86000, 'Rina'], ['T3', 'in', 33, 6, 'sq4', 4, 'bill', 4, 72, 412500, 'Andi'], ['T4', 'in', 49, 6, 'sq4', 4, 'free'], ['T5', 'in', 66, 7, 'rd4', 4, 'res', 0, 0, 0, '', '19:30', 'Pak Hendra', 4, 'Anniversary, quiet corner please'],
+  ['T6', 'in', 4, 42, 'long6', 6, 'occ', 5, 18, 254000, 'Rina'], ['T7', 'in', 30, 42, 'long6', 6, 'clean'], ['T8', 'in', 56, 44, 'rd2', 2, 'free'], ['T9', 'in', 68, 42, 'rd4', 4, 'occ', 3, 64, 198000, 'Maya'],
+  ['T10', 'in', 14, 72, 'long8', 8, 'res', 0, 0, 0, '', '20:00', 'Arisan Bu Ratna', 8, 'Birthday cake brought in, need plates'],
+  ['O1', 'out', 6, 10, 'rd2', 2, 'occ', 2, 22, 64000, 'Maya'], ['O2', 'out', 22, 10, 'rd2', 2, 'free'], ['O3', 'out', 38, 10, 'rd4', 4, 'free'], ['O4', 'out', 58, 10, 'rd4', 4, 'bill', 3, 55, 176000, 'Andi'], ['O5', 'out', 10, 50, 'long6', 6, 'free'], ['O6', 'out', 44, 50, 'long6', 6, 'occ', 6, 41, 388000, 'Maya'],
+  ['R1', 'roof', 8, 14, 'sq4', 4, 'free'], ['R2', 'roof', 28, 14, 'sq4', 4, 'res', 0, 0, 0, '', '21:00', 'Nadia', 3, 'Window side'], ['R3', 'roof', 48, 14, 'sq4', 4, 'free'], ['R4', 'roof', 20, 52, 'long8', 8, 'free'],
+].map(a => ({ id: a[0], zone: a[1], x: a[2], y: a[3], shape: a[4], seats: a[5], status: a[6], guests: a[7] || 0, mins: a[8] || 0, amount: a[9] || 0, server: a[10] || '', resTime: a[11] || '', resName: a[12] || '', resPax: a[13] || 0, resNote: a[14] || '', merged: null }));
+const ZONES = [['in', 'Indoor'], ['out', 'Outdoor'], ['roof', 'Rooftop']];
+const STATUS = { free: ['#FFFFFF', '#141210', 'inset 0 0 0 2px #141210', 'Available', '#F2EFEA', '#141210'], occ: ['#F26B1D', '#FFFFFF', 'none', 'Occupied', '#FFE2CF', '#84340A'], bill: ['#141210', '#FFFFFF', 'none', 'Bill requested', '#141210', '#FFFFFF'], res: ['#E6EEFD', '#163A85', 'inset 0 0 0 2px #2F6FEB', 'Reserved', '#E6EEFD', '#1F4FB5'], clean: ['#FFF4D6', '#5C3D00', 'inset 0 0 0 2px #E5A000', 'Needs cleaning', '#FFF4D6', '#8A5A00'] };
+const ITEMS = [[2, 'Nasi Goreng Spesial', 76000, 'Served'], [1, 'Sop Buntut', 68000, 'Cooking · 6m'], [3, 'Es Teh Manis', 36000, 'Served'], [1, 'Pisang Goreng Keju', 28000, 'Queued']];
+const ED0 = [{ id: 'T1', x: 48, y: 48, shape: 'sq2', seats: 2 }, { id: 'T2', x: 176, y: 48, shape: 'sq2', seats: 2 }, { id: 'T3', x: 312, y: 40, shape: 'sq4', seats: 4 }, { id: 'T6', x: 48, y: 200, shape: 'long6', seats: 6 }, { id: 'T9', x: 312, y: 200, shape: 'rd4', seats: 4 }];
+const K0 = [
+  { id: '#GF-8821', ch: 'GoFood', col: 0, items: '2× Ayam Geprek Level 3, 1× Es Jeruk', meta: 'Driver: Budi · 3 km', otp: '4821', t: 25 },
+  { id: '#SF-1190', ch: 'ShopeeFood', col: 0, items: '1× Nasi Goreng Spesial', meta: 'Waiting for driver', otp: '1190', t: 70 },
+  { id: '#ON-0042', ch: 'Online', col: 0, items: '3× Es Kopi Susu Aren, 2× Croissant', meta: 'Pickup 15:10 · Dewi A.', otp: '', t: 140 },
+  { id: '#GB-5531', ch: 'GrabFood', col: 1, items: '1× Mie Goreng Jawa, 1× Teh Tarik', meta: 'Driver arriving in 4 min', otp: '5531', t: 0 },
+  { id: '#GF-8817', ch: 'GoFood', col: 1, items: '4× Paket Hemat A', meta: 'Driver at outlet', otp: '8817', t: 0 },
+  { id: '#ON-0041', ch: 'Online', col: 2, items: '2× Matcha Latte', meta: 'Pickup now · Sari L.', otp: '', t: 0 },
+  { id: '#GB-5528', ch: 'GrabFood', col: 3, items: '2× Sop Buntut', meta: 'Picked up 14:41', otp: '5528', t: 0 },
+];
+const CH = { GoFood: ['#E3F5EA', '#156B3A'], GrabFood: ['#DDF3E6', '#0F5C30'], ShopeeFood: ['#FFE8DE', '#A1360A'], Online: ['#141210', '#FFFFFF'] };
+const MOD = [
+  { name: 'Size', type: 'one', req: true, opts: [['Regular', 0], ['Large', 5000]] },
+  { name: 'Temperature', type: 'one', req: true, opts: [['Iced', 0], ['Hot', 0]] },
+  { name: 'Sugar', type: 'one', req: false, def: 0, opts: [['Normal', 0], ['Less', 0], ['No sugar', 0]] },
+  { name: 'Add-ons', type: 'many', max: 3, opts: [['Extra shot', 8000], ['Oat milk', 7000], ['Boba', 6000], ['Cheese foam', 9000, true]] },
+];
+const DEN = [[100000, '#F9D9D9', '#7A1A15'], [50000, '#DCE8F7', '#163A85'], [20000, '#DDF0E2', '#0F4D29'], [10000, '#EADDF2', '#4B2466'], [5000, '#F2E6D3', '#5C3D00'], [2000, '#E6E2DC', '#2E2A26'], [1000, '#E6E9D6', '#3D4A12'], [500, '#F2EFEA', '#45403A'], [200, '#F2EFEA', '#45403A'], [100, '#F2EFEA', '#45403A']];
+
+class Component extends DCLogic {
+  state = { zone: 'in', tf: 'all', tables: T0, sel: null, merge: false, guestPick: 2, server: 'Rina', ed: ED0, edSel: 'T3', drag: null, kc: K0, kOver: null, mod: { 0: null, 1: null, 2: 0, 3: [] }, modQty: 1, modTried: false, modShake: 0, modCart: [], cash: { 100000: 18, 50000: 14, 20000: 12, 10000: 9, 5000: 6, 2000: 8, 1000: 5, 500: 4, 200: 0, 100: 0 }, cd: 'cart', cdItems: [[2, 'Es Kopi Susu Aren', 50000], [1, 'Croissant Almond', 32000]], cdNew: -1, q: 46, qPop: false };
+
+  componentDidMount() { this.tick = setInterval(() => this.setState(s => ({ kc: s.kc.map(c => c.col === 0 ? { ...c, t: c.t + 1 } : c) })), 1000); }
+  componentWillUnmount() { clearInterval(this.tick); }
+  upd(id, patch) { this.setState(s => ({ tables: s.tables.map(t => t.id === id ? { ...t, ...patch } : t) })); }
+
+  chairs(t, w, h) {
+    const n = t.seats, filled = (t.status === 'occ' || t.status === 'bill') ? t.guests : 0, out = [];
+    const H = (l, tp) => out.push({ l: l + 'px', t: tp + 'px', w: '24px', h: '10px' }), V = (l, tp) => out.push({ l: l + 'px', t: tp + 'px', w: '10px', h: '24px' });
+    const W = w + 28, HH = h + 28;
+    if (n <= 2) { V(0, HH / 2 - 12); V(W - 10, HH / 2 - 12); }
+    else if (n === 4) { H(W / 2 - 12, 0); H(W / 2 - 12, HH - 10); V(0, HH / 2 - 12); V(W - 10, HH / 2 - 12); }
+    else { const k = n / 2; for (let i = 0; i < k; i++) { const cx = 14 + w * (i + .5) / k - 12; H(cx, 0); } for (let i = 0; i < k; i++) { const cx = 14 + w * (i + .5) / k - 12; H(cx, HH - 10); } }
+    return out.map((c, i) => ({ ...c, bg: i < filled ? (t.status === 'bill' ? '#141210' : '#F26B1D') : '#CFCAC3' }));
+  }
+
+  primary(t) {
+    if (!t) return;
+    if (t.status === 'free') this.upd(t.id, { status: 'occ', guests: this.state.guestPick, mins: 0, amount: 0, server: this.state.server });
+    else if (t.status === 'occ') this.upd(t.id, { amount: t.amount + 38000, mins: t.mins });
+    else if (t.status === 'bill') this.upd(t.id, { status: 'clean', guests: 0, amount: 0, mins: 0, merged: null });
+    else if (t.status === 'res') this.upd(t.id, { status: 'occ', guests: t.resPax, mins: 0, amount: 0, server: this.state.server });
+    else if (t.status === 'clean') this.upd(t.id, { status: 'free' });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const zoneTables = s.tables.filter(t => t.zone === s.zone);
+    const selT = s.tables.find(t => t.id === s.sel);
+    const match = t => s.tf === 'all' || (s.tf === 'free' && t.status === 'free') || (s.tf === 'occ' && (t.status === 'occ' || t.status === 'bill')) || (s.tf === 'res' && t.status === 'res');
+    const busy = s.tables.filter(t => t.status === 'occ' || t.status === 'bill');
+    const tables = zoneTables.map(t => {
+      const [w, h, r] = SIZES[t.shape], st = STATUS[t.status], sel = s.sel === t.id;
+      const line1 = t.status === 'free' ? `${t.seats} seats` : t.status === 'occ' ? `${t.guests} pax · ${t.mins}m` : t.status === 'bill' ? `Bill · ${t.mins}m` : t.status === 'res' ? `${t.resTime} · ${t.resPax} pax` : 'Cleaning';
+      return { id: t.id, aria: `${t.id} ${st[3]}`, left: t.x + '%', top: t.y + '%', ww: (w + 28) + 'px', wh: (h + 28) + 'px', radius: r, bg: st[0], fg: st[1],
+        ring: sel ? `${st[2] === 'none' ? '' : st[2] + ','}0 0 0 4px #FFFFFF,0 0 0 8px #F8823A` : (t.merged ? `${st[2] === 'none' ? '' : st[2] + ','}0 0 0 3px #FFFFFF,0 0 0 5px #F26B1D` : st[2]),
+        idSize: w > 80 ? '22px' : '18px', line1, amt: fmt(t.amount).replace('IDR ', ''), amtD: (t.status === 'occ' || t.status === 'bill') && t.amount ? 'block' : 'none',
+        pingD: t.status === 'bill' ? 'block' : 'none', mergeD: t.merged ? 'block' : 'none', mergeLabel: t.merged || '', op: match(t) ? 1 : .25, scale: sel ? 1.04 : 1,
+        chairs: this.chairs(t, w, h),
+        onClick: e => { e.stopPropagation();
+          if (s.merge && s.sel && s.sel !== t.id) { const label = `${s.sel}+${t.id}`; this.setState(st2 => ({ merge: false, tables: st2.tables.map(x => (x.id === s.sel || x.id === t.id) ? { ...x, merged: label, status: x.status === 'free' ? 'occ' : x.status, guests: x.guests || 1 } : x) })); return; }
+          this.setState({ sel: t.id, guestPick: Math.min(t.seats, 2) }); } };
+    });
+    let sel = null;
+    if (selT) {
+      const st = STATUS[selT.status];
+      const sec = { free: [['Reserve', () => this.upd(selT.id, { status: 'res', resTime: '19:00', resName: 'Walk-in hold', resPax: this.state.guestPick, resNote: 'Held by cashier' })], ['Merge', () => this.setState({ merge: true })], ['Block', () => this.upd(selT.id, { status: 'clean' })]],
+        occ: [['Print bill', () => this.upd(selT.id, { status: 'bill' })], ['Move', () => this.setState({ merge: true })], ['Split', () => {}]], bill: [['Reprint', () => {}], ['Reopen', () => this.upd(selT.id, { status: 'occ' })], ['Split', () => {}]],
+        res: [['Call', () => {}], ['Edit', () => {}], ['Cancel', () => this.upd(selT.id, { status: 'free', resTime: '', resName: '', resPax: 0 })]], clean: [['Block', () => {}], ['Report', () => {}], ['History', () => {}]] }[selT.status];
+      const cta = { free: [`Start order · ${s.guestPick} guests`, '#F26B1D'], occ: ['Add items', '#F26B1D'], bill: [`Take payment · ${fmt(selT.amount)}`, '#F26B1D'], res: ['Seat guests now', '#141210'], clean: ['Mark as clean', '#1F9D55'] }[selT.status];
+      const n = Math.max(1, Math.min(4, Math.round(selT.amount / 90000)));
+      sel = { id: selT.merged || selT.id, statusLabel: st[3], badgeBg: st[4], badgeFg: st[5], meta: `${selT.seats} seats · ${ZONES.find(z => z[0] === selT.zone)[1]}${selT.server ? ' · ' + selT.server : ''}`,
+        isFree: selT.status === 'free', hasOrder: selT.status === 'occ' || selT.status === 'bill', isRes: selT.status === 'res', isClean: selT.status === 'clean',
+        guests: selT.guests, mins: selT.mins, timeColor: selT.mins > 60 ? '#B3261E' : '#141210', server: selT.server || '—', amt: fmt(selT.amount),
+        items: ITEMS.slice(0, n).map(([q, nm, p, stt]) => ({ q, n: nm, p: fmt(p), st: stt, stColor: stt.startsWith('Cooking') ? '#B04408' : (stt === 'Queued' ? '#857E76' : '#156B3A') })),
+        resName: selT.resName, resTime: selT.resTime, resPax: selT.resPax, resNote: selT.resNote, cta: cta[0], ctaBg: cta[1], secondary: sec.map(([label, onClick]) => ({ label, onClick })) };
+    }
+    const att = s.tables.filter(t => t.status === 'bill' || (t.status === 'occ' && t.mins > 60) || t.status === 'clean' || t.status === 'res').slice(0, 4).map(t => ({ id: t.id, bg: STATUS[t.status][0] === '#FFFFFF' ? '#F2EFEA' : STATUS[t.status][0], fg: STATUS[t.status][1], title: t.status === 'bill' ? 'Bill requested' : t.status === 'clean' ? 'Needs cleaning' : t.status === 'res' ? `Reserved ${t.resTime}` : `Seated ${t.mins}m, check in`, sub: t.status === 'res' ? `${t.resName} · ${t.resPax} pax` : (t.amount ? fmt(t.amount) : ZONES.find(z => z[0] === t.zone)[1]), onClick: () => this.setState({ zone: t.zone, sel: t.id }) }));
+
+    const edSel = s.ed.find(t => t.id === s.edSel);
+    const cols = ['New', 'Preparing', 'Ready', 'Picked up'];
+    const fmtT = t => `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+
+    const modTotalUnit = 25000 + MOD.reduce((a, g, gi) => { const v = s.mod[gi]; if (g.type === 'one') return a + (v != null ? g.opts[v][1] : 0); return a + v.reduce((b, i) => b + g.opts[i][1], 0); }, 0);
+    const missing = MOD.map((g, gi) => g.req && s.mod[gi] == null);
+    const modOk = !missing.some(Boolean);
+
+    const counted = DEN.reduce((a, [d]) => a + d * (s.cash[d] || 0), 0), expected = 2845000, v = counted - expected;
+    const cdSub = s.cdItems.reduce((a, i) => a + i[2], 0);
+    const q = s.q;
+
+    return {
+      zones: ZONES.map(([k, label]) => { const zt = s.tables.filter(t => t.zone === k); return { label, total: zt.length, free: zt.filter(t => t.status === 'free').length, bg: s.zone === k ? '#FFFFFF' : 'transparent', shadow: s.zone === k ? '0 1px 3px rgba(20,18,16,.12)' : 'none', onClick: () => this.setState({ zone: k, sel: null }) }; }),
+      tFilters: [['all', 'All'], ['free', 'Available'], ['occ', 'Occupied'], ['res', 'Reserved']].map(([k, label]) => ({ label, bg: s.tf === k ? '#141210' : '#FFFFFF', fg: s.tf === k ? '#FFFFFF' : '#141210', border: s.tf === k ? '#141210' : '#E6E2DC', onClick: () => this.setState({ tf: k }) })),
+      toggleMerge: () => this.setState({ merge: !s.merge }), mergeLabel: s.merge ? (s.sel ? `Tap a table to merge with ${s.sel}` : 'Pick the first table') : 'Merge tables', mergeBg: s.merge ? '#FFF3EB' : '#FFFFFF', mergeBorder: s.merge ? '#F26B1D' : '#141210', mergeFg: s.merge ? '#B04408' : '#141210',
+      occ: Math.round(busy.length / s.tables.length * 100) + '%', guestsNow: busy.reduce((a, t) => a + t.guests, 0), isIndoor: s.zone === 'in',
+      tables, clearSel: () => !s.merge && this.setState({ sel: null }), noSel: !selT, hasSel: !!selT, sel: sel || {}, hintText: s.merge ? 'Merge mode: tap the first table, then the second. Their bills combine into one.' : 'Tap a table to start an order, add items, take payment or seat a reservation.', attention: att,
+      guestPick: s.guestPick, guestDec: () => this.setState({ guestPick: Math.max(1, s.guestPick - 1) }), guestInc: () => this.setState({ guestPick: Math.min(20, s.guestPick + 1) }),
+      guestWarn: selT && s.guestPick > selT.seats ? `More than ${selT.seats} seats. Add chairs or merge a table.` : 'Guest count is used for per-pax reports.', guestWarnColor: selT && s.guestPick > selT.seats ? '#B3261E' : '#625C55',
+      servers: ['Rina', 'Andi', 'Maya'].map(n => ({ name: n, bg: s.server === n ? '#141210' : '#FFFFFF', border: s.server === n ? '#141210' : '#E6E2DC', onClick: () => this.setState({ server: n }) })).map(x => ({ ...x, name: x.name })),
+      primaryAction: () => this.primary(selT),
+      palette: [['sq2', 'Square · 2'], ['sq4', 'Square · 4'], ['rd4', 'Round · 4'], ['long6', 'Long · 6'], ['long8', 'Long · 8']].map(([sh, label]) => { const [w, h, r] = SIZES[sh]; return { label, w: Math.round(w / 6) + 'px', h: Math.round(h / 6) + 'px', r: r === '999px' ? '999px' : '4px', onClick: () => this.setState(st => { const id = 'T' + (Math.max(...st.ed.map(t => +t.id.replace(/\D/g, '') || 0)) + 1); return { ed: [...st.ed, { id, x: 456, y: 120, shape: sh, seats: { sq2: 2, sq4: 4, rd4: 4, long6: 6, long8: 8 }[sh] }], edSel: id }; }) }; }),
+      edTables: s.ed.map(t => { const [w, h, r] = SIZES[t.shape], on = s.edSel === t.id; return { id: t.id, seats: t.seats, x: t.x + 'px', y: t.y + 'px', w: w + 'px', h: h + 'px', r, scale: s.drag && s.drag.id === t.id ? 1.04 : 1, ring: on ? '0 0 0 2px #F26B1D,0 8px 20px -6px rgba(242,107,29,.4)' : 'inset 0 0 0 2px #141210',
+        onDown: e => { e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId); this.setState({ edSel: t.id, drag: { id: t.id, sx: e.clientX, sy: e.clientY, ox: t.x, oy: t.y } }); } }; }),
+      edMove: e => { const d = s.drag; if (!d) return; const nx = Math.max(0, Math.round((d.ox + e.clientX - d.sx) / 8) * 8), ny = Math.max(0, Math.round((d.oy + e.clientY - d.sy) / 8) * 8); this.setState(st => ({ ed: st.ed.map(t => t.id === d.id ? { ...t, x: nx, y: ny } : t) })); },
+      edUp: () => s.drag && this.setState({ drag: null }), edHint: s.drag ? `x ${s.ed.find(t => t.id === s.drag.id).x} · y ${s.ed.find(t => t.id === s.drag.id).y}` : `${s.ed.length} tables · drag to move · snap 8px`,
+      edSelId: edSel ? edSel.id : '', edSelSeats: edSel ? edSel.seats : 0,
+      edRename: e => { const v2 = e.target.value.slice(0, 6); this.setState(st => ({ ed: st.ed.map(t => t.id === st.edSel ? { ...t, id: v2 } : t), edSel: v2 })); },
+      edSeatDec: () => this.setState(st => ({ ed: st.ed.map(t => t.id === st.edSel ? { ...t, seats: Math.max(1, t.seats - 1) } : t) })), edSeatInc: () => this.setState(st => ({ ed: st.ed.map(t => t.id === st.edSel ? { ...t, seats: Math.min(20, t.seats + 1) } : t) })),
+      edDelete: () => this.setState(st => { const ed = st.ed.filter(t => t.id !== st.edSel); return { ed, edSel: ed[0] ? ed[0].id : null }; }),
+      kcols: cols.map((label, ci) => { const cards = s.kc.filter(c => c.col === ci); return { label: label.toUpperCase(), count: cards.length, bg: s.kOver === ci ? '#FFF3EB' : '#F2EFEA', ring: s.kOver === ci ? 'inset 0 0 0 2px #F26B1D' : 'none',
+        onOver: e => { e.preventDefault(); if (s.kOver !== ci) this.setState({ kOver: ci }); }, onLeave: () => this.setState({ kOver: null }), onDrop: e => { e.preventDefault(); const id = e.dataTransfer.getData('text/plain'); this.setState(st => ({ kOver: null, kc: st.kc.map(c => c.id === id ? { ...c, col: ci, t: 0 } : c) })); },
+        cards: cards.map(c => { const late = c.t > 120 ? '#E5383B' : c.t > 60 ? '#E5A000' : '#141210'; const ch = CH[c.ch]; return { id: c.id, ch: c.ch, chBg: ch[0], chFg: ch[1], items: c.items, meta: c.meta, otp: c.otp, otpD: c.otp ? 'inline-block' : 'none', timer: ci === 0 ? fmtT(c.t) : '', btn: ['Accept', 'Mark ready', 'Hand over', ''][ci], btnBg: ci === 0 ? late : (ci === 1 ? '#F26B1D' : '#1F9D55'), btnD: ci === 3 ? 'none' : 'flex',
+          onDrag: e => e.dataTransfer.setData('text/plain', c.id), onAdvance: () => this.setState(st => ({ kc: st.kc.map(x => x.id === c.id ? { ...x, col: Math.min(3, x.col + 1), t: 0 } : x) })) }; }) }; }),
+      modGroups: MOD.map((g, gi) => { const v2 = s.mod[gi], miss = s.modTried && missing[gi];
+        return { name: g.name, tag: g.req ? (miss ? 'Required · pick one' : 'Required') : (g.type === 'many' ? `Optional · up to ${g.max}` : 'Optional'), tagBg: miss ? '#E5383B' : (g.req ? '#141210' : '#F2EFEA'), tagFg: miss || g.req ? '#FFFFFF' : '#45403A',
+          opts: g.opts.map(([label, p, oos], oi) => { const on = g.type === 'one' ? v2 === oi : v2.includes(oi); const full = g.type === 'many' && !on && v2.length >= g.max;
+            return { label, price: oos ? 'Out of stock' : (p ? '+ ' + fmt(p) : 'Included'), border: on ? '#F26B1D' : (miss ? '#F4B4B4' : '#E6E2DC'), bg: on ? '#FFF3EB' : '#FFFFFF', op: oos || full ? .45 : 1, cursor: oos || full ? 'not-allowed' : 'pointer',
+              onClick: () => { if (oos || full) return; this.setState(st => { const m = { ...st.mod }; if (g.type === 'one') m[gi] = oi; else m[gi] = on ? m[gi].filter(x => x !== oi) : [...m[gi], oi]; return { mod: m }; }); } }; }) }; }),
+      modQty: s.modQty, modQtyDec: () => this.setState({ modQty: Math.max(1, s.modQty - 1) }), modQtyInc: () => this.setState({ modQty: s.modQty + 1 }),
+      modTotal: fmt(modTotalUnit * s.modQty), modCta: modOk ? 'Add to order' : 'Choose required options', modCtaBg: modOk ? '#F26B1D' : '#857E76', modShake: s.modShake + 'px',
+      modAdd: () => { if (!modOk) { this.setState({ modTried: true }); [-8, 8, -5, 5, 0].forEach((x, i) => setTimeout(() => this.setState({ modShake: x }), i * 45)); return; }
+        const mods = MOD.map((g, gi) => g.type === 'one' ? (s.mod[gi] != null ? g.opts[s.mod[gi]][0] : null) : s.mod[gi].map(i => g.opts[i][0]).join(', ')).filter(Boolean).join(' · ');
+        this.setState(st => ({ modCart: [...st.modCart, { q: st.modQty, mods, total: fmt(modTotalUnit * st.modQty) }], mod: { 0: null, 1: null, 2: 0, 3: [] }, modQty: 1, modTried: false })); },
+      modCart: s.modCart, modCartEmpty: s.modCart.length === 0,
+      openBills: [['T-03', 'Dine-in', '4 pax · 72m · Andi', 412500], ['T-09', 'Dine-in', '3 pax · 64m · Maya', 198000], ['Pak Joko', 'Takeaway', 'Saved 14:02 · phone order', 145000], ['O-06', 'Dine-in', '6 pax · 41m · Maya', 388000], ['Bar 2', 'Bar tab', '1 pax · 25m', 96000], ['#ON-0043', 'Pre-order', 'Pickup 16:00', 210000]].map(([name, type, meta, a]) => ({ name, type, meta, amt: fmt(a), tbg: type === 'Dine-in' ? '#FFE2CF' : '#F2EFEA', tfg: type === 'Dine-in' ? '#84340A' : '#45403A' })),
+      denoms: DEN.map(([d, bg, fg]) => { const n = s.cash[d] || 0; return { label: d >= 1000 ? (d / 1000) + 'k' : String(d), bg, fg, n, sum: n ? fmt(d * n) : '—', sumColor: n ? '#141210' : '#A9A39B', dec: () => this.setState(st => ({ cash: { ...st.cash, [d]: Math.max(0, (st.cash[d] || 0) - 1) } })), inc: () => this.setState(st => ({ cash: { ...st.cash, [d]: (st.cash[d] || 0) + 1 } })) }; }),
+      counted: fmt(counted), variance: (v > 0 ? '+ ' : v < 0 ? '− ' : '') + fmt(Math.abs(v)),
+      varLabel: v === 0 ? 'Balanced' : v > 0 ? 'Over' : 'Short', varBg: v === 0 ? '#E3F5EA' : (Math.abs(v) <= 20000 ? '#FFF4D6' : '#FDE8E8'), varFg: v === 0 ? '#0F4D29' : (Math.abs(v) <= 20000 ? '#5C3D00' : '#7A1A15'),
+      varHelp: v === 0 ? 'Drawer matches expected cash. Ready to close.' : (Math.abs(v) <= 20000 ? 'Within the IDR 20,000 tolerance. Add a note to close.' : 'Above tolerance. The PIC’s PIN and a reason are required to close (manager over IDR 50,000).'), varNoteD: v === 0 ? 'none' : 'flex',
+      cdIdle: () => this.setState({ cd: 'idle' }), cdCart: () => this.setState({ cd: 'cart' }), idleOp: s.cd === 'idle' ? 1 : 0, cartOp: s.cd === 'cart' ? 1 : 0,
+      cdIdleBg: s.cd === 'idle' ? '#141210' : '#F2EFEA', cdIdleFg: s.cd === 'idle' ? '#FFFFFF' : '#141210', cdCartBg: s.cd === 'cart' ? '#141210' : '#F2EFEA', cdCartFg: s.cd === 'cart' ? '#FFFFFF' : '#141210',
+      cdAdd: () => { const pool = [[1, 'Matcha Latte', 30000], [1, 'Banana Bread', 28000], [2, 'Air Mineral', 16000], [1, 'Teh Tarik', 22000]]; const it = pool[s.cdItems.length % pool.length]; const idx = s.cdItems.length; this.setState(st => ({ cd: 'cart', cdItems: [...st.cdItems, it].slice(-6), cdNew: Math.min(idx, 5) })); setTimeout(() => this.setState({ cdNew: -2 }), 30); setTimeout(() => this.setState({ cdNew: -1 }), 900); },
+      cdItems: s.cdItems.map(([qq, n, p], i) => { const isNew = i === s.cdItems.length - 1 && s.cdNew !== -1; return { q: qq, n, p: fmt(p), x: isNew && s.cdNew >= 0 ? '40px' : '0px', op: isNew && s.cdNew >= 0 ? 0 : 1, flash: isNew ? 'rgba(248,130,58,.12)' : 'transparent' }; }),
+      cdSub: fmt(cdSub), cdTax: fmt(cdSub * .1), cdTotal: fmt(cdSub * 1.1), cdPts: Math.floor(cdSub * 1.1 / 1000),
+      qNow: String(q).padStart(3, '0'), qPrev: `Previous: ${String(q - 1).padStart(3, '0')}, ${String(q - 2).padStart(3, '0')}`, qWait: [1, 2, 3, 4, 5].map(i => String(q + i).padStart(3, '0')), qScale: s.qPop ? 1.15 : 1,
+      qNext: () => { this.setState({ q: q + 1, qPop: true }); setTimeout(() => this.setState({ qPop: false }), 220); },
+      resRows: [['T5', [[19.5, 2, 'Pak Hendra · 4', 'res']]], ['T10', [[20, 2.5, 'Arisan Bu Ratna · 8', 'res']]], ['T3', [[17.2, 2.1, 'Walk-in · 4', 'occ']]], ['R2', [[21, 1.5, 'Nadia · 3', 'res']]], ['T6', [[18.3, 1.6, 'Walk-in · 5', 'occ'], [20.5, 1.5, 'Keluarga Wijaya · 6', 'res']]], ['O3', [[19, 1.5, 'Online booking · 2', 'res']]]].map(([t, bl]) => ({ t, blocks: bl.map(([st, du, label, k]) => ({ label, l: ((st - 17) / 6 * 100) + '%', w: (du / 6 * 100) + '%', bg: k === 'occ' ? '#F26B1D' : '#E6EEFD', fg: k === 'occ' ? '#FFFFFF' : '#163A85' })) })),
+    };
+  }
+}
+</script>
+</body>
+</html>
