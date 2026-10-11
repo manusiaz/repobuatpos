@@ -4,10 +4,15 @@
 import { useState } from 'react';
 import { setDeviceOnline, setSetting } from '../../data/actions.ts';
 import { issuePairCode, pairDevice, pairExpiry } from '../../data/actions/auth.ts';
-import { addDevice, flushQueue, logDevice, setDeviceStatus } from '../../data/actions/pos.ts';
+import { flushQueue } from '../../data/actions/pos.ts';
 import { idr } from '../../domain/money.ts';
 import { Badge, Empty, Field, Icon, Seg, Status, Toggle, ago, hhmm, toast, useNow } from '../../ui/kit.tsx';
-import type { Device } from '../../data/schema.ts';
+import type { Device, Integration } from '../../data/schema.ts';
+import { IntegrationsPanel } from '../../integrations/Panel.tsx';
+import { HardwareList, PrintQueue, ReadScale } from '../../devices/ui.tsx';
+import { ownerOf, receiptPrinter, stationPrinter, thisDevice } from '../../devices/routing.ts';
+import { edcDriver } from '../../devices/edc.ts';
+import { findByCode, useWedgeScanner } from '../../devices/scanner.ts';
 import { P, Row, SETTINGS_PATH, TabLinks, usePos, usePerm, warnStyle } from './shared.tsx';
 
 export function DeviceView() {
@@ -22,24 +27,32 @@ export function DeviceView() {
 }
 
 function DevRow({ d, children }: { d: Device; children?: React.ReactNode }) {
-  return <div className="row card tight wrap"><Icon name={d.kind === 'printer' ? 'printer' : d.kind === 'edc' ? 'credit-card' : d.kind === 'display' ? 'monitor' : 'tablet'} />
+  return <div className="row card tight wrap"><Icon name={d.kind === 'display' ? 'monitor' : 'tablet'} />
     <span className="grow stack" style={{ gap: 0, minWidth: 160 }}><b>{d.name}</b><span className="muted" style={{ fontSize: 13 }}>Last seen {ago(d.lastSeen)}</span></span><Status s={d.status} />{children}</div>;
 }
 const devs = (db: ReturnType<typeof usePos>['db'], outletId: string, kind: Device['kind']) => db.devices.filter(d => d.outletId === outletId && d.kind === kind);
 
+const PRINT_KINDS: Integration['kind'][] = ['printer', 'drawer'];
 function Printer() {
-  const { db, outletId, me, go, setting } = usePos();
+  const { db, outletId, me, go } = usePos();
   const can = usePerm();
-  const list = devs(db, outletId, 'printer');
-  const width = setting('paper', '80');
-  return <div className="stack">
-    {list.length === 0 ? <Empty icon="printer" title="No printer paired">Pair a receipt printer in Owner › Devices.</Empty> : list.map(d => <DevRow key={d.id} d={d}>
-      {d.status !== 'online' && <button className="btn btn-sm" onClick={() => { setDeviceStatus(d.id, 'online', me.id); toast(`${d.name} reconnected`); }}>Reconnect</button>}
-      <button className="btn btn-sm" disabled={d.status !== 'online'} onClick={() => { logDevice('print.test', d.name, me.id, outletId); toast('Test page printed'); }}>Test print</button></DevRow>)}
-    {list.some(d => d.status !== 'online') && <div className="banner b-warning"><Icon name="triangle-alert" /><span>Printer offline: receipts go to WhatsApp or wait in the print queue; kitchen tickets still reach the KDS.</span></div>}
-    <div className="card stack"><h3>Cash drawer</h3><p className="muted" style={{ fontSize: 14 }}>The drawer opens on cash payments through the printer kick port. Opening it without a sale needs a PIN override.</p>
-      <button className="btn btn-pos" style={{ alignSelf: 'flex-start', ...warnStyle(can('Open drawer without sale')) }} onClick={() => go(P('manager-pin-override'))}><Icon name="archive" />Open drawer without sale</button></div>
-    <div className="card stack"><h3>Paper</h3><Seg label="Paper width" value={width} options={[['58', '58 mm · 32 columns'], ['80', '80 mm · 48 columns']] as const} onChange={v => setSetting(SETTINGS_PATH + ':paper', v, me.id)} /></div>
+  const dev = thisDevice(db);
+  const route = db.categories.map(c => [c.name, c.station, stationPrinter(db, outletId, c.station)?.name] as const);
+  const rcpt = receiptPrinter(db, outletId, dev);
+  return <div className="grid" style={{ ['--min' as string]: '340px', alignItems: 'start' }}>
+    <div className="stack">
+      <PrintQueue deviceId={dev} />
+      <HardwareList db={db} deviceId={dev} kinds={PRINT_KINDS} by={me.id} />
+      <IntegrationsPanel kinds={PRINT_KINDS} outletId={outletId} deviceId={dev} />
+    </div>
+    <div className="stack">
+      <div className="card stack"><h3>Where tickets print</h3>
+        <Row l="Receipts" v={rcpt ? rcpt.name + (rcpt.config.autoPrint ? ' · auto' : '') : 'No printer · WhatsApp or e-mail only'} />
+        {route.map(([n, st, p]) => <Row key={n} l={`${n} · ${st}`} v={p ?? 'KDS only'} />)}
+        <span className="faint" style={{ fontSize: 13 }}>New items print once on their station printer the moment they are sent. Stations per category are set in Owner › Printer & KDS routing.</span></div>
+      <div className="card stack"><h3>Cash drawer</h3><p className="muted" style={{ fontSize: 14 }}>The drawer opens on cash payments through the receipt printer’s kick port. Opening it without a sale needs a PIN override. Every open is logged.</p>
+        <button className="btn btn-pos" style={{ alignSelf: 'flex-start', ...warnStyle(can('Open drawer without sale')) }} onClick={() => go(P('manager-pin-override'))}><Icon name="archive" />Open drawer without sale</button></div>
+    </div>
   </div>;
 }
 
@@ -59,6 +72,8 @@ function Display() {
         {err && <span style={{ color: 'var(--danger-fg)', fontSize: 14 }} role="alert">{err}</span>}
       </div>; })}
       <button className="btn" onClick={() => go('/display/pairing-with-register')}><Icon name="external-link" size={18} />Open the customer display</button>
+      <HardwareList db={db} deviceId={thisDevice(db)} kinds={['display']} by={me.id} />
+      <IntegrationsPanel kinds={['display']} outletId={outletId} deviceId={thisDevice(db)} />
     </div>
     <div className="card stack"><h3>What the guest sees now</h3>{cur?.lines.length ? <>{cur.lines.map(l => <Row key={l.id} l={`${l.qty}× ${l.name}`} v={idr((l.flashPrice ?? l.unitPrice) * l.qty)} />)}<Row l="Total" v={idr(cur.total)} strong /></> : <p className="muted">Idle · promo slideshow. The live cart mirrors the current order.</p>}</div>
   </div>;
@@ -66,34 +81,39 @@ function Display() {
 
 function Edc() {
   const { db, outletId, me } = usePos();
-  const list = devs(db, outletId, 'edc');
-  const [tid, setTid] = useState(''), [bank, setBank] = useState('BCA'), [code, setCode] = useState('');
-  return <div className="grid" style={{ ['--min' as string]: '320px', alignItems: 'start' }}>
-    <div className="stack">{list.length === 0 ? <Empty icon="credit-card" title="No EDC paired">Card payments need a paired EDC.</Empty> : list.map(d => <DevRow key={d.id} d={d}>
-      {d.status !== 'online' && <button className="btn btn-sm" onClick={() => setDeviceStatus(d.id, 'online', me.id)}>Reconnect</button>}
-      <button className="btn btn-sm" disabled={d.status !== 'online'} onClick={() => { logDevice('edc.test', d.name, me.id, outletId); toast('EDC test IDR 1 approved and voided'); }}>Test IDR 1</button></DevRow>)}</div>
-    <form className="card stack" onSubmit={e => { e.preventDefault(); addDevice(outletId, 'edc', `${bank} EDC · Terminal ${tid}`, me.id); toast('EDC paired'); setTid(''); setCode(''); }}>
-      <h3>Pair a new EDC</h3>
-      <Field label="Bank"><Seg label="Bank" value={bank} options={['BCA', 'Mandiri', 'BNI', 'BRI'] as const} onChange={setBank} /></Field>
-      <Field label="Terminal ID"><input className="input mono" value={tid} onChange={e => setTid(e.target.value)} placeholder="e.g. 02" /></Field>
-      <Field label="6-digit code on the EDC screen"><input className="input mono" inputMode="numeric" maxLength={6} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} /></Field>
-      <button className="btn btn-primary btn-pos" disabled={!tid.trim() || code.length !== 6}>Pair EDC</button></form>
+  const dev = thisDevice(db);
+  const edc = db.integrations.find(i => i.kind === 'edc' && i.enabled && ownerOf(db, i) === dev);
+  return <div className="grid" style={{ ['--min' as string]: '340px', alignItems: 'start' }}>
+    <div className="stack">
+      <div className={'banner ' + (edc ? 'b-info' : 'b-warning')}><Icon name="credit-card" /><span>{edc ? <>Card payments on this register use <b>{edc.name}</b>{edcDriver(edc).mode === 'pending' ? '. Its ECR driver is pending, so the cashier types the approval code from the slip.' : edcDriver(edc).mode === 'manual' ? ': key the amount on the EDC, then type the approval code from the slip.' : '.'}</> : 'No EDC set up. Card payments ask for the approval code from any standalone EDC slip.'}</span></div>
+      <HardwareList db={db} deviceId={dev} kinds={['edc']} by={me.id} />
+    </div>
+    <IntegrationsPanel kinds={['edc']} outletId={outletId} deviceId={dev} />
   </div>;
 }
 
 function Scanner() {
-  const { db, outletId } = usePos();
-  const [scan, setScan] = useState(''), [hits, setHits] = useState<string[]>([]), [w, setW] = useState(0), [tare, setTare] = useState(0);
-  return <div className="grid" style={{ ['--min' as string]: '320px', alignItems: 'start' }}>
-    <form className="card stack" onSubmit={e => { e.preventDefault(); const p = db.products.find(x => x.sku.toLowerCase() === scan.trim().toLowerCase()); setHits(h => [`${scan} → ${p ? p.name + (db.outletProducts.find(x => x.productId === p.id && x.outletId === outletId)?.is86 ? ' (sold out)' : '') : 'no match'}`, ...h].slice(0, 8)); setScan(''); }}>
-      <h3>Barcode scanner</h3><p className="muted" style={{ fontSize: 14 }}>Scan any product label. The scanner types into this field and ends with Enter.</p>
-      <input className="input mono" autoFocus value={scan} onChange={e => setScan(e.target.value)} placeholder="Waiting for a scan… (try KB-003)" aria-label="Scan test" />
-      {hits.length === 0 ? <Badge>No scans yet</Badge> : hits.map((h, i) => <span key={i} className="mono" style={{ fontSize: 13 }}>{h}</span>)}
-    </form>
-    <div className="card stack"><h3>Scale</h3>
-      <div className="sunken row between"><span className="muted">Net</span><b className="num" style={{ fontSize: 32 }}>{Math.max(0, w - tare).toFixed(3)} kg</b></div>
-      <div className="row wrap"><button className="btn btn-primary" onClick={() => setW(Math.round((0.1 + Math.random() * 1.4) * 1000) / 1000)}>Read weight</button><button className="btn" onClick={() => setTare(w)}>Tare</button><button className="btn" onClick={() => { setW(0); setTare(0); }}>Zero</button></div>
-      <span className="faint" style={{ fontSize: 13 }}>{tare ? `Tare ${tare.toFixed(3)} kg · ` : ''}Stable reading needed before a weighed item is added.</span></div>
+  const { db, outletId, me } = usePos();
+  const dev = thisDevice(db);
+  const wedge = db.integrations.find(i => i.connector === 'scanner-wedge' && i.enabled && ownerOf(db, i) === dev);
+  const [hits, setHits] = useState<string[]>([]), [w, setW] = useState(0), [tare, setTare] = useState(0);
+  const hit = (code: string) => { const p = findByCode(db, code); setHits(h => [`${code} → ${p ? p.name + (db.outletProducts.find(x => x.productId === p.id && x.outletId === outletId)?.is86 ? ' (sold out)' : '') : 'no product with this SKU'}`, ...h].slice(0, 8)); };
+  useWedgeScanner(hit, { minLength: Number(wedge?.config.minLength) || undefined, maxGap: Number(wedge?.config.maxGap) || undefined });
+  const [typed, setTyped] = useState('');
+  return <div className="grid" style={{ ['--min' as string]: '340px', alignItems: 'start' }}>
+    <div className="stack">
+      <form className="card stack" onSubmit={e => { e.preventDefault(); if (typed.trim()) hit(typed.trim()); setTyped(''); }}>
+        <h3>Barcode scanner</h3><p className="muted" style={{ fontSize: 14 }}>Scan any product label anywhere on this page. Fast keystrokes ending in Enter are read as a scan and matched by SKU.</p>
+        <input className="input mono" value={typed} onChange={e => setTyped(e.target.value)} placeholder="Or type a SKU and press Enter (try KB-003)" aria-label="Scan test" />
+        {hits.length === 0 ? <Badge>No scans yet</Badge> : hits.map((h, i) => <span key={i} className="mono" style={{ fontSize: 13 }}>{h}</span>)}
+      </form>
+      <div className="card stack"><h3>Scale</h3>
+        <div className="sunken row between"><span className="muted">Net</span><b className="num" style={{ fontSize: 32 }}>{Math.max(0, w - tare).toFixed(3)} kg</b></div>
+        <div className="row wrap"><ReadScale db={db} deviceId={dev} onWeight={setW} /><button className="btn" onClick={() => setTare(w)}>Tare</button><button className="btn" onClick={() => { setW(0); setTare(0); }}>Zero</button></div>
+        <span className="faint" style={{ fontSize: 13 }}>{tare ? `Tare ${tare.toFixed(3)} kg · ` : ''}Only a stable reading is taken.</span></div>
+      <HardwareList db={db} deviceId={dev} kinds={['scanner', 'scale']} by={me.id} />
+    </div>
+    <IntegrationsPanel kinds={['scanner', 'scale']} outletId={outletId} deviceId={dev} />
   </div>;
 }
 
