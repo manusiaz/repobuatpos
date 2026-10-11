@@ -1,6 +1,7 @@
 'use client';
 // Self-order (spec: BorNiz Self Order): QR menu on the guest's phone plus the customer links. Mobile-first single
 // column (max 520px, centered on desktop) in the merchant brand. Each registry page maps to one view below.
+import { themeNow } from '../system/studio.ts';
 import { useEffect, useRef, type ComponentType } from 'react';
 import { useApp } from '../app/context.tsx';
 import { sendToKitchen } from '../data/actions.ts';
@@ -24,7 +25,7 @@ export default function Screen() {
   const g = useGuest();
   const View = VIEWS[page.slug] ?? Landing;
 
-  return <div data-guest style={{ ...brandVars(g.db.theme), minHeight: '100dvh', background: 'color-mix(in srgb,var(--bn-ink) 9%,var(--bn-paper))' }}>
+  return <div data-guest style={{ ...brandVars(themeNow(g.db, g.db.theme, g.now)), minHeight: '100dvh', background: 'color-mix(in srgb,var(--bn-ink) 9%,var(--bn-paper))' }}>
     <main style={{ maxWidth: 520, margin: '0 auto', minHeight: '100dvh', background: 'var(--bn-paper)', position: 'relative', overflowX: 'hidden' }}>
       <View g={g} />
     </main>

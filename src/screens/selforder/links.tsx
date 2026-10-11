@@ -2,6 +2,7 @@
 // Customer links (receipt, member card, voucher, feedback, booking, queue, message previews, preferences). Each one is a
 // page a guest opens from WhatsApp, email or the QR menu; ?o= (order) and ?c= (customer) pick the record, otherwise the
 // remembered member or the most recent matching record at the outlet is shown.
+import { feedbackBeans, studioValue } from '../../system/studio.ts';
 import { referral } from '../../system/settings.ts';
 import { linkTo } from '../../system/hosts.ts';
 import { useState, type ReactNode } from 'react';
@@ -147,9 +148,9 @@ export function Voucher({ g }: { g: G }) {
 }
 
 // ── Feedback & rating ──────────────────────────────────────────────────────────────────
-const TAGS = ['Taste', 'Speed', 'Service', 'Cleanliness', 'Price'];
 export function Feedback({ g }: { g: G }) {
   const { db } = g;
+  const fb = studioValue(db, 'feedback-and-rating-page'), TAGS = String(fb.tags).split(',').map(x => x.trim()).filter(Boolean), beans = feedbackBeans(db);
   const c = useCustomer(g), o = useOrder(g, c);
   const [stars, setStars] = useState(0), [tags, setTags] = useState<string[]>([]), [text, setText] = useState(''), [done, setDone] = useState(false);
   if (!o) return <Page title="Rate your visit" g={g}><Empty icon="star" title="Nothing to rate yet">After your order you can rate it here.</Empty></Page>;
@@ -159,6 +160,7 @@ export function Feedback({ g }: { g: G }) {
     return <Page title="Rate your visit" g={g}><div style={{ ...card, textAlign: 'center' }} className="stack">
       <div className="row" style={{ justifyContent: 'center', gap: 4 }}>{[1, 2, 3, 4, 5].map(n => <Icon key={n} name="star" size={28} fill={n <= s ? 'var(--bn-acc)' : 'none'} />)}</div>
       <b style={{ fontSize: 20 }}>Thank you{c ? ', ' + firstName(c.name) : ''}!</b>
+      {beans > 0 && c && <span style={{ color: MUTED }}>{beans} beans added to your card</span>}
       <span style={{ color: MUTED }}>{s <= 2 ? 'Sorry we let you down. The outlet manager will contact you on WhatsApp today.' : 'The team reads every review. See you again soon.'}</span>
       {review?.text && <span style={{ fontStyle: 'italic' }}>“{review.text}”</span>}
       {review?.reply && <div className="sunken" style={{ textAlign: 'left' }}><b>{db.tenant.name} replied</b><br />{review.reply}</div>}
@@ -168,7 +170,8 @@ export function Feedback({ g }: { g: G }) {
   return <Page title="Rate your visit" g={g}>
     <div style={card} className="stack">
       <span style={{ fontSize: 14, color: MUTED }}>{db.tenant.name} {db.outlets.find(x => x.id === o.outletId)?.name} · {o.no} · {dateShort(o.createdAt)}</span>
-      <b style={{ fontSize: 20 }}>How was your visit?</b>
+      <b style={{ fontSize: 20 }}>{fb.q}</b>
+      {beans > 0 && c && <span style={{ fontSize: 14, color: MUTED }}>{fb.reward}</span>}
       <div className="row" role="radiogroup" aria-label="Stars" style={{ gap: 6, justifyContent: 'space-between' }}>{[1, 2, 3, 4, 5].map(n => <button key={n} role="radio" aria-checked={stars === n} aria-label={`${n} star${n > 1 ? 's' : ''}`} onClick={() => setStars(n)} style={{ flex: 1, height: 60, borderRadius: 14, border: `2px solid ${stars === n ? 'var(--bn-p)' : LINE}`, background: stars === n ? TINT : SURFACE, cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
         <Icon name="star" size={28} fill={n <= stars ? 'var(--bn-acc)' : 'none'} /></button>)}</div>
       {stars > 0 && <><span style={{ fontSize: 14, fontWeight: 600 }}>{stars >= 4 ? 'What did you like?' : 'What could be better?'}</span>
@@ -184,15 +187,16 @@ export function Booking({ g }: { g: G }) {
   const { db, out, me } = g;
   const [name, setName] = useState(me?.name ?? ''), [phone, setPhone] = useState(me?.phone ?? ''), [guests, setGuests] = useState(2), [day, setDay] = useState(0), [slot, setSlot] = useState(''), [note, setNote] = useState(''), [done, setDone] = useState<string | null>(null), [err, setErr] = useState('');
   const base = new Date(); base.setHours(0, 0, 0, 0);
+  const bk = studioValue(db, 'reservation-booking-page'), step = Math.max(15, Number(bk.slot) || 30); // Menu Studio › reservation page
   const [oh] = out.opens.split(':').map(Number), [ch] = out.closes.split(':').map(Number);
-  const slots = Array.from({ length: Math.max(0, (ch - oh - 1) * 2) }, (_, i) => `${String(oh + Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`)
+  const slots = Array.from({ length: Math.max(0, Math.floor(((ch - oh - 1) * 60) / step)) }, (_, i) => { const m = oh * 60 + i * step; return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; })
     .filter(s => { const [h, m] = s.split(':').map(Number); return base.getTime() + day * 864e5 + (h * 60 + m) * 60e3 > Date.now() + 30 * 60e3; });
   const r = done ? db.reservations.find(x => x.id === done) : null;
   if (r) return <Page title="Booking confirmed" g={g}><div style={{ ...card, textAlign: 'center' }} className="stack">
     <Icon name="calendar-check" size={36} style={{ alignSelf: 'center', color: 'var(--success)' }} />
     <b style={{ fontSize: 22 }}>See you, {firstName(r.name)}!</b>
     <span>{db.tenant.name} {out.name} · {new Date(r.at).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })} · {hhmm(r.at)}</span>
-    <span style={{ color: MUTED }}>{r.guests} guests · table {tableNo(r.table)} held for 15 minutes · reminder on WhatsApp 3 hours before</span>
+    <span style={{ color: MUTED }}>{r.guests} guests · table {tableNo(r.table)} · {String(bk.note)} Reminder on WhatsApp 3 hours before.</span>
     <span className={'badge ' + (r.status === 'booked' ? 'b-info' : r.status === 'seated' ? 'b-success' : 'b-danger')} style={{ alignSelf: 'center' }}>{r.status.replace('_', ' ')}</span>
   </div></Page>;
   const submit = () => {
@@ -211,7 +215,8 @@ export function Booking({ g }: { g: G }) {
       {!slots.length && <span style={{ fontSize: 14, color: MUTED }}>No times left today. Try tomorrow.</span>}
       <div className="row between"><b>Guests</b><div className="row" style={{ gap: 4 }}>
         <button className="btn icon-btn" aria-label="Fewer guests" onClick={() => setGuests(Math.max(1, guests - 1))}><Icon name="minus" /></button><b style={{ minWidth: 28, textAlign: 'center' }}>{guests}</b>
-        <button className="btn icon-btn" aria-label="More guests" onClick={() => setGuests(Math.min(30, guests + 1))}><Icon name="plus" /></button></div></div>
+        <button className="btn icon-btn" aria-label="More guests" onClick={() => setGuests(Math.min(Number(bk.maxGuests) || 30, guests + 1))}><Icon name="plus" /></button></div></div>
+      {Number(bk.deposit) > 0 && guests >= Number(bk.depositFrom) && <span style={{ fontSize: 14, color: MUTED }}>Groups of {Number(bk.depositFrom)} or more confirm with a {idr(Number(bk.deposit))} deposit, taken off the bill.</span>}
     </div>
     <div style={card} className="stack">
       <b>Your details</b>

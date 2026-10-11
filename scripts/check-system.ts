@@ -53,6 +53,7 @@ const central = Object.entries(src).find(([p]) => p.endsWith('system/settings.ts
 const unread = [...setIds].filter(i => !new RegExp(`\\b${i}\\b\\s*:|'${i}'`).test(central) && !Object.entries(src).some(([p, s]) => !own(p) && new RegExp(`:${i}['"\`]`).test(s)));
 const extras = Object.entries(src).find(([p]) => p.endsWith('studio/extras.tsx'))?.[1] ?? '';
 const xKeys = [...extras.matchAll(/\{ key: '([a-z0-9-]+)'/g)].map(m => m[1]);
-const preview = xKeys.filter(k => !Object.entries(src).some(([p, s]) => !p.endsWith('studio/extras.tsx') && (s.includes(`x['${k}']`) || s.includes(`studioValue('${k}'`))));
+const readers = Object.entries(src).map(([p, s]) => [p, p.endsWith('system/studio.ts') ? s.replace(/export const STUDIO_DEFAULTS[\s\S]*?\} as const/, '') : s] as const); // the defaults list is not a reader
+const preview = xKeys.filter(k => !readers.some(([p, s]) => !p.endsWith('studio/extras.tsx') && (s.includes(`x['${k}']`) || s.includes(`, '${k}')`))));
 console.log(`\nsettings nothing reads yet: ${unread.length} switch(es)${unread.length ? ' · ' + unread.join(', ') : ''}`);
 console.log(`Menu Studio pages that only preview: ${preview.length}/${xKeys.length}${preview.length ? ' · ' + preview.join(', ') : ''}`);

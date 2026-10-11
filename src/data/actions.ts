@@ -1,6 +1,7 @@
 'use client';
 // Service layer. Mirrors the service events in spec/bn-diagrams.js (Orders, Payments, Inventory, Shifts, Approvals,
 // Loyalty, Catalog, Themes). A service writes only through commit(); effects of one event run in the same commit.
+import { feedbackBeans, studioValue } from '../system/studio.ts';
 import { commit, snapshot, uid } from './store.ts';
 import type { Approval, DB, Order, Product, Rec, Role } from './schema.ts';
 import { lineTotal, orderTotals, QRIS_TTL_MS, type Method, type Source } from '../domain/order.ts';
@@ -141,7 +142,7 @@ export function startPayment(orderId: string, method: Method, amount: number, by
     const drawer = d.sessions.find(s => s.outletId === o.outletId && s.cashierId === by && s.status === 'open')?.id ?? o.sessionId;
     const instant = method === 'cash' || method === 'card' || method === 'deposit' || method === 'kasbon';
     d.payments.push({ id, orderId, outletId: o.outletId, method, amount, tip, status: instant ? 'settled' : 'pending', ref: (method === 'qris' ? 'QRIS-' : 'REF-') + id.slice(-6).toUpperCase(),
-      at: now(), expiresAt: method === 'qris' ? now() + QRIS_TTL_MS : null, sessionId: drawer });
+      at: now(), expiresAt: method === 'qris' ? now() + (Number(studioValue(d, 'qris-payment-page-on-customer-phone').timer) * 60e3 || QRIS_TTL_MS) : null, sessionId: drawer });
     if (method === 'deposit' && o.customerId) { const c = d.customers.find(x => x.id === o.customerId)!; c.deposit -= amount; }
     if (method === 'kasbon' && o.customerId) { const c = d.customers.find(x => x.id === o.customerId)!; c.credit += amount; }
     if (instant) settleIfDone(d, o, by);
@@ -484,7 +485,13 @@ export function redeem(customerId: string, cost: number, reward: string, by: str
 }
 export function replyReview(id: string, reply: string, by: string) { commit('review.replied', by, d => { d.reviews.find(r => r.id === id)!.reply = reply; }, id); }
 export function rateOrder(orderId: string, stars: number, text = '') {
-  commit('review.created', 'guest', d => { const o = findOrder(d, orderId); o.rating = stars; d.reviews.unshift({ id: uid('rv'), outletId: o.outletId, customerId: o.customerId, name: d.customers.find(c => c.id === o.customerId)?.name.split(' ')[0] ?? 'Guest', stars, text, at: now(), reply: null, orderId }); }, orderId);
+  commit('review.created', 'guest', d => {
+    const o = findOrder(d, orderId); o.rating = stars;
+    d.reviews.unshift({ id: uid('rv'), outletId: o.outletId, customerId: o.customerId, name: d.customers.find(c => c.id === o.customerId)?.name.split(' ')[0] ?? 'Guest', stars, text, at: now(), reply: null, orderId });
+    // the beans the feedback page promises (Menu Studio), once per order, to the member who ordered
+    const beans = feedbackBeans(d);
+    if (beans > 0 && o.customerId && !d.ledger.some(l => l.orderId === o.id && l.reason === 'Feedback')) d.ledger.push({ customerId: o.customerId, points: beans, reason: 'Feedback', orderId: o.id, at: now() });
+  }, orderId);
 }
 
 // ── Online & delivery (incoming only) ───────────────────────────────────────────────────

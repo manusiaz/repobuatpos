@@ -2,8 +2,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { snapshot } from './store.ts';
-import { addLine, bumpDone, decide, gatewayWebhook, newOrder, patchOrder, patchOutlet, sellable, sendToKitchen, setSetting, startPayment, stockEntry, verifyPin, watchKitchen } from './actions.ts';
+import { addLine, bumpDone, decide, gatewayWebhook, newOrder, patchOrder, patchOutlet, publish, rateOrder, sellable, sendToKitchen, setSetting, startPayment, stockEntry, verifyPin, watchKitchen } from './actions.ts';
 import { addOutlet, saveBusiness } from './actions/business.ts';
+import { menuDesign } from './actions/studio.ts';
 import { receiptDoc } from '../devices/receipt.ts';
 import { toText } from '../devices/layout.ts';
 import { PAYMENT_PAGE, payOn, referral, roundStep } from '../system/settings.ts';
@@ -131,4 +132,18 @@ test('One system: business profile and outlet details print on the receipt; a ne
   const again = findOrJoin('Rani', '0813 1234 0000', true, 'c1');
   assert.equal(again.created, false);
   assert.equal(snapshot().ledger.filter(l => l.reason.startsWith('Referral')).length, 2, 'beans given once, to both');
+});
+
+test('One system: what the owner publishes in Menu Studio changes the live QR menu (QRIS timer, feedback beans)', () => {
+  publish('menu', { x: { ...menuDesign(snapshot()).x, 'qris-payment-page-on-customer-phone': { timer: 2, steps: true, save: false }, 'feedback-and-rating-page': { reward: '30 beans for your feedback' } } }, 'budi', 'Shorter QRIS, more beans');
+  const guest = findOrJoin('Bayu', '0812 7777 2222');
+  const id = newOrder('sen', 'guest', 'qr', { table: 'T-12', customerId: guest.id });
+  addLine(id, 'p5', [], 1, '', 'guest');
+  const pay = startPayment(id, 'qris', order(id).total, 'guest');
+  const p = snapshot().payments.find(x => x.id === pay)!;
+  assert.ok(Math.abs(p.expiresAt! - p.at - 2 * 60e3) < 1000, 'QRIS code lives 2 minutes, as published');
+  gatewayWebhook(pay, 'settled');
+  const before = balance(snapshot().ledger, guest.id);
+  rateOrder(id, 5, 'Mantap'); rateOrder(id, 5, 'again');
+  assert.equal(balance(snapshot().ledger, guest.id) - before, 30, 'feedback beans as promised, once');
 });

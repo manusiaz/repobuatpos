@@ -1,4 +1,5 @@
 'use client';
+import { themeNow } from '../system/studio.ts';
 import { guestLang } from '../system/settings.ts';
 import { payOn } from '../system/settings.ts';
 import { gatewayResult } from '../data/actions/dispatch.ts';
@@ -42,7 +43,7 @@ export default function Screen() {
   const paying = !!order && db.payments.some(p => p.orderId === order.id && p.status === 'pending');
   useEffect(() => { if (view !== 'attract' && !paying && now - last.current > 60e3 && !(order && placed(order))) reset(); }); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return <div data-guest onPointerDown={() => { last.current = Date.now(); }} style={{ ...brandVars(db.theme), height: '100dvh', display: 'grid', placeItems: 'center', background: 'var(--ink-900)', overflow: 'hidden' }}>
+  return <div data-guest onPointerDown={() => { last.current = Date.now(); }} style={{ ...brandVars(themeNow(db, db.theme)), height: '100dvh', display: 'grid', placeItems: 'center', background: 'var(--ink-900)', overflow: 'hidden' }}>
     <div style={{ width: 'min(100vw, calc(100dvh * 9 / 16))', aspectRatio: '9 / 16', position: 'relative', overflow: 'hidden', containerType: 'inline-size', background: 'var(--bn-paper)', display: 'flex', flexDirection: 'column', userSelect: 'none' }}>
       {view === 'attract' && <Attract L={L} start={() => { last.current = Date.now(); to('menu'); }} />}
       {view === 'menu' && <Menu L={L} order={order} type={type} setType={setType} ensure={() => {

@@ -1,4 +1,5 @@
 'use client';
+import { studioValue } from '../../system/studio.ts';
 import { gatewayResult } from '../../data/actions/dispatch.ts';
 import { productImage } from '../../ui/kit.tsx';
 // QR menu views (spec: BorNiz Self Order, layout A: list rows + cart bar). The cart is the table's open order in the
@@ -173,7 +174,9 @@ export function Item({ g }: { g: G }) {
   const it = items.find(i => i.p.id === g.sp.get('p')) ?? items.find(i => i.p.id === best[0]) ?? items[0];
   const [sel, setSel] = useState<Sel>({}), [q, setQ] = useState(1), [note, setNote] = useState('');
   useEffect(() => { setSel({}); setQ(1); setNote(''); }, [it?.p.id]);
-  const pair = useMemo(() => items.find(i => !i.sold && i.cat === (it?.cat === 'pastry' ? 'coffee' : 'pastry') && i.p.id !== it?.p.id), [items, it]);
+  const up = studioValue(db, 'upsell-and-goes-well-with-rules'), ask = studioValue(db, 'checkout-flow-fields');
+  const pairs = useMemo(() => { const ruled = it && it.p.id === up.trigger ? String(up.suggest).split(',').map(s => items.find(i => i.p.id === s.trim() && !i.sold)).filter((x): x is NonNullable<typeof x> => !!x) : [];
+    return (ruled.length ? ruled : items.filter(i => !i.sold && i.cat === (it?.cat === 'pastry' ? 'coffee' : 'pastry') && i.p.id !== it?.p.id)).slice(0, Math.max(1, Number(up.max) || 1)); }, [items, it, up.trigger, up.suggest, up.max]);
   if (!it) return <Empty icon="utensils" title="Item not found" action={<button className="btn" onClick={() => g.go(so('menu-home'))}>{t('See the menu')}</button>} />;
   const groups = groupsOf(db, it.p), miss = missingGroup(groups, sel), mods = modsFrom(groups, sel);
   const each = unit(it) + mods.reduce((a, m) => a + m.price, 0);
@@ -197,11 +200,11 @@ export function Item({ g }: { g: G }) {
         <span>{it.sold ? <b style={{ color: 'var(--danger-fg)' }}>{t('Sold out')} today</b> : <><b style={{ fontSize: 18 }}>{idr(unit(it))}</b>{it.flash != null && <s style={{ marginLeft: 8, color: MUTED }}>{idr(it.price)}</s>}</>}</span>
       </div>
       {groups.length > 0 && <div style={{ ...card }}><OptionPicker groups={groups} sel={sel} onChange={setSel} t={t} /></div>}
-      <div className="field"><label htmlFor="note">Note for the kitchen <span className="faint">(optional)</span></label>
-        <input id="note" className="input" value={note} onChange={e => setNote(e.target.value)} placeholder="Allergies, less spicy…" maxLength={80} /></div>
-      {pair && <button onClick={() => openItem(g, pair.p.id)} style={{ ...card, border: `1px dashed ${LINE}`, display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer', textAlign: 'left', color: 'var(--bn-ink)' }}>
+      {ask.notes && <div className="field"><label htmlFor="note">Note for the kitchen <span className="faint">(optional)</span></label>
+        <input id="note" className="input" value={note} onChange={e => setNote(e.target.value)} placeholder="Allergies, less spicy…" maxLength={80} /></div>}
+      {pairs.map(pair => <button key={pair.p.id} onClick={() => openItem(g, pair.p.id)} style={{ ...card, border: `1px dashed ${LINE}`, display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer', textAlign: 'left', color: 'var(--bn-ink)' }}>
         <span style={{ width: 52, height: 52, borderRadius: 12, background: productImage(pair.p), flex: 'none' }} />
-        <span className="grow"><b>Goes well with {pair.p.name}</b><br /><span style={{ fontSize: 13, color: MUTED }}>+ {idr(unit(pair))}</span></span><Icon name="chevron-right" /></button>}
+        <span className="grow"><b>{up.title || 'Goes well with'} {pair.p.name}</b><br /><span style={{ fontSize: 13, color: MUTED }}>+ {idr(unit(pair))}</span></span><Icon name="chevron-right" /></button>)}
     </div>
     <div style={{ position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: 0, width: 'min(520px,100vw)', padding: '12px 14px calc(14px + env(safe-area-inset-bottom))', background: 'var(--bn-paper)', borderTop: `1px solid ${LINE}`, display: 'flex', gap: 10, zIndex: 20 }}>
       <div className="row" style={{ gap: 4, background: SURFACE, borderRadius: 16, padding: 4, border: `1px solid ${LINE}` }}>
@@ -245,8 +248,8 @@ export function Cart({ g }: { g: G }) {
       {ups.length > 0 && <><b style={{ fontSize: 16 }}>{t('People also add')}</b>
         <div className="row" style={{ gap: 10, overflowX: 'auto', scrollbarWidth: 'none' }}>{ups.map(i => <button key={i.p.id} disabled={!g.canOrder} onClick={() => { addLine(cart.id, i.p.id, [], 1, '', 'guest'); toast('Added ' + i.p.name); }} style={{ flex: 'none', width: 140, padding: 8, borderRadius: 16, border: 0, background: SURFACE, textAlign: 'left', cursor: 'pointer', color: 'var(--bn-ink)' }}>
           <span style={{ display: 'block', height: 80, borderRadius: 12, background: productImage(i.p), marginBottom: 6 }} /><b style={{ fontSize: 13 }}>{i.p.name}</b><br /><span style={{ fontSize: 13, color: MUTED }}>+ {idr(unit(i))}</span></button>)}</div></>}
-      <div className="field"><label htmlFor="knote">Note for the kitchen <span className="faint">(optional)</span></label>
-        <textarea id="knote" className="input" rows={2} value={note} onChange={e => setNote(e.target.value)} onBlur={() => note !== (cart.note ?? '') && patchOrder(cart.id, { note }, 'guest')} placeholder="Allergies, no ice…" style={{ minHeight: 64 }} /></div>
+      {studioValue(db, 'checkout-flow-fields').notes && <div className="field"><label htmlFor="knote">Note for the kitchen <span className="faint">(optional)</span></label>
+        <textarea id="knote" className="input" rows={2} value={note} onChange={e => setNote(e.target.value)} onBlur={() => note !== (cart.note ?? '') && patchOrder(cart.id, { note }, 'guest')} placeholder="Allergies, no ice…" style={{ minHeight: 64 }} /></div>}
       <Totals db={db} o={cart} me={g.me} />
     </div>
     <div style={{ position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: 0, width: 'min(520px,100vw)', padding: '12px 14px calc(14px + env(safe-area-inset-bottom))', background: 'var(--bn-paper)', borderTop: `1px solid ${LINE}`, zIndex: 20 }}>
@@ -266,11 +269,11 @@ export function Checkout({ g }: { g: G }) {
   if (!cart || !cart.lines.length) return <><Bar title={t('Checkout')} onBack={() => g.go(so('cart'))} /><Empty icon="shopping-basket" title={t('Your cart is empty')} action={<button className="btn btn-primary" onClick={() => g.go(so('menu-home'))}>{t('See the menu')}</button>} /></>;
   if (cart.status === 'paying') return <><Bar title={t('Checkout')} onBack={() => g.go(so('cart'))} /><Empty icon="qr-code" title="Payment in progress" action={<button className="btn btn-primary" onClick={() => g.go(so('qris-payment'))}>Open the QRIS code</button>} /></>;
   const due = cart.total - settledOf(db, cart);
-  const tip = pay === 'qris' ? Math.round(cart.subtotal * tipPct / 100 / 100) * 100 : 0;
+  const ask = studioValue(db, 'checkout-flow-fields');
+  const tip = pay === 'qris' && ask.tips ? Math.round(cart.subtotal * tipPct / 100 / 100) * 100 : 0;
   const hasNew = newLines(cart).length > 0;
   const voucher = db.promos.find(p => cart.promoIds.includes(p.id));
   // Menu Studio → Checkout fields decides what the guest must give; the WhatsApp number is where the receipt and "ready" alert go.
-  const ask = { name: 'required', phone: 'required', ...menuDesign(db).x['checkout-flow-fields'] };
   const place = () => {
     setErr('');
     if (ask.name === 'required' && !name.trim()) return setErr('Add a name so the team can call your order.');
@@ -299,7 +302,7 @@ export function Checkout({ g }: { g: G }) {
         {ask.phone !== 'off' && <input className="input" value={phone} onChange={e => setPhone(e.target.value)} placeholder={ask.phone === 'required' ? 'WhatsApp number, e.g. 0812 3456 7890' : 'WhatsApp number (optional)'} aria-label="WhatsApp number" inputMode="tel" autoComplete="tel" />}
         <span style={{ fontSize: 13, color: MUTED }}>Receipt and “ready” alert go to WhatsApp. Members earn beans on this order.</span>
       </div>
-      {pay === 'qris' && <div style={card} className="stack">
+      {pay === 'qris' && ask.tips && <div style={card} className="stack">
         <b>{t('Tip for the team')}</b>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>{[0, 5, 10, 15].map(p => <button key={p} aria-pressed={tipPct === p} onClick={() => setTip(p)} style={{ ...choice(tipPct === p), height: 48, fontWeight: 700 }}>{p ? p + '%' : t('None')}</button>)}</div>
       </div>}
@@ -328,6 +331,7 @@ export function Checkout({ g }: { g: G }) {
 // ── QRIS on the phone ──────────────────────────────────────────────────────────────────
 export function Qris({ g }: { g: G }) {
   const { db, cart, now } = g;
+  const qp = studioValue(db, 'qris-payment-page-on-customer-phone');
   const [tick, setTick] = useState(Date.now());
   useEffect(() => { const t = setInterval(() => setTick(Date.now()), 1000); return () => clearInterval(t); }, []);
   const pend = cart ? db.payments.find(p => p.orderId === cart.id && p.status === 'pending' && p.method === 'qris') : undefined;
@@ -354,9 +358,10 @@ export function Qris({ g }: { g: G }) {
       <button className="btn btn-primary btn-block" style={{ height: 56, borderRadius: 16 }} onClick={retry}>Get a new code</button>
       <button className="btn btn-block" style={{ height: 52, borderRadius: 16 }} onClick={atCashier}>{g.t('Pay at the cashier')} instead</button>
     </> : <>
-      <span style={{ fontSize: 14, color: MUTED, lineHeight: 1.5 }}>On this phone? Save the QR, then open it from your bank or e-wallet app’s gallery.</span>
+      {qp.steps && <ol style={{ textAlign: 'left', fontSize: 14, color: MUTED, paddingLeft: 20, margin: 0, lineHeight: 1.6 }}><li>Open any bank or e-wallet app</li><li>Scan or upload this code</li><li>Check the amount and pay</li></ol>}
+      {qp.save && <span style={{ fontSize: 14, color: MUTED, lineHeight: 1.5 }}>On this phone? Save the QR, then open it from your bank or e-wallet app’s gallery.</span>}
       <div className="row" style={{ width: '100%', gap: 10 }}>
-        <button className="btn grow" style={{ height: 52, borderRadius: 16 }} onClick={save}><Icon name="download" />Save QR</button>
+        {qp.save && <button className="btn grow" style={{ height: 52, borderRadius: 16 }} onClick={save}><Icon name="download" />Save QR</button>}
         <button className="btn grow" style={{ height: 52, borderRadius: 16 }} onClick={atCashier}>Pay at cashier</button>
       </div>
       <button className="btn btn-ghost btn-sm" onClick={() => gatewayResult(pend.id, 'settled').catch(e => toast((e as Error).message))}>Simulate payment (demo)</button>
@@ -444,17 +449,18 @@ export function AddMore({ g }: { g: G }) {
 // ── Table closed / outside opening hours ───────────────────────────────────────────────
 export function Closed({ g }: { g: G }) {
   const { out, db, hrs } = g;
+  const sc = studioValue(db, 'store-closed-offline-sold-out-pages'), offline = !g.online; // copy from Menu Studio › store closed pages
   return <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
     <div style={{ background: 'var(--bn-banner)', color: 'var(--ink-0)', padding: '24px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
       <Wordmark name={db.tenant.name} size={48} radius={14} />
-      <h1 style={{ fontSize: 30, fontWeight: 800 }}>{hrs.paused ? 'Ordering is paused' : 'We’re closed right now'}</h1>
+      <h1 style={{ fontSize: 30, fontWeight: 800 }}>{hrs.paused ? 'Ordering is paused' : offline ? sc.offline : sc.closed}</h1>
       <span style={{ opacity: .9 }}>{db.tenant.name} {out.name} · Table {tableNo(g.table)}</span>
     </div>
     <div className="stack" style={{ padding: 16, gap: 14 }}>
       <div style={card} className="stack sm">
         <div className="row" style={{ gap: 10 }}><Icon name={hrs.paused ? 'pause-circle' : 'clock'} style={{ color: 'var(--bn-p)' }} /><b>{hrs.paused ? 'The kitchen paused QR orders for a moment' : hrs.open ? `Open now until ${out.closes}` : hrs.text}</b></div>
         <span style={{ fontSize: 14, color: MUTED }}>Opening hours: every day {out.opens}–{out.closes} · {out.city}</span>
-        <span style={{ fontSize: 14, color: MUTED }}>{hrs.paused ? 'Please order at the counter, or try again in a few minutes.' : 'You can still browse the menu. Ordering opens with the store.'}</span>
+        <span style={{ fontSize: 14, color: MUTED }}>{hrs.paused ? 'Please order at the counter, or try again in a few minutes.' : offline ? sc.offlineSub : sc.closedSub}</span>
       </div>
       <button className="btn btn-primary" style={{ height: 56, borderRadius: 16 }} onClick={() => g.go(so('online-booking'))}><Icon name="calendar-plus" />Book a table</button>
       <button className="btn" style={{ height: 52, borderRadius: 16 }} onClick={() => g.go(so('menu-home'))}>Browse the menu</button>
