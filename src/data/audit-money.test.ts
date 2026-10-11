@@ -216,7 +216,7 @@ test('Drawer close, variance ladder and cash out work the way the owner expects'
   const ap = snapshot().approvals.find(a => a.subjectId === out)!;
   assert.equal(ap.level, 'manager');
   assert.equal(expected(sid), 500000, 'waiting cash out is not taken yet');
-  assert.equal(decide(ap.id, 'andi', 'rejected'), null);
+  assert.equal(decide(ap.id, 'budi', 'rejected'), null);
   assert.equal(expected(sid), 500000);
   cashMove(sid, 'drop', 200000, 'Safe drop', 'lia');
   assert.equal(expected(sid), 300000);

@@ -195,7 +195,7 @@ export function startFlash(sectionId: string, title: string, productIds: string[
     d.promos.forEach(p => { if (p.kind === 'flash' && (p.endsAt ?? 0) > now && p.productIds?.some(id => productIds.includes(id))) p.endsAt = now - 1; });
     for (const id of productIds) {
       const p = d0.products.find(x => x.id === id); if (!p) continue;
-      const row: FlashPromo = { id: uid('fl'), name: `${title} · ${p.name}`, kind: 'flash', value: flashPriceOf(p.basePrice, disc), productIds: [id], endsAt: now + minutes * 60e3, quota, used: 0, startsAt: now, sectionId };
+      const row: FlashPromo = { id: uid('fl'), name: `${title} · ${p.name}`, kind: 'flash', value: flashPriceOf(p.basePrice, disc), productIds: [id], endsAt: now + minutes * 60e3, quota: quota > 0 ? quota : undefined, used: 0, startsAt: now, sectionId };
       d.promos.push(row);
     }
   }, title);

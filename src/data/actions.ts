@@ -11,11 +11,19 @@ import { flashPrice, resolve } from '../domain/promo.ts';
 import { closeCheck } from '../domain/shift.ts';
 import { idr, roundCash } from '../domain/money.ts';
 import alertsCatalog from '../system/alerts.json' with { type: 'json' };
+import { perm } from '../system/perms.ts';
 
 const now = () => Date.now();
 const emp = (d: DB, id: string) => d.employees.find(e => e.id === id);
 const outletOf = (d: DB, id: string) => d.outlets.find(o => o.id === id)!;
-export const priceAt = (d: DB, p: Product, outletId: string) => d.outletProducts.find(x => x.productId === p.id && x.outletId === outletId)?.localPrice ?? p.basePrice;
+/** Franchise lock "Menu prices" on: every outlet sells at the base price (local prices are kept, not used). */
+export const priceAt = (d: DB, p: Product, outletId: string) => (d.tenant.locks.menuPrices ? null : d.outletProducts.find(x => x.productId === p.id && x.outletId === outletId)?.localPrice) ?? p.basePrice;
+/** The saved permission matrix decides what a person may do directly ('y', or 'o' at their own outlets); 'a' needs an approver. */
+const mayDo = (d: DB, by: string, action: string, outletId: string) => {
+  const e = emp(d, by); if (!e) return false;
+  const c = perm(d, e.role, action, outletId);
+  return e.role === 'owner' || c === 'y' && e.outlets.includes(outletId) || c === 'o' && e.outlets.includes(outletId);
+};
 
 // Alert engine: recipients come from the alert catalog (spec/bn-alerts.js) when the alert is listed there.
 const ALERT_TO: Record<string, Role[]> = Object.fromEntries((alertsCatalog.groups as [string, string, [string, string, Record<string, number>][]][])
@@ -82,7 +90,8 @@ const GUEST_ACTORS = ['guest', 'kiosk'];
 /** Sellable to guests now: not 86'd and the recipe can still make one portion from this outlet's stock. */
 export function sellable(d: DB, outletId: string) {
   const lv = levels(d.movements, outletId);
-  return (productId: string) => !d.outletProducts.find(x => x.productId === productId && x.outletId === outletId)?.is86 && portionsLeft(d.recipes, lv, productId) >= 1;
+  return (productId: string) => { const op = d.outletProducts.find(x => x.productId === productId && x.outletId === outletId);
+    return !!op && !op.is86 && !op.hidden && d.products.find(p => p.id === productId)?.status === 'live' && portionsLeft(d.recipes, lv, productId) >= 1; };
 }
 /** A guest can't pay for or send what the kitchen can't make (it sold out while it sat in the cart). */
 function guardGuest(d: DB, o: Order, by: string) {
@@ -153,7 +162,7 @@ export const CLOSED: Order['status'][] = ['paid', 'part_refunded', 'refunded', '
 const backFromPaying = (o: Order): Order['status'] => !o.lines.some(l => l.fired) ? 'open' : o.lines.every(l => l.kds === 'done') ? 'ready' : 'sent';
 function settleIfDone(d: DB, o: Order, by: string) {
   // a payment that lands on a bill already paid or voided (QRIS paid after cash, late webhook) is money to give back, not a second sale
-  if (CLOSED.includes(o.status)) { notify(d, 'Payment failed / declined', 'warn', ['cashier', 'pic'], o.outletId, `${o.no} is already ${o.status} but another payment settled · refund it to the guest`); return; }
+  if (CLOSED.includes(o.status) || o.paidAt) { notify(d, 'Payment failed / declined', 'warn', ['cashier', 'pic'], o.outletId, `${o.no} is already ${o.status} but another payment settled · refund it to the guest`); return; }
   const paid = d.payments.filter(p => p.orderId === o.id && p.status === 'settled').reduce((a, p) => a + p.amount, 0);
   // cash rounding (lg-total) is a separate line applied last: a cash bill is settled at the rounded amount
   const cash = d.payments.some(p => p.orderId === o.id && p.method === 'cash' && p.status === 'settled');
@@ -167,6 +176,8 @@ function settleIfDone(d: DB, o: Order, by: string) {
     waGuest(d, o, 'e_receipt');
   }
   if (o.promoIds.length) o.promoIds.forEach(id => { const p = d.promos.find(x => x.id === id); if (p) p.used = (p.used ?? 0) + 1; });
+  // flash quota counts units sold at the flash price
+  o.lines.forEach(l => { if (l.flashPrice == null) return; const f = d.promos.find(p => p.kind === 'flash' && p.value === l.flashPrice && p.productIds?.includes(l.productId)); if (f) f.used = (f.used ?? 0) + l.qty; });
   // order.paid → Inventory (recipe deduction), Loyalty (earn), Notifications (thank-you automation)
   // Stock moves at payment; a product that can no longer make one portion is "Out of stock" (sold out on QR + kiosk), else "Low stock" under par.
   const used = deductForSale(d.recipes, o.lines, o.outletId, o.id, by), before = levels(d.movements, o.outletId);
@@ -217,6 +228,8 @@ export function requestApproval(a: { type: RequestType; title: string; amount?: 
 export function decide(approvalId: string, by: string, decision: 'approved' | 'rejected' | 'recount', note = '', extra?: Record<string, unknown>): string | null {
   const d0 = snapshot(), a = d0.approvals.find(x => x.id === approvalId), e = emp(d0, by);
   if (!a || !e) return 'Not found';
+  if (a.status !== 'waiting') return `Already ${a.status} by ${emp(d0, a.decidedBy ?? '')?.name ?? 'someone else'}.`;
+  if (e.role !== 'owner' && !e.outlets.includes(a.outletId)) return 'This request belongs to another outlet.';
   const lvl: Level = e.role === 'owner' ? 'owner' : e.role === 'manager' ? 'manager' : e.role === 'pic' ? 'pic' : 'cashier';
   if (a.type === 'opname' && decision === 'approved') { const op = d0.opnames.find(x => x.id === a.subjectId); if (op && missingPhotos(op.lines.filter(l => typeof l.counted === 'number'), op.requirePhotoAll).length) return 'Photo proof missing on a line with a difference. Ask for it before signing.'; }
   if (!canDecide({ level: a.level, requestedBy: a.requestedBy, countedBy: a.countedBy }, { id: by, level: lvl }))
@@ -238,6 +251,7 @@ export function escalate(approvalId: string, by: string) {
 function rejectEffects(d: DB, r: Approval) {
   if (r.type === 'local_item' && r.subjectId) { const p = d.products.find(x => x.id === r.subjectId); if (p) p.status = 'archived'; }
   if (r.type === 'opname' && r.subjectId) { const op = d.opnames.find(x => x.id === r.subjectId); if (op) op.status = 'rejected'; }
+  if (r.type === 'po' && r.subjectId) { const po = d.pos.find(x => x.id === r.subjectId); if (po && po.status === 'waiting') po.status = 'cancelled'; }
   if (r.type === 'variance' && r.subjectId) { const s = d.sessions.find(x => x.id === r.subjectId); if (s) s.status = 'counting'; }
   if (r.type === 'cash_out') { const c = d.cashMoves.find(x => x.id === r.subjectId); if (c) { c.status = 'done'; c.amount = 0; } }
 }
@@ -274,9 +288,14 @@ function applyDecision(d: DB, r: Approval) {
         if (due > 0) d.ledger.push({ ...reversal({ customerId: cid, points: due, reason: '', orderId: o.id, at: now() }) });
       }
       // stock comes back for the refunded items only; an amount-only partial refund returns nothing
+      // and never a line an earlier refund already put back
       const lineIds = pl.lineIds as string[] | undefined;
-      const lines = lineIds?.length ? o.lines.filter(l => lineIds.includes(l.id)) : paidBack >= o.total ? o.lines : [];
-      if (pl.toStock && lines.length) d.movements.push(...deductForSale(d.recipes, lines, o.outletId, o.id, r.decidedBy ?? '').map(m => ({ ...m, qty: -m.qty, type: 'refund_return' as const })));
+      const done = new Set(d.refunds.filter(x => x.orderId === o.id && x.toStock && x.approvalId !== r.id).flatMap(x => x.lineIds ?? o.lines.map(l => l.id)));
+      const lines = (lineIds?.length ? o.lines.filter(l => lineIds.includes(l.id)) : paidBack >= o.total ? o.lines : []).filter(l => !done.has(l.id));
+      if (pl.toStock && lines.length) {
+        const mine = d.refunds.find(x => x.approvalId === r.id); if (mine) mine.lineIds = lines.map(l => l.id);
+        d.movements.push(...deductForSale(d.recipes, lines, o.outletId, o.id, r.decidedBy ?? '').map(m => ({ ...m, qty: -m.qty, type: 'refund_return' as const })));
+      }
       break;
     }
     case 'local_item': { const p = d.products.find(x => x.id === r.subjectId); if (p) { p.status = 'live'; if (pl.promote ?? p.promoteRequested) { p.scope = 'global'; p.ownerOutletId = null; d.outlets.forEach(o => { if (!d.outletProducts.some(x => x.productId === p.id && x.outletId === o.id)) d.outletProducts.push({ productId: p.id, outletId: o.id, localPrice: null, is86: false, hidden: false }); }); } } break; }
@@ -326,6 +345,7 @@ export function recall(orderId: string, by: string) {
 export function served(orderId: string, by: string) { commit('order.served', by, d => { const o = findOrder(d, orderId); if (o.status === 'ready') o.status = 'served'; }, orderId); }
 /** lg-86: per outlet, one shared list for KDS, PIC, POS, QR menu, kiosk, waiter and delivery apps. */
 export function toggle86(outletId: string, productId: string, by: string) {
+  if (!mayDo(snapshot(), by, 'Mark item sold out', outletId)) return; // 'a' in the matrix: the register asks an approver, the KDS uses ask86
   commit('item.86', by, d => {
     const x = d.outletProducts.find(p => p.productId === productId && p.outletId === outletId); if (!x) return; x.is86 = !x.is86;
     notify(d, x.is86 ? 'Item sold out (86)' : 'Back in stock', 'info', ['cashier', 'kitchen', 'waiter', 'pic'], outletId, `${d.products.find(p => p.id === productId)?.name} ${x.is86 ? 'sold out' : 'available again'} · synced to QR menu, kiosk and delivery apps`);
@@ -379,6 +399,7 @@ export function setRosterSlot(outletId: string, day: number, slot: 'pagi' | 'sia
 // ── Inventory ───────────────────────────────────────────────────────────────────────────
 export function startOpname(outletId: string, area: string, by: string) {
   const id = uid('op'); const d0 = snapshot();
+  if (!mayDo(d0, by, 'Count stock (opname)', outletId)) return null;
   commit('opname.started', by, d => {
     d.opnames.unshift({ id, outletId, area, countedBy: by, approvedBy: null, status: 'counting', at: now(), requirePhotoAll: false,
       lines: d0.stockItems.map(s => ({ stockItemId: s.id, systemQty: Math.round(stockLevel(d0.movements, outletId, s.id) * 100) / 100, counted: NaN, unitCost: s.unitCost })) });
@@ -399,6 +420,7 @@ export function submitOpname(opnameId: string, by: string) {
 export function receivePO(poId: string, received: Record<string, number>, by: string) {
   commit('po.received', by, d => {
     const po = d.pos.find(x => x.id === poId)!;
+    if (po.status !== 'sent' && po.status !== 'partial') return; // only an approved, open PO takes goods
     po.lines.forEach(l => { const q = received[l.stockItemId] ?? 0; if (q > 0) { l.received += q; d.movements.push({ outletId: po.outletId, stockItemId: l.stockItemId, qty: q, type: 'receipt', sourceId: po.id, by, at: now() }); } });
     po.status = po.lines.every(l => l.received >= l.qty) ? 'received' : 'partial';
   }, poId);
@@ -419,7 +441,13 @@ export function stockEntry(kind: 'waste' | 'adjust', outletId: string, stockItem
 
 // ── Catalog ─────────────────────────────────────────────────────────────────────────────
 export function saveProduct(p: Product, by: string) {
-  const role = emp(snapshot(), by)?.role;
+  const d0 = snapshot(), e = emp(d0, by), role = e?.role, was = d0.products.find(x => x.id === p.id);
+  if (role !== 'owner') {
+    // Menu scope: only the owner sets base prices and puts items live. A manager edits their own local items; new ones are local and wait for the owner.
+    if (was && !(was.scope === 'local' && e?.outlets.includes(was.ownerOutletId ?? ''))) return 'Global items are changed by the owner. Hide it here or mark it sold out.';
+    if (was) { const price = p.basePrice; p = { ...p, basePrice: was.basePrice, scope: was.scope, ownerOutletId: was.ownerOutletId, status: was.status === 'archived' ? was.status : p.status === 'archived' ? 'archived' : was.status }; if (price !== was.basePrice) requestPrice(p.id, price, by); }
+    else { if (!d0.tenant.locks.outletOnlyItems) return 'Outlet-only items are turned off by the owner'; p = { ...p, scope: 'local', status: 'pending_owner', ownerOutletId: e?.outlets.includes(p.ownerOutletId ?? '') ? p.ownerOutletId : e?.outlets[0] ?? null }; }
+  }
   commit('product.saved', by, d => {
     const i = d.products.findIndex(x => x.id === p.id);
     if (i >= 0) d.products[i] = p; else {
@@ -427,7 +455,8 @@ export function saveProduct(p: Product, by: string) {
       d.outlets.forEach(o => { if (p.scope === 'global' || p.ownerOutletId === o.id) d.outletProducts.push({ productId: p.id, outletId: o.id, localPrice: null, is86: false, hidden: false }); });
     }
   }, p.name);
-  if (role === 'manager' && p.status === 'pending_owner') requestApproval({ type: 'local_item', title: `New local item · ${p.name} · ${idr(p.basePrice)}`, amount: p.basePrice, requestedBy: by, outletId: p.ownerOutletId ?? 'sen', subjectId: p.id, payload: { promote: p.promoteRequested } });
+  if (role !== 'owner' && !was && p.status === 'pending_owner') requestApproval({ type: 'local_item', title: `New local item · ${p.name} · ${idr(p.basePrice)}`, amount: p.basePrice, requestedBy: by, outletId: p.ownerOutletId ?? 'sen', subjectId: p.id, payload: { promote: p.promoteRequested } });
+  return null;
 }
 export function requestPrice(productId: string, price: number, by: string, outletId?: string) {
   const d0 = snapshot(), p = d0.products.find(x => x.id === productId)!;
@@ -436,7 +465,11 @@ export function requestPrice(productId: string, price: number, by: string, outle
 }
 
 // ── Customers & loyalty ─────────────────────────────────────────────────────────────────
+const phoneKey = (s: string) => s.replace(/\D/g, '').replace(/^62/, '0');
+/** One member per phone across every outlet: an existing number returns that member (no second welcome beans). */
 export function addCustomer(name: string, phone: string, by: string, optIn = true) {
+  const k = phoneKey(phone), found = k.length >= 9 ? snapshot().customers.find(c => phoneKey(c.phone) === k) : undefined;
+  if (found) return found.id;
   const id = uid('c');
   commit('customer.created', by, d => { d.customers.push({ id, name, phone, email: '', joinedAt: now(), optIn, credit: 0, deposit: 0 }); d.ledger.push({ customerId: id, points: 50, reason: 'Welcome beans', at: now() }); }, name);
   return id;
@@ -457,7 +490,8 @@ export const readyBy = (tier: 'rush' | 'standard' | 'saver', source: Source, ope
   at + ((tier === 'rush' ? 10 : tier === 'standard' ? 18 : 30) + (source === 'web' ? 2 : 4) + Math.min(20, openTickets)) * 60e3;
 export function simulatePlatformOrder(outletId: string, source: Source = 'gofood') {
   const d0 = snapshot(), r = Math.random;
-  const ps = d0.products.filter(p => p.status === 'live').sort(() => r() - .5).slice(0, 1 + Math.floor(r() * 3));
+  const ok = sellable(d0, outletId); // the platform menu is synced: no 86'd, hidden or other-branch items
+  const ps = d0.products.filter(p => ok(p.id)).sort(() => r() - .5).slice(0, 1 + Math.floor(r() * 3));
   const tier = (['rush', 'standard', 'saver'] as const)[Math.floor(r() * 3)];
   const load = d0.orders.filter(o => o.outletId === outletId && ['sent', 'preparing'].includes(o.status)).length;
   const id = newOrder(outletId, source, source, { type: 'delivery', status: 'open', tier, readyBy: readyBy(tier, source, load) });
@@ -467,7 +501,13 @@ export function simulatePlatformOrder(outletId: string, source: Source = 'gofood
 }
 export function acceptOnline(orderId: string, by: string) { sendToKitchen(orderId, by); commit('online.accepted', by, d => { const o = findOrder(d, orderId); o.cashierId = by; }, orderId); }
 export function rejectOnline(orderId: string, reason: string, by: string) { commit('online.rejected', by, d => { const o = findOrder(d, orderId); o.status = 'voided'; o.note = 'Rejected: ' + reason; }, orderId); }
-export function pickedUp(orderId: string, by: string) { commit('online.picked_up', by, d => { const o = findOrder(d, orderId); o.status = 'paid'; o.paidAt = now(); d.payments.push({ id: uid('pay'), orderId, outletId: o.outletId, method: 'ewallet', amount: o.total, tip: 0, status: 'settled', ref: o.source.toUpperCase(), at: now(), expiresAt: null, sessionId: o.sessionId }); }, orderId); }
+export function pickedUp(orderId: string, by: string) {
+  commit('online.picked_up', by, d => {
+    const o = findOrder(d, orderId); if (o.paidAt) return;
+    d.payments.push({ id: uid('pay'), orderId, outletId: o.outletId, method: 'ewallet', amount: o.total, tip: 0, status: 'settled', ref: o.source.toUpperCase(), at: now(), expiresAt: null, sessionId: o.sessionId });
+    settleIfDone(d, o, by); // paid → recipe stock deducted like every other sale
+  }, orderId);
+}
 
 // ── Studios & settings ──────────────────────────────────────────────────────────────────
 /** Owner publishes; manager "Send to owner" creates a publish approval (lg-menu). */
