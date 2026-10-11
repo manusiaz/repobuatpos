@@ -42,13 +42,14 @@ const CSS = `
 .pos-pay{display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);min-height:min(640px,calc(100dvh - 24px))}
 .pos-off{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--danger-soft);color:var(--danger-fg);font-size:14px;font-weight:600}
 @media (max-width:1023px){.pos{grid-template-columns:72px minmax(0,1fr)}.pos-reg{grid-template-columns:minmax(0,1fr)}.pos-cart{display:none}
- .pos-bar{display:flex;gap:8px;position:sticky;bottom:0;margin:auto -16px -16px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--bg-canvas);border-top:1px solid var(--border)}
+ .pos-bar{display:flex;gap:8px;position:fixed;left:72px;right:0;bottom:0;z-index:5;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--bg-canvas);border-top:1px solid var(--border)}
+ .pos-menu{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
  .pos-bar .pos-view{flex:1 1 0;min-width:0}.pos-bar .pos-view>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pos-bar .btn-pay{flex:1.4 1 0;min-width:0}}
 @media (max-width:767px){.pos{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}.pos-rail{flex-direction:row;overflow-x:auto;padding:6px 8px}
  .pos-rail .logo{display:none}.pos-rail{align-items:center}.pos-tabs{flex-direction:row;overflow-x:auto;overflow-y:hidden}.pos-tabs .pos-lock{margin-top:0}
  .pos-rail .dev-chrome{flex-direction:row;padding:0 0 0 6px;border-top:0;border-left:1px solid var(--ink-800)}
  .pos-rail button{min-width:72px;min-height:56px;flex:none}.pos-rail .dev-chrome .btn{min-width:44px}.pos-main{height:auto;min-height:0}
- .pos-pay{grid-template-columns:minmax(0,1fr)}.pos-bar .btn-pay{min-width:0!important}}
+ .pos-pay{grid-template-columns:minmax(0,1fr)}.pos-bar{left:0}.pos-bar .btn-pay{min-width:0!important}}
 `;
 
 const RAIL: [string, string, string, string][] = [['register', 'Register', 'shopping-bag', 'register-order'], ['bills', 'Open bills', 'clipboard-list', 'open-bills-saved-orders'],
