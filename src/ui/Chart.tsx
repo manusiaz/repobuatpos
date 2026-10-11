@@ -8,6 +8,8 @@ Chart.register(LineController, LineElement, PointElement, BarController, BarElem
 export interface Series { label: string; data: number[]; compare?: boolean }
 export function LineChart({ labels, series, height = 240, kind = 'bar', format = (v: number) => String(v) }: { labels: string[]; series: Series[]; height?: number; kind?: 'line' | 'bar'; format?: (v: number) => string }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  // rebuild only when the numbers change: callers pass fresh arrays on every render (clock ticks), which restarted the draw-in from zero
+  const key = JSON.stringify([labels, series, kind]), fmt = useRef(format); fmt.current = format;
   useEffect(() => {
     const el = ref.current; if (!el) return;
     const css = getComputedStyle(el), accent = css.getPropertyValue('--role').trim() || '#FF6A00', muted = css.getPropertyValue('--ink-300').trim(), grid = css.getPropertyValue('--border').trim(), fg2 = css.getPropertyValue('--fg-2').trim();
@@ -25,11 +27,12 @@ export function LineChart({ labels, series, height = 240, kind = 'bar', format =
       }; }) },
       options: { responsive: true, maintainAspectRatio: false, animation: { duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 600, easing: 'easeOutQuart' },
         interaction: { mode: 'index', intersect: false },
-        plugins: { tooltip: { backgroundColor: '#0F172A', padding: 10, cornerRadius: 10, callbacks: { label: (i: { dataset: { label?: string }; parsed: { y: number | null } }) => ` ${i.dataset.label}: ${format(i.parsed.y ?? 0)}` } }, legend: { display: false } },
+        plugins: { tooltip: { backgroundColor: '#0F172A', padding: 10, cornerRadius: 10, callbacks: { label: (i: { dataset: { label?: string }; parsed: { y: number | null } }) => ` ${i.dataset.label}: ${fmt.current(i.parsed.y ?? 0)}` } }, legend: { display: false } },
         scales: { x: { grid: { display: false }, ticks: { color: fg2, maxRotation: 0, autoSkipPadding: 12, font: { family: "'Satoshi', system-ui, sans-serif" } } },
-          y: { grid: { color: grid }, border: { display: false }, ticks: { color: fg2, callback: (v: string | number) => format(Number(v)), font: { family: "'Satoshi', system-ui, sans-serif" } } } } },
+          y: { grid: { color: grid }, border: { display: false }, ticks: { color: fg2, callback: (v: string | number) => fmt.current(Number(v)), font: { family: "'Satoshi', system-ui, sans-serif" } } } } },
     });
     return () => c.destroy();
-  }, [labels, series, kind, format]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
   return <div style={{ height, position: 'relative' }}><canvas ref={ref} /></div>;
 }

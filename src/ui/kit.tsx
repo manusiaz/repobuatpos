@@ -69,8 +69,8 @@ export function Kpi({ label, value, delta, tone, href }: { label: string; value:
   const to = href !== undefined ? href : app ? drillTo(label, app.user.role, app.page.path) : null;
   // design v1.0: label, big number, arrow delta, and a tinted icon tile on the right (tone decides the tint)
   const d = typeof delta === 'string' && tone !== 'warn' ? delta.replace(/^\+\s?/, '↑ ').replace(/^[-−]\s?/, '↓ ') : delta;
-  const body = <><span className="stack" style={{ gap: 4, minWidth: 0 }}><span className="l">{label}</span><span className="v">{value}</span>{d != null && <span className={tone} style={{ fontSize: 13, fontWeight: 600 }}>{d}</span>}</span>
-    <span className={'kpi-ic ' + (tone ?? '')} aria-hidden><Icon name={kpiIcon(label)} size={20} /></span></>;
+  const body = <><span className="row between" style={{ alignItems: 'flex-start' }}><span className="l">{label}</span><span className={'kpi-ic ' + (tone ?? '')} aria-hidden><Icon name={kpiIcon(label)} size={18} /></span></span>
+    <span className="v">{value}</span>{d != null && <span className={tone} style={{ fontSize: 13, fontWeight: 600 }}>{d}</span>}</>;
   return to ? <Link href={to} className="card kpi link">{body}</Link> : <div className="card kpi">{body}</div>;
 }
 export const Avatar = ({ name, color, size = 36 }: { name: string; color?: string; size?: number }) =>
