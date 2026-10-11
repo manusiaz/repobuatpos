@@ -188,7 +188,7 @@ function Sales({ c }: { c: PicCtx }) {
   const { mine, paid, live, sales } = shiftOrders(c);
   const [f, setF] = useState<'all' | 'open' | 'paid'>('all');
   const pays = db.payments.filter(p => p.status === 'settled' && paid.some(o => o.id === p.orderId));
-  const cash = pays.filter(p => p.method === 'cash').reduce((a, p) => a + p.amount, 0);
+  const cash = pays.filter(p => p.method === 'cash' && p.ref !== 'ROUNDING').reduce((a, p) => a + p.amount, 0);
   const rows = (f === 'open' ? live : f === 'paid' ? paid : [...new Set([...live, ...mine])]).sort((a, b) => b.createdAt - a.createdAt);
   return <>
     <div className="grid" style={{ ['--min' as string]: '170px' }}>

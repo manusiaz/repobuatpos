@@ -156,7 +156,7 @@ function CashClose({ c }: { c: Ctx }) {
   const pin = usePin();
   const t0 = startOfDay(now), date = dateKey(now);
   const sessions = db.sessions.filter(s => s.outletId === here && (s.openedAt >= t0 || s.status !== 'closed' || (s.closedAt ?? 0) >= t0));
-  const pays = db.payments.filter(p => p.outletId === here && p.status === 'settled' && p.at >= t0);
+  const pays = db.payments.filter(p => p.outletId === here && p.status === 'settled' && p.ref !== 'ROUNDING' && p.at >= t0); // cash rounding moves no money
   const sum = (m: string[]) => pays.filter(p => m.includes(p.method)).reduce((a, p) => a + p.amount, 0);
   const totals = { cash: sum(['cash']), qris: sum(['qris']), cardWallet: sum(['card', 'ewallet', 'va']), other: sum(['deposit', 'kasbon']), variance: sessions.reduce((a, s) => a + (s.variance ?? 0), 0) };
   const pending = sessions.filter(s => s.status !== 'closed');

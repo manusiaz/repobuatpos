@@ -17,7 +17,7 @@ const MNAME: Record<string, string> = { cash: 'Cash', qris: 'QRIS', card: 'Card'
 export function stats(db: DB, orders: Order[], payFilter: (p: DB['payments'][number]) => boolean) {
   const paid = orders.filter(o => PAID.includes(o.status)), ids = new Set(orders.map(o => o.id));
   const sales = paid.reduce((a, o) => a + o.total, 0);
-  const pays = db.payments.filter(p => p.status === 'settled' && payFilter(p));
+  const pays = db.payments.filter(p => p.status === 'settled' && p.ref !== 'ROUNDING' && payFilter(p)); // rounding moves no money
   const by: Record<string, number> = {}; pays.forEach(p => { by[p.method] = (by[p.method] ?? 0) + p.amount; });
   const refunds = db.refunds.filter(r => ids.has(r.orderId));
   return { paid, sales, count: paid.length, avg: paid.length ? Math.round(sales / paid.length) : 0, by, tips: pays.reduce((a, p) => a + p.tip, 0),
@@ -180,7 +180,7 @@ export function CloseShift({ onClosed }: { onClosed?: () => void }) {
       <button className="btn btn-primary btn-pay" onClick={() => setPhase('review')}>Submit count</button>
     </> : <div className="grid" style={{ ['--min' as string]: '320px', alignItems: 'start' }}>
       <div className="card stack">
-        <Row l="Opening cash" v={idr(cash.openingFloat)} /><Row l="Cash sales" v={idr(cash.cashSales)} /><Row l="Cash in" v={idr(cash.cashIn)} />
+        <Row l="Opening cash" v={idr(cash.openingFloat)} /><Row l="Cash sales" v={idr(cash.cashSales)} />{!!cash.cashTips && <Row l="Cash tips" v={idr(cash.cashTips)} />}<Row l="Cash in" v={idr(cash.cashIn)} />
         <Row l="Cash out & drops" v={'− ' + idr(cash.cashOut)} /><Row l="Cash refunds" v={'− ' + idr(cash.cashRefunds)} /><hr style={{ border: 0, borderTop: '1px solid var(--border)', width: '100%' }} />
         <Row l="Expected in drawer" v={idr(exp)} strong /><Row l="Counted" v={idr(counted)} strong />
       </div>
