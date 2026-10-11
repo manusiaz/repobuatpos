@@ -143,7 +143,7 @@ export const EXTRAS: Extra[] = [
         {g.steps && <ol style={{ textAlign: 'left', fontSize: 13, paddingLeft: 18, margin: 0 }}><li>Open any bank or e-wallet app</li><li>Scan or upload this code</li><li>Check the amount and pay</li></ol>}
         {g.save && <GBtn d={ctx.d} ghost>Save QR to gallery</GBtn>}</div></Page>; } },
 
-  { key: 'checkout-flow-fields', label: 'Checkout fields', icon: 'list-checks', device: 'phone', defaults: { name: 'required', phone: 'optional', notes: true, tips: false, pickup: true, member: true },
+  { key: 'checkout-flow-fields', label: 'Checkout fields', icon: 'list-checks', device: 'phone', defaults: { name: 'required', phone: 'required', notes: true, tips: false, pickup: true, member: true },
     fields: () => [f.seg('name', 'Name', 'required:Required|optional:Optional|off:Hidden', 3), f.seg('phone', 'WhatsApp number', 'required:Required|optional:Optional|off:Hidden', 3), f.tog('notes', 'Order notes'), f.tog('tips', 'Tips'), f.tog('pickup', 'Pickup time (takeaway)'), f.tog('member', 'Join member checkbox')],
     preview: (g, ctx) => { const o = ctx.db.outlets.find(x => x.id === ctx.outletId)!, items = guestProducts(ctx.db, ctx.outletId).slice(0, 2), t = orderTotals(items.map(x => ({ unitPrice: x.price, qty: 1 })), o);
       const field = (l: string, v: Val) => v !== 'off' && <Box key={l}>{l} <span style={{ fontSize: 11, opacity: .6 }}>{v === 'required' ? 'Required' : 'Optional'}</span></Box>;

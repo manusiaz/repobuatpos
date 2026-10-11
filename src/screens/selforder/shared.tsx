@@ -19,8 +19,13 @@ export const so = (slug: string, q?: Record<string, string>) => (PATHS[slug] ?? 
 const TWO_H = 2 * 3600e3;
 
 export function useGuest() {
-  const { db, outletId, go } = useApp();
+  const { db, outletId: deviceOutlet, go } = useApp();
   const sp = useSearchParams();
+  // The table QR names its branch (?o=kem); a guest's phone has no device outlet, so the scanned branch is remembered with the table.
+  const [savedOutlet, setSavedOutlet] = useLocal<string | null>('bn-qr-outlet', null);
+  const qo = sp.get('o') ?? routeQuery().o ?? null;
+  const outletId = [qo, savedOutlet].find(x => x && db.outlets.some(o => o.id === x)) ?? deviceOutlet;
+  useEffect(() => { if (qo && qo === outletId && qo !== savedOutlet) setSavedOutlet(qo); }, [qo, outletId, savedOutlet, setSavedOutlet]);
   const [saved, setSaved] = useLocal('bn-qr-table', 'T-07');
   const qt = sp.get('t') ?? routeQuery().t ?? null; // order.bornis.id/<tenant>/t/07 carries the table in the path
   const table = qt ? 'T-' + qt.replace(/^T-?/i, '').padStart(2, '0') : saved;

@@ -33,12 +33,6 @@ export default function Screen() {
   const to = (v: View) => go(pathOf(v));
   const reset = () => { if (order && !placed(order) && order.status === 'open' && order.lines.length) clearOrder(order.id, 'kiosk'); setOrderId(null); setType(null); to('attract'); };
 
-  // Paid (QRIS settled by the gateway, or card) → fire to the KDS and tell the cashier.
-  const fired = useRef<string | null>(null);
-  useEffect(() => {
-    if (order && order.status === 'paid' && order.lines.some(l => !l.fired) && fired.current !== order.id) { fired.current = order.id; sendToKitchen(order.id, 'kiosk'); orderPlaced(order.id, false); }
-  }, [order]);
-
   // 60 s without a touch → back to attract (never while a QRIS code is open).
   const last = useRef(Date.now());
   const now = useNow(5000);

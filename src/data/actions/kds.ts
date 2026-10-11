@@ -7,9 +7,8 @@ import { addLine, newOrder, requestApproval, sendToKitchen, toggle86 } from '../
 
 const findOrder = (d: DB, id: string) => d.orders.find(o => o.id === id);
 /** One alert engine: recipients from the alert catalog (actions.ts notify). */
-import { notify as notice } from '../actions.ts';
+import { notify as notice, orderReady } from '../actions.ts';
 export { notice };
-const label = (o: Order) => `${o.no}${o.table ? ' · ' + o.table : ''}`;
 
 /** After any line change: all fired lines done → ready (+ notice); started → preparing; recalled → back to preparing. */
 function settle(d: DB, o: Order) {
@@ -17,7 +16,7 @@ function settle(d: DB, o: Order) {
   if (fired.length && fired.every(l => l.kds === 'done')) {
     if (['open', 'held', 'sent', 'preparing'].includes(o.status)) o.status = 'ready';
     const online = o.type === 'delivery';
-    notice(d, 'Order ready', 'info', online ? ['cashier', 'pic'] : ['waiter', 'cashier'], o.outletId, `${label(o)} ready${online ? ' · bag to the pickup shelf' : ''}`);
+    orderReady(d, o, online ? ['cashier', 'pic'] : ['waiter', 'cashier'], online ? ' · bag to the pickup shelf' : '');
   } else if (o.status === 'ready') o.status = 'preparing';
   else if (o.status === 'sent' && fired.some(l => l.kds !== 'new')) o.status = 'preparing';
 }

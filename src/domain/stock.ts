@@ -9,6 +9,16 @@ export interface RecipeLine { productId: string; stockItemId: string; qty: numbe
 export const level = (moves: Movement[], outletId: string, itemId: string) =>
   moves.filter(m => m.outletId === outletId && m.stockItemId === itemId).reduce((a, m) => a + m.qty, 0);
 
+/** Every item's level at one outlet in one pass (menus check many products at once). */
+export function levels(moves: Movement[], outletId: string) {
+  const m = new Map<string, number>();
+  for (const x of moves) if (x.outletId === outletId) m.set(x.stockItemId, (m.get(x.stockItemId) ?? 0) + x.qty);
+  return m;
+}
+/** Portions the recipe can still make from stock (Infinity when the product has no recipe). */
+export const portionsLeft = (recipe: RecipeLine[], lv: Map<string, number>, productId: string) =>
+  recipe.filter(r => r.productId === productId && r.qty > 0).reduce((n, r) => Math.min(n, Math.floor((lv.get(r.stockItemId) ?? 0) / r.qty + 1e-9)), Infinity); // 1e-9: levels are sums of decimals
+
 /** Sale deducts by recipe at order.paid, not at add-to-cart. */
 export function deductForSale(recipe: RecipeLine[], lines: { productId: string; qty: number }[], outletId: string, orderId: string, by: string, at = Date.now()): Movement[] {
   return lines.flatMap(l => recipe.filter(r => r.productId === l.productId)

@@ -20,7 +20,7 @@ export interface StockItem { id: string; name: string; unit: string; unitCost: I
 export interface Recipe { productId: string; stockItemId: string; qty: number }
 export interface Customer { id: string; name: string; phone: string; email: string; joinedAt: number; optIn: boolean; birthday?: string; credit: IDR; deposit: IDR }
 
-export interface OrderLine { id: string; productId: string; name: string; qty: number; unitPrice: IDR; flashPrice: IDR | null; mods: { name: string; price: IDR }[]; note: string; discountPct: number; station: Category['station']; kds: 'new' | 'cooking' | 'done'; fired: boolean }
+export interface OrderLine { id: string; productId: string; name: string; qty: number; unitPrice: IDR; flashPrice: IDR | null; mods: { name: string; price: IDR }[]; note: string; discountPct: number; station: Category['station']; kds: 'new' | 'cooking' | 'done'; fired: boolean; firedAt?: number }
 export interface Order {
   id: string; no: string; outletId: string; sessionId: string | null; source: Source; type: 'dine' | 'take' | 'delivery'; status: OrderStatus;
   table: string | null; customerId: string | null; lines: OrderLine[]; discountPct: number; promoIds: string[]; guests: number;
@@ -39,7 +39,7 @@ export interface PurchaseOrder { id: string; no: string; supplierId: string; out
 export interface Opname { id: string; outletId: string; area: string; countedBy: string; approvedBy: string | null; status: 'counting' | 'submitted' | 'locked' | 'recount' | 'approved' | 'rejected' | 'posted'; lines: OpnameLine[]; at: number; requirePhotoAll: boolean }
 export interface Reservation { id: string; outletId: string; name: string; phone: string; at: number; guests: number; table: string; status: 'booked' | 'seated' | 'cancelled' | 'no_show'; deposit: IDR }
 export interface Review { id: string; outletId: string; customerId: string | null; name: string; stars: number; text: string; at: number; reply: string | null; orderId: string | null }
-export interface Message { id: string; channel: 'wa' | 'email' | 'sms' | 'push'; template: string; to: string; status: 'queued' | 'sent' | 'delivered' | 'read' | 'failed'; at: number; customerId: string | null }
+export interface Message { id: string; channel: 'wa' | 'email' | 'sms' | 'push'; template: string; to: string; status: 'queued' | 'sent' | 'delivered' | 'read' | 'failed'; at: number; customerId: string | null; orderId?: string }
 export interface Device { id: string; outletId: string; kind: 'pos' | 'kds' | 'display' | 'kiosk' | 'pic' | 'printer' | 'edc' | 'waiter'; name: string; lastSeen: number; pairCode: string | null; status: 'online' | 'offline' }
 export interface Audit { id: string; actor: string; action: string; subject: string; before?: unknown; after?: unknown; at: number; outletId?: string }
 export interface Notice { id: string; alert: string; level: 'info' | 'warn' | 'high'; to: Role[]; outletId: string | null; text: string; href: string | null; at: number; read: boolean }

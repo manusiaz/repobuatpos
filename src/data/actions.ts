@@ -6,7 +6,7 @@ import type { Approval, DB, Order, Product, Rec, Role } from './schema.ts';
 import { orderTotals, QRIS_TTL_MS, type Method, type Source } from '../domain/order.ts';
 import { canDecide, levelRequired, type Level, type RequestType, PIN_TRIES, PIN_LOCK_MS } from '../domain/approval.ts';
 import { earn, reversal, tierOf, canRedeem } from '../domain/loyalty.ts';
-import { deductForSale, level as stockLevel, missingPhotos, opnameApprover, postOpname, type OpnameLine } from '../domain/stock.ts';
+import { deductForSale, level as stockLevel, levels, portionsLeft, missingPhotos, opnameApprover, postOpname, type OpnameLine } from '../domain/stock.ts';
 import { flashPrice, resolve } from '../domain/promo.ts';
 import { closeCheck } from '../domain/shift.ts';
 import { idr, roundCash } from '../domain/money.ts';
@@ -77,10 +77,33 @@ export function applyVoucher(orderId: string, code: string, by: string): string 
   return null;
 }
 /** Course firing: send unfired lines to their stations. */
+const GUEST_SOURCES: Source[] = ['qr', 'kiosk', 'web'];
+const GUEST_ACTORS = ['guest', 'kiosk'];
+/** Sellable to guests now: not 86'd and the recipe can still make one portion from this outlet's stock. */
+export function sellable(d: DB, outletId: string) {
+  const lv = levels(d.movements, outletId);
+  return (productId: string) => !d.outletProducts.find(x => x.productId === productId && x.outletId === outletId)?.is86 && portionsLeft(d.recipes, lv, productId) >= 1;
+}
+/** A guest can't pay for or send what the kitchen can't make (it sold out while it sat in the cart). */
+function guardGuest(d: DB, o: Order, by: string) {
+  if (!GUEST_ACTORS.includes(by)) return;
+  const ok = sellable(d, o.outletId), gone = o.lines.filter(l => !l.fired && !ok(l.productId));
+  if (gone.length) throw new Error(`${gone.map(l => l.name).join(', ')} just sold out. Remove ${gone.length > 1 ? 'them' : 'it'} to continue.`);
+}
+/** Fire unsent lines: kitchen gets "New order" (and "Allergy order" when a note says so). */
+function fire(d: DB, o: Order) {
+  const fresh = o.lines.filter(l => !l.fired); if (!fresh.length) return;
+  fresh.forEach(l => { l.fired = true; l.kds = 'new'; l.firedAt = now(); });
+  const tag = `${o.no}${o.table ? ' · ' + o.table : ''}`;
+  notify(d, 'New order', 'info', ['kitchen'], o.outletId, `${tag} · ${fresh.reduce((a, l) => a + l.qty, 0)} items`, '/kds');
+  const allergy = fresh.filter(l => /alerg|allerg/i.test(l.note + ' ' + l.mods.map(m => m.name).join(' ')));
+  if (allergy.length) notify(d, 'Allergy order', 'high', ['kitchen', 'waiter', 'pic'], o.outletId, `${tag} · ${allergy.map(l => `${l.name}: ${l.note || l.mods.map(m => m.name).join(', ')}`).join(' · ')}`, '/kds');
+}
 export function sendToKitchen(orderId: string, by: string) {
   commit('order.sent', by, d => {
     const o = findOrder(d, orderId);
-    o.lines.forEach(l => { if (!l.fired) { l.fired = true; l.kds = 'new'; } });
+    guardGuest(d, o, by);
+    fire(d, o);
     if (o.status === 'open' || o.status === 'held') o.status = 'sent';
   }, orderId);
 }
@@ -94,6 +117,7 @@ export function startPayment(orderId: string, method: Method, amount: number, by
   if (!online && (method === 'qris' || method === 'va' || method === 'ewallet')) throw new Error('Offline: QRIS, VA and e-wallet need internet. Use cash or card.');
   commit('payment.created', by, d => {
     const o = findOrder(d, orderId);
+    guardGuest(d, o, by);
     o.status = 'paying';
     const instant = method === 'cash' || method === 'card' || method === 'deposit' || method === 'kasbon';
     d.payments.push({ id, orderId, outletId: o.outletId, method, amount, tip, status: instant ? 'settled' : 'pending', ref: (method === 'qris' ? 'QRIS-' : 'REF-') + id.slice(-6).toUpperCase(),
@@ -111,7 +135,8 @@ export function gatewayWebhook(paymentId: string, status: 'settled' | 'failed' |
     if (!p || p.status !== 'pending') return; // idempotent on gateway_ref
     p.status = status;
     const o = findOrder(d, p.orderId);
-    if (status === 'settled') settleIfDone(d, o, 'gateway'); else o.status = backFromPaying(o);
+    if (status === 'settled') settleIfDone(d, o, 'gateway');
+    else { o.status = backFromPaying(o); notify(d, 'Payment failed / declined', 'warn', ['cashier'], o.outletId, `${o.no}${o.table ? ' · ' + o.table : ''} · ${p.method.toUpperCase()} ${status} · ${idr(p.amount)}`); }
   }, paymentId);
 }
 /** A failed or cancelled payment never un-sends a ticket: fired orders go back to their kitchen state. */
@@ -122,13 +147,25 @@ function settleIfDone(d: DB, o: Order, by: string) {
   const cash = d.payments.some(p => p.orderId === o.id && p.method === 'cash' && p.status === 'settled');
   if (paid < (cash ? Math.min(o.total, roundCash(o.total)) : o.total)) return;
   o.status = 'paid'; o.paidAt = now();
+  // Pay-first guest orders (QR menu, kiosk, web) go to the kitchen at settlement, wherever the gateway lands, not on the guest's open tab.
+  if (o.total > 2_000_000) notify(d, 'Big order', 'info', ['pic', 'manager'], o.outletId, `${o.no} · ${idr(o.total)}`);
+  if (GUEST_SOURCES.includes(o.source) && o.lines.some(l => !l.fired)) {
+    fire(d, o);
+    notify(d, 'New QR / kiosk / online order', 'info', ['cashier', 'pic'], o.outletId, `${o.no}${o.table ? ' · ' + o.table : ''} · ${o.source === 'kiosk' ? 'kiosk' : 'QR menu'} · paid`, '/pos/selling/online-and-qr-orders-inbox');
+    waGuest(d, o, 'e_receipt');
+  }
   if (o.promoIds.length) o.promoIds.forEach(id => { const p = d.promos.find(x => x.id === id); if (p) p.used = (p.used ?? 0) + 1; });
   // order.paid → Inventory (recipe deduction), Loyalty (earn), Notifications (thank-you automation)
-  d.movements.push(...deductForSale(d.recipes, o.lines, o.outletId, o.id, by));
-  for (const l of o.lines) for (const r of d.recipes.filter(x => x.productId === l.productId)) {
-    const item = d.stockItems.find(s => s.id === r.stockItemId)!;
-    const lvl = stockLevel(d.movements, o.outletId, item.id);
-    if (lvl < item.par && lvl + r.qty * l.qty >= item.par) notify(d, 'Low stock', 'warn', ['pic', 'manager'], o.outletId, `${item.name} below par at ${outletOf(d, o.outletId).name} (${lvl.toFixed(1)} ${item.unit})`, '/owner/inventory/low-stock-alerts-and-reorder-rules');
+  // Stock moves at payment; a product that can no longer make one portion is "Out of stock" (sold out on QR + kiosk), else "Low stock" under par.
+  const used = deductForSale(d.recipes, o.lines, o.outletId, o.id, by), before = levels(d.movements, o.outletId);
+  d.movements.push(...used);
+  const after = levels(d.movements, o.outletId), at = outletOf(d, o.outletId).name;
+  const gone = d.products.filter(p => p.status === 'live' && portionsLeft(d.recipes, before, p.id) >= 1 && portionsLeft(d.recipes, after, p.id) < 1);
+  for (const itemId of new Set(used.map(m => m.stockItemId))) {
+    const item = d.stockItems.find(s => s.id === itemId)!, lvl = after.get(itemId) ?? 0, was = before.get(itemId) ?? 0;
+    const hit = gone.filter(p => d.recipes.some(r => r.productId === p.id && r.stockItemId === itemId && lvl / r.qty + 1e-9 < 1)).map(p => p.name);
+    if (hit.length) notify(d, 'Out of stock', 'high', ['pic', 'manager', 'kitchen'], o.outletId, `${item.name} ran out at ${at} (${Math.max(0, lvl).toFixed(2)} ${item.unit}) · ${hit.join(', ')} sold out on the QR menu and kiosk until stock is received or recounted`, '/owner/inventory/low-stock-alerts-and-reorder-rules');
+    else if (lvl < item.par && was >= item.par) notify(d, 'Low stock', 'warn', ['pic', 'manager'], o.outletId, `${item.name} below par at ${at} (${lvl.toFixed(1)} ${item.unit})`, '/owner/inventory/low-stock-alerts-and-reorder-rules');
   }
   if (o.customerId) {
     const tier = tierOf(d.ledger, o.customerId);
@@ -226,18 +263,29 @@ function applyDecision(d: DB, r: Approval) {
 }
 
 // ── Kitchen ─────────────────────────────────────────────────────────────────────────────
+/** Transactional WhatsApp to the guest who left a number on this order (receipt, ready). Once per order + template. */
+export function waGuest(d: DB, o: Order, template: 'e_receipt' | 'order_ready') {
+  const c = o.customerId ? d.customers.find(x => x.id === o.customerId) : undefined;
+  if (!c?.phone || d.messages.some(m => m.orderId === o.id && m.template === template)) return;
+  d.messages.unshift({ id: uid('ms'), channel: 'wa', template, to: c.phone, status: 'queued', at: now(), customerId: c.id, orderId: o.id });
+}
+/** Order ready → floor team + the guest's phone. */
+export function orderReady(d: DB, o: Order, roles: Role[] = ['waiter', 'cashier'], suffix = '') {
+  notify(d, 'Order ready', 'info', roles, o.outletId, `${o.no}${o.table ? ' · ' + o.table : ''} ready${suffix}`);
+  waGuest(d, o, 'order_ready');
+}
 export function bump(orderId: string, station: string | 'all', by: string) {
   commit('ticket.bumped', by, d => {
     const o = findOrder(d, orderId);
     o.lines.forEach(l => { if (l.fired && (station === 'all' || l.station === station)) l.kds = l.kds === 'new' ? 'cooking' : 'done'; });
     if (o.lines.every(l => l.kds === 'done')) {
       if (['sent', 'preparing'].includes(o.status) || (o.status === 'paid' && !o.paidAt)) o.status = 'ready';
-      notify(d, 'Order ready', 'info', ['waiter', 'cashier'], o.outletId, `${o.no}${o.table ? ' · ' + o.table : ''} ready`);
+      orderReady(d, o);
     } else if (o.status === 'sent') o.status = 'preparing';
   }, orderId);
 }
 export function bumpDone(orderId: string, by: string) {
-  commit('ticket.done', by, d => { const o = findOrder(d, orderId); o.lines.forEach(l => { if (l.fired) l.kds = 'done'; }); if (['sent', 'preparing'].includes(o.status)) o.status = 'ready'; notify(d, 'Order ready', 'info', ['waiter', 'cashier'], o.outletId, `${o.no}${o.table ? ' · ' + o.table : ''} ready`); }, orderId);
+  commit('ticket.done', by, d => { const o = findOrder(d, orderId); o.lines.forEach(l => { if (l.fired) l.kds = 'done'; }); if (['sent', 'preparing'].includes(o.status)) o.status = 'ready'; orderReady(d, o); }, orderId);
 }
 export function recall(orderId: string, by: string) {
   commit('ticket.recalled', by, d => { const o = findOrder(d, orderId); o.lines.forEach(l => { if (l.fired) l.kds = 'cooking'; }); if (o.status === 'ready') o.status = 'preparing'; }, orderId);
@@ -247,7 +295,7 @@ export function served(orderId: string, by: string) { commit('order.served', by,
 export function toggle86(outletId: string, productId: string, by: string) {
   commit('item.86', by, d => {
     const x = d.outletProducts.find(p => p.productId === productId && p.outletId === outletId); if (!x) return; x.is86 = !x.is86;
-    notify(d, x.is86 ? 'Sold out' : 'Back in stock', 'info', ['cashier', 'kitchen', 'waiter', 'pic'], outletId, `${d.products.find(p => p.id === productId)?.name} ${x.is86 ? 'sold out' : 'available again'} · synced to QR menu, kiosk and delivery apps`);
+    notify(d, x.is86 ? 'Item sold out (86)' : 'Back in stock', 'info', ['cashier', 'kitchen', 'waiter', 'pic'], outletId, `${d.products.find(p => p.id === productId)?.name} ${x.is86 ? 'sold out' : 'available again'} · synced to QR menu, kiosk and delivery apps`);
   }, productId, outletId);
 }
 
@@ -440,6 +488,12 @@ export function archiveProduct(productId: string, by: string) {
 export function hideAtOutlet(productId: string, outletId: string, hidden: boolean, by: string) { commit('product.hidden', by, d => { const x = d.outletProducts.find(y => y.productId === productId && y.outletId === outletId); if (x) x.hidden = hidden; }, productId, outletId); }
 export function saveModifierGroup(g: DB['modifierGroups'][0], by: string) { commit('modifier.saved', by, d => { const i = d.modifierGroups.findIndex(x => x.id === g.id); if (i >= 0) d.modifierGroups[i] = g; else d.modifierGroups.push(g); }, g.name); }
 /** Escalation ladder for unanswered requests: PIC 5 min → manager 30 min → owner (lg-approval, Alerts). Idempotent. */
+/** Kitchen tickets past 12 minutes → "Order late" once per ticket (KDS turns amber at 8). */
+export function watchKitchen(at = now()) {
+  const d0 = snapshot(), late = d0.orders.filter(o => o.lines.some(l => l.fired && l.kds !== 'done' && l.firedAt && at - l.firedAt > 12 * 60e3)
+    && !d0.notices.some(n => n.alert === 'Order late' && n.text.startsWith(o.no + ' ')));
+  if (late.length) commit('kitchen.late', 'system', d => late.forEach(o => notify(d, 'Order late', 'warn', ['kitchen', 'pic'], o.outletId, `${o.no} · ${o.table ?? o.source} · over 12 min`, '/kds')));
+}
 export function escalateDue(at = now()) {
   const due = snapshot().approvals.filter(a => a.status === 'waiting' && ((a.level === 'pic' && at - a.at > 5 * 60e3) || (a.level === 'manager' && at - a.at > 35 * 60e3)));
   if (!due.length) return;

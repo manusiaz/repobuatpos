@@ -9,6 +9,7 @@ import { balance, tierOf, TIERS } from '../../domain/loyalty.ts';
 import { usable } from '../../domain/promo.ts';
 import { addLine, applyVoucher, cancelPayment, gatewayWebhook, patchOrder, sendToKitchen, setQty, startPayment } from '../../data/actions.ts';
 import { findOrJoin, guestCall, orderPlaced } from '../../data/actions/selforder.ts';
+import { menuDesign } from '../../data/actions/studio.ts';
 import { firstName, groupsOf, LINE, missingGroup, mmss, modsFrom, modsText, MUTED, OptionPicker, progress, QR, SURFACE, TINT, unit, useMenu, Wordmark, type Sel } from '../guest/kit.tsx';
 import { back, Bar, CartBar, ItemRow, newLines, Notices, Pill, settledOf, so, tableNo, Totals, type G } from './shared.tsx';
 
@@ -266,8 +267,12 @@ export function Checkout({ g }: { g: G }) {
   const tip = pay === 'qris' ? Math.round(cart.subtotal * tipPct / 100 / 100) * 100 : 0;
   const hasNew = newLines(cart).length > 0;
   const voucher = db.promos.find(p => cart.promoIds.includes(p.id));
+  // Menu Studio → Checkout fields decides what the guest must give; the WhatsApp number is where the receipt and "ready" alert go.
+  const ask = { name: 'required', phone: 'required', ...menuDesign(db).x['checkout-flow-fields'] };
   const place = () => {
     setErr('');
+    if (ask.name === 'required' && !name.trim()) return setErr('Add a name so the team can call your order.');
+    if (ask.phone === 'required' && phone.replace(/\D/g, '').length < 9) return setErr('Enter your WhatsApp number. Your receipt and the “order ready” message go there.');
     if (phone.trim() && phone.replace(/\D/g, '').length < 9) return setErr('Enter a full WhatsApp number, or leave it empty.');
     setBusy(true);
     try {
@@ -287,8 +292,8 @@ export function Checkout({ g }: { g: G }) {
     <div className="stack" style={{ padding: 14, gap: 14 }}>
       <div style={card} className="stack">
         <b>{t('Name for the order')}</b>
-        <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="Your first name" aria-label="Your first name" autoComplete="given-name" />
-        <input className="input" value={phone} onChange={e => setPhone(e.target.value)} placeholder="WhatsApp number (optional)" aria-label="WhatsApp number" inputMode="tel" autoComplete="tel" />
+        {ask.name !== 'off' && <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder={ask.name === 'required' ? 'Your first name' : 'Your first name (optional)'} aria-label="Your first name" autoComplete="given-name" />}
+        {ask.phone !== 'off' && <input className="input" value={phone} onChange={e => setPhone(e.target.value)} placeholder={ask.phone === 'required' ? 'WhatsApp number, e.g. 0812 3456 7890' : 'WhatsApp number (optional)'} aria-label="WhatsApp number" inputMode="tel" autoComplete="tel" />}
         <span style={{ fontSize: 13, color: MUTED }}>Receipt and “ready” alert go to WhatsApp. Members earn beans on this order.</span>
       </div>
       {pay === 'qris' && <div style={card} className="stack">

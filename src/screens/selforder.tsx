@@ -24,12 +24,6 @@ export default function Screen() {
   const g = useGuest();
   const View = VIEWS[page.slug] ?? Landing;
 
-  // Pay-now QR orders go to the kitchen the moment the gateway settles them (on whichever phone is open).
-  const fired = useRef(new Set<string>());
-  useEffect(() => {
-    for (const o of g.recent) if (o.status === 'paid' && o.lines.some(l => !l.fired) && !fired.current.has(o.id)) { fired.current.add(o.id); sendToKitchen(o.id, 'guest'); orderPlaced(o.id, false); }
-  }, [g.recent]);
-
   return <div data-guest style={{ ...brandVars(g.db.theme), minHeight: '100dvh', background: 'color-mix(in srgb,var(--bn-ink) 9%,var(--bn-paper))' }}>
     <main style={{ maxWidth: 520, margin: '0 auto', minHeight: '100dvh', background: 'var(--bn-paper)', position: 'relative', overflowX: 'hidden' }}>
       <View g={g} />

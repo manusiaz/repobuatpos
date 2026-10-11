@@ -4,7 +4,7 @@ import { QR as QRCode } from '../../ui/qr.tsx';
 // merchant brand from Menu Studio (db.theme → --bn-*), never BorNiz colors (Design Notes cd/so: "Read --bn-* variables").
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import type { DB, ModifierGroup, Order, Outlet, Product, Theme } from '../../data/schema.ts';
-import { priceAt } from '../../data/actions.ts';
+import { priceAt, sellable } from '../../data/actions.ts';
 import { flashPrice } from '../../domain/promo.ts';
 import { Icon } from '../../ui/kit.tsx';
 
@@ -67,10 +67,11 @@ export function useLang() {
 // ── Menu (same rules as POS: outlet scope, hidden, 86, local price, flash price) ────────
 export interface MenuItem { p: Product; price: number; flash: number | null; sold: boolean; cat: string }
 export function menuOf(db: DB, outletId: string): MenuItem[] {
+  const ok = sellable(db, outletId);
   return db.products.filter(p => p.status === 'live').flatMap(p => {
     const op = db.outletProducts.find(x => x.productId === p.id && x.outletId === outletId);
     if (!op || op.hidden) return [];
-    return [{ p, price: priceAt(db, p, outletId), flash: flashPrice(db.promos, p.id), sold: op.is86, cat: p.categoryId }];
+    return [{ p, price: priceAt(db, p, outletId), flash: flashPrice(db.promos, p.id), sold: !ok(p.id), cat: p.categoryId }];
   });
 }
 export function useMenu(db: DB, outletId: string) {

@@ -1,232 +1,369 @@
--- BorNiz core schema: the ERD in spec/bn-diagrams.js (DATA MODEL) as Postgres for Supabase.
--- The browser store (src/data) is the local adapter; this is the authority: tenant isolation (RLS), approval PIN
--- verified server-side, the approval ladder, append-only audit / ledger / movements, totals computed here.
-create extension if not exists pgcrypto;
-create schema if not exists bn;
+-- BorNiz on Supabase. One document table per tenant keeps every app (POS, KDS, PIC, back office, guest screens)
+-- on the same data in realtime; the rules that protect money and authority live HERE, not in the browser:
+--   * staff PINs are hashed server-side and never stored in documents
+--   * an approval only changes state if the approver passed their approval PIN on the server in the last 2 minutes,
+--     is not the requester / counter, and their role reaches the required level (Cashier → PIC → Manager → Owner)
+--   * QRIS / VA / e-wallet payments become "settled" only through the payment gateway webhook
+--   * audit log, stock movements, loyalty ledger and approval decisions are append-only; beans never go negative
+--   * order numbers come from a server sequence (no duplicates across registers)
+--   * guests (QR menu, receipts) never sign in: they use narrow RPCs that re-check prices against the catalog
+create extension if not exists pgcrypto with schema extensions;
+create schema if not exists private;
 
--- ── Identity ──────────────────────────────────────────────────────────────────────────────
--- Tenant comes from the JWT (app_metadata.tenant_id); the outlet from the device pairing.
-create or replace function bn.tenant_id() returns uuid language sql stable as $$
-  select nullif(coalesce(auth.jwt() -> 'app_metadata' ->> 'tenant_id', auth.jwt() ->> 'tenant_id'), '')::uuid $$;
+-- ── Tenancy ─────────────────────────────────────────────────────────────────────────────
+create table public.tenants (
+  id uuid primary key default gen_random_uuid(),
+  slug text not null unique check (slug ~ '^[a-z0-9][a-z0-9-]{1,40}$'),
+  name text not null,
+  plan text not null default 'free' check (plan in ('free','basic','pro','enterprise')),
+  created_at timestamptz not null default now()
+);
+create table public.members (
+  tenant_id uuid not null references public.tenants on delete cascade,
+  user_id uuid not null references auth.users on delete cascade,
+  employee_id text not null,
+  role text not null check (role in ('owner','manager','device','admin')),
+  created_at timestamptz not null default now(),
+  primary key (tenant_id, user_id)
+);
+create index members_user on public.members (user_id);
 
-create table bn.tenants (id uuid primary key default gen_random_uuid(), name text not null, plan text not null default 'free' check (plan in ('free','basic','pro','enterprise')), created_at timestamptz not null default now());
-create table bn.brands (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, name text not null);
-create table bn.outlets (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, brand_id uuid references bn.brands, name text not null, city text,
-  timezone text not null default 'Asia/Jakarta', service_bps int not null default 0, tax_bps int not null default 1000, tax_inclusive bool not null default false, opens time, closes time);
-create table bn.staff (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, auth_user uuid unique, name text not null, phone text, email text,
-  pin_hash text, approval_pin_hash text, twofa bool not null default false, active bool not null default true);
-create table bn.role_assignments (staff_id uuid not null references bn.staff, outlet_id uuid not null references bn.outlets, tenant_id uuid not null references bn.tenants,
-  role text not null check (role in ('owner','manager','pic','cashier','kitchen','waiter')), primary key (staff_id, outlet_id, role));
-create table bn.devices (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, outlet_id uuid not null references bn.outlets,
-  kind text not null check (kind in ('pos','kds','display','kiosk','pic','printer','edc','waiter')), name text, last_seen timestamptz, pair_code text, pair_expires timestamptz);
-create table bn.franchise_locks (tenant_id uuid primary key references bn.tenants, menu_prices bool not null default false, outlet_only_items bool not null default true, brand bool not null default true);
-create table bn.permission_overrides (tenant_id uuid not null references bn.tenants, outlet_id uuid references bn.outlets, action text not null, code char(7) not null check (code ~ '^[yoan]{7}$'),
-  unique (tenant_id, outlet_id, action));
+create or replace function public.bn_is_member(p_tenant uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.members where tenant_id = p_tenant and user_id = auth.uid()) $$;
+create or replace function public.bn_member_role(p_tenant uuid) returns text
+language sql stable security definer set search_path = public as $$
+  select role from public.members where tenant_id = p_tenant and user_id = auth.uid() $$;
 
-create or replace function bn.me() returns bn.staff language sql stable security definer set search_path = bn as $$
-  select s from bn.staff s where s.auth_user = auth.uid() and s.tenant_id = bn.tenant_id() $$;
-create or replace function bn.role_at(p_outlet uuid) returns text language sql stable security definer set search_path = bn as $$
-  select r.role from bn.role_assignments r where r.staff_id = (bn.me()).id and (r.outlet_id = p_outlet or r.role = 'owner')
-  order by array_position(array['owner','manager','pic','cashier','kitchen','waiter'], r.role) limit 1 $$;
-/** Owner sees every outlet; everyone else only outlets they are assigned to. */
-create or replace function bn.can_outlet(p_outlet uuid) returns bool language sql stable as $$ select bn.role_at(p_outlet) is not null $$;
+-- ── Documents: every collection of the app store (orders, products, approvals …) ──────────
+create table public.docs (
+  tenant_id uuid not null references public.tenants on delete cascade,
+  coll text not null,
+  id text not null,
+  data jsonb not null,
+  t bigint,                 -- business time in ms (orders, payments, movements …) for loading windows
+  open boolean not null default false, -- still needed on devices regardless of age (open orders, waiting approvals)
+  updated_at timestamptz not null default now(),
+  updated_by uuid default auth.uid(),
+  primary key (tenant_id, coll, id)
+);
+create index docs_window on public.docs (tenant_id, coll, t);
+create index docs_open on public.docs (tenant_id, coll) where open;
 
--- ── Catalog & menu scope ──────────────────────────────────────────────────────────────────
-create table bn.categories (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, name text not null, station text not null default 'bar');
-create table bn.products (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, category_id uuid references bn.categories, name text not null, sku text,
-  scope text not null check (scope in ('global','local')), owner_outlet_id uuid references bn.outlets, base_price int not null check (base_price >= 0), cost int not null default 0,
-  status text not null default 'live' check (status in ('draft','pending_owner','live','archived')), promote_requested bool not null default false,
-  check ((scope = 'global') = (owner_outlet_id is null)));
-create table bn.outlet_products (product_id uuid not null references bn.products, outlet_id uuid not null references bn.outlets, tenant_id uuid not null references bn.tenants,
-  local_price int, is_86 bool not null default false, hidden bool not null default false, primary key (product_id, outlet_id));
-create table bn.modifier_groups (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, name text not null, required bool not null default false, max_pick int not null default 1);
-create table bn.modifiers (id uuid primary key default gen_random_uuid(), group_id uuid not null references bn.modifier_groups, tenant_id uuid not null references bn.tenants, name text not null, price int not null default 0);
-create table bn.stock_items (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, name text not null, unit text not null, unit_cost int not null default 0, par numeric not null default 0);
-create table bn.recipe_lines (product_id uuid not null references bn.products, stock_item_id uuid not null references bn.stock_items, tenant_id uuid not null references bn.tenants, qty numeric not null, primary key (product_id, stock_item_id));
-create table bn.price_changes (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, product_id uuid not null references bn.products, outlet_id uuid references bn.outlets,
-  old_price int not null, new_price int not null, requested_by uuid references bn.staff, approved_by uuid references bn.staff, at timestamptz not null default now());
+create table public.audit_log (
+  id bigint generated always as identity primary key,
+  tenant_id uuid not null references public.tenants on delete cascade,
+  actor text not null, action text not null, subject text, outlet_id text,
+  user_id uuid default auth.uid(),
+  at timestamptz not null default now()
+);
+create index audit_tenant_at on public.audit_log (tenant_id, at desc);
 
-/** Local price must stay within ±10% of base and is blocked by the franchise lock "Menu prices". */
-create or replace function bn.check_local_price() returns trigger language plpgsql as $$
-declare base int; locked bool;
+create table private.staff_secrets (
+  tenant_id uuid not null references public.tenants on delete cascade,
+  employee_id text not null,
+  pin_hash text, approval_pin_hash text,
+  login_fails int not null default 0, login_locked_until timestamptz,
+  approval_fails int not null default 0, approval_locked_until timestamptz,
+  proof_until timestamptz,  -- approval PIN passed; decisions allowed until then
+  primary key (tenant_id, employee_id)
+);
+create table private.sequences (tenant_id uuid not null references public.tenants on delete cascade, name text not null, next bigint not null default 1, primary key (tenant_id, name));
+create table private.secrets (name text primary key, value text not null);
+create table public.payment_events (
+  id bigint generated always as identity primary key,
+  tenant_id uuid not null references public.tenants on delete cascade,
+  provider text not null, payment_id text not null, status text not null, payload jsonb, at timestamptz not null default now()
+);
+
+-- ── Helpers ─────────────────────────────────────────────────────────────────────────────
+create or replace function private.rank(p_role text) returns int language sql immutable as $$
+  select case p_role when 'owner' then 3 when 'manager' then 2 when 'pic' then 1 else 0 end $$;
+create or replace function private.doc(p_tenant uuid, p_coll text, p_id text) returns jsonb language sql stable as $$
+  select data from public.docs where tenant_id = p_tenant and coll = p_coll and id = p_id $$;
+create or replace function private.notice(p_tenant uuid, p_alert text, p_level text, p_to text[], p_text text) returns void language sql as $$
+  insert into public.docs (tenant_id, coll, id, data, t, open)
+  values (p_tenant, 'notices', 'n' || replace(gen_random_uuid()::text, '-', ''), jsonb_build_object('id', 'n' || replace(gen_random_uuid()::text, '-', ''), 'alert', p_alert, 'level', p_level, 'to', to_jsonb(p_to),
+    'outletId', null, 'text', p_text, 'href', null, 'at', (extract(epoch from now()) * 1000)::bigint, 'read', false), (extract(epoch from now()) * 1000)::bigint, false) $$;
+
+-- ── Guards: the rules no client can bypass ───────────────────────────────────────────────
+create or replace function private.docs_guard() returns trigger language plpgsql security definer set search_path = public, private as $$
+declare
+  o jsonb := case when tg_op = 'INSERT' then null else old.data end;
+  n jsonb := case when tg_op = 'DELETE' then null else new.data end;
+  c text := coalesce(new.coll, old.coll);
+  tid uuid := coalesce(new.tenant_id, old.tenant_id);
+  approver jsonb; secret private.staff_secrets; bal numeric;
 begin
-  if new.local_price is null then return new; end if;
-  select p.base_price into base from bn.products p where p.id = new.product_id;
-  select coalesce(f.menu_prices, false) into locked from bn.franchise_locks f where f.tenant_id = new.tenant_id;
-  if coalesce(locked, false) then raise exception 'Franchise lock "Menu prices" blocks local prices'; end if;
-  if abs(new.local_price - base) > base * 0.10 then raise exception 'Local price must stay within ±10%% of %', base; end if;
-  return new;
-end $$;
-create trigger outlet_price_band before insert or update of local_price on bn.outlet_products for each row execute function bn.check_local_price();
-
--- ── Sales ─────────────────────────────────────────────────────────────────────────────────
-create table bn.business_days (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, outlet_id uuid not null references bn.outlets, day date not null, unique (outlet_id, day));
-create table bn.shifts (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, business_day_id uuid not null references bn.business_days, slot text not null check (slot in ('pagi','siang','malam')));
-create table bn.shift_assignments (shift_id uuid not null references bn.shifts, staff_id uuid not null references bn.staff, tenant_id uuid not null references bn.tenants, role text not null, is_pic bool not null default false, station text, primary key (shift_id, staff_id));
-create unique index one_pic_per_shift on bn.shift_assignments (shift_id) where is_pic;
-create table bn.clock_events (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, staff_id uuid not null references bn.staff, outlet_id uuid not null references bn.outlets, kind text not null check (kind in ('in','out','break')), at timestamptz not null default now());
-create table bn.drawer_sessions (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, outlet_id uuid not null references bn.outlets, shift_id uuid references bn.shifts, cashier_id uuid not null references bn.staff,
-  opened_at timestamptz not null default now(), opening_float int not null, closed_at timestamptz, counted int, variance int, status text not null default 'open' check (status in ('open','counting','needs_approval','closed')), note text);
-create table bn.cash_moves (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, session_id uuid not null references bn.drawer_sessions, kind text not null check (kind in ('in','out','drop')), amount int not null check (amount > 0), reason text not null, by_staff uuid references bn.staff, status text not null default 'waiting', at timestamptz not null default now());
-create table bn.customers (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, name text not null, phone text, email text, opt_in bool not null default false, credit int not null default 0, deposit int not null default 0, joined_at timestamptz not null default now(), unique (tenant_id, phone));
-create table bn.orders (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, outlet_id uuid not null references bn.outlets, session_id uuid references bn.drawer_sessions,
-  no text not null, source text not null check (source in ('pos','qr','kiosk','waiter','web','gofood','grabfood','shopeefood')), type text not null default 'dine' check (type in ('dine','take','delivery')),
-  status text not null default 'open' check (status in ('open','held','sent','preparing','ready','served','paying','paid','voided','part_refunded','refunded')),
-  table_label text, customer_id uuid references bn.customers, discount_pct int not null default 0 check (discount_pct between 0 and 100), guests int not null default 1,
-  subtotal int not null default 0, discount int not null default 0, service int not null default 0, tax int not null default 0, total int not null default 0,
-  tier text check (tier in ('rush','standard','saver')), ready_by timestamptz, idem_key text not null, cashier_id uuid references bn.staff,
-  created_at timestamptz not null default now(), paid_at timestamptz, unique (tenant_id, idem_key));
-create table bn.order_lines (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, order_id uuid not null references bn.orders on delete cascade, product_id uuid not null references bn.products,
-  name text not null, qty int not null check (qty > 0), unit_price int not null, flash_price int, modifiers_total int not null default 0, discount_pct int not null default 0, note text,
-  station text not null default 'bar', kds text not null default 'new' check (kds in ('new','cooking','done')), fired bool not null default false);
-create table bn.payments (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, order_id uuid not null references bn.orders, session_id uuid references bn.drawer_sessions,
-  method text not null check (method in ('cash','qris','card','ewallet','va','deposit','kasbon')), amount int not null check (amount > 0), tip int not null default 0,
-  status text not null check (status in ('created','pending','settled','expired','failed','refund_requested','refunded')), gateway_ref text, expires_at timestamptz, at timestamptz not null default now(), unique (tenant_id, gateway_ref));
-create table bn.refunds (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, payment_id uuid not null references bn.payments, amount int not null check (amount > 0), reason text not null, approval_id uuid, to_stock bool not null default false, at timestamptz not null default now());
-
-/** lg-total, server authority: line price → modifiers → flash price → line discount → order discount → service → tax. */
-create or replace function bn.recalc_order(p_order uuid) returns bn.orders language plpgsql security definer set search_path = bn as $$
-declare o bn.orders; out bn.outlets; sub int; disc int; net int; svc int; tx int; tot int;
-begin
-  select * into o from bn.orders where id = p_order for update;
-  if o.status in ('paid','voided','part_refunded','refunded') then raise exception 'Order % is final; changes are refunds', o.no; end if;
-  select * into out from bn.outlets where id = o.outlet_id;
-  select coalesce(sum(((coalesce(flash_price, unit_price) + modifiers_total) * qty) - round(((coalesce(flash_price, unit_price) + modifiers_total) * qty) * discount_pct / 100.0)), 0)::int into sub from bn.order_lines where order_id = p_order;
-  disc := round(sub * o.discount_pct / 100.0); net := sub - disc;
-  svc := round(net * out.service_bps / 10000.0);
-  if out.tax_inclusive then tot := net + svc; tx := round(tot - tot / (1 + out.tax_bps / 10000.0));
-  else tx := round((net + svc) * out.tax_bps / 10000.0); tot := net + svc + tx; end if;
-  update bn.orders set subtotal = sub, discount = disc, service = svc, tax = tx, total = tot where id = p_order returning * into o;
-  return o;
-end $$;
-/** Paid is final: no edit of money fields after payment (refunds are new rows). Delivery-app orders are never edited. */
-create or replace function bn.guard_order() returns trigger language plpgsql as $$
-begin
-  if old.status in ('paid','part_refunded','refunded','voided') and (new.total, new.subtotal, new.discount) is distinct from (old.total, old.subtotal, old.discount) then
-    raise exception 'Paid orders are never edited'; end if;
-  if old.source in ('gofood','grabfood','shopeefood') and (new.total is distinct from old.total) then raise exception 'Delivery-app orders are read only'; end if;
-  return new;
-end $$;
-create trigger order_final before update on bn.orders for each row execute function bn.guard_order();
-
--- ── Stock, opname, purchasing ─────────────────────────────────────────────────────────────
-create table bn.stock_movements (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, outlet_id uuid not null references bn.outlets, stock_item_id uuid not null references bn.stock_items,
-  qty numeric not null, type text not null check (type in ('sale','receipt','transfer_in','transfer_out','waste','adjust','opname_adjustment','refund_return','production')), source_id uuid, by_staff uuid references bn.staff, at timestamptz not null default now());
-/** Stock level is a view over movements; nobody types a stock number. */
-create view bn.stock_levels with (security_invoker = true) as select tenant_id, outlet_id, stock_item_id, sum(qty) as on_hand from bn.stock_movements group by 1, 2, 3;
-create table bn.opnames (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, outlet_id uuid not null references bn.outlets, area text not null,
-  counted_by uuid not null references bn.staff, approved_by uuid references bn.staff, status text not null default 'counting' check (status in ('counting','submitted','locked','recount','approved','rejected','posted')),
-  require_photo_all bool not null default false, variance_value int, at timestamptz not null default now(), check (approved_by is distinct from counted_by));
-create table bn.opname_lines (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, opname_id uuid not null references bn.opnames, stock_item_id uuid not null references bn.stock_items,
-  system_qty numeric not null, counted numeric not null, unit_cost int not null, locked bool not null default false, recount_of uuid references bn.opname_lines);
-create table bn.opname_photos (line_id uuid not null references bn.opname_lines, tenant_id uuid not null references bn.tenants, url text not null, taken_at timestamptz not null default now());
-create or replace function bn.guard_opname_line() returns trigger language plpgsql as $$
-begin if old.locked then raise exception 'Counted lines are locked after submit; add a recount line'; end if; return new; end $$;
-create trigger opname_locked before update or delete on bn.opname_lines for each row execute function bn.guard_opname_line();
-create table bn.suppliers (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, name text not null, phone text, terms text);
-create table bn.purchase_orders (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, no text not null, supplier_id uuid not null references bn.suppliers, outlet_id uuid not null references bn.outlets,
-  status text not null default 'draft' check (status in ('draft','waiting','sent','partial','received','cancelled')), due date, created_by uuid references bn.staff, at timestamptz not null default now());
-create table bn.po_lines (po_id uuid not null references bn.purchase_orders, stock_item_id uuid not null references bn.stock_items, tenant_id uuid not null references bn.tenants, qty numeric not null, price int not null, received numeric not null default 0, primary key (po_id, stock_item_id));
-
--- ── Approvals: one engine, level computed at creation, PIN verified here ───────────────────
-create table bn.approval_requests (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, outlet_id uuid not null references bn.outlets,
-  type text not null check (type in ('discount','void','refund','variance','cash_out','waste','adjust','opname','price','publish','payroll','local_item','po','asset','expense','transfer','points','supplier','staff_advance','manual_payment','gift_card','budget','broadcast','promo','recipe','perm','leave','timesheet','reject_online')),
-  title text not null, amount int not null default 0, pct int not null default 0, level_required text not null, status text not null default 'waiting' check (status in ('waiting','approved','rejected','recount')),
-  requested_by uuid not null references bn.staff, counted_by uuid references bn.staff, subject_id uuid, payload jsonb not null default '{}', note text, at timestamptz not null default now(), offline_at timestamptz);
-create table bn.approval_decisions (request_id uuid not null references bn.approval_requests, tenant_id uuid not null references bn.tenants, by_staff uuid not null references bn.staff, decision text not null, note text, at timestamptz not null default now());
-create table bn.pin_attempts (staff_id uuid primary key references bn.staff, fails int not null default 0, locked_until timestamptz);
-
-/** Mirrors src/domain/approval.ts levelRequired. Cashier → PIC (≤20% / ≤100k / variance ≤50k) → manager (≤500k) → owner. */
-create or replace function bn.level_required(p_type text, p_amount int, p_pct int) returns text language sql immutable as $$
-  select case
-    when p_type in ('price','publish','payroll','points','supplier','perm','promo','recipe','broadcast','budget','local_item') then 'owner'
-    when p_type = 'discount' then case when p_pct <= 10 then 'cashier' when p_pct <= 20 then 'pic' else 'manager' end
-    when p_type in ('leave','timesheet') then 'manager'
-    when p_type = 'reject_online' then 'pic'
-    when p_type in ('po','asset','expense','transfer','staff_advance','gift_card') then case when p_amount <= 500000 then 'manager' else 'owner' end
-    when p_amount <= case when p_type in ('variance','waste','adjust','opname') then 50000 else 100000 end then 'pic'
-    when p_amount <= 500000 then 'manager' else 'owner' end $$;
-
-create or replace function bn.request_approval(p_outlet uuid, p_type text, p_title text, p_amount int default 0, p_pct int default 0, p_subject uuid default null, p_payload jsonb default '{}', p_counted_by uuid default null)
-returns bn.approval_requests language plpgsql security definer set search_path = bn as $$
-declare r bn.approval_requests; me bn.staff := bn.me();
-begin
-  if not bn.can_outlet(p_outlet) then raise exception 'No access to this outlet'; end if;
-  insert into bn.approval_requests (tenant_id, outlet_id, type, title, amount, pct, level_required, requested_by, subject_id, payload, counted_by)
-  values (me.tenant_id, p_outlet, p_type, p_title, p_amount, p_pct, bn.level_required(p_type, p_amount, p_pct), me.id, p_subject, p_payload, p_counted_by) returning * into r;
-  perform pg_notify('bn_' || p_outlet::text, json_build_object('event', 'approval.requested', 'id', r.id, 'level', r.level_required)::text);
-  return r;
-end $$;
-
-/** Every approve / reject needs the approver's own 6-digit approval PIN (not the password). 5 wrong tries lock 15 min.
-    Nobody decides their own request; the counter can't sign their own opname; rank must reach the required level. */
-create or replace function bn.decide(p_request uuid, p_pin text, p_decision text, p_note text default null) returns bn.approval_requests language plpgsql security definer set search_path = bn, public as $$
-declare r bn.approval_requests; me bn.staff := bn.me(); a bn.pin_attempts; my_role text; rank int; need int;
-begin
-  if p_decision not in ('approved','rejected','recount') then raise exception 'Unknown decision'; end if;
-  select * into a from bn.pin_attempts where staff_id = me.id;
-  if a.locked_until > now() then raise exception 'Approval PIN locked until %', a.locked_until; end if;
-  if me.approval_pin_hash is null or crypt(p_pin, me.approval_pin_hash) <> me.approval_pin_hash then
-    insert into bn.pin_attempts (staff_id, fails) values (me.id, 1) on conflict (staff_id) do update set fails = bn.pin_attempts.fails + 1,
-      locked_until = case when bn.pin_attempts.fails + 1 >= 5 then now() + interval '15 minutes' end;
-    if coalesce(a.fails, 0) + 1 >= 5 then
-      update bn.pin_attempts set fails = 0 where staff_id = me.id;
-      perform pg_notify('bn_alerts', json_build_object('alert', 'Approval PIN locked', 'staff', me.id, 'to', array['manager','owner'])::text);
+  if tg_op = 'DELETE' then
+    if c in ('orders','payments','refunds','movements','ledger','approvals','clock','sessions','cashMoves','opnames') then
+      raise exception 'BN001 % are never deleted; corrections are new records', c;
     end if;
-    return null; -- wrong PIN: caller shows "Wrong PIN" with tries left (a raise would roll back the counter)
+    return old;
   end if;
-  delete from bn.pin_attempts where staff_id = me.id;
-  select * into r from bn.approval_requests where id = p_request and tenant_id = me.tenant_id for update;
-  if r.status <> 'waiting' then raise exception 'Already decided'; end if;
-  if me.id = r.requested_by or me.id = r.counted_by then raise exception 'Nobody approves their own request'; end if;
-  my_role := bn.role_at(r.outlet_id);
-  rank := array_position(array['cashier','pic','manager','owner'], my_role); need := array_position(array['cashier','pic','manager','owner'], r.level_required);
-  if rank is null or rank < need then raise exception 'Needs %; escalate instead', r.level_required; end if;
-  update bn.approval_requests set status = p_decision where id = r.id returning * into r;
-  insert into bn.approval_decisions (request_id, tenant_id, by_staff, decision, note) values (r.id, r.tenant_id, me.id, p_decision, p_note);
-  if p_decision = 'approved' and r.type = 'opname' then
-    update bn.opnames set status = 'posted', approved_by = me.id where id = r.subject_id;
-    insert into bn.stock_movements (tenant_id, outlet_id, stock_item_id, qty, type, source_id, by_staff)
-      select l.tenant_id, o.outlet_id, l.stock_item_id, l.counted - l.system_qty, 'opname_adjustment', o.id, me.id
-      from bn.opname_lines l join bn.opnames o on o.id = l.opname_id where o.id = r.subject_id and l.counted <> l.system_qty
-        and not exists (select 1 from bn.opname_lines x where x.recount_of = l.id);
+
+  if c = 'employees' then new.data := n - 'pin' - 'approvalPin'; end if; -- PINs live hashed in private.staff_secrets
+  -- an upsert fires BEFORE INSERT first; if the row exists, the BEFORE UPDATE pass that follows does the checking
+  if tg_op = 'INSERT' and exists (select 1 from public.docs where tenant_id = new.tenant_id and coll = new.coll and id = new.id) then return new; end if;
+
+  if c in ('movements','ledger') and tg_op = 'UPDATE' and o is distinct from n then
+    raise exception 'BN002 % is append-only', c;
   end if;
-  insert into bn.audit_log (tenant_id, actor, action, subject, after) values (r.tenant_id, me.id, 'approval.' || p_decision, r.title, to_jsonb(r));
-  perform pg_notify('bn_' || r.outlet_id::text, json_build_object('event', 'approval.decided', 'id', r.id, 'decision', p_decision)::text);
-  return r;
+  if c = 'ledger' and tg_op = 'INSERT' and (n->>'points')::numeric < 0 then
+    select coalesce(sum((data->>'points')::numeric), 0) into bal from public.docs where tenant_id = tid and coll = 'ledger' and data->>'customerId' = n->>'customerId';
+    if bal + (n->>'points')::numeric < 0 then raise exception 'BN003 Not enough beans'; end if;
+  end if;
+
+  if c = 'payments' and n->>'status' = 'settled' and n->>'method' in ('qris','va','ewallet')
+     and (o is null or o->>'status' is distinct from 'settled')
+     and coalesce(current_setting('bn.gateway', true), '') <> 'on'
+     and coalesce(n->>'ref', '') !~ '^(GOFOOD|GRABFOOD|SHOPEEFOOD)' then
+    raise exception 'BN004 % payments are settled only by the payment gateway', upper(n->>'method');
+  end if;
+
+  if c = 'approvals' then
+    if tg_op = 'INSERT' and n->>'status' <> 'waiting' and not (n->>'level' = 'cashier' and n->>'decidedBy' = n->>'requestedBy') then
+      raise exception 'BN005 A new request starts as waiting';
+    end if;
+    if tg_op = 'UPDATE' and o->>'status' is distinct from n->>'status' then
+      if o->>'status' = 'recount' and n->>'status' = 'waiting' then return new; end if;
+      if o->>'status' <> 'waiting' then raise exception 'BN006 This request was already decided'; end if;
+      if n->>'decidedBy' is null or n->>'decidedBy' in (coalesce(n->>'requestedBy', ''), coalesce(n->>'countedBy', '')) then
+        raise exception 'BN007 Nobody approves their own request';
+      end if;
+      approver := private.doc(tid, 'employees', n->>'decidedBy');
+      select * into secret from private.staff_secrets where tenant_id = tid and employee_id = n->>'decidedBy';
+      if secret.proof_until is null or secret.proof_until < now() then raise exception 'BN008 Approval PIN required'; end if;
+      if private.rank(approver->>'role') < private.rank(n->>'level') then raise exception 'BN009 Needs %', n->>'level'; end if;
+    end if;
+    if tg_op = 'UPDATE' and private.rank(n->>'level') < private.rank(o->>'level') then raise exception 'BN010 Escalation only goes up'; end if;
+  end if;
+  return new;
+end $$;
+create trigger docs_guard before insert or update or delete on public.docs for each row execute function private.docs_guard();
+
+create or replace function private.append_only() returns trigger language plpgsql as $$ begin raise exception 'BN002 % is append-only', tg_table_name; end $$;
+create trigger audit_append_only before update or delete on public.audit_log for each row execute function private.append_only();
+create trigger events_append_only before update or delete on public.payment_events for each row execute function private.append_only();
+
+-- ── Row-level security ────────────────────────────────────────────────────────────────────
+alter table public.tenants enable row level security;
+alter table public.members enable row level security;
+alter table public.docs enable row level security;
+alter table public.audit_log enable row level security;
+alter table public.payment_events enable row level security;
+create policy tenants_read on public.tenants for select to authenticated using (public.bn_is_member(id));
+create policy tenants_owner_update on public.tenants for update to authenticated using (public.bn_member_role(id) = 'owner');
+create policy members_read on public.members for select to authenticated using (public.bn_is_member(tenant_id));
+create policy docs_read on public.docs for select to authenticated using (public.bn_is_member(tenant_id));
+create policy docs_insert on public.docs for insert to authenticated with check (public.bn_is_member(tenant_id));
+create policy docs_update on public.docs for update to authenticated using (public.bn_is_member(tenant_id)) with check (public.bn_is_member(tenant_id));
+create policy docs_delete on public.docs for delete to authenticated using (public.bn_is_member(tenant_id));
+create policy audit_read on public.audit_log for select to authenticated using (public.bn_is_member(tenant_id));
+create policy audit_insert on public.audit_log for insert to authenticated with check (public.bn_is_member(tenant_id));
+create policy events_read on public.payment_events for select to authenticated using (public.bn_is_member(tenant_id));
+
+-- ── Writes: one commit = one transaction (documents + audit) ──────────────────────────────
+-- ops: [{ "op": "put" | "del", "coll", "id", "data", "t", "open" }]
+create or replace function public.bn_write(p_tenant uuid, p_ops jsonb, p_action text, p_actor text, p_subject text default null, p_outlet text default null)
+returns int language plpgsql security invoker set search_path = public as $$
+declare op jsonb; n int := 0;
+begin
+  if not public.bn_is_member(p_tenant) then raise exception 'BN011 Not a member of this business'; end if;
+  for op in select * from jsonb_array_elements(p_ops) loop
+    if op->>'op' = 'del' then
+      delete from public.docs where tenant_id = p_tenant and coll = op->>'coll' and id = op->>'id';
+    else
+      insert into public.docs (tenant_id, coll, id, data, t, open, updated_at, updated_by)
+      values (p_tenant, op->>'coll', op->>'id', op->'data', nullif(op->>'t', '')::bigint, coalesce((op->>'open')::boolean, false), now(), auth.uid())
+      on conflict (tenant_id, coll, id) do update set data = excluded.data, t = excluded.t, open = excluded.open, updated_at = now(), updated_by = auth.uid()
+      where public.docs.data is distinct from excluded.data or public.docs.open is distinct from excluded.open;
+    end if;
+    n := n + 1;
+  end loop;
+  insert into public.audit_log (tenant_id, actor, action, subject, outlet_id) values (p_tenant, p_actor, p_action, p_subject, p_outlet);
+  return n;
 end $$;
 
--- ── Loyalty, promos, guests, messaging ────────────────────────────────────────────────────
-create table bn.loyalty_ledger (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, customer_id uuid not null references bn.customers, points int not null, reason text not null, order_id uuid references bn.orders, at timestamptz not null default now());
-create view bn.loyalty_balances with (security_invoker = true) as select tenant_id, customer_id, sum(points) as beans from bn.loyalty_ledger group by 1, 2;
-create or replace function bn.guard_balance() returns trigger language plpgsql as $$
-begin if (select coalesce(sum(points), 0) from bn.loyalty_ledger where customer_id = new.customer_id) + new.points < 0 then raise exception 'Not enough beans'; end if; return new; end $$;
-create trigger no_negative_beans before insert on bn.loyalty_ledger for each row execute function bn.guard_balance();
-create table bn.promos (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, name text not null, kind text not null check (kind in ('pct','amount','flash')), value int not null, code text, min_spend int, stackable bool not null default false, quota int, used int not null default 0, ends_at timestamptz);
-create table bn.reservations (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, outlet_id uuid not null references bn.outlets, name text not null, phone text, at timestamptz not null, guests int not null, table_label text, status text not null default 'booked', deposit int not null default 0);
-create table bn.reviews (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, outlet_id uuid not null references bn.outlets, customer_id uuid references bn.customers, order_id uuid references bn.orders, stars int not null check (stars between 1 and 5), body text, reply text, at timestamptz not null default now());
-create table bn.messages (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, customer_id uuid references bn.customers, channel text not null, template text not null, recipient text not null, status text not null default 'queued', at timestamptz not null default now());
-create table bn.versions (id uuid primary key default gen_random_uuid(), tenant_id uuid not null references bn.tenants, kind text not null, by_staff uuid references bn.staff, status text not null, data jsonb not null, note text, at timestamptz not null default now());
-create table bn.settings (tenant_id uuid not null references bn.tenants, key text not null, value jsonb not null, primary key (tenant_id, key));
-
--- ── Audit: append-only, never updated or deleted ──────────────────────────────────────────
-create table bn.audit_log (id bigint generated always as identity primary key, tenant_id uuid not null references bn.tenants, actor uuid, action text not null, subject text, before jsonb, after jsonb, at timestamptz not null default now());
-create or replace function bn.append_only() returns trigger language plpgsql as $$ begin raise exception '% is append-only', tg_table_name; end $$;
-create trigger audit_append_only before update or delete on bn.audit_log for each row execute function bn.append_only();
-create trigger ledger_append_only before update or delete on bn.loyalty_ledger for each row execute function bn.append_only();
-create trigger movements_append_only before update or delete on bn.stock_movements for each row execute function bn.append_only();
-create trigger decisions_append_only before update or delete on bn.approval_decisions for each row execute function bn.append_only();
-
--- ── Row-level security: every table is tenant-scoped; outlet tables also check the assignment ─
-do $$ declare t text; begin
-  for t in select tablename from pg_tables where schemaname = 'bn' and tablename not in ('tenants','pin_attempts') loop
-    execute format('alter table bn.%I enable row level security', t);
-    execute format('create policy tenant_isolation on bn.%I using (tenant_id = bn.tenant_id()) with check (tenant_id = bn.tenant_id())', t);
-  end loop;
-  for t in select c.table_name from information_schema.columns c where c.table_schema = 'bn' and c.column_name = 'outlet_id' and c.table_name in (select tablename from pg_tables where schemaname = 'bn') loop
-    execute format('create policy outlet_scope on bn.%I as restrictive using (outlet_id is null or bn.can_outlet(outlet_id))', t);
-  end loop;
+-- ── Sign-up, PINs, sequences ──────────────────────────────────────────────────────────────
+create or replace function public.bn_bootstrap(p_name text, p_slug text, p_employee_id text) returns uuid
+language plpgsql security definer set search_path = public as $$
+declare tid uuid;
+begin
+  if auth.uid() is null then raise exception 'BN012 Sign in first'; end if;
+  insert into public.tenants (name, slug) values (p_name, p_slug) returning id into tid;
+  insert into public.members (tenant_id, user_id, employee_id, role) values (tid, auth.uid(), p_employee_id, 'owner');
+  return tid;
 end $$;
-alter table bn.tenants enable row level security;
-create policy own_tenant on bn.tenants using (id = bn.tenant_id());
-alter table bn.pin_attempts enable row level security; -- only security-definer functions touch it
+
+create or replace function public.bn_set_pins(p_tenant uuid, p_employee text, p_pin text default null, p_approval_pin text default null) returns void
+language plpgsql security definer set search_path = public, private, extensions as $$
+begin
+  if public.bn_member_role(p_tenant) not in ('owner','manager') then raise exception 'BN013 Only the owner or a manager sets PINs'; end if;
+  if p_pin is not null and p_pin !~ '^\d{4}$' then raise exception 'BN014 Login PIN is 4 digits'; end if;
+  if p_approval_pin is not null and p_approval_pin !~ '^\d{6}$' then raise exception 'BN015 Approval PIN is 6 digits'; end if;
+  insert into private.staff_secrets (tenant_id, employee_id, pin_hash, approval_pin_hash)
+  values (p_tenant, p_employee, case when p_pin is null then null else crypt(p_pin, gen_salt('bf')) end, case when p_approval_pin is null then null else crypt(p_approval_pin, gen_salt('bf')) end)
+  on conflict (tenant_id, employee_id) do update set
+    pin_hash = coalesce(excluded.pin_hash, private.staff_secrets.pin_hash),
+    approval_pin_hash = coalesce(excluded.approval_pin_hash, private.staff_secrets.approval_pin_hash),
+    login_fails = 0, login_locked_until = null, approval_fails = 0, approval_locked_until = null;
+end $$;
+
+create or replace function public.bn_check_login_pin(p_tenant uuid, p_employee text, p_pin text) returns text
+language plpgsql security definer set search_path = public, private, extensions as $$
+declare s private.staff_secrets;
+begin
+  if not public.bn_is_member(p_tenant) then return 'This device is not signed in to this business'; end if;
+  select * into s from private.staff_secrets where tenant_id = p_tenant and employee_id = p_employee;
+  if s.pin_hash is null then return 'No PIN set yet. Ask your manager.'; end if;
+  if s.login_locked_until > now() then return 'Locked for a few minutes after 5 wrong tries.'; end if;
+  if crypt(p_pin, s.pin_hash) = s.pin_hash then
+    update private.staff_secrets set login_fails = 0 where tenant_id = p_tenant and employee_id = p_employee; return null;
+  end if;
+  update private.staff_secrets set login_fails = login_fails + 1, login_locked_until = case when login_fails + 1 >= 5 then now() + interval '5 minutes' end
+    where tenant_id = p_tenant and employee_id = p_employee;
+  return 'Wrong PIN.';
+end $$;
+
+create or replace function public.bn_check_approval_pin(p_tenant uuid, p_employee text, p_pin text) returns text
+language plpgsql security definer set search_path = public, private, extensions as $$
+declare s private.staff_secrets; left_tries int;
+begin
+  if not public.bn_is_member(p_tenant) then return 'This device is not signed in to this business'; end if;
+  select * into s from private.staff_secrets where tenant_id = p_tenant and employee_id = p_employee;
+  if s.approval_pin_hash is null then return 'No approval PIN set yet. The owner sets it in Employees.'; end if;
+  if s.approval_locked_until > now() then return 'Approval PIN locked for 15 min after 5 wrong tries. The owner can reset it.'; end if;
+  if crypt(p_pin, s.approval_pin_hash) = s.approval_pin_hash then
+    update private.staff_secrets set approval_fails = 0, proof_until = now() + interval '2 minutes' where tenant_id = p_tenant and employee_id = p_employee;
+    return null;
+  end if;
+  left_tries := 4 - s.approval_fails;
+  if left_tries <= 0 then
+    update private.staff_secrets set approval_fails = 0, approval_locked_until = now() + interval '15 minutes' where tenant_id = p_tenant and employee_id = p_employee;
+    perform private.notice(p_tenant, 'Approval PIN locked', 'high', array['manager','owner'], coalesce(private.doc(p_tenant, 'employees', p_employee)->>'name', p_employee) || ': approval PIN locked after 5 wrong tries');
+    return 'Approval PIN locked for 15 min. Manager and owner were alerted.';
+  end if;
+  update private.staff_secrets set approval_fails = approval_fails + 1 where tenant_id = p_tenant and employee_id = p_employee;
+  return 'Wrong PIN. ' || left_tries || ' tries left.';
+end $$;
+
+/** Reserve a block of numbers (order numbers per register) so registers never collide, even offline. */
+create or replace function public.bn_reserve(p_tenant uuid, p_name text, p_count int default 100) returns bigint
+language plpgsql security definer set search_path = public, private as $$
+declare first bigint;
+begin
+  if not public.bn_is_member(p_tenant) then raise exception 'BN011 Not a member of this business'; end if;
+  insert into private.sequences (tenant_id, name, next) values (p_tenant, p_name, 2001 + p_count)
+  on conflict (tenant_id, name) do update set next = private.sequences.next + p_count
+  returning next - p_count into first;
+  return first;
+end $$;
+
+/** Stock and beans from documents older than the device's loading window, as opening balances. */
+create or replace function public.bn_opening(p_tenant uuid, p_before bigint) returns jsonb
+language sql stable security invoker set search_path = public as $$
+  select jsonb_build_object(
+    'stock', coalesce((select jsonb_agg(jsonb_build_object('outletId', o, 'stockItemId', s, 'qty', q)) from (
+      select data->>'outletId' o, data->>'stockItemId' s, sum((data->>'qty')::numeric) q from public.docs
+      where tenant_id = p_tenant and coll = 'movements' and t < p_before group by 1, 2) x), '[]'),
+    'beans', coalesce((select jsonb_agg(jsonb_build_object('customerId', c, 'points', p)) from (
+      select data->>'customerId' c, sum((data->>'points')::numeric) p from public.docs
+      where tenant_id = p_tenant and coll = 'ledger' and t < p_before group by 1) y), '[]')) $$;
+
+-- ── Payment gateway webhook (called by /api/payments/webhook/<provider> with the shared secret) ─
+create or replace function public.bn_gateway_update(p_secret text, p_tenant uuid, p_payment_id text, p_status text, p_provider text, p_payload jsonb default '{}')
+returns jsonb language plpgsql security definer set search_path = public, private as $$
+declare d jsonb;
+begin
+  if p_secret is null or p_secret <> (select value from private.secrets where name = 'payment_webhook') then raise exception 'BN016 Bad webhook secret'; end if;
+  if p_status not in ('settled','failed','expired') then raise exception 'BN017 Unknown status'; end if;
+  insert into public.payment_events (tenant_id, provider, payment_id, status, payload) values (p_tenant, p_provider, p_payment_id, p_status, p_payload);
+  select data into d from public.docs where tenant_id = p_tenant and coll = 'payments' and id = p_payment_id for update;
+  if d is null then raise exception 'BN018 Payment not found'; end if;
+  if d->>'status' <> 'pending' then return d; end if; -- idempotent: gateways retry
+  perform set_config('bn.gateway', 'on', true);
+  update public.docs set data = jsonb_set(data, '{status}', to_jsonb(p_status)), updated_at = now(), updated_by = null
+    where tenant_id = p_tenant and coll = 'payments' and id = p_payment_id returning data into d;
+  return d;
+end $$;
+create or replace function public.bn_payment_order(p_secret text, p_tenant uuid, p_payment_id text) returns jsonb
+language plpgsql security definer set search_path = public, private as $$
+begin
+  if p_secret is null or p_secret <> (select value from private.secrets where name = 'payment_webhook') then raise exception 'BN016 Bad webhook secret'; end if;
+  return jsonb_build_object('payment', private.doc(p_tenant, 'payments', p_payment_id),
+    'order', private.doc(p_tenant, 'orders', private.doc(p_tenant, 'payments', p_payment_id)->>'orderId'));
+end $$;
+
+-- ── Guests: QR menu, kiosk links, digital receipts (no sign-in) ────────────────────────────
+create or replace function public.bn_public_snapshot(p_slug text) returns jsonb
+language sql stable security definer set search_path = public as $$
+  select jsonb_build_object('tenant', jsonb_build_object('id', t.id, 'slug', t.slug, 'name', t.name, 'plan', t.plan),
+    'docs', coalesce((select jsonb_agg(jsonb_build_object('coll', coll, 'id', id, 'data', data)) from public.docs d
+      where d.tenant_id = t.id and (d.coll in ('outlets','categories','modifierGroups','products','outletProducts','promos','recipes')
+        or (d.coll = '_meta' and d.id in ('tenant','theme','staffBrand','settings')))), '[]'))
+  from public.tenants t where t.slug = p_slug $$;
+
+create or replace function public.bn_guest_order(p_tenant uuid, p_order_id text) returns jsonb
+language sql stable security definer set search_path = public as $$
+  select jsonb_build_object('order', private.doc(p_tenant, 'orders', p_order_id),
+    'payments', coalesce((select jsonb_agg(data) from public.docs where tenant_id = p_tenant and coll = 'payments' and data->>'orderId' = p_order_id), '[]')) $$;
+
+/** Guest writes: only their own unpaid QR / kiosk / web order, a pending payment for its exact total,
+    a review, a reservation, a member sign-up or a waiter call. Every line price is re-checked against the catalog. */
+create or replace function public.bn_guest_write(p_tenant uuid, p_ops jsonb) returns int
+language plpgsql security definer set search_path = public, private as $$
+declare op jsonb; d jsonb; cur jsonb; line jsonb; price numeric; flash numeric; sub numeric; n int := 0; c text;
+begin
+  for op in select * from jsonb_array_elements(p_ops) loop
+    c := op->>'coll'; d := op->'data';
+    if op->>'op' <> 'put' then raise exception 'BN019 Guests cannot delete'; end if;
+    cur := private.doc(p_tenant, c, op->>'id');
+    if c = 'orders' then
+      if d->>'source' not in ('qr','kiosk','web') then raise exception 'BN020 Not a guest order'; end if;
+      if cur is not null and cur->>'status' not in ('open','held','sent','preparing','ready','served','paying') then raise exception 'BN021 Order is closed'; end if;
+      if d->>'status' not in ('open','held','sent','preparing','paying') then raise exception 'BN022 Guests cannot set this status'; end if;
+      sub := 0;
+      for line in select * from jsonb_array_elements(d->'lines') loop
+        select coalesce((op2.data->>'localPrice')::numeric, (p.data->>'basePrice')::numeric) into price
+          from public.docs p left join public.docs op2 on op2.tenant_id = p.tenant_id and op2.coll = 'outletProducts' and op2.id = (p.id || '|' || (d->>'outletId'))
+          where p.tenant_id = p_tenant and p.coll = 'products' and p.id = line->>'productId' and p.data->>'status' = 'live';
+        if price is null or (line->>'unitPrice')::numeric <> price then raise exception 'BN023 Price changed for %', line->>'name'; end if;
+        flash := nullif(line->>'flashPrice', '')::numeric;
+        if flash is not null and not exists (select 1 from public.docs pr where pr.tenant_id = p_tenant and pr.coll = 'promos' and pr.data->>'kind' = 'flash'
+            and (pr.data->>'value')::numeric = flash and pr.data->'productIds' ? (line->>'productId')) then raise exception 'BN024 Flash price not active'; end if;
+        sub := sub + (coalesce(flash, price) + coalesce((select sum((m->>'price')::numeric) from jsonb_array_elements(line->'mods') m), 0)) * (line->>'qty')::numeric;
+      end loop;
+      if abs(sub - (d->>'subtotal')::numeric) > 1 then raise exception 'BN025 Total does not match the menu'; end if;
+      if (d->>'discountPct')::numeric <> 0 then raise exception 'BN026 Guests cannot discount'; end if;
+    elsif c = 'payments' then
+      if d->>'status' <> 'pending' or d->>'method' not in ('qris','va','ewallet') then raise exception 'BN027 Guests only start gateway payments'; end if;
+      if (d->>'amount')::numeric <> (private.doc(p_tenant, 'orders', d->>'orderId')->>'total')::numeric then raise exception 'BN028 Amount does not match the order'; end if;
+    elsif c in ('reviews','reservations','notices','customers','ledger') then
+      if cur is not null then raise exception 'BN029 Guests only add % once', c; end if;
+      if c = 'ledger' and ((d->>'points')::numeric <> 50 or d->>'reason' <> 'Welcome beans') then raise exception 'BN030 Guests only get welcome beans'; end if;
+    else
+      raise exception 'BN031 Guests cannot write %', c;
+    end if;
+    insert into public.docs (tenant_id, coll, id, data, t, open, updated_by) values (p_tenant, c, op->>'id', d, nullif(op->>'t', '')::bigint, coalesce((op->>'open')::boolean, false), null)
+    on conflict (tenant_id, coll, id) do update set data = excluded.data, t = excluded.t, open = excluded.open, updated_at = now(), updated_by = null;
+    n := n + 1;
+  end loop;
+  return n;
+end $$;
+
+-- ── Grants ──────────────────────────────────────────────────────────────────────────────
+revoke all on schema private from public, anon, authenticated;
+-- guests never touch tables directly; only the narrow guest RPCs below
+revoke all on public.tenants, public.members, public.docs, public.audit_log, public.payment_events from anon;
+revoke execute on all functions in schema public from public, anon;
+grant execute on function public.bn_is_member(uuid), public.bn_member_role(uuid), public.bn_write(uuid, jsonb, text, text, text, text), public.bn_bootstrap(text, text, text),
+  public.bn_set_pins(uuid, text, text, text), public.bn_check_login_pin(uuid, text, text), public.bn_check_approval_pin(uuid, text, text),
+  public.bn_reserve(uuid, text, int), public.bn_opening(uuid, bigint) to authenticated;
+grant execute on function public.bn_public_snapshot(text), public.bn_guest_order(uuid, text), public.bn_guest_write(uuid, jsonb),
+  public.bn_gateway_update(text, uuid, text, text, text, jsonb), public.bn_payment_order(text, uuid, text) to anon, authenticated;
+
+-- realtime for signed-in devices (RLS decides who receives what)
+do $$ begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then alter publication supabase_realtime add table public.docs; end if;
+end $$;

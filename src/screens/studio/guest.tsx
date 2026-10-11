@@ -3,7 +3,7 @@
 // Page Builder section. Everything renders from the live store (products, prices, 86, flash promos, reviews, outlets).
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import type { DB, Product } from '../../data/schema.ts';
-import { priceAt } from '../../data/actions.ts';
+import { priceAt, sellable } from '../../data/actions.ts';
 import { flashPrice } from '../../domain/promo.ts';
 import { orderTotals } from '../../domain/order.ts';
 import { idr } from '../../domain/money.ts';
@@ -31,9 +31,10 @@ export const Tag = ({ children, tone = 'acc' }: { children: ReactNode; tone?: 'a
 
 export interface GProduct { p: Product; price: number; flash: number | null; sold: boolean }
 export function guestProducts(db: DB, outletId: string): GProduct[] {
+  const ok = sellable(db, outletId);
   return db.products.filter(p => p.status === 'live').flatMap(p => {
     const op = db.outletProducts.find(x => x.productId === p.id && x.outletId === outletId);
-    return op && !op.hidden ? [{ p, price: priceAt(db, p, outletId), flash: flashPrice(db.promos, p.id), sold: op.is86 }] : [];
+    return op && !op.hidden ? [{ p, price: priceAt(db, p, outletId), flash: flashPrice(db.promos, p.id), sold: !ok(p.id) }] : [];
   });
 }
 export function bestSellers(db: DB, outletId: string, n = 4) {
