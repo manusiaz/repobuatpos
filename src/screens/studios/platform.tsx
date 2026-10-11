@@ -1,4 +1,5 @@
 'use client';
+import { cnameTarget, config as hostConfig, linkTo } from '../../system/hosts.ts';
 import { productImage } from '../../ui/kit.tsx';
 // Platform studio: fonts, icons, app icon, sounds, languages, white-label, domain & SSO, embeds, brand kit, theme from logo,
 // motion, price & number display, accessible kiosk, legal pages, saved themes. Theme changes go through publish('menu').
@@ -147,9 +148,9 @@ function White({ v, x }: PP) {
 }
 function DomainPanel({ v, set }: PP) {
   const [st, setSt] = useState<Record<string, string>>({});
-  const check = async (name: string) => { setSt(s => ({ ...s, [name]: 'Checking…' })); try { const r = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(name)}&type=CNAME`); const j = await r.json() as { Answer?: { data: string }[] }; setSt(s => ({ ...s, [name]: (j.Answer ?? []).some(a => a.data.includes('bornis.id')) ? 'Verified' : 'Not found' })); } catch { setSt(s => ({ ...s, [name]: 'Couldn’t check' })); } };
+  const check = async (name: string) => { setSt(s => ({ ...s, [name]: 'Checking…' })); try { const r = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(name)}&type=CNAME`); const j = await r.json() as { Answer?: { data: string }[] }; setSt(s => ({ ...s, [name]: (j.Answer ?? []).some(a => a.data.includes(hostConfig().root) || a.data.includes(cnameTarget())) ? 'Verified' : 'Not found' })); } catch { setSt(s => ({ ...s, [name]: 'Couldn’t check' })); } };
   return <div className="stack">
-    {[['menu', 'Menu & store domain', 'menu.bornis.id'], ['dash', 'Dashboard domain', 'app.bornis.id']].map(([k, l, target]) => <div key={k} className="stack sm">
+    {[['menu', 'Menu & store domain', cnameTarget()], ['dash', 'Dashboard domain', 'app.' + hostConfig().root]].map(([k, l, target]) => <div key={k} className="stack sm">
       <div className="field"><label>{l}</label><input className="input" value={v[k]} onChange={e => set(k, e.target.value)} /></div>
       <CopyRow label="CNAME" value={target} /><div className="row between"><button className="btn btn-sm" onClick={() => check(v[k])}>Check DNS</button>{st[v[k]] && <Badge tone={st[v[k]] === 'Verified' ? 'success' : 'warning'}>{st[v[k]]}</Badge>}</div></div>)}
     <div className="field"><label>Staff sign-in</label><Seg value={v.sso} options={[['none', 'Password'], ['google', 'Google'], ['ms', 'Microsoft'], ['saml', 'SAML']] as const} onChange={s => set('sso', s)} /></div>
@@ -166,8 +167,9 @@ function Domain({ v, x }: PP) {
 }
 function Embed({ v, x }: PP) {
   const tenant = x.db.tenant.id, rv = x.db.reviews, avg = rv.length ? rv.reduce((a, r) => a + r.stars, 0) / rv.length : 0;
-  const snip = `<script src="https://cdn.bornis.id/embed.js" data-tenant="${tenant}" data-outlet="${x.outletId}"${v.wa ? ' data-whatsapp' : ''}${v.reviews ? ' data-reviews' : ''}${v.ig ? ' data-instagram' : ''} async></script>\n<div data-bornis="order-button"></div>`;
-  const iframe = `<iframe src="https://order.bornis.id/${tenant}/${x.outletId}?embed=1" width="100%" height="720" style="border:0" loading="lazy"></iframe>`;
+  const order = linkTo(`/order?o=${x.outletId}`, tenant);
+  const snip = `<a href="${order}" target="_blank" rel="noopener" style="display:inline-block;padding:12px 20px;border-radius:999px;background:#F26B1D;color:#fff;font:600 15px sans-serif;text-decoration:none">Order online</a>`;
+  const iframe = `<iframe src="${order}&embed=1" width="100%" height="720" style="border:0" loading="lazy"></iframe>`;
   return <div className="stack" style={{ width: '100%' }}>
     <div className="card" style={{ position: 'relative', minHeight: 260 }}>
       <b>{x.db.tenant.name} website</b><p className="muted" style={{ fontSize: 13 }}>Your own site with BorNiz widgets.</p>

@@ -1,4 +1,5 @@
 'use client';
+import { linkTo } from '../system/hosts.ts';
 // TEMPLATE template: editable message or print layout with a live preview from real data ({{name}} {{outlet}} {{total}}).
 // DEVICE template: full-screen customer/kitchen-facing screen on a fixed 16:9 canvas that never scrolls.
 import { useState } from 'react';
@@ -25,7 +26,7 @@ export function MessageTemplate() {
   const o = [...db.orders].reverse().find(x => x.status === 'paid' && x.customerId) ?? db.orders[db.orders.length - 1];
   const c = db.customers.find(x => x.id === o?.customerId), out = db.outlets.find(x => x.id === o?.outletId);
   const pay = db.payments.find(p => p.orderId === o?.id);
-  const vars: Record<string, string> = { name: c?.name.split(' ')[0] ?? 'Dewi', brand: db.tenant.name, outlet: out?.name ?? 'Senayan', total: idr(o?.total ?? 0), order: o?.no ?? '#2049', method: (pay?.method ?? 'qris').toUpperCase(), beans: String(Math.floor((o?.subtotal ?? 0) / 1000)), rating_link: 'kopibiru.bornis.id/r/' + (o?.id ?? '').slice(-5), receipt_link: 'kopibiru.bornis.id/s/' + (o?.id ?? '').slice(-5), time: '19:00', guests: '6' };
+  const vars: Record<string, string> = { name: c?.name.split(' ')[0] ?? 'Dewi', brand: db.tenant.name, outlet: out?.name ?? 'Senayan', total: idr(o?.total ?? 0), order: o?.no ?? '#2049', method: (pay?.method ?? 'qris').toUpperCase(), beans: String(Math.floor((o?.subtotal ?? 0) / 1000)), rating_link: linkTo('/order/customer-links/feedback-and-rating?o=' + (o?.id ?? '')), receipt_link: linkTo('/order/customer-links/digital-receipt?o=' + (o?.id ?? '')), time: '19:00', guests: '6' };
   const filled = body.replace(/\{\{(\w+)\}\}/g, (_, v: string) => vars[v] ?? '{{' + v + '}}');
   const width = /58mm/i.test(page.name) ? 220 : 300;
   return <>
@@ -50,12 +51,12 @@ export function MessageTemplate() {
 }
 
 export function DeviceScreen() {
-  const { db, outletId } = useApp();
+  const { db, outletId, page } = useApp();
   const [orient, setOrient] = useState<'16:9' | '9:16'>('16:9');
   const live = db.orders.filter(o => o.outletId === outletId && Date.now() - o.createdAt < 3 * 3600e3);
   const ready = live.filter(o => o.status === 'ready'), prep = live.filter(o => ['sent', 'preparing'].includes(o.status));
   return <>
-    <PageHead actions={<><Seg value={orient} onChange={setOrient} options={['16:9', '9:16'] as const} /><button className="btn btn-primary" onClick={() => toast('Open this URL on the TV: kopibiru.bornis.id/queue')}><Icon name="tv" size={18} />Open on TV</button></>} />
+    <PageHead actions={<><Seg value={orient} onChange={setOrient} options={['16:9', '9:16'] as const} /><button className="btn btn-primary" onClick={() => toast('Open this URL on the TV: ' + linkTo(page.path))}><Icon name="tv" size={18} />Open on TV</button></>} />
     <div data-theme="dark" style={{ containerType: 'inline-size', aspectRatio: orient === '16:9' ? '16/9' : '9/16', maxHeight: '70vh', margin: '0 auto', width: orient === '16:9' ? '100%' : 'auto', background: db.theme.ink, color: '#fff', borderRadius: 20, overflow: 'hidden', display: 'grid', gridTemplateColumns: orient === '16:9' ? '1fr 1fr' : '1fr', padding: '3cqw', gap: '3cqw' }}>
       {[['Preparing', prep, 'rgba(255,255,255,.7)'], ['Ready · please pick up', ready, db.theme.acc]].map(([t, l, col]) => <div key={t as string} style={{ display: 'flex', flexDirection: 'column', gap: '2cqw' }}>
         <div style={{ font: `700 4cqw/1 ${'var(--bn-font)'}`, color: col as string }}>{t as string}</div>

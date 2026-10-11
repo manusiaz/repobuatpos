@@ -1,4 +1,5 @@
 'use client';
+import { cnameTarget, linkTo } from '../system/hosts.ts';
 // Menu Studio (spec: BorNiz Menu Studio + Page Builder). Edits the merchant theme and menu presentation that /order,
 // /kiosk and /display read live. Owner publishes; manager "Send to owner" (publish() creates the approval).
 // Every sitemap page of the surface is one tool of the studio; drafts autosave as versions.
@@ -216,7 +217,7 @@ function Studio() {
         f.tog('powered', 'Show “Powered by BorNiz”', db.tenant.plan === 'free' || db.tenant.plan === 'basic' ? 'Removable on Pro and up' : 'Removable on your plan', db.tenant.plan === 'free' || db.tenant.plan === 'basic' ? 'Locked by plan' : undefined)]} />
       <Block title="Custom CSS" right={locked ? <Badge><Icon name="lock" size={12} />Locked by plan · Enterprise</Badge> : undefined} hint="Scoped to .bn-menu. Status colors, payment marks and legal lines ignore custom CSS.">
         <textarea className="input mono" disabled={locked} value={String(d.adv.css)} onChange={e => setIn('adv')('css', e.target.value)} aria-label="Custom CSS" placeholder=".bn-menu h1 { letter-spacing: .02em; }" /></Block>
-      <Fields g={d.adv} set={setIn('adv')} fs={[f.text('domain', 'Custom domain', 'CNAME to menu.bornis.id'), f.text('seoTitle', 'SEO title'), f.area('seoDesc', 'SEO description')]} />
+      <Fields g={d.adv} set={setIn('adv')} fs={[f.text('domain', 'Custom domain', 'CNAME to ' + cnameTarget()), f.text('seoTitle', 'SEO title'), f.area('seoDesc', 'SEO description')]} />
     </>,
     submit: () => submitPanel(owner ? ['menu', 'page'] : ['menu']),
     psubmit: () => submitPanel(['page']),
@@ -305,7 +306,7 @@ function Studio() {
   return <>
     {pin.sheet}
     {!online && <div className="banner" style={{ background: 'var(--warning-soft)', color: 'var(--warning-fg)', marginBottom: 12 }}><Icon name="wifi-off" size={18} />Offline. Your draft is kept on this device; publishing waits until you are back online.</div>}
-    <StudioFrame title="Menu studio" sub={<span className="mono">order.bornis.id/{d.name.toLowerCase().replace(/[^a-z0-9]+/g, '')}</span>} groups={groups} current={current} status={status}
+    <StudioFrame title="Menu studio" sub={<span className="mono">{linkTo('/order').replace(/^https?:\/\//, '')}</span>} groups={groups} current={current} status={status}
       panelTitle={title} panelSub={sub} panel={PAGE_KEYS.has(key) && key !== 'psubmit' ? <PagesPanel view={key} a={api} /> : (panels[key] ?? panels.brand)()}
       actions={<button className="btn btn-primary" disabled={!!blocked} title={blocked || undefined} onClick={() => setConfirm(true)}><Icon name="send" size={16} />{waiting ? 'Waiting for owner' : verb}</button>}
       previewBar={<>{preview.bar}{peek && <span className="row" style={{ marginLeft: 'auto' }}><Badge tone="info">Previewing {peek.label}</Badge><button className="btn btn-sm btn-ghost" style={{ color: 'inherit' }} onClick={() => setPeek(null)}>Back to draft</button></span>}</>}

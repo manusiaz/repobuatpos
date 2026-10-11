@@ -12,6 +12,8 @@ Cloud POS for Indonesian F&B / retail / UMKM. Every surface (marketing, owner, m
 - `supabase/migrations/` — production schema (ERD, RLS per tenant + outlet, approval PIN verified in `bn.decide`, ladder in `bn.level_required`, append-only audit/ledger/movements, server-side `bn.recalc_order`). `supabase/tests/core.sql` (`npm run test:db`) proves the rules.
 - `src/app/App.tsx` — resolves page → session → access → shell → surface. `src/app/context.tsx` `useApp()` = `{ page, db, user, me, outletId, setOutlet, go }`.
 - `src/screens/<surface>.tsx` — dedicated screens (one per prototype). `src/templates/` — the 8 page templates for every back-office page without its own screen.
+- `src/system/pagemap.ts` — the ~600 sitemap entries are FEATURES; they live on 114 real pages (kind: page/tab/sheet/step/state/setting/template/tool) with a release (MVP → v2, from spec bn-pm.js roadmap). `src/system/connections.ts` — page links from spec LINKS + shared data. `npm run check:system` proves every feature has a page, every page is connected, no release gap, every code link is declared.
+- `src/system/hosts.ts` + `proxy.ts` — domains: `bornis.id`, `app.`, `pos.`, `kds.`, `display.`, `order.<tenant>`, `admin.`, merchant custom domains; or one domain with subfolders (`NEXT_PUBLIC_BORNIZ_ROUTING=path`). Use `linkTo(path)` for any public link (QR, receipt, WA). `npm run check:deploy` prints the domains/DNS and proves every page is reachable.
 - `src/system/perms.ts` — permission matrix (`perm(db, role, action, outletId)` → y/o/a/n). `src/system/access.ts` — which roles open which surface (launcher APPS).
 - `src/ui/PinSheet.tsx` — the only approval PIN sheet (`usePin()`). `src/screens/insight/metrics.ts` — the only sales math (dashboards + reports).
 - `src/ui/kit.tsx` (Icon, Badge, Status, Sheet, Seg, Toggle, Field, Numpad, Kpi, Empty, Loading, toast…), `src/ui/Chart.tsx` (Chart.js per DS), `app/globals.css` (tokens + component classes).
@@ -30,6 +32,6 @@ Cloud POS for Indonesian F&B / retail / UMKM. Every surface (marketing, owner, m
 Add a page in the design system sitemap → `npm run spec` → it routes automatically. Then `npm run graph`, `npm test`, `npm run links` (every in-app href must be a registry path), `npx tsc --noEmit`, `npx next build` (statically generates every page).
 
 ## Known gaps (local adapter vs production)
-- Realtime is BroadcastChannel + localStorage (one browser). Production: Supabase realtime on the same tables; swap `store.ts`, keep `actions.ts` signatures.
+- Data lives in the browser (localStorage + BroadcastChannel): one browser, one origin. Subdomain routing therefore needs the Supabase adapter before go-live (each subdomain has its own storage). Production: Supabase realtime on the same tables; swap `store.ts`, keep `actions.ts` signatures.
 - Payment gateway, WhatsApp (WABA), delivery-app webhooks and printers are simulated ("Simulate…" buttons). QR images are drawn stand-ins; the real QRIS payload comes from the gateway.
 - Approval PIN is verified in the browser by the local adapter; production verifies it only in `bn.decide`.

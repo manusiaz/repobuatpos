@@ -8,7 +8,7 @@ const walk = (d: string) => { for (const f of fs.readdirSync(d)) { const p = pat
 walk(new URL('../src', import.meta.url).pathname);
 let bad = 0;
 const ROOTS = /^\/(owner|manager|pic|pos|kds|display|order|kiosk|admin|system|account|online|waiter|studios|graph)(\/|$)/;
-for (const f of files.filter(f => !f.endsWith('registry.ts'))) {
+for (const f of files.filter(f => !f.endsWith('registry.ts') && !f.endsWith('hosts.ts'))) {
   const src = fs.readFileSync(f, 'utf8');
   for (const m of src.matchAll(/['"`](\/[a-z0-9\-\/]+)(?:[?#][^'"`]*)?['"`]/g)) {
     const p = m[1].replace(/\/$/, '') || '/';

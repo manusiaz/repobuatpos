@@ -1,4 +1,5 @@
 'use client';
+import { linkTo } from '../../system/hosts.ts';
 // Menu Studio previews outside the QR menu: receipt & e-receipt, customer display, kiosk attract, QR table stand, member card.
 // All of them render real store data (last order at the outlet, open cart, members, outlet tables).
 import type { CSSProperties, ReactNode } from 'react';
@@ -14,9 +15,8 @@ import { QR } from '../../ui/qr.tsx';
 const WHITE = 'var(--ink-0)', INK = 'var(--ink-950)';
 // Print card fills must be real colours for the contrast maths; these equal --ink-0 / --ink-950.
 const PAPER_HEX = '#FFFFFF', INK_HEX = '#141210';
-export const origin = () => (typeof location !== 'undefined' ? location.origin : 'https://app.bornis.id');
 /** Table link encoded in every table QR (scan landing detects the table and outlet). */
-export const tableUrl = (outletId: string, n: number) => `${origin()}/order/qr-menu/scan-landing?t=${String(n).padStart(2, '0')}&o=${outletId}`;
+export const tableUrl = (outletId: string, n: number) => linkTo(`/order?t=${String(n).padStart(2, '0')}&o=${outletId}`);
 const lastOrder = (db: DB, outletId: string, open = false): Order | undefined =>
   db.orders.filter(o => o.outletId === outletId && o.lines.length && (open ? ['open', 'sent', 'paying'].includes(o.status) : o.status === 'paid')).sort((a, b) => b.createdAt - a.createdAt)[0];
 const initials = (n: string) => n.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
@@ -25,7 +25,7 @@ export function ReceiptPreview({ ctx }: { ctx: GuestCtx }) {
   const { d, db, outletId } = ctx, rc = d.rc, o = lastOrder(db, outletId), outlet = db.outlets.find(x => x.id === outletId)!;
   const w = rc.paper === '58' ? 236 : 316, fs = rc.paper === '58' ? 11 : 12;
   const pts = o ? Math.floor(o.subtotal / 1000) : 0;
-  const url = rc.qr === 'feedback' ? `${origin()}/order/customer-links/feedback-and-rating?o=${o?.id ?? ''}` : rc.qr === 'member' ? `${origin()}/order/customer-links/member-card-and-points` : tableUrl(outletId, 1);
+  const url = rc.qr === 'feedback' ? linkTo(`/order/customer-links/feedback-and-rating?o=${o?.id ?? ''}`) : rc.qr === 'member' ? linkTo('/order/customer-links/member-card-and-points') : tableUrl(outletId, 1);
   const Row = ({ l, r, b }: { l: ReactNode; r: ReactNode; b?: boolean }) => <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontWeight: b ? 700 : 400 }}><span>{l}</span><span>{r}</span></div>;
   return <div className="row wrap" style={{ alignItems: 'flex-start', justifyContent: 'center', gap: 20 }}>
     <div className="mono" style={{ width: w, background: WHITE, color: INK, padding: '16px 14px', fontSize: fs, lineHeight: 1.5, boxShadow: 'var(--shadow-e2)', display: 'flex', flexDirection: 'column', gap: 6 }} aria-label={`${rc.paper} mm thermal receipt`}>

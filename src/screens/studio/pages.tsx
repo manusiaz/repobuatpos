@@ -1,4 +1,5 @@
 'use client';
+import { linkTo } from '../../system/hosts.ts';
 // Page Builder inside Menu Studio (spec: BorNiz Page Builder): pages, section library, section settings,
 // visibility rules, preview-as, devices and the promo blocks. Flash sales write db.promos (kind 'flash') for the POS.
 import { useEffect, useState, type ReactNode } from 'react';
@@ -154,7 +155,7 @@ export function PagesPanel({ view, a }: { view: string; a: SiteApi }) {
     <div className="row wrap">{[['Blank page', []], ['Promos page', promosTemplate()], ['Link in bio', ['hero', 'links', 'member']]].map(([l, types]) =>
       <button key={l as string} className="btn btn-sm" onClick={() => { const id = 'pg' + Date.now().toString(36); a.mut(site => { site.push({ id, name: l as string, slug: '/' + (l as string).toLowerCase().replace(/\s+/g, '-'), icon: 'file', nav: false, sched: 'always', seo: l as string, sections: (types as (string | [string, Record<string, Val>])[]).map(t => Array.isArray(t) ? newSection(t[0], t[1]) : newSection(t)) }); }); a.setPageId(id); }}><Icon name="plus" size={14} />{l as string}</button>)}</div>
     <Block title={'Page · ' + pg.name}>
-      <Fields g={pg as unknown as Record<string, Val>} set={(k, v) => setPage(k as keyof SitePage, v)} fs={[f.text('name', 'Name'), f.text('slug', 'Address', 'order.bornis.id/kopibiru' + pg.slug), f.tog('nav', 'Show in menu bar'), f.seg('sched', 'Live', 'always:Always|season:Seasonal|hidden:Hidden'), f.text('seo', 'SEO title')]} />
+      <Fields g={pg as unknown as Record<string, Val>} set={(k, v) => setPage(k as keyof SitePage, v)} fs={[f.text('name', 'Name'), f.text('slug', 'Address', linkTo('/order').replace(/^https?:\/\//, '') + pg.slug), f.tog('nav', 'Show in menu bar'), f.seg('sched', 'Live', 'always:Always|season:Seasonal|hidden:Hidden'), f.text('seo', 'SEO title')]} />
       {!['home', 'menu'].includes(pg.id) && <button className="btn btn-danger" onClick={() => { a.mut(site => { site.splice(site.findIndex(p => p.id === pg.id), 1); }); a.setPageId('home'); }}><Icon name="trash-2" size={16} />Delete page</button>}
     </Block>
   </>;

@@ -8,13 +8,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --test --experimental-strip-types src/domain/*.test.ts",
+    "test": "node --test --experimental-strip-types src/domain/*.test.ts src/system/*.test.ts",
     "typecheck": "tsc --noEmit",
     "graph": "node --experimental-strip-types scripts/graph.ts",
     "paths": "node --experimental-strip-types scripts/paths.ts",
     "links": "node --experimental-strip-types scripts/check-links.ts",
     "test:db": "psql \"postgres://postgres@localhost:5433/postgres\" -v ON_ERROR_STOP=1 -q -f supabase/tests/core.sql",
-    "check:system": "node --experimental-strip-types scripts/check-system.ts"
+    "check:system": "node --experimental-strip-types scripts/check-system.ts",
+    "check:deploy": "node --experimental-strip-types scripts/check-deploy.ts"
   },
   "dependencies": {
     "chart.js": "^4.5.1",

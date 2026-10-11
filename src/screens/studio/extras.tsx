@@ -1,4 +1,5 @@
 'use client';
+import { linkTo } from '../../system/hosts.ts';
 // "More pages" in Menu Studio: every extra customer page or screen, as a settings spec + a live preview from store data.
 // Settings live in the menu design (design.x[key]) and publish with the rest of the menu.
 import type { ReactNode } from 'react';
@@ -9,7 +10,6 @@ import { Icon } from '../../ui/kit.tsx';
 import { Block, f, type Device, type F } from './Frame.tsx';
 import { Guest, GBtn, Tag, gh, guestProducts, photoOf, type GuestCtx } from './guest.tsx';
 import { QR } from '../../ui/qr.tsx';
-import { origin } from './surfaces.tsx';
 
 export interface Extra { key: string; label: string; icon: string; device: Device | 'print'; defaults: Group; fields: (ctx: GuestCtx, g: Group) => F[]; extra?: (g: Group, set: (k: string, v: Val) => void, ctx: GuestCtx) => ReactNode; preview: (g: Group, ctx: GuestCtx) => ReactNode }
 const WHITE = 'var(--ink-0)';
@@ -171,10 +171,10 @@ export const EXTRAS: Extra[] = [
         <b style={{ fontFamily: 'var(--bn-font)', fontSize: 24, minWidth: 72 }}>{p.kind === 'pct' ? p.value + '%' : Math.round(p.value / 1000) + 'k'}</b><span style={{ flex: 1, fontSize: 13 }}><b>{p.name}</b>{p.minSpend ? <><br />Min. spend {idr(p.minSpend)}</> : null}{g.expiry && p.quota ? <><br />{p.quota - (p.used ?? 0)} left</> : null}</span>{g.code && p.code && <span className="mono" style={{ fontSize: 12 }}>{p.code}</span>}</div>; })}</Page> },
 
   { key: 'multi-page-online-store-link-in-bio', label: 'Online store & link in bio', icon: 'link', device: 'phone', defaults: { handle: '@kopibiru.id', order: true, book: true, gift: true, wa: true, maps: true, store: 'kopibiru' },
-    fields: () => [f.text('handle', 'Handle'), f.text('store', 'Store address', 'order.bornis.id/<this>'), f.tog('order', 'Order online'), f.tog('book', 'Book a table'), f.tog('gift', 'Gift cards'), f.tog('wa', 'WhatsApp'), f.tog('maps', 'Google Maps (each outlet)')],
+    fields: () => [f.text('handle', 'Handle'), f.text('store', 'Store address', 'your link: ' + linkTo('/order', '<this>').replace(/^https?:\/\//, '')), f.tog('order', 'Order online'), f.tog('book', 'Book a table'), f.tog('gift', 'Gift cards'), f.tog('wa', 'WhatsApp'), f.tog('maps', 'Google Maps (each outlet)')],
     preview: (g, ctx) => <Guest d={ctx.d} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center', textAlign: 'center' }}>
       <span style={{ width: 84, height: 84, borderRadius: 99, background: ctx.d.media.logo ? `var(--bn-surface) url(${ctx.d.media.logo}) center/70% no-repeat` : 'var(--bn-banner)' }} /><H ctx={ctx}>{String(g.handle)}</H><p style={{ fontSize: 13, opacity: .75 }}>{ctx.d.tagline}</p>
       {[['order', 'Order online'], ['book', 'Book a table'], ['gift', 'Gift cards'], ['wa', 'Chat on WhatsApp']].filter(([k]) => g[k]).map(([k, l], i) => <GBtn key={k} d={ctx.d} ghost={i > 0} style={{ width: '100%' }}>{l}</GBtn>)}
       {g.maps && ctx.db.outlets.map(o => <GBtn key={o.id} d={ctx.d} ghost style={{ width: '100%' }}><Icon name="map-pin" size={16} />{o.name}</GBtn>)}
-      <span className="mono" style={{ fontSize: 11, opacity: .6 }}>{origin().replace(/^https?:\/\//, '')}/{String(g.store)}</span></Guest> },
+      <span className="mono" style={{ fontSize: 11, opacity: .6 }}>{linkTo('/order', String(g.store)).replace(/^https?:\/\//, '')}</span></Guest> },
 ];

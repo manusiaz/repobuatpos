@@ -4,6 +4,7 @@ import { productImage } from '../../ui/kit.tsx';
 // member, language, and the small building blocks every QR-menu and customer-link view shares.
 import { useEffect, type ReactNode } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { routeQuery } from '../../system/hosts.ts';
 import { useApp } from '../../app/context.tsx';
 import { pagesOf } from '../../system/registry.ts';
 import { Icon, useNow } from '../../ui/kit.tsx';
@@ -21,7 +22,7 @@ export function useGuest() {
   const { db, outletId, go } = useApp();
   const sp = useSearchParams();
   const [saved, setSaved] = useLocal('bn-qr-table', 'T-07');
-  const qt = sp.get('t');
+  const qt = sp.get('t') ?? routeQuery().t ?? null; // order.bornis.id/<tenant>/t/07 carries the table in the path
   const table = qt ? 'T-' + qt.replace(/^T-?/i, '').padStart(2, '0') : saved;
   useEffect(() => { if (qt && table !== saved) setSaved(table); }, [qt, table, saved, setSaved]);
   const L = useLang();
