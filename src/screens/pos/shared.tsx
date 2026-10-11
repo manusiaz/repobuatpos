@@ -71,7 +71,6 @@ export const SETTINGS_PATH = '/pos/device/register-settings';
 export const OPEN_STATUSES: Order['status'][] = ['open', 'sent', 'preparing', 'ready', 'served', 'paying'];
 export const isOpenBill = (o: Order) => OPEN_STATUSES.includes(o.status) || o.status === 'held';
 export const paidOf = (db: DB, orderId: string) => db.payments.filter(p => p.orderId === orderId && p.status === 'settled').reduce((a, p) => a + p.amount, 0);
-export const tint = (hue: number) => `linear-gradient(135deg,oklch(.92 .05 ${hue}),oklch(.8 .08 ${hue}))`;
 export const label = (o: Order) => o.type === 'dine' ? (o.table ?? 'Dine-in') : o.type === 'take' ? 'Takeaway' : 'Delivery';
 export const itemsOf = (o: Order) => o.lines.reduce((a, l) => a + l.qty, 0);
 export const startOfDay = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); };

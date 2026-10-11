@@ -5,20 +5,22 @@ import { nav, PAGES, surfaceHome } from '../system/registry.ts';
 import { relatedPages } from '../system/graph-lite.ts';
 import { Icon, Badge } from '../ui/kit.tsx';
 import { useApp } from './context.tsx';
+import { staffBrand } from '../data/actions/studio.ts';
 import { Bell, Help, Launcher, OutletPicker, UserSwitch } from './chrome.tsx';
 
 export function BackOfficeShell({ children }: { children: ReactNode }) {
-  const { page, user } = useApp();
+  const { page, user, db } = useApp();
+  const sb = staffBrand(db); // Brand Studio: workspace name, logo and owner accent on staff tools
   const role = user.role === 'manager' ? 'manager' : user.role === 'admin' ? 'admin' : 'owner';
   const groups = useMemo(() => nav(role), [role]);
   const [q, setQ] = useState(''), [open, setOpen] = useState<Record<string, boolean>>({}), [side, setSide] = useState(false);
   const home = role === 'admin' ? '/admin' : role === 'manager' ? '/manager' : '/owner';
   const ql = q.toLowerCase();
-  return <div className="bo" data-role={role} data-theme={role === 'admin' ? 'dark' : undefined}>
+  return <div className="bo" data-role={role} data-theme={role === 'admin' ? 'dark' : undefined} style={role === 'owner' ? { ['--role' as string]: sb.c.primary, ['--role-soft' as string]: `color-mix(in srgb, ${sb.c.primary} 10%, var(--bg-surface))`, ['--role-fg' as string]: `color-mix(in srgb, ${sb.c.primary} 75%, var(--fg-1))` } : undefined}>
     <aside className={'bo-side' + (side ? ' open' : '')} aria-label="Navigation">
       <Link href={home} className="row" style={{ padding: '4px 6px 12px', textDecoration: 'none', color: 'var(--fg-1)' }}>
-        <span style={{ width: 36, height: 36, borderRadius: 11, background: 'var(--role)', color: '#fff', display: 'grid', placeItems: 'center', fontFamily: 'var(--font-display)', fontWeight: 700 }}>B</span>
-        <span className="stack" style={{ gap: 0 }}><b>{role === 'admin' ? 'BorNiz' : 'Kopi Biru'}</b><span className="faint" style={{ fontSize: 12 }}>{role === 'admin' ? 'BorNiz HQ' : role === 'manager' ? 'Manager · Senayan + Kemang' : 'Owner · 3 outlets · Pro'}</span></span>
+        <span style={{ width: 36, height: 36, borderRadius: 11, background: role !== 'admin' && sb.logo ? `center / cover url("${sb.logo}")` : 'var(--role)', color: '#fff', display: 'grid', placeItems: 'center', fontFamily: 'var(--font-display)', fontWeight: 700 }}>{role !== 'admin' && sb.logo ? '' : (role === 'admin' ? 'B' : sb.workspace.slice(0, 1))}</span>
+        <span className="stack" style={{ gap: 0 }}><b>{role === 'admin' ? 'BorNiz' : sb.workspace}</b><span className="faint" style={{ fontSize: 12 }}>{role === 'admin' ? 'BorNiz HQ' : role === 'manager' ? 'Manager · Senayan + Kemang' : 'Owner · 3 outlets · Pro'}</span></span>
       </Link>
       <input className="search" placeholder={`Search ${PAGES.length} pages`} value={q} onChange={e => setQ(e.target.value)} aria-label="Search pages" />
       <Link className="nav-i" href={home} aria-current={page.path === home ? 'page' : undefined}><Icon name="activity" size={18} />{role === 'admin' ? 'Platform overview' : 'Live dashboard'}</Link>
@@ -54,7 +56,7 @@ export function Connected() {
   if (!rel.length) return null;
   return <section className="card stack" aria-label="Connected pages">
     <div className="row between"><h3>Connected · same data</h3><Link href={'/graph?node=' + encodeURIComponent(page.path)} className="row" style={{ fontSize: 13 }}><Icon name="waypoints" size={16} />Open in graph</Link></div>
-    <div className="row wrap">{rel.map(p => <Link key={p.path} href={p.path} className="chip row" style={{ textDecoration: 'none', color: 'var(--fg-1)' }}>{p.title}<Badge>{p.role}</Badge></Link>)}</div>
+    <div className="row wrap">{rel.map(p => <Link key={p.path} href={p.path} className="chip row" style={{ textDecoration: 'none', color: 'var(--fg-1)', whiteSpace: 'normal', height: 'auto', minHeight: 34, padding: '6px 12px', maxWidth: '100%', flex: '0 1 auto' }}>{p.title}<Badge>{p.role}</Badge></Link>)}</div>
   </section>;
 }
 

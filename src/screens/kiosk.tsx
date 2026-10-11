@@ -1,4 +1,5 @@
 'use client';
+import { productImage } from '../ui/kit.tsx';
 // Self-order kiosk (spec: BorNiz Kiosk). Portrait 9:16 canvas in cqw units, 64px+ touch targets, actions in the
 // bottom half, merchant brand. The order is a real store order (source 'kiosk', K-number) and reaches the KDS once
 // paid; "pay at cashier" holds it for the register. Resets to the attract screen after 60 s without a touch.
@@ -10,7 +11,7 @@ import { idr } from '../domain/money.ts';
 import { addLine, cancelPayment, clearOrder, gatewayWebhook, holdOrder, newOrder, patchOrder, sendToKitchen, setQty, startPayment } from '../data/actions.ts';
 import { orderPlaced } from '../data/actions/selforder.ts';
 import type { Order } from '../data/schema.ts';
-import { brandVars, groupsOf, LINE, missingGroup, mmss, modsFrom, modsText, MUTED, OptionPicker, photo, QR, unit, useLang, useLocal, useMenu, Wordmark, type MenuItem, type Sel } from './guest/kit.tsx';
+import { brandVars, groupsOf, LINE, missingGroup, mmss, modsFrom, modsText, MUTED, OptionPicker, QR, unit, useLang, useLocal, useMenu, Wordmark, type MenuItem, type Sel } from './guest/kit.tsx';
 
 const SLUG = { attract: 'kiosk-attract-screen', menu: 'kiosk-menu-and-cart', pay: 'kiosk-payment-and-number' } as const;
 type View = keyof typeof SLUG;
@@ -108,7 +109,7 @@ function Menu({ L, order, type, setType, ensure, toPay }: { L: LangT; order: Ord
     <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: '0 5cqw 26cqw', display: 'grid', gridTemplateColumns: '1fr 1fr', gridAutoRows: 'min-content', gap: '3cqw' }}>
       {list.map(i => { const n = inCart(i.p.id); return <button key={i.p.id} disabled={i.sold} onClick={() => groupsOf(db, i.p).length ? setOpen(i) : add(i)} aria-label={`${i.p.name}, ${i.sold ? t('Sold out') : idr(unit(i))}`}
         style={{ ...CARD, boxShadow: 'none', padding: 0, overflow: 'hidden', textAlign: 'left', position: 'relative', opacity: i.sold ? .55 : 1, cursor: i.sold ? 'not-allowed' : 'pointer' }}>
-        <span style={{ display: 'block', aspectRatio: '1', background: i.sold ? 'var(--bg-sunken)' : photo(i.p.hue) }} />
+        <span style={{ display: 'block', aspectRatio: '1', background: i.sold ? 'var(--bg-sunken)' : productImage(i.p) }} />
         <span style={{ display: 'block', padding: '3cqw' }}><b style={{ display: 'block', fontSize: '4cqw', lineHeight: 1.2 }}>{i.p.name}</b>
           {i.sold ? <b style={{ fontSize: '4cqw', color: MUTED }}>{t('Sold out')}</b> : <><b style={{ fontSize: '4cqw', color: 'var(--bn-p)' }}>{idr(unit(i))}</b>{i.flash != null && <s style={{ fontSize: '3cqw', color: MUTED, marginLeft: '1.4cqw' }}>{idr(i.price).replace('IDR ', '')}</s>}</>}</span>
         {n > 0 && <span style={{ position: 'absolute', top: '2.4cqw', right: '2.4cqw', minWidth: '9cqw', height: '9cqw', padding: '0 2cqw', borderRadius: 99, background: 'var(--bn-p)', color: 'var(--ink-0)', fontSize: '4cqw', fontWeight: 800, lineHeight: '9cqw', textAlign: 'center' }}>{n}</span>}
@@ -131,7 +132,7 @@ function ItemSheet({ i, L, close, add }: { i: MenuItem; L: LangT; close: () => v
     <div onClick={close} style={{ position: 'absolute', inset: 0, background: 'color-mix(in srgb,var(--ink-950) 45%,transparent)', zIndex: 8, animation: 'fade var(--dur-base) var(--ease-out)' }} />
     <div role="dialog" aria-modal="true" aria-label={i.p.name} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, maxHeight: '88%', zIndex: 9, background: 'var(--bn-paper)', borderRadius: '7cqw 7cqw 0 0', display: 'flex', flexDirection: 'column', animation: 'slideU var(--dur-slow) var(--ease-out)' }}>
       <div style={{ flex: 'none', display: 'flex', gap: '4cqw', padding: '5cqw', alignItems: 'center' }}>
-        <span style={{ width: '22cqw', height: '22cqw', borderRadius: '5cqw', background: photo(i.p.hue), flex: 'none' }} />
+        <span style={{ width: '22cqw', height: '22cqw', borderRadius: '5cqw', background: productImage(i.p), flex: 'none' }} />
         <span style={{ flex: 1, minWidth: 0 }}><b style={{ ...HEAD, display: 'block', fontSize: '6cqw' }}>{i.p.name}</b><span style={{ fontSize: '4cqw', color: MUTED }}>{idr(unit(i))}</span></span>
         <button onClick={close} aria-label="Close" style={{ width: TOUCH, height: TOUCH, borderRadius: 99, border: 0, background: 'var(--ink-0)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Icon name="x" size={28} /></button>
       </div>

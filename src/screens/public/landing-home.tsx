@@ -1,4 +1,5 @@
 'use client';
+import { productImage } from '../../ui/kit.tsx';
 // Home, features, solutions, hardware, integrations and case studies (spec/BorNiz Landing, layout A: hero + product mock).
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -55,7 +56,7 @@ function RegisterMock() {
     <div style={{ borderRadius: 18, background: 'var(--ink-50)', color: 'var(--ink-950)', display: 'flex', overflow: 'hidden', minHeight: 300 }}>
       <div style={{ flex: 1, padding: 12, display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(88px,1fr))', gap: 8, alignContent: 'start' }}>
         {items.map(p => <button key={p.id} onClick={() => setCart(c => ({ ...c, [p.id]: (c[p.id] ?? 0) + 1 }))} style={{ border: 0, padding: 0, borderRadius: 12, background: 'var(--ink-0)', boxShadow: '0 0 0 1px var(--ink-200)', overflow: 'hidden', display: 'flex', flexDirection: 'column', cursor: 'pointer', textAlign: 'left' }}>
-          <span style={{ aspectRatio: '4/3', background: `linear-gradient(135deg,oklch(.9 .05 ${p.hue}),oklch(.8 .07 ${p.hue}))` }} />
+          <span style={{ aspectRatio: '4/3', background: productImage(p) }} />
           <span style={{ padding: '6px 8px', fontSize: 11, fontWeight: 700, lineHeight: 1.2 }}>{p.name}<br /><span style={{ fontWeight: 500, color: 'var(--ink-600)' }}>{idrShort(priceAt(db, p, outlet.id))}</span></span>
         </button>)}
       </div>

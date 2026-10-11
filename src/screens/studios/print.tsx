@@ -1,4 +1,5 @@
 'use client';
+import { productImage } from '../../ui/kit.tsx';
 // Print studio: labels, tickets, coupons, letterhead, printed menu, receipts. Every preview prints a real order / PO / catalog.
 import { idr } from '../../domain/money.ts';
 import { Empty, hhmm } from '../../ui/kit.tsx';
@@ -104,7 +105,7 @@ function PrintedMenu({ v, x }: PP) {
     <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols},minmax(0,1fr))`, gap: 16, flex: 1 }}>
       {menu.map(g => <div key={g.c.id} className="stack" style={{ gap: 6 }}><b style={{ fontSize: 13, letterSpacing: '.06em', textTransform: 'uppercase', color: t.p }}>{g.c.name}</b>
         {g.items.map(r => <div key={r.p.id} className="row" style={{ gap: 6, fontSize: 12, opacity: r.is86 ? .45 : 1 }}>
-          {v.photos && <span style={{ width: 22, height: 22, borderRadius: 6, flex: 'none', background: `hsl(${r.p.hue} 45% 62%)` }} />}
+          {v.photos && <span style={{ width: 22, height: 22, borderRadius: 6, flex: 'none', background: productImage(r.p) }} />}
           <span className="grow" style={{ overflowWrap: 'anywhere' }}>{r.p.name}</span>{v.prices && <b>{thousands(r.price)}</b>}</div>)}</div>)}
     </div>
     <span style={{ fontSize: 10, textAlign: 'center' }}>{v.note}{v.prices && ' · Prices in IDR thousands'}</span>

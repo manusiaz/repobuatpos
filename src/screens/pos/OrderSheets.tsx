@@ -1,4 +1,5 @@
 'use client';
+import { productImage } from '../../ui/kit.tsx';
 // Every sheet that edits the current order. One sheet at a time; approvals replace the sheet body in place.
 import { useState, type ReactNode } from 'react';
 import { addCustomer, addLine, applyVoucher, holdOrder, patchOrder, priceAt, redeem, sendToKitchen } from '../../data/actions.ts';
@@ -58,7 +59,7 @@ function Options({ close }: BodyProps) {
     addLine(ensureOrder(), p.id, chosen.map(o => ({ name: o.name, price: o.price })), qty, note.trim(), me.id); enqueue('order.line_added'); close();
   };
   return <div className="stack lg">
-    <div className="row"><span style={{ width: 64, height: 64, borderRadius: 16, background: `linear-gradient(135deg,oklch(.92 .05 ${p.hue}),oklch(.8 .08 ${p.hue}))`, flex: 'none' }} />
+    <div className="row"><span style={{ width: 64, height: 64, borderRadius: 16, background: productImage(p), flex: 'none' }} />
       <div className="stack" style={{ gap: 2 }}><h3>{p.name}</h3><span className="muted">{idr(base)}{base < priceAt(db, p, outletId) && ' · flash price'}</span></div></div>
     {sold && <div className="banner b-danger"><Icon name="ban" />Sold out at this outlet. It stays visible but can’t be added.</div>}
     {groups.map(g => {

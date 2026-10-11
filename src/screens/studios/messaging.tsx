@@ -8,7 +8,7 @@ import type { DB, Message, Rec } from '../../data/schema.ts';
 import { idr, idrShort } from '../../domain/money.ts';
 import { Badge, Empty, Icon, Kpi, Seg, Status, Toggle, ago, dateShort, hhmm, toast, useNow } from '../../ui/kit.tsx';
 import { LineChart } from '../../ui/Chart.tsx';
-import { Caption, CopyRow, F, fillVars, first, orderVars, outletName, pct, Phone, Stage, type Ctx, type PP, type Tool, type V } from './core.tsx';
+import { Caption, CopyRow, F, fillVars, orderVars, outletName, pct, Phone, Stage, type Ctx, type PP, type Tool, type V } from './core.tsx';
 
 // ── Templates ────────────────────────────────────────────────────────────────────────────
 type Cat = 'UTILITY' | 'MARKETING';

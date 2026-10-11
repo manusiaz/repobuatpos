@@ -14,7 +14,7 @@ export interface Outlet { id: string; name: string; city: string; serviceBps: nu
 export interface Employee { id: string; name: string; role: Role; outlets: string[]; pin: string; approvalPin: string; phone: string; color: string; active: boolean; wage: IDR }
 export interface Category { id: string; name: string; station: 'bar' | 'kitchen' | 'pastry' }
 export interface ModifierGroup { id: string; name: string; required: boolean; max: number; options: { id: string; name: string; price: IDR }[] }
-export interface Product { id: string; name: string; categoryId: string; basePrice: IDR; scope: Scope; ownerOutletId: string | null; status: ProductStatus; hue: number; sku: string; desc: string; modifierGroupIds: string[]; promoteRequested?: boolean; cost: IDR }
+export interface Product { id: string; name: string; categoryId: string; basePrice: IDR; /** data URL or storage URL set in Menu Studio */ photo?: string; scope: Scope; ownerOutletId: string | null; status: ProductStatus; hue: number; sku: string; desc: string; modifierGroupIds: string[]; promoteRequested?: boolean; cost: IDR }
 export interface OutletProduct { productId: string; outletId: string; localPrice: IDR | null; is86: boolean; hidden: boolean }
 export interface StockItem { id: string; name: string; unit: string; unitCost: IDR; par: number }
 export interface Recipe { productId: string; stockItemId: string; qty: number }

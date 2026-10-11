@@ -8,9 +8,12 @@ Cloud POS for Indonesian F&B / retail / UMKM. Every surface (marketing, owner, m
 - `src/system/registry.ts` — sitemap → routes. Each page: `path, surface, shell, mode, template, object`. `npm run paths [surface]` lists them.
 - `src/system/graph.ts` → `KNOWLEDGE_GRAPH.json` (`npm run graph`): page / surface / object / role / event nodes, data-dependency edges. Viewer at `/graph`.
 - `src/domain/*` — pure business rules (money, order totals, approval ladder, loyalty, stock/opname, menu scope, promo, shift). Tested: `npm test`.
-- `src/data/schema.ts` (ERD tables), `seed.ts` (Kopi Biru demo tenant), `store.ts` (`useDB`, `commit` → audit + realtime across tabs), `actions.ts` (service layer: the only writers).
+- `src/data/schema.ts` (ERD tables), `seed.ts` (Kopi Biru demo tenant), `store.ts` (`useDB`, `commit` → audit + realtime across tabs), `actions.ts` (service layer: the only writers; `notify` = the one alert engine, recipients from the alert catalog), `actions/<surface>.ts` (surface-specific services, still only through `commit`).
+- `supabase/migrations/` — production schema (ERD, RLS per tenant + outlet, approval PIN verified in `bn.decide`, ladder in `bn.level_required`, append-only audit/ledger/movements, server-side `bn.recalc_order`). `supabase/tests/core.sql` (`npm run test:db`) proves the rules.
 - `src/app/App.tsx` — resolves page → session → access → shell → surface. `src/app/context.tsx` `useApp()` = `{ page, db, user, me, outletId, setOutlet, go }`.
 - `src/screens/<surface>.tsx` — dedicated screens (one per prototype). `src/templates/` — the 8 page templates for every back-office page without its own screen.
+- `src/system/perms.ts` — permission matrix (`perm(db, role, action, outletId)` → y/o/a/n). `src/system/access.ts` — which roles open which surface (launcher APPS).
+- `src/ui/PinSheet.tsx` — the only approval PIN sheet (`usePin()`). `src/screens/insight/metrics.ts` — the only sales math (dashboards + reports).
 - `src/ui/kit.tsx` (Icon, Badge, Status, Sheet, Seg, Toggle, Field, Numpad, Kpi, Empty, Loading, toast…), `src/ui/Chart.tsx` (Chart.js per DS), `app/globals.css` (tokens + component classes).
 
 ## Rules
@@ -24,4 +27,9 @@ Cloud POS for Indonesian F&B / retail / UMKM. Every surface (marketing, owner, m
 - Demo sign-ins: cashier PIN `1234`, approval PIN `246810`. Users: budi (owner), andi (manager), maya/sari/lia (PIC), rina/tono/wulan (cashier), dimas/hadi (kitchen), joko/putri (waiter), admin.
 
 ## Changing things
-Add a page in the design system sitemap → `npm run spec` → it routes automatically. Then `npm run graph`, `npm test`, `npx tsc --noEmit`, `npx next build` (statically generates every page).
+Add a page in the design system sitemap → `npm run spec` → it routes automatically. Then `npm run graph`, `npm test`, `npm run links` (every in-app href must be a registry path), `npx tsc --noEmit`, `npx next build` (statically generates every page).
+
+## Known gaps (local adapter vs production)
+- Realtime is BroadcastChannel + localStorage (one browser). Production: Supabase realtime on the same tables; swap `store.ts`, keep `actions.ts` signatures.
+- Payment gateway, WhatsApp (WABA), delivery-app webhooks and printers are simulated ("Simulate…" buttons). QR images are drawn stand-ins; the real QRIS payload comes from the gateway.
+- Approval PIN is verified in the browser by the local adapter; production verifies it only in `bn.decide`.

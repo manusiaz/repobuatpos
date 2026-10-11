@@ -1,4 +1,5 @@
 'use client';
+import { productImage } from '../ui/kit.tsx';
 // Customer display (spec: BorNiz Customer Display). A fixed 16:9 canvas in cqw units that never scrolls, worn in the
 // merchant brand. It mirrors the outlet's open POS order and follows it on its own: cart → QRIS → paid → receipt →
 // thank-you → rating → idle. Every state is also its own URL; opening one directly shows it without timers.
@@ -14,7 +15,7 @@ import { patchOrder, rateOrder } from '../data/actions.ts';
 import { chooseTip, newPairCode, pairByCode, sendReceipt, tipOf, unpairDisplay } from '../data/actions/display.ts';
 import { digits, findCustomer, findOrJoin } from '../data/actions/selforder.ts';
 import type { DB, Order, Payment } from '../data/schema.ts';
-import { brandVars, firstName, LINE, maskPhone, menuOf, mmss, modsText, MUTED, photo, QR, TINT, Wordmark } from './guest/kit.tsx';
+import { brandVars, firstName, LINE, maskPhone, menuOf, mmss, modsText, MUTED, QR, TINT, Wordmark } from './guest/kit.tsx';
 
 const SLUG = {
   idle: 'idle-promo-slideshow', cart: 'live-cart', qris: 'qris-payment', paid: 'payment-success', fail: 'payment-expired-failed', rate: 'rate-your-visit',
@@ -127,7 +128,7 @@ function Idle({ db, now, outletId }: P) {
     for (const p of db.promos.filter(x => usable(x, now))) {
       if (p.kind === 'flash') {
         const it = menu.find(i => p.productIds?.includes(i.p.id));
-        if (it && !it.sold) s.push({ head: `Flash sale: ${it.p.name}`, sub: `${idr(p.value)} · was ${idr(it.price)}${p.endsAt ? ' · until ' + hhmm(p.endsAt) : ''}`, bg: photo(it.p.hue) });
+        if (it && !it.sold) s.push({ head: `Flash sale: ${it.p.name}`, sub: `${idr(p.value)} · was ${idr(it.price)}${p.endsAt ? ' · until ' + hhmm(p.endsAt) : ''}`, bg: productImage(it.p) });
       } else s.push({ head: p.name, sub: [p.minSpend ? `Min. spend ${idr(p.minSpend)}` : '', p.code ? `Code ${p.code}` : '', p.quota != null ? `${(p.quota - (p.used ?? 0)).toLocaleString('en-US')} left` : ''].filter(Boolean).join(' · '), bg: 'var(--bn-banner)' });
     }
     s.push({ head: `Join ${db.tenant.name} Rewards`, sub: `1 bean for every IDR 1,000 · ${TIERS[1].name} members earn ${TIERS[1].multiplier}×`, bg: 'linear-gradient(135deg,var(--bn-p),var(--bn-ink))' });

@@ -1,4 +1,5 @@
 'use client';
+import { productImage } from '../../ui/kit.tsx';
 // Register (layout A): search + category chips + product grid, cart on the right with the 72px Charge.
 // Below 1024px (layout B) the cart becomes a bottom order bar that opens the cart as a sheet.
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -10,7 +11,7 @@ import { balance, tierOf } from '../../domain/loyalty.ts';
 import { idr } from '../../domain/money.ts';
 import { Badge, Icon, Seg, Sheet, Status, toast, hhmm } from '../../ui/kit.tsx';
 import type { Order, OrderLine } from '../../data/schema.ts';
-import { P, paidOf, picNow, tint, uiGet, uiSet, usePos, useApproval, usePerm, waitingFor, warnStyle, itemsOf } from './shared.tsx';
+import { P, paidOf, picNow, uiGet, uiSet, usePos, useApproval, usePerm, waitingFor, warnStyle, itemsOf } from './shared.tsx';
 
 export function Register() {
   const { db, outletId, cur, me, session, ensureOrder, go, route } = usePos();
@@ -58,7 +59,7 @@ export function Register() {
             const sold = !!op?.is86, base = priceAt(db, p, outletId), flash = flashPrice(db.promos, p.id), c = counts[p.id] ?? 0;
             return <button key={p.id} className="pos-tile" disabled={sold} aria-disabled={sold} onClick={() => tap(p.id)} style={{ opacity: sold ? .45 : 1, cursor: sold ? 'not-allowed' : 'pointer', boxShadow: c ? '0 0 0 2px var(--accent)' : undefined }}
               aria-label={`${p.name}, ${idr(flash ?? base)}${sold ? ', sold out' : ''}${c ? `, ${c} in order` : ''}`}>
-              <span className="pos-ph" style={{ background: tint(p.hue) }}>{sold && <span className="badge b-danger" style={{ position: 'absolute', left: 8, top: 8 }}>Sold out</span>}{flash != null && !sold && <span className="badge b-accent" style={{ position: 'absolute', left: 8, top: 8 }}>Flash</span>}</span>
+              <span className="pos-ph" style={{ background: productImage(p) }}>{sold && <span className="badge b-danger" style={{ position: 'absolute', left: 8, top: 8 }}>Sold out</span>}{flash != null && !sold && <span className="badge b-accent" style={{ position: 'absolute', left: 8, top: 8 }}>Flash</span>}</span>
               <span className="stack" style={{ gap: 2, padding: '8px 10px 10px', textAlign: 'left' }}>
                 <span style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.25 }}>{p.name}</span>
                 <span className="row" style={{ gap: 6 }}><b className="num" style={{ fontSize: 15 }}>{idr(flash ?? base)}</b>{flash != null && <s className="faint" style={{ fontSize: 13 }}>{idr(base)}</s>}</span>

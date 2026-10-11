@@ -1,15 +1,14 @@
 'use client';
 // Kitchen services the shared layer doesn't cover yet: bump per station to done in one tap, item-level done,
 // runner calls to the waiter phone. Same ready rules as bump() in actions.ts.
-import { commit, snapshot, uid } from '../store.ts';
+import { commit, snapshot } from '../store.ts';
 import type { DB, Order, OrderLine } from '../schema.ts';
 import { addLine, newOrder, requestApproval, sendToKitchen, toggle86 } from '../actions.ts';
 
 const findOrder = (d: DB, id: string) => d.orders.find(o => o.id === id);
-export function notice(d: DB, alert: string, level: 'info' | 'warn' | 'high', to: DB['notices'][0]['to'], outletId: string | null, text: string, href: string | null = null) {
-  d.notices.unshift({ id: uid('n'), alert, level, to, outletId, text, href, at: Date.now(), read: false });
-  if (d.notices.length > 200) d.notices.length = 200;
-}
+/** One alert engine: recipients from the alert catalog (actions.ts notify). */
+import { notify as notice } from '../actions.ts';
+export { notice };
 const label = (o: Order) => `${o.no}${o.table ? ' · ' + o.table : ''}`;
 
 /** After any line change: all fired lines done → ready (+ notice); started → preparing; recalled → back to preparing. */

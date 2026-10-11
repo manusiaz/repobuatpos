@@ -72,7 +72,7 @@ export default function List({ readOnly }: { readOnly?: boolean }) {
     </>} />
     <div className="row wrap" style={{ gap: 8 }}>
       <input className="search" style={{ maxWidth: 320 }} placeholder={`Search ${rows0.length} rows`} value={q} onChange={e => { setQ(e.target.value); setN(PAGE); }} aria-label="Search" />
-      <div className="row" style={{ overflowX: 'auto', gap: 6 }}>{chips.map(c => <button key={c} className="chip" aria-pressed={chip === c} onClick={() => setChip(c)}>{c.replace(/_/g, ' ')}</button>)}</div>
+      <div className="row" style={{ overflowX: 'auto', gap: 6, maxWidth: '100%', minWidth: 0 }}>{chips.map(c => <button key={c} className="chip" aria-pressed={chip === c} onClick={() => setChip(c)}>{c.replace(/_/g, ' ')}</button>)}</div>
       <span className="faint grow" style={{ textAlign: 'right', fontSize: 13 }}>{rows.length} of {rows0.length}</span>
     </div>
     {rows0.length === 0 ? <div className="card"><Empty icon={mode === 'approve' ? 'check-check' : 'inbox'} title={mode === 'approve' ? 'Nothing waiting for you' : 'Nothing here yet'}>{mode === 'record' ? 'These are created at the POS. They appear here the moment a cashier rings one up.' : mode === 'incoming' ? 'Incoming items from guests and delivery apps land here.' : canCreate ? 'Add the first one.' : 'Data appears as soon as it happens.'}</Empty>{canCreate && <div className="row" style={{ justifyContent: 'center' }}><button className="btn btn-primary" onClick={() => setSheet({ mode: 'new', row: null })}>New</button></div>}</div>

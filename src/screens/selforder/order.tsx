@@ -1,4 +1,5 @@
 'use client';
+import { productImage } from '../../ui/kit.tsx';
 // QR menu views (spec: BorNiz Self Order, layout A: list rows + cart bar). The cart is the table's open order in the
 // store (source 'qr'); the kitchen sees it once sent, and the status page follows the KDS line states live.
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -8,7 +9,7 @@ import { balance, tierOf, TIERS } from '../../domain/loyalty.ts';
 import { usable } from '../../domain/promo.ts';
 import { addLine, applyVoucher, cancelPayment, gatewayWebhook, patchOrder, sendToKitchen, setQty, startPayment } from '../../data/actions.ts';
 import { findOrJoin, guestCall, orderPlaced } from '../../data/actions/selforder.ts';
-import { firstName, groupsOf, LINE, missingGroup, mmss, modsFrom, modsText, MUTED, OptionPicker, photo, progress, QR, SURFACE, TINT, unit, useMenu, Wordmark, type Sel } from '../guest/kit.tsx';
+import { firstName, groupsOf, LINE, missingGroup, mmss, modsFrom, modsText, MUTED, OptionPicker, progress, QR, SURFACE, TINT, unit, useMenu, Wordmark, type Sel } from '../guest/kit.tsx';
 import { back, Bar, CartBar, ItemRow, newLines, Notices, Pill, settledOf, so, tableNo, Totals, type G } from './shared.tsx';
 
 const card = { padding: 16, borderRadius: 18, background: SURFACE } as const;
@@ -100,7 +101,7 @@ export function Home({ g }: { g: G }) {
     <SearchAndChips g={g} onCat={c => g.go(so('category-full-menu', c === 'all' ? undefined : { c }))} />
     {(flash.length > 0 || promos.length > 0) && <div className="row" style={{ gap: 10, overflowX: 'auto', padding: '2px 14px 6px', scrollbarWidth: 'none' }}>
       {flash.map(i => <button key={i.p.id} onClick={() => openItem(g, i.p.id)} style={{ flex: 'none', width: 250, padding: 14, borderRadius: 18, border: 0, background: 'var(--bn-ink)', color: 'var(--ink-0)', textAlign: 'left', cursor: 'pointer', display: 'flex', gap: 12, alignItems: 'center' }}>
-        <span style={{ width: 52, height: 52, borderRadius: 12, background: photo(i.p.hue), flex: 'none' }} />
+        <span style={{ width: 52, height: 52, borderRadius: 12, background: productImage(i.p), flex: 'none' }} />
         <span className="stack" style={{ gap: 2 }}><span style={{ fontSize: 11, fontWeight: 800, color: 'var(--bn-acc)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{t('Flash sale')}</span><b style={{ fontSize: 14 }}>{i.p.name}</b><span style={{ fontSize: 13 }}>{idr(i.flash!)} <s style={{ opacity: .7 }}>{idr(i.price).replace('IDR ', '')}</s></span></span></button>)}
       {promos.map(p => <button key={p.id} onClick={() => g.go(so('claim-voucher'))} style={{ flex: 'none', width: 220, padding: 14, borderRadius: 18, border: 0, background: 'var(--bn-acc)', color: 'var(--bn-ink)', textAlign: 'left', cursor: 'pointer' }}>
         <b style={{ display: 'block', fontSize: 15 }}>{p.name}</b><span style={{ fontSize: 13 }}>Code <b className="mono">{p.code}</b>{p.minSpend ? ` · min. ${idr(p.minSpend)}` : ''}</span></button>)}
@@ -182,7 +183,7 @@ export function Item({ g }: { g: G }) {
     back(g.go, so('menu-home'));
   };
   return <div style={{ paddingBottom: 110 }}>
-    <div style={{ height: 240, background: it.sold ? 'var(--bg-sunken)' : photo(it.p.hue), position: 'relative' }}>
+    <div style={{ height: 240, background: it.sold ? 'var(--bg-sunken)' : productImage(it.p), position: 'relative' }}>
       <button className="btn icon-btn" onClick={() => back(g.go, so('menu-home'))} aria-label="Back" style={{ position: 'absolute', top: 12, left: 12, borderRadius: 99 }}><Icon name="arrow-left" /></button>
       {it.flash != null && <span style={{ position: 'absolute', top: 18, right: 14, padding: '4px 10px', borderRadius: 99, background: 'var(--bn-acc)', fontSize: 12, fontWeight: 800 }}>{t('Flash sale')}</span>}
     </div>
@@ -196,7 +197,7 @@ export function Item({ g }: { g: G }) {
       <div className="field"><label htmlFor="note">Note for the kitchen <span className="faint">(optional)</span></label>
         <input id="note" className="input" value={note} onChange={e => setNote(e.target.value)} placeholder="Allergies, less spicy…" maxLength={80} /></div>
       {pair && <button onClick={() => openItem(g, pair.p.id)} style={{ ...card, border: `1px dashed ${LINE}`, display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer', textAlign: 'left', color: 'var(--bn-ink)' }}>
-        <span style={{ width: 52, height: 52, borderRadius: 12, background: photo(pair.p.hue), flex: 'none' }} />
+        <span style={{ width: 52, height: 52, borderRadius: 12, background: productImage(pair.p), flex: 'none' }} />
         <span className="grow"><b>Goes well with {pair.p.name}</b><br /><span style={{ fontSize: 13, color: MUTED }}>+ {idr(unit(pair))}</span></span><Icon name="chevron-right" /></button>}
     </div>
     <div style={{ position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: 0, width: 'min(520px,100vw)', padding: '12px 14px calc(14px + env(safe-area-inset-bottom))', background: 'var(--bn-paper)', borderTop: `1px solid ${LINE}`, display: 'flex', gap: 10, zIndex: 20 }}>
@@ -240,7 +241,7 @@ export function Cart({ g }: { g: G }) {
       </div>}
       {ups.length > 0 && <><b style={{ fontSize: 16 }}>{t('People also add')}</b>
         <div className="row" style={{ gap: 10, overflowX: 'auto', scrollbarWidth: 'none' }}>{ups.map(i => <button key={i.p.id} disabled={!g.canOrder} onClick={() => { addLine(cart.id, i.p.id, [], 1, '', 'guest'); toast('Added ' + i.p.name); }} style={{ flex: 'none', width: 140, padding: 8, borderRadius: 16, border: 0, background: SURFACE, textAlign: 'left', cursor: 'pointer', color: 'var(--bn-ink)' }}>
-          <span style={{ display: 'block', height: 80, borderRadius: 12, background: photo(i.p.hue), marginBottom: 6 }} /><b style={{ fontSize: 13 }}>{i.p.name}</b><br /><span style={{ fontSize: 13, color: MUTED }}>+ {idr(unit(i))}</span></button>)}</div></>}
+          <span style={{ display: 'block', height: 80, borderRadius: 12, background: productImage(i.p), marginBottom: 6 }} /><b style={{ fontSize: 13 }}>{i.p.name}</b><br /><span style={{ fontSize: 13, color: MUTED }}>+ {idr(unit(i))}</span></button>)}</div></>}
       <div className="field"><label htmlFor="knote">Note for the kitchen <span className="faint">(optional)</span></label>
         <textarea id="knote" className="input" rows={2} value={note} onChange={e => setNote(e.target.value)} onBlur={() => note !== (cart.note ?? '') && patchOrder(cart.id, { note }, 'guest')} placeholder="Allergies, no ice…" style={{ minHeight: 64 }} /></div>
       <Totals db={db} o={cart} me={g.me} />

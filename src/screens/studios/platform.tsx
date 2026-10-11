@@ -1,4 +1,5 @@
 'use client';
+import { productImage } from '../../ui/kit.tsx';
 // Platform studio: fonts, icons, app icon, sounds, languages, white-label, domain & SSO, embeds, brand kit, theme from logo,
 // motion, price & number display, accessible kiosk, legal pages, saved themes. Theme changes go through publish('menu').
 import { useEffect, useState } from 'react';
@@ -126,7 +127,7 @@ function Lang({ v, set, x }: PP) {
   return <Stage><Phone theme={t}>
     <div style={{ padding: 14, display: 'flex', gap: 6, flexWrap: 'wrap' }}>{on.map(([k, l]) => <span key={k} style={{ padding: '4px 10px', borderRadius: 99, fontSize: 12, background: k === prev ? 'var(--bn-p)' : 'transparent', color: k === prev ? onColor(t.p, t.ink) : 'inherit', border: '1px solid color-mix(in srgb,var(--bn-ink) 20%,transparent)' }}>{l}</span>)}</div>
     <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>{menu.map(i => <div key={i.p.id} className="row" style={{ padding: 10, borderRadius: 14, background: 'var(--ink-0)', gap: 10 }}>
-      <span style={{ width: 44, height: 44, borderRadius: 10, background: `hsl(${i.p.hue} 45% 62%)`, flex: 'none' }} />
+      <span style={{ width: 44, height: 44, borderRadius: 10, background: productImage(i.p), flex: 'none' }} />
       <span className="grow" style={{ fontSize: 14 }}><b>{v[`tr:${i.p.id}:${prev}`] || i.p.name}</b><br /><span style={{ fontSize: 12, opacity: .7 }}>{Math.round(i.price / 1000)}k</span></span>
       <span style={{ padding: '6px 12px', borderRadius: 10, background: 'var(--bn-p)', color: onColor(t.p, t.ink), fontSize: 13, fontWeight: 700 }}>{ui[0]}</span></div>)}</div>
   </Phone>
@@ -274,7 +275,7 @@ function Anim({ v, x }: PP) {
   const it = menuOf(x.db, x.outletId)[0]?.items[0];
   return <Stage><div data-guest onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} onFocus={() => setHover(true)} onBlur={() => setHover(false)} tabIndex={0}
     style={{ width: 240, padding: 16, borderRadius: 20, background: x.db.theme.paper, color: x.db.theme.ink, boxShadow: 'var(--shadow-e2)', transition: tr, transform: tf, cursor: 'pointer' }}>
-    <div style={{ height: 120, borderRadius: 14, background: `hsl(${it?.p.hue ?? 30} 45% 60%)` }} /><b style={{ display: 'block', marginTop: 10 }}>{it?.p.name}</b><span>{it && Math.round(it.price / 1000)}k</span></div>
+    <div style={{ height: 120, borderRadius: 14, background: productImage(it?.p ?? { hue: 30 }) }} /><b style={{ display: 'block', marginTop: 10 }}>{it?.p.name}</b><span>{it && Math.round(it.price / 1000)}k</span></div>
     <Caption>Hover or focus the card. {{ none: 'No entrance or hover motion; instant state changes.', subtle: 'Fade and rise 8px on enter, small lift on hover. Default.', playful: 'Spring pops, tilt on hover, confetti on order placed.' }[v.level as 'none']} {v.reduce ? 'Devices set to reduce motion get none.' : ''} Payment success always animates as a short fade.</Caption></Stage>;
 }
 const round = (n: number, step: number, mode: string) => step <= 1 ? n : (mode === 'up' ? Math.ceil(n / step) : mode === 'down' ? Math.floor(n / step) : Math.round(n / step)) * step;

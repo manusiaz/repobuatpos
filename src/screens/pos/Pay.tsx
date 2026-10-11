@@ -1,4 +1,5 @@
 'use client';
+import { QR } from '../../ui/qr.tsx';
 // Payment: one sheet, no stacked modals. Left = amount due, tip and methods (F1–F6); right = the method's panel.
 // QRIS / VA / e-wallet only settle through gatewayWebhook; the "simulate" buttons stand in for the bank.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -127,16 +128,8 @@ function CashPanel({ o, remaining, tip }: PanelProps) {
   </div>;
 }
 
-/** Deterministic QR-like matrix from the payment reference (the real QR comes from the gateway). */
-function QrArt({ seed, size = 220 }: { seed: string; size?: number }) {
-  const n = 25; let h = 0; for (const c of seed) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  const rnd = () => { h ^= h << 13; h ^= h >>> 17; h ^= h << 5; return (h >>> 0) / 4294967296; };
-  const finder = (x: number, y: number) => [[0, 0], [n - 7, 0], [0, n - 7]].some(([fx, fy]) => x >= fx && x < fx + 7 && y >= fy && y < fy + 7);
-  const cells: ReactNode[] = [];
-  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { if (!finder(x, y) && rnd() > .52) cells.push(<rect key={x + '-' + y} x={x} y={y} width={1} height={1} />); }
-  const F = ([fx, fy]: number[]) => <g key={fx + '' + fy}><rect x={fx} y={fy} width={7} height={7} /><rect x={fx + 1} y={fy + 1} width={5} height={5} fill="var(--ink-0)" /><rect x={fx + 2} y={fy + 2} width={3} height={3} /></g>;
-  return <svg viewBox={`-2 -2 ${n + 4} ${n + 4}`} width={size} height={size} role="img" aria-label="QRIS code" style={{ background: 'var(--ink-0)', borderRadius: 12, fill: 'var(--ink-950)', boxShadow: 'var(--shadow-e1)' }}>{cells}{[[0, 0], [n - 7, 0], [0, n - 7]].map(F)}</svg>;
-}
+/** QRIS on the register: the one QR encoder; encodes the gateway reference (production: the gateway's QRIS payload). */
+const QrArt = ({ seed, size = 220 }: { seed: string; size?: number }) => <div style={{ background: 'var(--ink-0)', color: 'var(--ink-950)', borderRadius: 12, boxShadow: 'var(--shadow-e1)', padding: 4 }}><QR value={seed} size={size} label="QRIS code" /></div>;
 
 function GatewayPanel({ o, remaining, tip, m }: PanelProps & { m: 'qris' | 'ewallet' | 'va' }) {
   const { db, me, go } = usePos();

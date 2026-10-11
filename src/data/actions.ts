@@ -2,7 +2,7 @@
 // Service layer. Mirrors the service events in spec/bn-diagrams.js (Orders, Payments, Inventory, Shifts, Approvals,
 // Loyalty, Catalog, Themes). A service writes only through commit(); effects of one event run in the same commit.
 import { commit, snapshot, uid } from './store.ts';
-import type { Approval, DB, Order, OrderLine, Product, Rec, Role } from './schema.ts';
+import type { Approval, DB, Order, Product, Rec, Role } from './schema.ts';
 import { orderTotals, QRIS_TTL_MS, type Method, type Source } from '../domain/order.ts';
 import { canDecide, levelRequired, type Level, type RequestType, PIN_TRIES, PIN_LOCK_MS } from '../domain/approval.ts';
 import { earn, reversal, tierOf, canRedeem } from '../domain/loyalty.ts';

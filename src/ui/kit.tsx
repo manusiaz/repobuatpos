@@ -71,3 +71,6 @@ export const ago = (t: number, now = Date.now()) => { const m = Math.round((now 
 export const hhmm = (t: number) => new Date(t).toTimeString().slice(0, 5);
 export const dateShort = (t: number) => new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 export function useNow(ms = 1000) { const [n, setN] = useState(() => Date.now()); useEffect(() => { const t = setInterval(() => setN(Date.now()), ms); return () => clearInterval(t); }, [ms]); return n; }
+/** The one product visual: the Menu Studio photo when there is one, else a warm tile from the product hue (DS: photos on warm neutral). */
+export const productImage = (p: { hue: number; photo?: string }) =>
+  p.photo ? `center / cover no-repeat url("${p.photo}")` : `linear-gradient(135deg,oklch(.92 .05 ${p.hue}),oklch(.8 .08 ${p.hue}))`;

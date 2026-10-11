@@ -11,7 +11,7 @@ import { idr, idrShort } from '../domain/money.ts';
 import { markRead } from '../data/actions.ts';
 import { nav, pagesOf } from '../system/registry.ts';
 import type { DB } from '../data/schema.ts';
-import { delta, openOrders, pct, period, series, soldAt, startOfDay, summary, WEEK , SOURCE_LABEL, METHOD_LABEL } from './insight/metrics.ts';
+import { delta, openOrders, pct, period, series, startOfDay, summary, WEEK, SOURCE_LABEL, METHOD_LABEL } from './insight/metrics.ts';
 import { amountOf, myQueue, outletsLive, typeLabel, useDecide, verbs, watchItems } from './insight/live.tsx';
 
 // Tab key → registry path (slug "owner-mobile-<key>").

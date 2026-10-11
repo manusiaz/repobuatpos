@@ -2,14 +2,11 @@
 // Guest services for the QR menu, kiosk and customer links. Writes only through commit(); order and payment
 // writes reuse the shared service layer (newOrder, addLine, startPayment …) in ../actions.ts.
 import { commit, snapshot, uid } from '../store.ts';
-import type { DB, Role } from '../schema.ts';
-import { addCustomer } from '../actions.ts';
+import type { DB } from '../schema.ts';
+import { addCustomer, notify } from '../actions.ts';
 
 const now = () => Date.now();
-function notice(d: DB, alert: string, level: 'info' | 'warn', to: Role[], outletId: string, text: string, href: string | null = null) {
-  d.notices.unshift({ id: uid('n'), alert, level, to, outletId, text, href, at: now(), read: false });
-  if (d.notices.length > 200) d.notices.length = 200;
-}
+const notice = notify; // one alert engine (actions.ts)
 
 export const digits = (s: string) => s.replace(/\D/g, '').replace(/^62/, '0');
 export const findCustomer = (d: DB, phone: string) => { const p = digits(phone); return p.length >= 9 ? d.customers.find(c => digits(c.phone) === p) : undefined; };

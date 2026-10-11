@@ -1,4 +1,5 @@
 'use client';
+import { productImage } from '../../ui/kit.tsx';
 // Self-order plumbing: table from the URL, the table's open bill (a real store order, source 'qr'), the remembered
 // member, language, and the small building blocks every QR-menu and customer-link view shares.
 import { useEffect, type ReactNode } from 'react';
@@ -10,7 +11,7 @@ import { idr } from '../../domain/money.ts';
 import { earn, tierOf } from '../../domain/loyalty.ts';
 import { newOrder } from '../../data/actions.ts';
 import type { DB, Order } from '../../data/schema.ts';
-import { groupsOf, hours, LINE, MUTED, photo, SURFACE, unit, unpaid, useLang, useLocal, type MenuItem } from '../guest/kit.tsx';
+import { groupsOf, hours, LINE, MUTED, SURFACE, unit, unpaid, useLang, useLocal, type MenuItem } from '../guest/kit.tsx';
 
 const PATHS: Record<string, string> = Object.fromEntries(pagesOf('selforder').map(p => [p.slug, p.path]));
 export const so = (slug: string, q?: Record<string, string>) => (PATHS[slug] ?? PATHS.order ?? '/') + (q ? '?' + new URLSearchParams(q) : '');
@@ -55,7 +56,7 @@ export function ItemRow({ i, onOpen, badge, t, count = 0 }: { i: MenuItem; onOpe
   const { db } = useApp();
   return <button type="button" onClick={onOpen} disabled={i.sold} aria-label={`${i.p.name}, ${i.sold ? t('Sold out') : idr(unit(i))}`}
     style={{ border: 0, padding: 10, borderRadius: 18, background: SURFACE, display: 'flex', gap: 12, alignItems: 'center', textAlign: 'left', cursor: i.sold ? 'not-allowed' : 'pointer', opacity: i.sold ? .55 : 1, color: 'var(--bn-ink)', width: '100%' }}>
-    <span style={{ width: 84, height: 84, flex: 'none', borderRadius: 14, background: i.sold ? 'var(--bg-sunken)' : photo(i.p.hue), position: 'relative' }}>
+    <span style={{ width: 84, height: 84, flex: 'none', borderRadius: 14, background: i.sold ? 'var(--bg-sunken)' : productImage(i.p), position: 'relative' }}>
       {(badge || i.flash != null) && !i.sold && <span style={{ position: 'absolute', top: 6, left: 6, height: 20, padding: '0 7px', borderRadius: 99, background: 'var(--bn-acc)', fontSize: 10, fontWeight: 800, lineHeight: '20px' }}>{i.flash != null ? t('Flash sale') : badge}</span>}
     </span>
     <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>

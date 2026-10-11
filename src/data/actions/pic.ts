@@ -3,21 +3,16 @@
 // Kept outside actions.ts (shared file); every write still goes through commit().
 import { commit, snapshot, uid } from '../store.ts';
 import { requestApproval } from '../actions.ts';
-import type { DB, Rec, Role } from '../schema.ts';
+import type { DB, Rec } from '../schema.ts';
 import { idr } from '../../domain/money.ts';
 import { opnameApprover, opnameVariance, type OpnameLine } from '../../domain/stock.ts';
 import { closeCheck } from '../../domain/shift.ts';
 import { sessionCash } from '../actions.ts';
-import alertsCatalog from '../../system/alerts.json' with { type: 'json' };
 
 const now = () => Date.now();
-const ALERT_TO: Record<string, Role[]> = Object.fromEntries((alertsCatalog.groups as [string, string, [string, string, Record<string, number>][]][])
-  .flatMap(g => g[2].map(a => [a[0].toLowerCase(), Object.keys(a[2]).filter(r => r !== 'guest') as Role[]])));
-/** Same routing as the alert engine in actions.ts: recipients from the alert catalog, fallback otherwise. */
-export function notice(d: DB, alert: string, level: 'info' | 'warn' | 'high', fallback: Role[], outletId: string | null, text: string, href: string | null = null) {
-  d.notices.unshift({ id: uid('n'), alert, level, to: ALERT_TO[alert.toLowerCase()] ?? fallback, outletId, text, href, at: now(), read: false });
-  if (d.notices.length > 200) d.notices.length = 200;
-}
+/** One alert engine: recipients from the alert catalog (actions.ts notify). */
+import { notify as notice } from '../actions.ts';
+export { notice };
 export function putRecord(d: DB, object: string, row: Rec) {
   const l = d.records[object] ?? (d.records[object] = []);
   const i = l.findIndex(x => x.id === row.id);

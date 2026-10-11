@@ -1,4 +1,5 @@
 'use client';
+import { productImage } from '../../ui/kit.tsx';
 // After the sale and counter tools: open bills, shift transaction history (detail, reprint, e-receipt, void / refund,
 // exchange) and tools (price check, stock check, sold-out, reservations & walk-ins, manager PIN override).
 import { useState } from 'react';
@@ -10,7 +11,7 @@ import { level as stockLevel } from '../../domain/stock.ts';
 import { idr } from '../../domain/money.ts';
 import { Badge, Empty, Field, Icon, Kpi, Seg, Sheet, Status, Toggle, ago, hhmm, toast } from '../../ui/kit.tsx';
 import type { Order, OrderLine } from '../../data/schema.ts';
-import { P, Paper, Row, TabLinks, isOpenBill, itemsOf, label, paidOf, receiptLines, startOfDay, tint, usePos, useApproval, usePerm, warnStyle } from './shared.tsx';
+import { P, Paper, Row, TabLinks, isOpenBill, itemsOf, label, paidOf, receiptLines, startOfDay, usePos, useApproval, usePerm, warnStyle } from './shared.tsx';
 import { CustomerList } from './OrderSheets.tsx';
 
 const lt = (l: OrderLine) => lineTotal({ unitPrice: l.unitPrice, flashPrice: l.flashPrice, modifiers: l.mods.map(m => m.price), qty: l.qty, discountPct: l.discountPct });
@@ -234,7 +235,7 @@ function SoldOut() {
   return <div className="stack">{c.input}
     <p className="muted" style={{ fontSize: 14 }}>Sold out is per outlet and syncs to the QR menu, kiosk, waiter app and delivery apps.{can('Mark item sold out') === 'a' ? ' Your role needs the PIC’s PIN for each change.' : ''}</p>
     <div className="grid" style={{ ['--min' as string]: '260px', gap: 8 }}>{sorted.map(p => { const on = !!db.outletProducts.find(x => x.productId === p.id && x.outletId === outletId)?.is86;
-      return <div key={p.id} className="row card tight" style={{ opacity: on ? .7 : 1, ...warnStyle(can('Mark item sold out')) }}><span style={{ width: 40, height: 40, borderRadius: 10, background: tint(p.hue), flex: 'none' }} />
+      return <div key={p.id} className="row card tight" style={{ opacity: on ? .7 : 1, ...warnStyle(can('Mark item sold out')) }}><span style={{ width: 40, height: 40, borderRadius: 10, background: productImage(p), flex: 'none' }} />
         <span className="grow stack" style={{ gap: 0 }}><b style={{ fontSize: 14 }}>{p.name}</b><span className={on ? '' : 'muted'} style={{ fontSize: 13, color: on ? 'var(--danger-fg)' : undefined }}>{on ? 'Sold out' : 'Available'}</span></span>
         <Toggle on={on} label={`${p.name} sold out`} onChange={() => flow.verify('Mark item sold out', `${on ? 'Back in stock' : 'Sold out'} · ${p.name}`, by => { toggle86(outletId, p.id, by); toast(`${p.name} ${on ? 'available again' : 'sold out'}`); })} /></div>; })}</div>
     <span className="faint" style={{ fontSize: 13 }}>Signed in as {me.name}.</span>

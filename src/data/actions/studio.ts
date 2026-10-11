@@ -70,6 +70,8 @@ function merge<T>(base: T, over: unknown): T {
 }
 /** The live (published) menu design that /order, /kiosk and /display read. */
 export const menuDesign = (db: DB): MenuDesign => merge(defaultDesign({ ...db.theme }), db.theme);
+/** Any saved design (draft, version, schedule) completed with defaults. */
+export const asDesign = (db: DB, data: unknown): MenuDesign => merge(menuDesign(db), data);
 
 // ── Versions & drafts ─────────────────────────────────────────────────────────────────
 export type Kind = Version['kind'];
@@ -161,12 +163,13 @@ const SLIDES: Record<string, Slide[]> = {
   tiles: [{ img: '', title: 'Weekend brunch', sub: 'Sat–Sun 08:00–12:00', badge: 'New' }, { img: '', title: 'Student 15%', sub: 'Show your student card', badge: '' }, { img: '', title: 'Office catering', sub: 'Order 1 day ahead', badge: '' }, { img: '', title: 'Gift cards', sub: 'From IDR 100k', badge: '' }],
 };
 export const ALL_VIS: Vis = { aud: 'all', time: 'all', outlet: 'all', dev: 'all', dates: '' };
-export function newSection(type: string, props: Group = {}): Section {
-  return { id: uid('s'), type, hidden: false, props: { ...SECTION_LIB[type][2], ...props }, items: structuredClone(SLIDES[type] ?? []), vis: { ...ALL_VIS }, style: { bg: 'page', pad: 'm' } };
+export function newSection(type: string, props: Group = {}, id = uid('s')): Section {
+  return { id, type, hidden: false, props: { ...SECTION_LIB[type][2], ...props }, items: structuredClone(SLIDES[type] ?? []), vis: { ...ALL_VIS }, style: { bg: 'page', pad: 'm' } };
 }
 const pg = (id: string, name: string, slug: string, icon: string, nav: boolean, types: (string | [string, Group])[], sched = 'always'): SitePage =>
-  ({ id, name, slug, icon, nav, sched, seo: name + ' · Kopi Biru', sections: types.map(t => (Array.isArray(t) ? newSection(t[0], t[1]) : newSection(t))) });
+  ({ id, name, slug, icon, nav, sched, seo: name + ' · Kopi Biru', sections: types.map((t, i) => (Array.isArray(t) ? newSection(t[0], t[1], `${id}-${i}`) : newSection(t, {}, `${id}-${i}`))) });
 export const promosTemplate = () => ['carousel', 'flash', 'vouchers', 'tiles', 'bundle', ['banner', { layout: 'split', title: 'Bring a friend, both get 10%', sub: 'Share your code from the member app', badge: 'Referral', cta: 'Get my code' }], 'popup'] as (string | [string, Group])[];
+/** Deterministic ids, so the default site always equals itself (no phantom draft before the first publish). */
 export function defaultSite(): Site {
   return [
     pg('home', 'Home', '/', 'home', true, ['announce', 'hero', 'cats', 'products', ['banner', { countdown: true }], 'reviews', 'member', 'hours']),
@@ -188,6 +191,8 @@ export function startFlash(sectionId: string, title: string, productIds: string[
   const d0 = snapshot(), now = Date.now();
   commit('promo.flash_started', by, d => {
     d.promos = d.promos.filter(p => (p as FlashPromo).sectionId !== sectionId);
+    // one flash price per product: a new sale replaces any running one on the same items
+    d.promos.forEach(p => { if (p.kind === 'flash' && (p.endsAt ?? 0) > now && p.productIds?.some(id => productIds.includes(id))) p.endsAt = now - 1; });
     for (const id of productIds) {
       const p = d0.products.find(x => x.id === id); if (!p) continue;
       const row: FlashPromo = { id: uid('fl'), name: `${title} · ${p.name}`, kind: 'flash', value: flashPriceOf(p.basePrice, disc), productIds: [id], endsAt: now + minutes * 60e3, quota, used: 0, startsAt: now, sectionId };

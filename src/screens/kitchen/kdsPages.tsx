@@ -10,7 +10,7 @@ import { clock, recall, setSetting, toggle86 } from '../../data/actions.ts';
 import { ask86, bumpStation, callRunner } from '../../data/actions/kds.ts';
 import { level } from '../../domain/stock.ts';
 import type { Order } from '../../data/schema.ts';
-import { Caught, kdsPath, SET, TGT, TicketGrid, type Kctx, type View } from '../kds.tsx';
+import { Caught, kdsPath, SET, TGT, type Kctx, type View } from '../kds.tsx';
 import { allDay, CHANNEL, completedToday, empName, isHistory, isOnline, linesAt, mmss, openLinesAt, prepStats, startOfDay, STATIONS, ticketLabel, type Station } from './model.ts';
 import { chime, fs, KBtn, Pill, Ticket } from './Ticket.tsx';
 import catalog from '../../system/catalog.json' with { type: 'json' };

@@ -1,4 +1,5 @@
 'use client';
+import { QR as QRCode } from '../../ui/qr.tsx';
 // Shared pieces for guest screens (customer display, QR menu, kiosk, customer links). Guest screens wear the
 // merchant brand from Menu Studio (db.theme → --bn-*), never BorNiz colors (Design Notes cd/so: "Read --bn-* variables").
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
@@ -32,7 +33,6 @@ export function brandVars(t: Theme): CSSProperties {
   } as CSSProperties;
 }
 /** Product photo placeholder until Menu Studio images exist: a soft gradient on the product hue. */
-export const photo = (hue: number) => `linear-gradient(135deg,oklch(.9 .05 ${hue}),oklch(.8 .07 ${hue}))`;
 export const initials = (name: string) => name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 export const firstName = (n?: string | null) => (n ?? '').split(' ')[0];
 export const mmss = (ms: number) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
@@ -132,20 +132,9 @@ export function hours(out: Outlet, now = Date.now()) {
   return { open, paused: !out.online, text: open ? `Open until ${out.closes}` : m < mins(out.opens) ? `Opens today at ${out.opens}` : `Opens tomorrow at ${out.opens}` };
 }
 
-// ── QR (visual stand-in; the real QRIS payload comes from the payment gateway) ─────────
+// ── QR: the one encoder (src/ui/qr.tsx). Payment screens encode the gateway reference; production encodes the gateway's QRIS payload.
 export function QR({ value, label }: { value: string; label?: string }) {
-  const N = 29, cells = useMemo(() => {
-    let h = 2166136261; const r = () => { h ^= h << 13; h ^= h >>> 17; h ^= h << 5; return (h >>> 0) / 4294967296; };
-    for (const c of value) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
-    const finder = (x: number, y: number) => [[0, 0], [N - 7, 0], [0, N - 7]].some(([a, b]) => x >= a && x < a + 8 && y >= b && y < b + 8);
-    const out: [number, number][] = [];
-    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (!finder(x, y) && r() < .5) out.push([x, y]);
-    return out;
-  }, [value]);
-  const eye = (x: number, y: number) => <g key={x + '-' + y}><rect x={x} y={y} width={7} height={7} /><rect x={x + 1} y={y + 1} width={5} height={5} fill="var(--ink-0)" /><rect x={x + 2} y={y + 2} width={3} height={3} /></g>;
-  return <svg viewBox={`-2 -2 ${N + 4} ${N + 4}`} role="img" aria-label={label ?? 'QR code'} style={{ width: '100%', height: '100%', display: 'block', background: 'var(--ink-0)', fill: 'var(--ink-950)' }} shapeRendering="crispEdges">
-    {cells.map(([x, y]) => <rect key={x + '.' + y} x={x} y={y} width={1} height={1} />)}{eye(0, 0)}{eye(N - 7, 0)}{eye(0, N - 7)}
-  </svg>;
+  return <div style={{ width: '100%', height: '100%', background: 'var(--ink-0)', color: 'var(--ink-950)' }}><QRCode value={value} size="100%" label={label} /></div>;
 }
 
 export const Wordmark = ({ name, size = 40, radius = 12 }: { name: string; size?: number | string; radius?: number | string }) =>

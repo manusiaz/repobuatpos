@@ -149,3 +149,7 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 @media (max-width:767px){.hide-sm{display:none!important}}
 @media (min-width:768px){.only-sm{display:none!important}}
 .b-info.banner{background:var(--info-soft);color:var(--info-fg)}.b-warning.banner{background:var(--warning-soft);color:var(--warning-fg)}.b-success.banner{background:var(--success-soft);color:var(--success-fg)}.b-danger.banner{background:var(--danger-soft);color:var(--danger-fg)}
+
+/* wide tables scroll inside their card, never the page */
+.card:has(> .table),.sheet-b:has(> .table),.card>.scroll-x{overflow-x:auto;max-width:100%}
+.bo-body>*{min-width:0;max-width:100%}
