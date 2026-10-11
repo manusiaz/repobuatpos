@@ -11,6 +11,7 @@ import { usable } from '../../domain/promo.ts';
 import { addLine, applyVoucher, cancelPayment, patchOrder, sendToKitchen, setQty, startPayment } from '../../data/actions.ts';
 import { findOrJoin, guestCall, orderPlaced } from '../../data/actions/selforder.ts';
 import { menuDesign } from '../../data/actions/studio.ts';
+import { payOn } from '../../system/settings.ts';
 import { firstName, groupsOf, LINE, missingGroup, mmss, modsFrom, modsText, MUTED, OptionPicker, progress, QR, SURFACE, TINT, unit, useMenu, Wordmark, type Sel } from '../guest/kit.tsx';
 import { back, Bar, CartBar, ItemRow, newLines, Notices, Pill, settledOf, so, tableNo, Totals, type G } from './shared.tsx';
 
@@ -259,7 +260,7 @@ export function Cart({ g }: { g: G }) {
 // ── Checkout & payment ─────────────────────────────────────────────────────────────────
 export function Checkout({ g }: { g: G }) {
   const { db, cart, me, t } = g;
-  const [name, setName] = useState(me?.name ?? ''), [phone, setPhone] = useState(me?.phone ?? ''), [tipPct, setTip] = useState(0), [pay, setPay] = useState<'qris' | 'cashier'>(db.device.online ? 'qris' : 'cashier');
+  const [name, setName] = useState(me?.name ?? ''), [phone, setPhone] = useState(me?.phone ?? ''), [tipPct, setTip] = useState(0), [pay, setPay] = useState<'qris' | 'cashier'>(db.device.online && payOn(db, 'qris') ? 'qris' : 'cashier');
   const [code, setCode] = useState(''), [err, setErr] = useState(''), [busy, setBusy] = useState(false);
   useEffect(() => { if (me) { setName(n => n || me.name); setPhone(p => p || me.phone); } }, [me]);
   if (!cart || !cart.lines.length) return <><Bar title={t('Checkout')} onBack={() => g.go(so('cart'))} /><Empty icon="shopping-basket" title={t('Your cart is empty')} action={<button className="btn btn-primary" onClick={() => g.go(so('menu-home'))}>{t('See the menu')}</button>} /></>;
@@ -284,9 +285,10 @@ export function Checkout({ g }: { g: G }) {
       else { startPayment(cart.id, 'qris', due, 'guest', tip); g.go(so('qris-payment')); }
     } catch (e) { setErr((e as Error).message); setBusy(false); }
   };
-  const ways: ['qris' | 'cashier', string, string, string, boolean][] = [
+  const ways = ([
     ['qris', 'qr-code', 'QRIS', g.online ? 'Any bank or e-wallet · pay now on this phone' : 'Needs internet', g.online],
-    ['cashier', 'store', t('Pay at the cashier'), hasNew ? 'Order goes to the kitchen now, pay later' : 'Show your table number at the counter', true]];
+    ['cashier', 'store', t('Pay at the cashier'), hasNew ? 'Order goes to the kitchen now, pay later' : 'Show your table number at the counter', true]] as ['qris' | 'cashier', string, string, string, boolean][])
+    .filter(([k]) => k !== 'qris' || payOn(db, 'qris')); // the owner's Payment methods decide
   return <div style={{ paddingBottom: 110 }}>
     <Bar title={t('Checkout')} onBack={() => g.go(so('cart'))} />
     <Notices g={g} />

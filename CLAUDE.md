@@ -2,6 +2,32 @@
 
 Cloud POS for Indonesian F&B / retail / UMKM. Every surface (marketing, owner, manager, PIC, cashier POS, kitchen, customer display, self-order, kiosk, waiter, super admin) is **one Next.js app, one route, one store**. Never fork a surface into its own app or its own data.
 
+## Owner notes (decisions, keep)
+- **One system.** One app, one database, one store. Subdomains are doors into the same app and the same data, never separate apps or separate data.
+- **Host structure** (spec Sitemap hosts, `src/system/hosts.ts` HOSTS):
+  | Host | Serves |
+  |---|---|
+  | `bornis.id` | landing |
+  | `app.bornis.id` | account, owner and manager |
+  | `pos.bornis.id` | POS, PIC, online orders and waiter |
+  | `kds.bornis.id` | kitchen display |
+  | `display.bornis.id` | customer display |
+  | `order.bornis.id/<tenant>` | QR menu, kiosk and customer links |
+  | `admin.bornis.id` | super admin |
+
+  The spec also names:
+  - `go.` for the device pairing code
+  - `status.` for the status page
+  - `preview.` for theme preview links
+  - `menu.` as the CNAME target for merchant domains
+  - `mail.` for SPF/DKIM
+- **Root domain** is `NEXT_PUBLIC_BORNIZ_ROOT_DOMAIN`. The spec spells it `bornis.id`; the owner wrote `borniz.id`. Confirm the spelling before buying.
+- **Hosting before the domain exists.** Free `*.vercel.app` cannot have subdomains. Each surface gets an alias (`pos-soft-ajie-pos.vercel.app` …) through `NEXT_PUBLIC_BORNIZ_HOSTS`. Switch hosts on together with Supabase: browser storage is per origin.
+- **Every feature is developed to depth, not just routed.**
+  - A setting must change real behaviour on the surface it governs: no preview-only pages and no switches nobody reads.
+  - Each feature gets its data, actions, permissions, approvals, alerts, states, responsive layout and a test.
+  - `npm run check:system` lists settings that nothing reads.
+
 ## Map
 - `spec/` — the BorNiz design system (prototypes `BorNiz *.dc.html`, data `bn-*.js`, tokens). Source of truth for design + rules. `spec/CLAUDE.md` = product rules (roles, approval chain, menu scope, opname).
 - `scripts/sync-spec.mjs` → `src/system/{pages,authority,alerts,catalog,docs}.json` (`npm run spec`). Never hand-edit those JSON files.

@@ -1,4 +1,5 @@
 'use client';
+import { payOn } from '../system/settings.ts';
 import { gatewayResult } from '../data/actions/dispatch.ts';
 import { productImage } from '../ui/kit.tsx';
 // Self-order kiosk (spec: BorNiz Kiosk). Portrait 9:16 canvas in cqw units, 64px+ touch targets, actions in the
@@ -197,6 +198,7 @@ function Pay({ L, order, back, reset }: { L: LangT; order: Order | null; back: (
   };
   const methods: [('qris' | 'card' | 'cashier'), string, string, string, boolean][] = [
     ['qris', 'qr-code', 'QRIS', 'Scan with any bank or e-wallet', db.device.online], ['card', 'credit-card', 'Card', 'Tap or insert below the screen', true], ['cashier', 'receipt', L.t('Pay at the cashier'), 'Print a ticket and pay at the counter', true]];
+  const offered = methods.filter(([k]) => k === 'cashier' || payOn(db, k)); // the owner's Payment methods decide
   return <div style={{ flex: 1, minHeight: 0, padding: '7cqw 6cqw 6cqw', display: 'flex', flexDirection: 'column', gap: '3.4cqw' }}>
     <b style={{ ...HEAD, fontSize: '8cqw' }}>Pay {idr(order.total)}</b>
     <div style={{ flex: '0 1 auto', minHeight: 0, overflow: 'auto', padding: '4cqw', borderRadius: '5cqw', background: 'var(--ink-0)', display: 'flex', flexDirection: 'column', gap: '2.4cqw', fontSize: '3.8cqw' }}>
@@ -212,7 +214,7 @@ function Pay({ L, order, back, reset }: { L: LangT; order: Order | null; back: (
         <span style={{ display: 'flex', justifyContent: 'space-between' }}><span>PB1 {out.taxBps / 100}%{out.taxInclusive ? ' incl.' : ''}</span><span>{idr(order.tax)}</span></span>
       </div>
     </div>
-    {methods.map(([k, ic, l, d, ok]) => <button key={k} disabled={!ok} onClick={() => pay(k)} style={{ ...CARD, flex: 'none', height: 'max(72px, 18cqw)', display: 'flex', alignItems: 'center', gap: '4cqw', padding: '0 5cqw', textAlign: 'left', opacity: ok ? 1 : .45 }}>
+    {offered.map(([k, ic, l, d, ok]) => <button key={k} disabled={!ok} onClick={() => pay(k)} style={{ ...CARD, flex: 'none', height: 'max(72px, 18cqw)', display: 'flex', alignItems: 'center', gap: '4cqw', padding: '0 5cqw', textAlign: 'left', opacity: ok ? 1 : .45 }}>
       <Icon name={ic} style={{ width: '8cqw', height: '8cqw', color: 'var(--bn-p)' }} />
       <span style={{ display: 'flex', flexDirection: 'column', gap: '1cqw' }}><b style={{ fontSize: '5cqw' }}>{l}</b><span style={{ fontSize: '3.4cqw', color: MUTED }}>{ok ? d : 'Needs internet. Use card or pay at the cashier.'}</span></span></button>)}
     {err && <span role="alert" style={{ color: 'var(--danger-fg)', fontSize: '3.6cqw' }}>{err}</span>}

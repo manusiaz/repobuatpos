@@ -2,7 +2,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { snapshot } from './store.ts';
-import { addLine, bumpDone, decide, gatewayWebhook, newOrder, patchOrder, sellable, sendToKitchen, startPayment, stockEntry, verifyPin, watchKitchen } from './actions.ts';
+import { addLine, bumpDone, decide, gatewayWebhook, newOrder, patchOrder, sellable, sendToKitchen, setSetting, startPayment, stockEntry, verifyPin, watchKitchen } from './actions.ts';
+import { PAYMENT_PAGE, payOn, roundStep } from '../system/settings.ts';
 import { payCash } from './actions/pos.ts';
 import { findOrJoin } from './actions/selforder.ts';
 import { level } from '../domain/stock.ts';
@@ -94,4 +95,18 @@ test('Allergy note and a ticket past 12 minutes reach the kitchen once', () => {
   watchKitchen(Date.now() + 13 * 60e3);
   watchKitchen(Date.now() + 14 * 60e3);
   assert.equal(notices('Order late', no + ' ').length, 1);
+});
+
+test('One system: the owner\'s Payment methods page drives every surface that takes money', () => {
+  setSetting(PAYMENT_PAGE + ':qris', false, 'budi');
+  const id = newOrder('sen', 'guest', 'qr', { table: 'T-11' });
+  addLine(id, 'p5', [], 1, '', 'guest');
+  assert.equal(payOn(snapshot(), 'qris'), false, 'QR menu, kiosk and POS hide QRIS');
+  assert.throws(() => startPayment(id, 'qris', order(id).total, 'guest'), /switched off/);
+  setSetting(PAYMENT_PAGE + ':qris', true, 'budi');
+  assert.equal(roundStep(snapshot()), 100, 'cash rounding on by default, IDR 100');
+  setSetting(PAYMENT_PAGE + ':roundStep', 500, 'budi');
+  assert.equal(roundStep(snapshot()), 500, 'every register rounds to the owner\'s step');
+  setSetting(PAYMENT_PAGE + ':rounding', false, 'budi');
+  assert.equal(roundStep(snapshot()), 0);
 });

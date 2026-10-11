@@ -11,6 +11,7 @@ import { flashPrice, resolve } from '../domain/promo.ts';
 import { closeCheck } from '../domain/shift.ts';
 import { idr, roundCash } from '../domain/money.ts';
 import { approvalAlert, decidedAlert } from './alerts/names.ts';
+import { payOn, type PayId } from '../system/settings.ts';
 import alertsCatalog from '../system/alerts.json' with { type: 'json' };
 import { perm } from '../system/perms.ts';
 
@@ -125,6 +126,7 @@ export function startPayment(orderId: string, method: Method, amount: number, by
   const id = uid('pay');
   const online = snapshot().device.online;
   if (!online && (method === 'qris' || method === 'va' || method === 'ewallet')) throw new Error('Offline: QRIS, VA and e-wallet need internet. Use cash or card.');
+  if (!payOn(snapshot(), method as PayId)) throw new Error(`${method.toUpperCase()} is switched off in Payment methods.`);
   commit('payment.created', by, d => {
     const o = findOrder(d, orderId);
     if (CLOSED.includes(o.status)) throw new Error(`${o.no} is already closed (${o.status}). Nothing was charged.`);

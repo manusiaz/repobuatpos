@@ -8,6 +8,7 @@ import { cancelPayment, holdOrder, patchOrder, startPayment } from '../../data/a
 import { enqueue, payCash, sendReceipt } from '../../data/actions/pos.ts';
 import { lineTotal, methodAvailable, type Method } from '../../domain/order.ts';
 import { roundCash, idr } from '../../domain/money.ts';
+import { payOn, roundStep, type PayId } from '../../system/settings.ts';
 import { Badge, Empty, Field, Icon, Numpad, Seg, Status, ago, toast, useNow } from '../../ui/kit.tsx';
 import type { Order, Payment } from '../../data/schema.ts';
 import { thisDevice, ownerOf, receiptPrinter } from '../../devices/routing.ts';
@@ -79,12 +80,13 @@ function PayBody({ o, mode }: { o: Order; mode: string }) {
       {!online && <div className="banner b-danger" style={{ padding: '8px 12px' }}><Icon name="wifi-off" size={18} /><span>Offline: QRIS, VA and e-wallet need internet. Use cash or card.</span></div>}
       <div className="stack sm">{METHODS.map(([slug, l, s, ic, key]) => {
         const m = slug === 'card-edc' ? 'card' : slug === 'e-wallet' ? 'ewallet' : slug === 'virtual-account' ? 'va' : slug.replace('-bill', '');
+        if (!payOn(db, m as PayId)) return null; // switched off by the owner in Payment methods
         const off = !methodAvailable(m as Method, online) && m !== 'split';
         return <button key={slug} className="row card tight" disabled={off} onClick={() => go(P(slug))} aria-pressed={active === slug}
           style={{ cursor: off ? 'not-allowed' : 'pointer', textAlign: 'left', minHeight: 56, padding: '8px 12px', opacity: off ? .45 : 1, borderColor: active === slug ? 'var(--accent)' : undefined, background: active === slug ? 'var(--accent-soft)' : undefined }}>
           <Icon name={ic} size={22} /><span className="grow stack" style={{ gap: 0 }}><b style={{ fontSize: 15 }}>{l}</b><span className="muted" style={{ fontSize: 13 }}>{off ? 'Needs internet' : s}</span></span><span className="mono faint">{key}</span></button>;
       })}</div>
-      <div className="row wrap" style={{ gap: 6 }}>{MORE.map(([slug, l, k]) => <button key={slug} className="chip" aria-pressed={mode === k} onClick={() => go(P(slug))}>{l}{k === 'pending' && pending.length ? ` · ${pending.length}` : ''}</button>)}</div>
+      <div className="row wrap" style={{ gap: 6 }}>{MORE.filter(([, , k]) => (k !== 'kasbon' && k !== 'deposit') || payOn(db, k)).map(([slug, l, k]) => <button key={slug} className="chip" aria-pressed={mode === k} onClick={() => go(P(slug))}>{l}{k === 'pending' && pending.length ? ` · ${pending.length}` : ''}</button>)}</div>
       {pays.length > 0 && <div className="stack sm"><span className="cap">Payments on this bill</span>{pays.map(p => <div key={p.id} className="row between" style={{ fontSize: 14 }}><span>{NAME[p.method]} · <span className="mono">{p.ref}</span></span><span className="row" style={{ gap: 6 }}><b className="num">{idr(p.amount)}</b><Status s={p.status} /></span></div>)}</div>}
     </div>
     <div className="stack" style={{ padding: 20, minWidth: 0 }}>
@@ -112,7 +114,7 @@ function useCharge(o: Order) {
 
 function CashPanel({ o, remaining, tip }: PanelProps) {
   const { db, me, setting, route, go } = usePos();
-  const step = setting('rounding', 100), due = step ? roundCash(remaining, step) : remaining, toPay = due + tip;
+  const step = roundStep(db), due = step ? roundCash(remaining, step) : remaining, toPay = due + tip;
   const [tender, setTender] = useState(0);
   const change = tender - toPay;
   const quick = [...new Set([toPay, Math.ceil(toPay / 10000) * 10000, Math.ceil(toPay / 50000) * 50000, Math.ceil(toPay / 100000) * 100000, Math.ceil(toPay / 100000) * 100000 + 50000])].slice(0, 5);

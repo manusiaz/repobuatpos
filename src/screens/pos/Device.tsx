@@ -1,6 +1,7 @@
 'use client';
 // Register hardware and local settings: printer & drawer, customer display pairing, EDC, scanner & scale,
 // register settings, sync status & offline queue.
+import { roundStep } from '../../system/settings.ts';
 import { useState } from 'react';
 import { setDeviceOnline, setSetting } from '../../data/actions.ts';
 import { issuePairCode, pairDevice, pairExpiry } from '../../data/actions/auth.ts';
@@ -125,7 +126,7 @@ function Settings() {
     <Row l="This register" v={`${reg?.name ?? 'Register'} · ${db.outlets.find(o => o.id === outletId)?.name}`} />
     <Field label="Default order type"><Seg label="Default order type" value={setting('defaultType', 'dine')} options={[['dine', 'Dine-in'], ['take', 'Takeaway'], ['delivery', 'Delivery']] as const} onChange={v => set('defaultType', v)} /></Field>
     <Field label="Default receipt"><Seg label="Default receipt" value={setting('receipt', 'print')} options={[['print', 'Print'], ['wa', 'WhatsApp'], ['email', 'Email'], ['none', 'None']] as const} onChange={v => set('receipt', v)} /></Field>
-    <Field label="Cash rounding" hint="Separate line, applied last"><Seg label="Cash rounding" value={String(setting('rounding', 100))} options={[['0', 'Off'], ['100', 'IDR 100'], ['500', 'IDR 500'], ['1000', 'IDR 1,000']] as const} onChange={v => set('rounding', Number(v))} /></Field>
+    <Row l="Cash rounding" v={roundStep(db) ? `IDR ${roundStep(db).toLocaleString('en-US')} · set by the owner in Payment methods` : 'Off · set by the owner in Payment methods'} />
     <Field label="Float left for the next shift"><input className="input num" inputMode="numeric" defaultValue={setting('float', 500000)} onBlur={e => set('float', Number(e.target.value.replace(/\D/g, '')) || 0)} /></Field>
     <Field label="Kasbon limit per customer"><input className="input num" inputMode="numeric" defaultValue={setting('kasbonLimit', 500000)} onBlur={e => set('kasbonLimit', Number(e.target.value.replace(/\D/g, '')) || 0)} /></Field>
     <label className="row between"><span>Lock after 2 minutes idle</span><Toggle on={setting('autoLock', true)} onChange={v => set('autoLock', v)} label="Auto lock" /></label>
