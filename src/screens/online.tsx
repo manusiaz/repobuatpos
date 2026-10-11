@@ -6,7 +6,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useApp } from '../app/context.tsx';
 import { IntegrationsPanel } from '../integrations/Panel.tsx';
-import { OutletPicker } from '../app/chrome.tsx';
+import { OutletPicker, DeviceChrome } from '../app/chrome.tsx';
 import { Badge, Empty, Field, Icon, Kpi, Seg, Sheet, Toggle, ago, hhmm, toast, useNow } from '../ui/kit.tsx';
 import { usePin } from '../ui/PinSheet.tsx';
 import { idr } from '../domain/money.ts';
@@ -43,7 +43,7 @@ export default function Screen() {
       <b style={{ fontSize: 18 }}>{title}</b><span className="grow" />
       <nav className="row" style={{ overflowX: 'auto', maxWidth: '100%' }} aria-label="Online pages">{links.filter((p, i, a) => a.findIndex(x => x.title === p.title) === i).map(p =>
         <Link key={p.path} href={p.path} className="btn btn-ghost btn-sm" aria-current={p.path === page.path ? 'page' : undefined} style={{ flex: 'none', fontWeight: p.path === page.path ? 700 : 500, background: p.path === page.path ? 'var(--role-soft)' : undefined }}>{p.title.replace(/ \(.*\)$/, '')}</Link>)}</nav>
-      <OutletPicker />
+      <OutletPicker /><DeviceChrome />
     </header>}
     <div className="stack lg" style={{ padding: embedded ? 0 : '20px var(--margin) 110px', maxWidth: 1360, margin: '0 auto' }}>
       {view === 'kanban' ? <Kanban c={c} title={embedded ? title : null} /> : view === 'integrations' ? <Integrations c={c} title={embedded ? title : null} />

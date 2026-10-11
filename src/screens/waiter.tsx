@@ -1,6 +1,7 @@
 'use client';
 // Waiter & staff phone (spec: BorNiz Waiter). Tables with open bills, dishes to run, guest calls, take an order at the
 // table (fires to the KDS), request the bill. Payment stays with the cashier or the guest's QR.
+import { DeviceChrome } from '../app/chrome.tsx';
 import { useMemo, useState } from 'react';
 import { useApp } from '../app/context.tsx';
 import { Badge, Empty, Icon, Sheet, ago, hhmm, toast, useNow, type Tone } from '../ui/kit.tsx';
@@ -50,7 +51,7 @@ export default function Screen() {
       {tab === 'table' ? <button type="button" className="btn icon-btn" aria-label="Back to tables" onClick={() => setTab('tables')}><Icon name="arrow-left" /></button>
         : <span className="avatar" style={{ background: 'var(--role)' }}>{(me?.name ?? 'W')[0]}</span>}
       <span className="grow stack" style={{ gap: 0 }}><b style={{ fontSize: 16 }}>{title}</b><span className="muted" style={{ fontSize: 12 }}>{me?.name ?? user.role}{slot ? ` · ${SHIFTS[slot][0]} ${SHIFTS[slot][1]}–${SHIFTS[slot][2]}` : ''}</span></span>
-      <Badge tone="success">Waiter</Badge>
+      <DeviceChrome />
     </header>
     {!db.device.online && <div className="banner" role="alert" style={{ margin: '10px 14px 0', background: 'var(--danger-soft)', color: 'var(--danger-fg)' }}><Icon name="wifi-off" /><span>Offline. New orders are kept on this phone and sent to the kitchen when the connection is back.</span></div>}
     <main className="stack" style={{ flex: 1, padding: '12px 14px 160px' }}>

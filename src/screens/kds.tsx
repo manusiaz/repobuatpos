@@ -1,6 +1,7 @@
 'use client';
 // Kitchen display (spec: BorNiz Kitchen Display). Dark, readable from 2 m, tickets from the live order stream at this outlet.
 // Every KDS page is one view of this screen; station is per device, layout / sound / colors / targets are KDS settings.
+import { DeviceChrome } from '../app/chrome.tsx';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useApp } from '../app/context.tsx';
@@ -76,6 +77,7 @@ export default function Screen() {
     <header style={{ position: 'sticky', top: 0, zIndex: 20, background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
       <div className="row wrap" style={{ minHeight: 64, padding: '8px 16px', gap: 12 }}>
         <b style={{ fontSize: fs(18), whiteSpace: 'nowrap' }}>Kitchen · {outlet?.name}</b>
+        <span style={{ order: 99, marginLeft: 'auto' }}><DeviceChrome dark /></span>
         <div className="row" role="group" aria-label="Station" style={{ gap: 4, padding: 4, borderRadius: 12, background: 'var(--bg-sunken)', overflowX: 'auto', maxWidth: '100%' }}>
           {STATIONS.map(([s, l]) => <button key={s} type="button" aria-pressed={st === s} onClick={() => setSt(s)} style={{ height: 44, padding: '0 14px', border: 0, borderRadius: 9, cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 700, fontSize: fs(15),
             background: st === s ? 'var(--accent)' : 'transparent', color: st === s ? '#fff' : 'var(--fg-2)' }}>{l} <span style={{ opacity: .75 }}>{count(s)}</span></button>)}

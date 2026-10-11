@@ -69,9 +69,9 @@ export function Register() {
           })}
         </div>}
       <div className="pos-bar">
-        <button className="btn btn-lg grow" onClick={() => setCartOpen(true)} disabled={!cur?.lines.length} style={{ justifyContent: 'space-between' }}>
-          <span className="row"><Icon name="shopping-basket" />{cur ? `${itemsOf(cur)} items` : 'Empty order'}</span><span>View order</span></button>
-        <button className="btn btn-primary btn-pay" style={{ flex: '0 0 auto', minWidth: 160 }} disabled={!cur?.lines.length} onClick={() => go(P('payment-method-picker'))}>Charge {idr(cur ? cur.total - paidOf(db, cur.id) : 0)}</button>
+        <button className="btn btn-lg pos-view" onClick={() => setCartOpen(true)} disabled={!cur?.lines.length}>
+          <Icon name="shopping-basket" /><span>{cur?.lines.length ? `View order · ${itemsOf(cur)}` : 'No items yet'}</span></button>
+        <button className="btn btn-primary btn-pay" disabled={!cur?.lines.length} onClick={() => go(P('payment-method-picker'))}>Charge {idr(cur ? cur.total - paidOf(db, cur.id) : 0)}</button>
       </div>
     </section>
     <aside className="pos-cart" aria-label="Current order"><Cart /></aside>

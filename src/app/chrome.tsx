@@ -96,9 +96,10 @@ export function Help() {
   </>;
 }
 
-/** Floating chrome for full-screen device apps (POS, KDS, waiter): apps, alerts, user. */
-export function DeviceChrome({ dark }: { dark?: boolean }) {
-  return <div className="row" data-theme={dark ? 'dark' : undefined} style={{ position: 'fixed', right: 12, bottom: 12, zIndex: 40, padding: 4, borderRadius: 16, background: 'var(--bg-surface)', boxShadow: 'var(--shadow-e2)', border: '1px solid var(--border)' }}>
+/** Apps, help, alerts and user for full-screen device apps (POS, KDS, PIC, waiter, online). Sits in each app's own
+ * header or rail, never floating: on a phone the bottom belongs to the app's one action bar (Responsive spec). */
+export function DeviceChrome({ dark, vertical }: { dark?: boolean; vertical?: boolean }) {
+  return <div className={'dev-chrome' + (vertical ? ' v' : '')} data-theme={dark ? 'dark' : undefined}>
     <Help /><Launcher /><Bell /><UserSwitch compact />
   </div>;
 }

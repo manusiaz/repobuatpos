@@ -1,5 +1,6 @@
 'use client';
 // PIC tablet (spec/BorNiz PIC.dc.html, layout A): dark rail of the four groups, shift header, one view per registry page.
+import { DeviceChrome } from '../app/chrome.tsx';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { pagesOf, surfaceHome } from '../system/registry.ts';
@@ -60,6 +61,7 @@ export default function Screen() {
           <span className="stack" style={{ gap: 0 }}><b>{picId ? nameOf(db, picId) : 'No PIC on this shift'}</b>
             <span className="muted" style={{ fontSize: 12 }}>{picId === meId ? 'You are the PIC' : 'PIC on shift'} · reports to {mgr?.name ?? 'the manager'}</span></span>
         </div>
+        <DeviceChrome />
       </header>
       {!picId && <div className="banner b-danger">No PIC on this shift. Approvals go to {mgr?.name ?? 'the manager'} until one is assigned in Shifts.</div>}
       {picId && picId !== meId && <div className="banner b-info"><Icon name="info" size={18} />{nameOf(db, picId)} is the PIC on this shift. You can still act within your role’s limits; everything is logged with your name.</div>}

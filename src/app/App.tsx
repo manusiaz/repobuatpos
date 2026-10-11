@@ -10,7 +10,6 @@ import { escalateDue, watchKitchen } from '../data/actions.ts';
 import { setSession, useSession } from '../session.ts';
 import { Ctx, type AppCtx } from './context.tsx';
 import { BackOfficeShell, PublicShell } from './Shells.tsx';
-import { DeviceChrome } from './chrome.tsx';
 import { Loading, Toaster, Icon } from '../ui/kit.tsx';
 
 const L = (f: () => Promise<{ default: ComponentType }>) => dynamic(f, { ssr: false, loading: () => <div style={{ padding: 24 }}><Loading /></div> });
@@ -41,11 +40,9 @@ export default function App({ path }: { path: string }) {
   const Surface = SURFACES[page.surface];
   const allowed = canOpen(ctx.user.role, page);
   const body = allowed ? <Surface /> : <Denied />;
-  const staffDevice = ['pos', 'pic', 'kds', 'online', 'waiter'].includes(page.surface);
   return <Ctx.Provider value={ctx}>
     <div data-theme={DARK[page.surface] ? 'dark' : undefined} data-role={ctx.user.role} style={{ minHeight: '100dvh', background: 'var(--bg-canvas)', color: 'var(--fg-1)' }}>
       {page.shell === 'backoffice' || page.shell === 'admin' ? <BackOfficeShell>{body}</BackOfficeShell> : page.shell === 'public' ? <PublicShell>{body}</PublicShell> : body}
-      {staffDevice && allowed && <DeviceChrome dark={DARK[page.surface]} />}
       <Toaster />
     </div>
   </Ctx.Provider>;

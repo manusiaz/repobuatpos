@@ -3,6 +3,7 @@
 // the register in its state: page slug → view (+ sheet / tab), see ROUTES in ./pos/shared.tsx.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { DeviceChrome } from '../app/chrome.tsx';
 import { useApp } from '../app/context.tsx';
 import { newOrder, setSetting } from '../data/actions.ts';
 import { applyPosApproval, flushQueue, type PosPayload } from '../data/actions/pos.ts';
@@ -23,6 +24,8 @@ const CSS = `
 .pos-rail button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:60px;border:0;border-radius:14px;background:transparent;color:var(--ink-400);font:600 13px/1.1 var(--font-body);cursor:pointer;text-align:center;padding:6px 2px;transition:transform var(--dur-instant)}
 .pos-rail button:active{transform:scale(var(--press-scale))}
 .pos-rail button[aria-current=page]{background:var(--ink-800);color:var(--ink-0)}
+.pos-tabs{display:flex;flex-direction:column;gap:4px;flex:1;min-height:0;overflow-y:auto}.pos-tabs .pos-lock{margin-top:auto}
+.pos-rail .dev-chrome{flex-direction:column;padding-top:8px;border-top:1px solid var(--ink-800)}.pos-rail .dev-chrome .btn{color:var(--ink-400)}
 .pos-rail .n{position:absolute;top:4px;right:8px;min-width:20px;height:20px;padding:0 6px;border-radius:99px;background:var(--accent);color:var(--ink-0);font:700 12px/20px var(--font-display)}
 .pos-main{min-width:0;height:100dvh;overflow:auto;display:flex;flex-direction:column}
 .pos-reg{display:grid;grid-template-columns:minmax(0,1fr) clamp(340px,30vw,380px);flex:1;min-height:0}
@@ -39,9 +42,12 @@ const CSS = `
 .pos-pay{display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);min-height:min(640px,calc(100dvh - 24px))}
 .pos-off{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--danger-soft);color:var(--danger-fg);font-size:14px;font-weight:600}
 @media (max-width:1023px){.pos{grid-template-columns:72px minmax(0,1fr)}.pos-reg{grid-template-columns:minmax(0,1fr)}.pos-cart{display:none}
- .pos-bar{display:flex;gap:8px;position:sticky;bottom:0;margin:auto -16px -16px;padding:12px 16px 76px;background:var(--bg-canvas);border-top:1px solid var(--border)}}
+ .pos-bar{display:flex;gap:8px;position:sticky;bottom:0;margin:auto -16px -16px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--bg-canvas);border-top:1px solid var(--border)}
+ .pos-bar .pos-view{flex:1 1 0;min-width:0}.pos-bar .pos-view>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pos-bar .btn-pay{flex:1.4 1 0;min-width:0}}
 @media (max-width:767px){.pos{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}.pos-rail{flex-direction:row;overflow-x:auto;padding:6px 8px}
- .pos-rail .logo{display:none}.pos-rail button{min-width:72px;min-height:56px;flex:none}.pos-main{height:auto;min-height:0}
+ .pos-rail .logo{display:none}.pos-rail{align-items:center}.pos-tabs{flex-direction:row;overflow-x:auto;overflow-y:hidden}.pos-tabs .pos-lock{margin-top:0}
+ .pos-rail .dev-chrome{flex-direction:row;padding:0 0 0 6px;border-top:0;border-left:1px solid var(--ink-800)}
+ .pos-rail button{min-width:72px;min-height:56px;flex:none}.pos-rail .dev-chrome .btn{min-width:44px}.pos-main{height:auto;min-height:0}
  .pos-pay{grid-template-columns:minmax(0,1fr)}.pos-bar .btn-pay{min-width:0!important}}
 `;
 
@@ -102,10 +108,12 @@ export default function Screen() {
     {body ?? <div className="pos">
       <nav className="pos-rail" aria-label="Register">
         <span className="logo" aria-hidden>B</span>
-        {RAIL.map(([k, l, ic, slug]) => <button key={k} aria-current={route.v === k || (k === 'shift' && route.v === 'change') ? 'page' : undefined} onClick={() => go(slug ? P(slug) : ONLINE_INBOX)}>
-          <Icon name={ic} size={24} />{l}{(k === 'bills' ? held : k === 'online' ? incoming : 0) > 0 && <span className="n">{k === 'bills' ? held : incoming}</span>}</button>)}
-        <span style={{ flex: 1 }} />
-        <button onClick={() => go(P('lock-screen'))}><Icon name="lock" size={24} />Lock</button>
+        <div className="pos-tabs no-sb">
+          {RAIL.map(([k, l, ic, slug]) => <button key={k} aria-current={route.v === k || (k === 'shift' && route.v === 'change') ? 'page' : undefined} onClick={() => go(slug ? P(slug) : ONLINE_INBOX)}>
+            <Icon name={ic} size={24} />{l}{(k === 'bills' ? held : k === 'online' ? incoming : 0) > 0 && <span className="n">{k === 'bills' ? held : incoming}</span>}</button>)}
+          <button className="pos-lock" onClick={() => go(P('lock-screen'))}><Icon name="lock" size={24} />Lock</button>
+        </div>
+        <DeviceChrome dark />
       </nav>
       <main className="pos-main">
         {!db.device.online && <button className="pos-off" style={{ border: 0, cursor: 'pointer' }} onClick={() => go(P('sync-status-and-retry'))}><Icon name="wifi-off" size={18} />Offline · {db.device.queue.length} queued · QRIS, VA and e-wallet paused. Cash and card keep working.</button>}
