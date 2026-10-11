@@ -61,10 +61,16 @@ export function Loading({ rows = 6 }: { rows?: number }) {
 export const Empty = ({ icon = 'inbox', title, children, action }: { icon?: string; title: string; children?: ReactNode; action?: ReactNode }) =>
   <div className="empty"><Icon name={icon} size={32} /><h3 style={{ color: 'var(--fg-1)' }}>{title}</h3>{children && <p style={{ maxWidth: 420 }}>{children}</p>}{action}</div>;
 /** A KPI tile opens the list it counts (src/system/drill.ts) unless `href` says otherwise (null = static). */
+const KPI_ICONS: [RegExp, string][] = [[/^open|late|wait|\bmin\b|prep|time/i, 'clock'], [/revenue|sales|spend|margin|target|aov|ticket/i, 'trending-up'], [/order|cover|transaction/i, 'chart-column'],
+  [/void|refund|waste|variance|loss/i, 'receipt-text'], [/member|customer|guest|staff|team|shift|present/i, 'users'], [/point|bean|loyal|reward/i, 'coins'], [/approv|pending|review/i, 'shield-check'], [/cash|drawer|deposit|payout|balance/i, 'wallet'], [/stock|item|product|sku|par/i, 'package']];
+const kpiIcon = (label: string) => KPI_ICONS.find(([r]) => r.test(label))?.[1] ?? 'activity';
 export function Kpi({ label, value, delta, tone, href }: { label: string; value: ReactNode; delta?: ReactNode; tone?: 'up' | 'down' | 'warn'; href?: string | null }) {
   const app = useContext(Ctx);
   const to = href !== undefined ? href : app ? drillTo(label, app.user.role, app.page.path) : null;
-  const body = <><span className="l">{label}{to && <Icon name="chevron-right" size={14} />}</span><span className="v">{value}</span>{delta != null && <span className={tone} style={{ fontSize: 13, fontWeight: 600 }}>{delta}</span>}</>;
+  // design v1.0: label, big number, arrow delta, and a tinted icon tile on the right (tone decides the tint)
+  const d = typeof delta === 'string' && tone !== 'warn' ? delta.replace(/^\+\s?/, '↑ ').replace(/^[-−]\s?/, '↓ ') : delta;
+  const body = <><span className="stack" style={{ gap: 4, minWidth: 0 }}><span className="l">{label}</span><span className="v">{value}</span>{d != null && <span className={tone} style={{ fontSize: 13, fontWeight: 600 }}>{d}</span>}</span>
+    <span className={'kpi-ic ' + (tone ?? '')} aria-hidden><Icon name={kpiIcon(label)} size={20} /></span></>;
   return to ? <Link href={to} className="card kpi link">{body}</Link> : <div className="card kpi">{body}</div>;
 }
 export const Avatar = ({ name, color, size = 36 }: { name: string; color?: string; size?: number }) =>

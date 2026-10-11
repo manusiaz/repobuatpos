@@ -122,7 +122,7 @@ export function starterData(p: NewBusiness, slug: string): DB {
   const slot = () => ({ pic: '', crew: [] as string[] });
   return { ...e, tenant: { ...s.tenant, id: slug, name: p.name, plan: 'free' }, theme: { ...s.theme, name: p.name }, staffBrand: { ...s.staffBrand, workspace: p.name },
     outlets: [outlet], categories: s.categories, modifierGroups: s.modifierGroups, device: { ...s.device, outletId: 'main' },
-    employees: [{ id: 'owner', name: p.owner, role: 'owner', outlets: ['main'], pin: p.pin, approvalPin: p.approvalPin, phone: p.phone, color: '#F26B1D', active: true, wage: 0 }],
+    employees: [{ id: 'owner', name: p.owner, role: 'owner', outlets: ['main'], pin: p.pin, approvalPin: p.approvalPin, phone: p.phone, color: '#FF6A00', active: true, wage: 0 }],
     roster: Array.from({ length: 7 }, (_, day) => ({ outletId: 'main', day, slots: { pagi: slot(), siang: slot(), malam: slot() } })) };
 }
 /** Owner sign-up, step 2: bn_bootstrap creates the business and the owner's membership, then the starter data goes up (bn_import). */

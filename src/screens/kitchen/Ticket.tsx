@@ -3,7 +3,7 @@
 // items 20px (tap = done), 64px bump. No prices anywhere on the kitchen screen.
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Order } from '../../data/schema.ts';
-import { hhmm } from '../../ui/kit.tsx';
+import { Icon, hhmm } from '../../ui/kit.tsx';
 import { CHANNEL, TIER, dueText, isOnline, lineMods, linesAt, minsLeft, mmss, ticketLabel, type Station } from './model.ts';
 
 export interface KdsCfg { warn: number; late: number; colors: 'timer' | 'channel'; scale: number }
@@ -45,19 +45,27 @@ export function Ticket({ o, st, now, cfg, meta, recalled, action, onItem, onOpen
     ? { background: 'var(--bg-raised)', color: 'var(--fg-1)', boxShadow: `inset 8px 0 0 ${CHANNEL[o.source].color}` }
     : tone === 'late' ? { background: 'var(--danger)', color: '#fff' } : tone === 'warn' ? { background: 'var(--warning-soft)', color: 'var(--warning-fg)' } : { background: 'var(--bg-raised)', color: 'var(--fg-1)' };
   const timerColor = cfg.colors === 'channel' ? (tone === 'late' ? 'var(--danger-fg)' : tone === 'warn' ? 'var(--warning-fg)' : 'inherit') : 'inherit';
-  return <article style={{ borderRadius: 18, background: 'var(--bg-surface)', border: `3px solid ${border}`, overflow: 'hidden', display: 'flex', flexDirection: 'column', animation: 'fade 220ms var(--ease-out)', minWidth: 0 }}>
-    <button type="button" onClick={onOpen} style={{ ...head, border: 0, textAlign: 'left', cursor: onOpen ? 'pointer' : 'default', padding: '12px 14px', display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start', font: 'inherit' }}
+  return <article style={{ borderRadius: 16, background: 'var(--bg-surface)', border: `${tone === 'ok' && o.tier !== 'rush' ? 1 : 2}px solid ${border}`, overflow: 'hidden', display: 'flex', flexDirection: 'column', animation: 'fade 220ms var(--ease-out)', minWidth: 0 }}>
+    <button type="button" onClick={onOpen} style={{ ...head, border: 0, textAlign: 'left', cursor: onOpen ? 'pointer' : 'default', padding: '12px 14px', display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', font: 'inherit' }}
       aria-label={`Open ${ticketLabel(o)} detail`}>
-      <span style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-        <span className="row wrap" style={{ gap: 6 }}>{(online || o.source !== 'pos') && <ChannelPill o={o} />}<b style={{ fontSize: fs(22), lineHeight: 1.1 }}>{ticketLabel(o)}</b><TierPill o={o} />
-          {isNew && <Pill bg="var(--accent)" fg="#fff">New</Pill>}{recalled && <Pill bg="var(--info-soft)" fg="var(--info-fg)">Recalled</Pill>}</span>
-        <span style={{ fontSize: fs(15), fontWeight: 600, opacity: .9 }}>{meta}</span>
+      <span className="row" style={{ gap: 10, minWidth: 0, alignItems: 'center' }}>
+        <span aria-hidden style={{ flex: 'none', width: 40, height: 40, borderRadius: 12, display: 'grid', placeItems: 'center', color: '#fff', font: `800 ${fs(13)}/1 var(--font-display)`,
+          background: online || o.source !== 'pos' ? CHANNEL[o.source].color : tone === 'late' ? 'rgba(255,255,255,.2)' : 'var(--accent)' }}>
+          {online ? CHANNEL[o.source].short : <Icon name={o.type === 'take' ? 'shopping-bag' : o.type === 'delivery' ? 'bike' : 'utensils'} size={20} />}</span>
+        <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+          <b style={{ fontSize: fs(20), lineHeight: 1.1, whiteSpace: 'nowrap' }}>{o.no}</b>
+          <span style={{ fontSize: fs(14), fontWeight: 600, opacity: .85, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{[o.table, meta].filter(Boolean).join(' · ')}</span>
+        </span>
       </span>
       <span style={{ flex: 'none', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
-        <b style={{ fontSize: fs(24), color: timerColor }}>{mmss(age)}</b>
-        {online && o.readyBy && <span style={{ fontSize: fs(15), fontWeight: 800, whiteSpace: 'nowrap', color: tone === 'late' && cfg.colors === 'timer' ? '#fff' : minsLeft(o.readyBy, now) < 0 ? 'var(--danger-fg)' : minsLeft(o.readyBy, now) < 4 ? 'var(--warning-fg)' : 'inherit' }}>Ready by {hhmm(o.readyBy)} · {dueText(o.readyBy, now)}</span>}
+        <b style={{ fontSize: fs(20), color: timerColor }}>{mmss(age)}</b>
+        <span style={{ fontSize: fs(14), fontWeight: 600, opacity: .85, whiteSpace: 'nowrap' }}>{((n: number) => `${n} item${n === 1 ? '' : 's'}`)(lines.reduce((a, l) => a + l.qty, 0))}</span>
       </span>
     </button>
+    {(o.tier || isNew || recalled || (online && o.readyBy)) && <div className="row wrap" style={{ gap: 6, padding: '0 14px 10px', ...head, boxShadow: 'none' }}>
+      <TierPill o={o} />{isNew && <Pill bg="var(--accent)" fg="#fff">New</Pill>}{recalled && <Pill bg="var(--info-soft)" fg="var(--info-fg)">Recalled</Pill>}
+      {online && o.readyBy && <span style={{ fontSize: fs(14), fontWeight: 800, whiteSpace: 'nowrap', color: tone === 'late' && cfg.colors === 'timer' ? '#fff' : minsLeft(o.readyBy, now) < 0 ? 'var(--danger-fg)' : minsLeft(o.readyBy, now) < 4 ? 'var(--warning-fg)' : 'inherit' }}>Ready by {hhmm(o.readyBy)} · {dueText(o.readyBy, now)}</span>}
+    </div>}
     {(o.tier === 'rush' || notes.length > 0) && <div style={{ padding: '8px 14px', background: 'var(--danger)', color: '#fff', fontSize: fs(15), fontWeight: 800, lineHeight: 1.35 }}>
       {[o.tier === 'rush' && 'RUSH', allergy && 'ALLERGY', !allergy && notes.length && 'NOTE'].filter(Boolean).join(' · ')}{notes.length > 0 && <>: {notes.join(' · ')}</>}</div>}
     <div style={{ padding: '4px 14px', display: 'flex', flexDirection: 'column' }}>

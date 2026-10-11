@@ -25,14 +25,14 @@ const T: Record<string, [string, string, string, string]> = {
   'brand-studio': ['colors', 'Brand studio', 'palette', 'Change any color directly. Every change goes to the owner before it reaches your team.'],
 };
 const PRESETS: [string, string, StaffBrand['c']][] = [
-  ['BorNiz', 'light', { primary: '#F26B1D', sidebar: '#141210', bg: '#FAF8F5', surface: '#FFFFFF', text: '#141210', kpi: '#F26B1D', loginTint: '#141210' }],
+  ['BorNiz', 'light', { primary: '#FF6A00', sidebar: '#FFFFFF', bg: '#FAFAFA', surface: '#FFFFFF', text: '#0F172A', kpi: '#FF6A00', loginTint: '#0F172A' }],
   ['Kopi Biru', 'dark', { primary: '#1F5FBF', sidebar: '#0F2A55', bg: '#F6F8FB', surface: '#FFFFFF', text: '#0F172A', kpi: '#1F5FBF', loginTint: '#0F2A55' }],
   ['Matcha', 'light', { primary: '#3E7D4F', sidebar: '#1B2A1F', bg: '#FAF8F5', surface: '#FFFFFF', text: '#1B2A1F', kpi: '#3E7D4F', loginTint: '#1B2A1F' }],
   ['Berry', 'brand', { primary: '#B0305C', sidebar: '#3A1626', bg: '#FFF5F7', surface: '#FFFFFF', text: '#3A1626', kpi: '#B0305C', loginTint: '#3A1626' }],
 ];
 const COLORS: [keyof StaffBrand['c'], string, string][] = [['primary', 'Primary', 'Buttons, active nav, Charge'], ['sidebar', 'Sidebar', 'Dashboard side navigation'], ['bg', 'Background', 'Behind every screen'], ['surface', 'Cards & panels', 'Tables, KPI cards, cart'], ['text', 'Text', 'All body text'], ['kpi', 'Highlight card', 'First KPI on Live monitor'], ['loginTint', 'Login backdrop', 'Used when there is no photo']];
 // Colour maths needs real values: these equal --ink-0 and --ink-950.
-const WHITE = '#FFFFFF', INK = '#141210';
+const WHITE = '#FFFFFF', INK = '#0F172A';
 const STAFF_FONTS = ['space', 'jakarta', 'dm', 'outfit', 'nunito', 'system'];
 const LOCKED_STAFF = ['Payment status colors: paid, pending, void, refunded', 'Kitchen timer colors and the green Bump button', 'Minimum POS touch size (56 px) and the Charge button position', 'Text contrast below 4.5:1 cannot be published', 'QRIS and card network marks', 'Error, offline and payment-failed screens'];
 const PLANS: [string, string][] = [['Free', 'Logo and workspace name.'], ['Basic', 'Primary color, sidebar style, login photo.'], ['Pro', 'Every color, fonts, corners, density, POS header, KDS line. Remove “Powered by”.'], ['Enterprise', 'Per-brand and per-outlet workspaces, custom font upload, SSO login page.']];

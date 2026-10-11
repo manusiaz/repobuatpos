@@ -50,7 +50,7 @@ Cloud POS for Indonesian F&B / retail / UMKM. Every surface (marketing, owner, m
 - Every view of a surface is a URL from the registry (`go(path)` / `<Link>`); a screen must handle every page of its surface.
 - Data-origin modes decide actions: `edit` (create/edit/delete), `settings`, `read` (report), `record` (from POS, read-only), `incoming` (accept/reject/reply only), `approve` (approve/reject with approval PIN). Never show “+ New” on record/incoming/read data.
 - Approvals: `requestApproval` / `decide` (ladder in `src/domain/approval.ts`); every approve/reject asks the approver’s 6-digit approval PIN (demo `246810`). Nobody approves their own request.
-- Tokens only (CSS vars in `app/globals.css`); no new colors, no emoji, Lucide icons via `<Icon name="kebab-name" />`. Fonts: Space Grotesk (headings, numbers), Instrument Sans (body), JetBrains Mono (IDs).
+- Tokens only (CSS vars in `app/globals.css`, source `spec/tokens/`); no new colors, no emoji, Lucide icons via `<Icon name="kebab-name" />`. Design system v1.0 (owner PNG set, Oct 2026): brand orange `#FF6A00`, slate neutrals, Satoshi (UI, headings, numbers; loaded from Fontshare), JetBrains Mono (IDs only). Orange text uses `--accent-fg` (ember-700) for contrast. Owner, manager and PIC share the orange; super admin keeps its dark shell. Guest screens (QR menu, kiosk, customer display) wear the merchant brand from Menu Studio.
 - Touch: 44 staff · 56 POS · 72 pay button · 64 KDS/kiosk. Text ≥ 13px staff, ≥ 15px kitchen, inputs 16px.
 - Demo sign-ins: cashier PIN `1234`, approval PIN `246810`. Users: budi (owner), andi (manager), maya/sari/lia (PIC), rina/tono/wulan (cashier), dimas/hadi (kitchen), joko/putri (waiter), admin.
 

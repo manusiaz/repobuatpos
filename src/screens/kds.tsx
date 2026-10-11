@@ -12,6 +12,7 @@ import { perm, type PermCode } from '../system/perms.ts';
 import { apply86, bumpStation, demoTicket, startStation, toggleLine } from '../data/actions/kds.ts';
 import { useOnlineAutomation } from './kitchen/onlineAuto.ts';
 import type { Order } from '../data/schema.ts';
+import { pickupLanes } from '../domain/order.ts';
 import { activeTickets, allDay, CHANNEL, empName, isOnline, linesAt, openLinesAt, prepStats, STATIONS, TIER, type Station } from './kitchen/model.ts';
 import { chime, fs, KBtn, Ticket, useStableOrder, useTouchHold, useWakeLock, type KdsCfg } from './kitchen/Ticket.tsx';
 import { KdsPage } from './kitchen/kdsPages.tsx';
@@ -47,7 +48,7 @@ export default function Screen() {
   const [more, setMore] = useState(false);
   const g = db.settings, by = me?.id ?? user.id;
   const cfg: KdsCfg = { warn: Number(g[TGT('warn')] ?? 8), late: Number(g[TGT('late')] ?? 12), colors: g[SET('colors')] === 'channel' ? 'channel' : 'timer', scale: g[SET('size')] === 'large' ? 1.15 : 1 };
-  const layout = (['A', 'B', 'C'].includes(String(g[SET('layout')])) ? g[SET('layout')] : 'A') as 'A' | 'B' | 'C';
+  const layout = (['A', 'B', 'C'].includes(String(g[SET('layout')])) ? g[SET('layout')] : 'B') as 'A' | 'B' | 'C'; // design v1.0: queue → in progress → ready
   const sound = g[SET('sound')] !== false;
   const outlet = db.outlets.find(o => o.id === outletId);
   const tickets = useMemo(() => activeTickets(db, outletId), [db, outletId]);
@@ -127,9 +128,9 @@ export function TicketGrid({ k, list, empty, action, min = 260 }: { k: Kctx; lis
   </div>;
 }
 export const Caught = ({ children }: { children?: ReactNode }) => <div style={{ padding: '80px 20px', textAlign: 'center', color: 'var(--fg-3)', fontSize: fs(20) }}>{children ?? 'All caught up. New tickets appear here with a chime.'}</div>;
-const LaneBox = ({ title, n, children, tint }: { title: string; n: number; children: ReactNode; tint?: boolean }) =>
-  <section style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0, padding: 10, borderRadius: 18, background: tint ? 'var(--bg-sunken)' : 'transparent', border: '1px solid var(--border)' }}>
-    <div className="row between" style={{ padding: '0 4px' }}><b style={{ fontSize: fs(17) }}>{title}</b><span style={{ fontSize: fs(15), color: 'var(--fg-2)' }}>{n} tickets</span></div>{children}</section>;
+const LaneBox = ({ title, n, children, tint, done }: { title: string; n: number; children: ReactNode; tint?: boolean; done?: boolean }) =>
+  <section style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0, padding: 10, borderRadius: 18, background: done ? 'var(--success-soft)' : tint ? 'var(--bg-sunken)' : 'transparent', border: `1px solid ${done ? 'color-mix(in srgb,var(--success) 40%,transparent)' : 'var(--border)'}` }}>
+    <div className="row between" style={{ padding: '0 4px' }}><b style={{ fontSize: fs(17) }}>{title}</b><span style={{ fontSize: fs(15), color: 'var(--fg-2)' }}>{n} ticket{n === 1 ? '' : 's'}</span></div>{children}</section>;
 const LaneEmpty = () => <span style={{ padding: 24, borderRadius: 14, border: '1px dashed var(--border)', color: 'var(--fg-3)', fontSize: fs(15), textAlign: 'center' }}>Nothing in this lane</span>;
 
 function Tickets({ k }: { k: Kctx }) {
@@ -178,12 +179,13 @@ function Rush({ k }: { k: Kctx }) {
 function StatusLanes({ k }: { k: Kctx }) {
   const mine = k.tickets.filter(o => openLinesAt(o, k.st).length).sort(byAge);
   const isNew = (o: Order) => openLinesAt(o, k.st).every(l => l.kds === 'new');
-  const ready = k.db.orders.filter(o => o.outletId === k.outletId && o.status === 'ready' && linesAt(o, k.st).length).sort(byAge);
+  // line state, not order status: a paid-first QR / kiosk order stays 'paid' while it is ready (same rule as the pickup board)
+  const ready = pickupLanes(k.db.orders.filter(o => o.outletId === k.outletId && linesAt(o, k.st).length), k.now).ready.sort(byAge);
   const canBump = k.can('See & bump tickets') !== 'n' && k.can('See & bump tickets') !== 'a';
   return <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,280px),1fr))', gap: 12, alignItems: 'start' }}>
-    <LaneBox title="New" n={mine.filter(isNew).length}><TicketGrid k={k} list={mine.filter(isNew)} empty={<LaneEmpty />} min={240} action={o => canBump ? { label: 'Start cooking', tone: 'accent', run: () => startStation(o.id, k.st, k.by) } : null} /></LaneBox>
-    <LaneBox title="Cooking" n={mine.filter(o => !isNew(o)).length} tint><TicketGrid k={k} list={mine.filter(o => !isNew(o))} empty={<LaneEmpty />} min={240} /></LaneBox>
-    <LaneBox title="Ready · waiting for runner" n={ready.length}>{ready.length ? <TicketGrid k={k} list={ready} min={240} action={() => null} /> : <LaneEmpty />}</LaneBox>
+    <LaneBox title="Order queue" n={mine.filter(isNew).length}><TicketGrid k={k} list={mine.filter(isNew)} empty={<LaneEmpty />} min={240} action={o => canBump ? { label: 'Start cooking', tone: 'accent', run: () => startStation(o.id, k.st, k.by) } : null} /></LaneBox>
+    <LaneBox title="In progress" n={mine.filter(o => !isNew(o)).length} tint><TicketGrid k={k} list={mine.filter(o => !isNew(o))} empty={<LaneEmpty />} min={240} /></LaneBox>
+    <LaneBox title="Ready" n={ready.length} done>{ready.length ? <TicketGrid k={k} list={ready} min={240} action={() => null} /> : <LaneEmpty />}</LaneBox>
   </div>;
 }
 

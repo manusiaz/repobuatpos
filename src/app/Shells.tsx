@@ -29,9 +29,10 @@ export function BackOfficeShell({ children }: { children: ReactNode }) {
       {ql ? <div className="stack sm">{[...FEATURES.values()].filter(f => (f.name + ' ' + f.page.title).toLowerCase().includes(ql)).slice(0, 40).map(f =>
         <Link key={f.path} href={f.path} className="nav-i" onClick={() => setSide(false)}><span className="grow">{f.name}<br /><span className="faint" style={{ fontSize: 12 }}>{f.page.title} · {f.kind}</span></span></Link>)}</div>
       : groups.map(([mod, pages]) => {
-        const isOpen = open[mod] ?? true;
+        const isOpen = open[mod] ?? pages.some(rp => rp.id === here?.id); // design v1.0: one icon row per module, the current one open
         return <div key={mod}>
-          <button className="nav-g" onClick={() => setOpen(o => ({ ...o, [mod]: !isOpen }))} aria-expanded={isOpen}><span>{mod}</span><span>{isOpen ? '▾' : '▸'}</span></button>
+          <button className="nav-m" onClick={() => setOpen(o => ({ ...o, [mod]: !isOpen }))} aria-expanded={isOpen} aria-current={!isOpen && pages.some(rp => rp.id === here?.id) ? 'true' : undefined}>
+            <Icon name={MOD_ICON[mod] ?? 'circle'} size={18} /><span className="grow">{mod}</span><Icon name={isOpen ? 'chevron-down' : 'chevron-right'} size={16} /></button>
           {isOpen && pages.map(rp => <Link key={rp.id} href={rp.path} className="nav-i" aria-current={here?.id === rp.id ? 'page' : undefined} onClick={() => setSide(false)}>
             <span className="grow">{rp.title}</span>{rp.release !== 'MVP' && <ReleaseTag r={rp.release} />}</Link>)}
         </div>;
@@ -51,6 +52,7 @@ export function BackOfficeShell({ children }: { children: ReactNode }) {
   </div>;
 }
 
+const MOD_ICON: Record<string, string> = { Home: 'activity', Sales: 'receipt', Catalog: 'utensils-crossed', Inventory: 'package', Customers: 'users', Team: 'user-round-cog', Outlets: 'store', Finance: 'wallet', Reports: 'chart-column', Marketing: 'megaphone', Studios: 'palette', Settings: 'settings', Platform: 'server' };
 const MODULES = ['Home', 'Sales', 'Catalog', 'Inventory', 'Customers', 'Team', 'Outlets', 'Finance', 'Reports', 'Marketing', 'Studios', 'Settings', 'Platform'];
 /** Navigation = real pages (src/system/pagemap.ts), not the ~600 sitemap features. */
 export function realNav(role: 'owner' | 'manager' | 'admin'): [string, RealPage[]][] {

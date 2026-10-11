@@ -133,7 +133,7 @@ export function seed(now = Date.now()): DB {
       { id: 'n2', alert: 'Printer offline', level: 'warn', to: ['pic', 'cashier'], outletId: 'sen', text: 'Epson TM-m30 at Senayan offline for 9 min', href: '/owner/account/devices', at: now - 9 * 60e3, read: false },
     ],
     theme: { name: 'Kopi Biru', p: '#1F4FD8', acc: '#F2B544', ink: '#14213D', paper: '#F7F4EE', font: 'space', banner: 'g1', img: '' },
-    staffBrand: { accent: '#F26B1D', logo: '', workspace: 'Kopi Biru', density: 'comfy' },
+    staffBrand: { accent: '#FF6A00', logo: '', workspace: 'Kopi Biru', density: 'comfy' },
     versions: [], perms: {}, records: {}, settings: {}, counters: { order: 2049, po: 149 },
     device: { outletId: 'sen', online: true, queue: [], paired: {} },
   };

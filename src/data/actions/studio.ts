@@ -219,7 +219,7 @@ export interface StaffBrand {
 export function staffBrand(db: DB): StaffBrand {
   const sb = db.staffBrand;
   return merge<StaffBrand>({
-    ...sb, c: { primary: sb.accent, sidebar: '#141210', bg: '#FAF8F5', surface: '#FFFFFF', text: '#141210', kpi: sb.accent, loginTint: '#141210' },
+    ...sb, c: { primary: sb.accent, sidebar: '#FFFFFF', bg: '#FAFAFA', surface: '#FFFFFF', text: '#0F172A', kpi: sb.accent, loginTint: '#0F172A' },
     logoMono: '', loginImg: '', loginTitle: 'Good morning, team.', font: 'space', radius: 16, side: 'light', posHead: 'light', kdsLine: true, powered: true,
   }, sb);
 }

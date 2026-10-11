@@ -131,7 +131,7 @@ function Trend({ db, outlet, per, gran, spec, now, live, setGran }: { db: DB; ou
     </div>
     <div className="grid" style={{ ['--min' as string]: '140px', gap: 10 }}>{stats.map(([l, v, d]) => <div key={l} className="sunken stack" style={{ gap: 2, padding: 12 }}><span className="muted" style={{ fontSize: 12 }}>{l}</span><b className="num" style={{ fontSize: 16 }}>{v}</b>{d && <span className="faint" style={{ fontSize: 12 }}>{d}</span>}</div>)}</div>
     {empty ? <Empty icon="sun" title="No sales yet today">{live ? 'The first order shows here within seconds.' : 'Orders appear here as soon as an outlet opens and takes its first payment.'}</Empty>
-      : <LineChart labels={data.labels} series={chartSeries} kind={today && gran === 'min' ? 'bar' : 'line'} height={240} format={idrShort} />}
+      : <LineChart labels={data.labels} series={chartSeries} height={240} format={idrShort} />}
     {missing && <p className="faint" style={{ fontSize: 13 }}><Icon name="history" size={14} /> Sales history starts {new Date(since).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}. Earlier {per === '12m' ? 'months' : 'days'} show no data, not zero.</p>}
     {!live && today && <span className="faint" style={{ fontSize: 12 }}>Today so far vs {spec.compareLabel}: {idrShort(total)} vs {idrShort((data.p.slice(0, nowIdx + 1).filter(v => v != null) as number[]).reduce((a, b) => a + b, 0))}</span>}
   </section>;
