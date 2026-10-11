@@ -2,6 +2,8 @@
 // Customer links (receipt, member card, voucher, feedback, booking, queue, message previews, preferences). Each one is a
 // page a guest opens from WhatsApp, email or the QR menu; ?o= (order) and ?c= (customer) pick the record, otherwise the
 // remembered member or the most recent matching record at the outlet is shown.
+import { referral } from '../../system/settings.ts';
+import { linkTo } from '../../system/hosts.ts';
 import { useState, type ReactNode } from 'react';
 import { Icon, Empty, Toggle, ago, dateShort, hhmm, toast } from '../../ui/kit.tsx';
 import { idr } from '../../domain/money.ts';
@@ -40,7 +42,7 @@ function FindMember({ g, intro }: { g: G; intro: string }) {
     const c = findCustomer(g.db, phone);
     if (c) { g.setMe(c.id); toast(`Welcome back, ${firstName(c.name)}`); return; }
     if (!ask) return setAsk(true);
-    const r = findOrJoin(name, phone); g.setMe(r.id); toast('Welcome! 50 beans added');
+    const r = findOrJoin(name, phone, true, g.ref); g.setMe(r.id); toast('Welcome! 50 beans added');
   };
   return <div style={card} className="stack">
     <span style={{ fontSize: 15 }}>{intro}</span>
@@ -104,6 +106,7 @@ export function MemberCard({ g }: { g: G }) {
         <span style={{ fontSize: 13 }}>{(next.min - year).toLocaleString('en-US')} more to {next.name} · earning {tier.multiplier}×</span></div> : <span style={{ fontSize: 13 }}>Top tier · earning {tier.multiplier}×</span>}
     </div>
     <span style={{ fontSize: 13, color: MUTED, textAlign: 'center' }}>Show the QR at the cashier or kiosk to earn and redeem · member since {dateShort(c.joinedAt)}</span>
+    {referral(g.db).on && <button className="btn" style={{ alignSelf: 'center' }} onClick={() => { const url = linkTo('/order?ref=' + c.id); navigator.share ? navigator.share({ title: g.db.tenant.name, text: `Join ${g.db.tenant.name} Rewards and get ${referral(g.db).friend} beans`, url }).catch(() => {}) : (navigator.clipboard?.writeText(url), toast('Invite link copied')); }}><Icon name="gift" />Invite a friend · you get {referral(g.db).referrer} beans</button>}
     {claims.length > 0 && <div style={card} className="stack sm"><b>Saved vouchers</b>{claims.map(p => <div key={p!.id} className="row between" style={{ fontSize: 14 }}><span>{p!.name}</span><span className="mono">{p!.code}</span></div>)}</div>}
     <div style={card} className="stack sm"><b>Bean history</b>
       {rows.map((r, i) => <div key={i} className="row between" style={{ fontSize: 14 }}><span className="grow">{r.reason}<span style={{ display: 'block', fontSize: 12, color: MUTED }}>{dateShort(r.at)}</span></span><b style={{ color: r.points < 0 ? 'var(--danger-fg)' : 'var(--success-fg)' }}>{r.points > 0 ? '+' : ''}{r.points}</b></div>)}

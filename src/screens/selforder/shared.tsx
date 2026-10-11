@@ -28,6 +28,9 @@ export function useGuest() {
   const outletId = [qo, savedOutlet].find(x => x && db.outlets.some(o => o.id === x)) ?? deviceOutlet;
   useEffect(() => { if (qo && qo === outletId && qo !== savedOutlet) setSavedOutlet(qo); }, [qo, outletId, savedOutlet, setSavedOutlet]);
   const [saved, setSaved] = useLocal('bn-qr-table', 'T-07');
+  const [ref, setRef] = useLocal<string | null>('bn-ref', null); // invite link ?ref=<member id>, kept until they join
+  const qref = sp.get('ref');
+  useEffect(() => { if (qref && qref !== ref) setRef(qref); }, [qref, ref, setRef]);
   const qt = sp.get('t') ?? routeQuery().t ?? null; // order.bornis.id/<tenant>/t/07 carries the table in the path
   const table = qt ? 'T-' + qt.replace(/^T-?/i, '').padStart(2, '0') : saved;
   useEffect(() => { if (qt && table !== saved) setSaved(table); }, [qt, table, saved, setSaved]);
@@ -41,7 +44,7 @@ export function useGuest() {
   const cart = recent.find(unpaid) ?? null;               // the table's open bill
   const latest = recent.find(o => o.lines.some(l => l.fired)) ?? null; // the order the kitchen knows about
   const ensureCart = () => cart?.id ?? newOrder(outletId, 'guest', 'qr', { table, type: 'dine', customerId: meId });
-  return { db, outletId, go, sp, table, L, t: L.t, me, setMe, out, hrs, canOrder: hrs.open && !hrs.paused, online: db.device.online, recent, cart, latest, ensureCart, now };
+  return { db, outletId, go, sp, ref, table, L, t: L.t, me, setMe, out, hrs, canOrder: hrs.open && !hrs.paused, online: db.device.online, recent, cart, latest, ensureCart, now };
 }
 export type G = ReturnType<typeof useGuest>;
 

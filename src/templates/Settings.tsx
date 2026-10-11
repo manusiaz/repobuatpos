@@ -14,6 +14,7 @@ import { LIMITS } from '../domain/approval.ts';
 import { idr } from '../domain/money.ts';
 import { PageHead } from './common.tsx';
 import { IntegrationsPanel } from '../integrations/Panel.tsx';
+import { BusinessProfile, LabelPrinting, OutletDetail, Outlets, ProfileSecurity, ReceiptDesigner, Referral, Users } from './settingsPages.tsx';
 import { CANON } from '../system/settings.ts';
 import { CHANNELS, channelState, setChannel } from '../data/actions/online.ts';
 import { downloadJournalCsv } from '../integrations/server/accounting/journal.ts';
@@ -51,6 +52,14 @@ export default function Settings() {
 
   function build(): Section[] {
     const n = page.name.toLowerCase();
+    if (/business profile/.test(n)) return [{ t: 'Business profile', body: <BusinessProfile /> }];
+    if (/profile & security/.test(n)) return [{ t: 'Profile & security', body: <ProfileSecurity /> }];
+    if (/receipt designer/.test(n)) return [{ t: 'Receipt', body: <ReceiptDesigner /> }];
+    if (/label printing/.test(n)) return [{ t: 'Labels', body: <LabelPrinting /> }];
+    if (/referral/.test(n)) return [{ t: 'Invite a friend', body: <Referral /> }];
+    if (/^outlets$/.test(n)) return [{ t: 'Outlets', body: <Outlets /> }];
+    if (/outlet detail/.test(n)) return [{ t: 'Outlet', body: <OutletDetail /> }];
+    if (/users & invites/.test(n)) return [{ t: 'Staff', body: <Users /> }];
     if (/accounting/.test(n)) return [{ t: 'Accounting', body: <IntegrationsPanel kinds={['accounting']} /> }, { t: 'Journal export', body: <JournalExport /> }];
     if (/bank account/.test(n)) return [{ t: 'Bank & payouts', body: <IntegrationsPanel kinds={['bank']} /> }];
     if (/tax|fees/.test(n)) return db.outlets.map(o => ({ t: o.name, body: <OutletTax o={o} /> }));
@@ -87,9 +96,7 @@ export default function Settings() {
       { t: 'Auto-accept per outlet', body: <div className="stack">{db.outlets.map(o => <div key={o.id} className="stack sm"><b style={{ fontSize: 14 }}>{o.name}</b>
         <div className="row wrap">{CHANNELS.map(ch => { const st = channelState(db, o.id, ch); return <label key={ch} className="row" style={{ gap: 8 }}><Toggle on={st.auto} onChange={v => { setChannel(o.id, ch, 'auto', v, user.id); toast(`${ch} ${v ? 'auto-accepts' : 'waits for a person'} at ${o.name}`); }} label={`Auto-accept ${ch} at ${o.name}`} /><span style={{ fontSize: 14 }}>{ch}</span></label>; })}</div></div>)}
         <span className="muted" style={{ fontSize: 13 }}>Same switches as the online orders screen at each outlet. Accepted orders go to the POS inbox and the KDS; prices, photos and sold-out sync from Menu Studio.</span></div> }];
-    const words = page.title.replace(/^settings · /i, '');
-    return [{ t: 'General', body: <>{T('on', `Use ${words}`, 'Applies to ' + db.outlets.map(o => o.name).join(', '))}{T('wa', 'Notify on WhatsApp', 'Owner and manager')}{T('pin', 'Require approval PIN for changes', 'Logged in the store audit log', true, true)}</> },
-      { t: 'Rules', body: <>{T('override', 'Allow manager overrides', 'Within the limits set in Roles')}{T('sync-dev', 'Auto-sync to devices', 'POS, KDS, displays and kiosks')}</> }];
+    return [{ t: page.title, body: <p className="muted">Nothing to set on this page yet.</p> }];
   }
 }
 

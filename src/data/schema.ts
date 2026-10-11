@@ -10,7 +10,9 @@ import type { ProductStatus, Scope } from '../domain/menu.ts';
 
 export type Role = 'owner' | 'manager' | 'pic' | 'cashier' | 'kitchen' | 'waiter' | 'admin' | 'customer' | 'public';
 
-export interface Outlet { id: string; name: string; city: string; serviceBps: number; taxBps: number; taxInclusive: boolean; opens: string; closes: string; tables: number; online: boolean }
+/** Business identity printed on receipts and invoices (Business profile page). */
+export interface BusinessProfile { legalName: string; npwp: string; address: string; phone: string; email: string; brands: string[] }
+export interface Outlet { id: string; name: string; city: string; serviceBps: number; taxBps: number; taxInclusive: boolean; opens: string; closes: string; tables: number; online: boolean; address?: string; phone?: string; /** regional tax id printed for PB1 */ npwpd?: string }
 export interface Employee { id: string; name: string; role: Role; outlets: string[]; pin: string; approvalPin: string; phone: string; color: string; active: boolean; wage: IDR }
 export interface Category { id: string; name: string; station: 'bar' | 'kitchen' | 'pastry' }
 export interface ModifierGroup { id: string; name: string; required: boolean; max: number; options: { id: string; name: string; price: IDR }[] }
@@ -56,7 +58,7 @@ export interface Rec { id: string; a: string; b: string; c: string; d: string; e
 
 export interface DB {
   v: number;
-  tenant: { id: string; name: string; plan: 'free' | 'basic' | 'pro' | 'enterprise'; locks: { menuPrices: boolean; outletOnlyItems: boolean; brand: boolean } };
+  tenant: { id: string; name: string; plan: 'free' | 'basic' | 'pro' | 'enterprise'; locks: { menuPrices: boolean; outletOnlyItems: boolean; brand: boolean }; profile?: BusinessProfile };
   outlets: Outlet[]; employees: Employee[]; categories: Category[]; modifierGroups: ModifierGroup[]; products: Product[]; outletProducts: OutletProduct[];
   stockItems: StockItem[]; recipes: Recipe[]; movements: Movement[]; customers: Customer[]; ledger: LedgerRow[];
   orders: Order[]; payments: Payment[]; refunds: Refund[]; approvals: Approval[]; sessions: Session[]; cashMoves: CashMove[];

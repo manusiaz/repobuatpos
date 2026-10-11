@@ -31,3 +31,7 @@ export const ticketsOnPaper = (db: DB, outletId: string) =>
 export const moneyStyle = (db: DB) => (setting<string>(db, LANG_PAGE, 'fmt', 'idr') === 'rp' ? 'rp' : 'idr') as 'idr' | 'rp';
 /** Language a guest sees first on the QR menu and kiosk (they can still switch). */
 export const guestLang = (db: DB) => (setting<string>(db, LANG_PAGE, 'lang', 'en') === 'id' ? 'id' : 'en') as 'en' | 'id';
+
+export const REFERRAL_PAGE = '/owner/customers/referral-program';
+/** Invite-a-friend: both get beans when the friend joins from the member's link. */
+export const referral = (db: DB) => ({ on: Boolean(setting(db, REFERRAL_PAGE, 'ref-on', true)), referrer: Number(setting(db, REFERRAL_PAGE, 'ref-referrer', 100)), friend: Number(setting(db, REFERRAL_PAGE, 'ref-friend', 50)) });

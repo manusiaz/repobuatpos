@@ -279,7 +279,7 @@ export function Checkout({ g }: { g: G }) {
     setBusy(true);
     try {
       let customerId = cart.customerId;
-      if (phone.trim()) { const r = findOrJoin(name, phone); customerId = r.id; g.setMe(r.id); }
+      if (phone.trim()) { const r = findOrJoin(name, phone, true, g.ref); customerId = r.id; g.setMe(r.id); }
       if (customerId !== cart.customerId) patchOrder(cart.id, { customerId }, 'guest');
       if (pay === 'cashier') { if (hasNew) { sendToKitchen(cart.id, 'guest'); orderPlaced(cart.id, true); } g.go(so('order-status')); }
       else { startPayment(cart.id, 'qris', due, 'guest', tip); g.go(so('qris-payment')); }

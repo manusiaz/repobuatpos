@@ -3,6 +3,7 @@
 import type { DB, Order, OrderLine } from '../data/schema.ts';
 import { idr } from '../domain/money.ts';
 import { linkTo } from '../system/hosts.ts';
+import { menuDesign } from '../data/actions/studio.ts';
 import type { Paper } from './escpos.ts';
 import type { Doc, Op } from './layout.ts';
 
@@ -10,7 +11,7 @@ const p2 = (n: number) => String(n).padStart(2, '0');
 export const clock = (t: number) => { const d = new Date(t); return p2(d.getHours()) + ':' + p2(d.getMinutes()); };
 export const stamp = (t: number) => { const d = new Date(t); return `${p2(d.getDate())}/${p2(d.getMonth() + 1)}/${d.getFullYear()} ${clock(t)}`; };
 /** Amount without the currency word (the TOTAL line carries "IDR"). */
-const amt = (n: number) => (n < 0 ? '-' : '') + idr(Math.abs(n)).replace(/^IDR /, '');
+const amt = (n: number) => (n < 0 ? '-' : '') + idr(Math.abs(n)).replace(/^(IDR |Rp)/, '');
 const NAME: Record<string, string> = { cash: 'Cash', qris: 'QRIS', card: 'Card', ewallet: 'E-wallet', va: 'Virtual account', deposit: 'Deposit', kasbon: 'Kasbon' };
 const SOURCE: Record<string, string> = { pos: 'Register', qr: 'QR order', kiosk: 'Kiosk', waiter: 'Waiter', web: 'Web', gofood: 'GoFood', grabfood: 'GrabFood', shopeefood: 'ShopeeFood' };
 export const where = (o: Order) => o.type === 'dine' ? (o.table ?? 'Dine-in') : o.type === 'take' ? 'Takeaway' : 'Delivery';
@@ -27,9 +28,14 @@ export function receiptDoc(db: DB, o: Order, paper: Paper, opts: ReceiptOpts = {
   const cust = db.customers.find(c => c.id === o.customerId);
   const pays = db.payments.filter(p => p.orderId === o.id && p.status === 'settled' && p.ref !== 'ROUNDING');
   const rounding = db.payments.filter(p => p.orderId === o.id && p.ref === 'ROUNDING' && p.status === 'settled').reduce((a, p) => a + p.amount, 0);
+  const biz = db.tenant.profile, rc = menuDesign(db).rc; // Business profile + the receipt design published from Menu Studio
+  const qrUrl = opts.url ?? (rc.qr === 'feedback' ? linkTo('/order/customer-links/feedback-and-rating?o=' + o.id) : rc.qr === 'member' && cust ? linkTo('/order/customer-links/member-card-and-points?c=' + cust.id) : receiptUrl(o.id));
   const ops: Op[] = [
     { t: 'text', s: db.tenant.name, align: 'center', bold: true, size: 'wide' },
-    ...(out ? [{ t: 'text', s: out.name, align: 'center' } as Op, { t: 'text', s: out.city, align: 'center' } as Op] : []),
+    ...(biz?.legalName && biz.legalName !== db.tenant.name ? [{ t: 'text', s: biz.legalName, align: 'center' } as Op] : []),
+    ...(out ? [{ t: 'text', s: out.name, align: 'center' } as Op, { t: 'text', s: out.address || out.city, align: 'center' } as Op] : []),
+    ...(out?.phone ? [{ t: 'text', s: out.phone, align: 'center' } as Op] : []),
+    ...(out?.npwpd ? [{ t: 'text', s: 'NPWPD ' + out.npwpd, align: 'center' } as Op] : biz?.npwp ? [{ t: 'text', s: 'NPWP ' + biz.npwp, align: 'center' } as Op] : []),
     ...(opts.copy ? [{ t: 'text', s: '*** COPY ***', align: 'center', bold: true } as Op] : []),
     { t: 'rule' },
     { t: 'lr', l: 'No ' + o.no, r: stamp(o.paidAt ?? o.createdAt) },
@@ -57,8 +63,12 @@ export function receiptDoc(db: DB, o: Order, paper: Paper, opts: ReceiptOpts = {
     if (p.method !== 'cash') ops.push({ t: 'text', s: '  ' + (p.method === 'card' && !p.ref.startsWith('REF-') ? p.ref : 'Ref ' + p.ref) });
   }
   if (opts.change) ops.push({ t: 'lr', l: 'Change', r: amt(opts.change), bold: true });
-  ops.push({ t: 'rule' }, { t: 'qr', data: opts.url ?? receiptUrl(o.id) }, { t: 'text', s: 'Scan for your digital receipt', align: 'center' },
-    { t: 'feed', n: 1 }, { t: 'text', s: opts.footer ?? 'Terima kasih!', align: 'center', bold: true }, { t: 'text', s: 'Powered by BorNiz', align: 'center' });
+  ops.push({ t: 'rule' });
+  if (rc.qr !== 'none') ops.push({ t: 'qr', data: qrUrl }, { t: 'text', s: rc.qr === 'feedback' ? 'Scan to rate your visit' : rc.qr === 'member' && cust ? 'Scan for your member card' : 'Scan for your digital receipt', align: 'center' });
+  ops.push({ t: 'feed', n: 1 }, { t: 'text', s: opts.footer ?? (String(rc.f1 || '') || 'Terima kasih!'), align: 'center', bold: true });
+  if (rc.f2) ops.push({ t: 'text', s: String(rc.f2), align: 'center' });
+  if (rc.wifiOn && rc.wifi) ops.push({ t: 'text', s: 'WiFi ' + String(rc.wifi), align: 'center' });
+  ops.push({ t: 'text', s: 'Powered by BorNiz', align: 'center' });
   if (opts.copy) ops.push({ t: 'text', s: '*** COPY ***', align: 'center', bold: true });
   ops.push({ t: 'feed', n: 3 });
   if (opts.cut !== false) ops.push({ t: 'cut' });

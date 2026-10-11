@@ -4,6 +4,7 @@
 import { commit, snapshot, uid } from '../store.ts';
 import type { DB } from '../schema.ts';
 import { addCustomer, notify } from '../actions.ts';
+import { awardReferral } from './business.ts';
 
 const now = () => Date.now();
 const notice = notify; // one alert engine (actions.ts)
@@ -11,10 +12,12 @@ const notice = notify; // one alert engine (actions.ts)
 export const digits = (s: string) => s.replace(/\D/g, '').replace(/^62/, '0');
 export const findCustomer = (d: DB, phone: string) => { const p = digits(phone); return p.length >= 9 ? d.customers.find(c => digits(c.phone) === p) : undefined; };
 /** Existing member by phone, or a new one (welcome beans come from addCustomer). */
-export function findOrJoin(name: string, phone: string, optIn = true): { id: string; created: boolean } {
+export function findOrJoin(name: string, phone: string, optIn = true, ref?: string | null): { id: string; created: boolean } {
   const c = findCustomer(snapshot(), phone);
   if (c) return { id: c.id, created: false };
-  return { id: addCustomer(name.trim() || 'Guest', phone.trim(), 'guest', optIn), created: true };
+  const id = addCustomer(name.trim() || 'Guest', phone.trim(), 'guest', optIn);
+  if (ref) awardReferral(id, ref); // joined from a member's invite link (Referral program)
+  return { id, created: true };
 }
 
 /** Alert "New QR / kiosk / online order" → cashier and PIC (the KDS reads the fired lines itself). */

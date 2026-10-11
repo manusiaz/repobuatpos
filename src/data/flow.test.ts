@@ -2,8 +2,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { snapshot } from './store.ts';
-import { addLine, bumpDone, decide, gatewayWebhook, newOrder, patchOrder, sellable, sendToKitchen, setSetting, startPayment, stockEntry, verifyPin, watchKitchen } from './actions.ts';
-import { PAYMENT_PAGE, payOn, roundStep } from '../system/settings.ts';
+import { addLine, bumpDone, decide, gatewayWebhook, newOrder, patchOrder, patchOutlet, sellable, sendToKitchen, setSetting, startPayment, stockEntry, verifyPin, watchKitchen } from './actions.ts';
+import { addOutlet, saveBusiness } from './actions/business.ts';
+import { receiptDoc } from '../devices/receipt.ts';
+import { toText } from '../devices/layout.ts';
+import { PAYMENT_PAGE, payOn, referral, roundStep } from '../system/settings.ts';
 import { payCash } from './actions/pos.ts';
 import { findOrJoin } from './actions/selforder.ts';
 import { level } from '../domain/stock.ts';
@@ -109,4 +112,23 @@ test('One system: the owner\'s Payment methods page drives every surface that ta
   assert.equal(roundStep(snapshot()), 500, 'every register rounds to the owner\'s step');
   setSetting(PAYMENT_PAGE + ':rounding', false, 'budi');
   assert.equal(roundStep(snapshot()), 0);
+});
+
+test('One system: business profile and outlet details print on the receipt; a new outlet sells the whole menu; invite links give beans once', () => {
+  saveBusiness('Kopi Biru', { legalName: 'PT Biru Sejahtera', npwp: '01.234.567.8-901.000', address: 'Jakarta', phone: '', email: '', brands: [] }, 'budi');
+  patchOutlet('sen', { address: 'Jl. Asia Afrika 8, Senayan', npwpd: 'P2-123456' }, 'budi');
+  const paid = snapshot().orders.find(o => o.outletId === 'sen' && o.paidAt)!;
+  const lines = toText(receiptDoc(snapshot(), paid, '80'));
+  assert.ok(lines.some(l => l.includes('PT Biru Sejahtera')) && lines.some(l => l.includes('Jl. Asia Afrika 8')) && lines.some(l => l.includes('NPWPD P2-123456')));
+
+  const id = addOutlet({ name: 'Bintaro', city: 'Tangerang Selatan', serviceBps: 500, taxBps: 1000, taxInclusive: false, opens: '08:00', closes: '22:00', tables: 8, online: true }, 'budi');
+  const globals = snapshot().products.filter(p => p.scope === 'global').length;
+  assert.equal(snapshot().outletProducts.filter(x => x.outletId === id).length, globals, 'new outlet carries the global menu');
+
+  const friend = findOrJoin('Rani', '0813 1234 0000', true, 'c1');
+  const beans = (cid: string) => balance(snapshot().ledger, cid);
+  assert.ok(friend.created && beans(friend.id) >= 50 + referral(snapshot()).friend, 'friend gets welcome + referral beans');
+  const again = findOrJoin('Rani', '0813 1234 0000', true, 'c1');
+  assert.equal(again.created, false);
+  assert.equal(snapshot().ledger.filter(l => l.reason.startsWith('Referral')).length, 2, 'beans given once, to both');
 });
