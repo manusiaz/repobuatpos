@@ -1,9 +1,9 @@
 'use client';
-import { productImage } from '../../ui/kit.tsx';
+import { same } from './same.tsx';
 // Print studio: labels, tickets, coupons, letterhead, printed menu, receipts. Every preview prints a real order / PO / catalog.
 import { idr } from '../../domain/money.ts';
 import { Empty, hhmm } from '../../ui/kit.tsx';
-import { Caption, F, first, latest, Line, menuOf, modsText, outletName, Paper, Rule, Stage, themeColor, themeSwatches, thousands, onColor, customerOf, type PP, type Tool } from './core.tsx';
+import { Caption, F, first, latest, Line, modsText, outletName, Paper, Rule, Stage, themeColor, themeSwatches, onColor, customerOf, type PP, type Tool } from './core.tsx';
 
 const NoOrder = () => <Empty icon="receipt" title="No orders yet at this outlet">The preview prints the latest real order. Ring one up on the POS and it shows here.</Empty>;
 
@@ -96,22 +96,6 @@ function Letter({ v, x }: PP) {
   </div><Caption>Shown on {po.no}. Applies to invoices, POs, transfer notes and every PDF exported from Reports.</Caption></Stage>;
 }
 
-function PrintedMenu({ v, x }: PP) {
-  const t = x.db.theme, menu = menuOf(x.db, x.outletId);
-  const w = { A4: 420, A3: 520, DL: 260 }[v.paper as 'A4'] ?? 420;
-  const cols = v.layout === '1col' || v.paper === 'DL' ? 1 : v.layout === 'tri' ? 3 : 2;
-  return <Stage><div data-guest style={{ width: `min(${w}px,100%)`, aspectRatio: v.paper === 'DL' ? '1 / 2' : '1 / 1.414', background: t.paper, color: t.ink, boxShadow: 'var(--shadow-e2)', padding: 24, display: 'flex', flexDirection: 'column', gap: 14, fontFamily: 'var(--bn-font)', overflow: 'hidden' }}>
-    <div style={{ textAlign: 'center' }}><b style={{ fontSize: 26, color: t.p }}>{v.title}</b><div style={{ fontSize: 12 }}>{x.db.tenant.name} · {outletName(x.db, x.outletId)}</div></div>
-    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols},minmax(0,1fr))`, gap: 16, flex: 1 }}>
-      {menu.map(g => <div key={g.c.id} className="stack" style={{ gap: 6 }}><b style={{ fontSize: 13, letterSpacing: '.06em', textTransform: 'uppercase', color: t.p }}>{g.c.name}</b>
-        {g.items.map(r => <div key={r.p.id} className="row" style={{ gap: 6, fontSize: 12, opacity: r.is86 ? .45 : 1 }}>
-          {v.photos && <span style={{ width: 22, height: 22, borderRadius: 6, flex: 'none', background: productImage(r.p) }} />}
-          <span className="grow" style={{ overflowWrap: 'anywhere' }}>{r.p.name}</span>{v.prices && <b>{thousands(r.price)}</b>}</div>)}</div>)}
-    </div>
-    <span style={{ fontSize: 10, textAlign: 'center' }}>{v.note}{v.prices && ' · Prices in IDR thousands'}</span>
-  </div><Caption>Built from the live catalog of {outletName(x.db, x.outletId)} with local prices. Sold-out items print faded; change prices and the PDF follows.</Caption></Stage>;
-}
-
 function Receipt({ v, x }: PP) {
   const out = x.db.outlets.find(o => o.id === (v.outlet || x.outletId)) ?? x.db.outlets[0];
   const o = latest(x.db, out.id, o => o.status === 'paid');
@@ -142,8 +126,7 @@ export const PRINT: Tool[] = [
   { id: 'letter', group: 'PRINT', name: 'Letterhead, invoices & PDF reports', icon: 'file-text', plan: 'free', desc: 'Header and footer used on invoices, purchase orders and exported PDF reports.', def: { co: 'PT Kopi Biru Nusantara', addr: 'Jl. Asia Afrika 8, Senayan, Jakarta 10270', npwp: '01.234.567.8-901.000', pos: 'left', accent: 'primary', foot: 'Thank you for your business.', sign: true }, Preview: Letter,
     pairs: (v, x) => { const c = themeColor(x.db.theme, v.accent); return [[onColor(c, x.db.theme.ink), c, 'Logo initials on accent']]; },
     fields: (_, x) => [F.text('Company name', 'co'), F.text('Address', 'addr'), F.text('NPWP', 'npwp'), F.seg('Logo position', 'pos', [['left', 'Left'], ['center', 'Center']]), F.swatch('Accent', 'accent', themeSwatches(x.db.theme)), F.text('Footer', 'foot'), F.toggle('Signature & stamp area', 'sign')] },
-  { id: 'pmenu', group: 'PRINT', name: 'Printed menu (PDF)', icon: 'book-open', plan: 'free', desc: 'Generates a print-ready menu from your catalog, so prices are never out of date.', def: { layout: '2col', paper: 'A4', photos: false, prices: true, title: 'Menu', note: 'Prices include PB1 10%.' }, Preview: PrintedMenu,
-    fields: () => [F.text('Title', 'title'), F.seg('Layout', 'layout', [['1col', '1 column'], ['2col', '2 columns'], ['tri', 'Trifold']]), F.seg('Paper', 'paper', [['A4', 'A4'], ['A3', 'A3'], ['DL', 'DL']]), F.toggle('Product photos', 'photos'), F.toggle('Prices', 'prices'), F.text('Footnote', 'note'), F.node(<button className="btn btn-block" onClick={() => window.print()}>Download PDF</button>)] },
+  { id: 'pmenu', group: 'PRINT', name: 'Printed menu (PDF)', icon: 'book-open', plan: 'free', desc: 'Generates a print-ready menu from your catalog, so prices are never out of date.', ...same('printable-menu-pdf-generator') },
   { id: 'rcpt', group: 'PRINT', name: 'Receipt template per outlet', icon: 'receipt', plan: 'free', desc: 'Each outlet can override the header, footer and Wi-Fi on its receipts.', def: { outlet: '', paper: '80', h1: '', h2: '', f1: 'Terima kasih!', wifi: '', inherit: true }, Preview: Receipt,
     fields: (v, x) => [F.seg('Outlet', 'outlet', [['', 'Current'], ...x.db.outlets.map(o => [o.id, o.name] as [string, string])]), F.toggle('Inherit from brand receipt', 'inherit'), F.seg('Paper', 'paper', [['58', '58 mm'], ['80', '80 mm']]), ...(v.inherit ? [] : [F.text('Header line 1', 'h1'), F.text('Header line 2', 'h2'), F.text('Wi-Fi', 'wifi')]), F.text('Footer', 'f1'), F.note('Legal lines (NPWP, tax) are locked and always print.')] },
 ];

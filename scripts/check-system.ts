@@ -57,3 +57,7 @@ const readers = Object.entries(src).map(([p, s]) => [p, p.endsWith('system/studi
 const preview = xKeys.filter(k => !readers.some(([p, s]) => !p.endsWith('studio/extras.tsx') && (s.includes(`x['${k}']`) || s.includes(`, '${k}')`))));
 console.log(`\nsettings nothing reads yet: ${unread.length} switch(es)${unread.length ? ' · ' + unread.join(', ') : ''}`);
 console.log(`Menu Studio pages that only preview: ${preview.length}/${xKeys.length}${preview.length ? ' · ' + preview.join(', ') : ''}`);
+// Customization Studios: a tool with settings (def) is live only when a surface reads its published values (toolValue).
+const tools = Object.entries(src).filter(([p]) => p.includes('screens/studios/')).flatMap(([, s]) => s.split(/\{ id: '/).slice(1).filter(c => /^[a-z_]+'[^]*?def: \{/.test(c.split(/\n\s*\{ id: '/)[0])).map(c => c.slice(0, c.indexOf("'"))));
+const toolDead = tools.filter(id => !Object.entries(src).some(([p, s]) => !p.includes('screens/studios') && new RegExp(`toolValue\\([^,]+, '${id}'`).test(s)));
+console.log(`Customization Studio tools that only preview: ${toolDead.length}/${tools.length}${toolDead.length ? ' · ' + toolDead.join(', ') : ''}`);

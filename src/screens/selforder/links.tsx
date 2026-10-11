@@ -10,6 +10,7 @@ import { Icon, Empty, Toggle, ago, dateShort, hhmm, toast } from '../../ui/kit.t
 import { idr } from '../../domain/money.ts';
 import { balance, tierOf, TIERS } from '../../domain/loyalty.ts';
 import { usable } from '../../domain/promo.ts';
+import { pickupLanes } from '../../domain/order.ts';
 import { applyVoucher, rateOrder } from '../../data/actions.ts';
 import { bookTable, claimVoucher, digits, findCustomer, findOrJoin, setOptIn } from '../../data/actions/selforder.ts';
 import type { Customer, Order } from '../../data/schema.ts';
@@ -235,7 +236,7 @@ export function Queue({ g }: { g: G }) {
   const { db, outletId } = g;
   // History rows ("h…") are closed tickets from earlier days; the queue is today's live tickets only.
   const live = db.orders.filter(o => o.outletId === outletId && !o.id.startsWith('h') && o.lines.some(l => l.fired) && o.status !== 'served' && o.status !== 'voided' && Date.now() - o.createdAt < 3 * 3600e3).sort((a, b) => a.createdAt - b.createdAt);
-  const ready = live.filter(o => progress(o) === 3), cooking = live.filter(o => progress(o) < 3);
+  const { prep: cooking, ready } = pickupLanes(live, Date.now()); // the same lanes as the pickup board TV
   const mineNo = g.sp.get('n');
   const mine = (mineNo && live.find(o => o.no === mineNo)) || g.latest;
   const ahead = mine && progress(mine) < 3 ? cooking.findIndex(o => o.id === mine.id) : -1;
@@ -248,6 +249,33 @@ export function Queue({ g }: { g: G }) {
     <div style={card} className="stack sm"><b>Ready to pick up</b><Nums list={ready} tone="var(--success-soft)" /></div>
     <div style={card} className="stack sm"><b>Preparing</b><Nums list={cooking} tone="var(--bg-sunken)" /></div>
     <span style={{ fontSize: 12, color: MUTED, textAlign: 'center' }}>Updates live from the kitchen · {db.tenant.name} {g.out.name}</span>
+  </Page>;
+}
+
+/** Delivery tracking: the link a delivery guest opens. Stages come from the kitchen and the hand-over; Menu Studio decides what shows. */
+export function Track({ g }: { g: G }) {
+  const { db } = g, v = studioValue(db, 'delivery-tracking-page') as { driver: boolean; map: boolean; eta: boolean; help: string };
+  const id = g.sp.get('o');
+  const o = id ? db.orders.find(x => x.id === id) : db.orders.filter(x => x.outletId === g.outletId && x.type === 'delivery' && !x.id.startsWith('h')).sort((a, b) => b.createdAt - a.createdAt)[0];
+  if (!o) return <Page title="Delivery" g={g}><Empty icon="bike" title="No delivery to track">Open the link from your WhatsApp message to follow your order.</Empty></Page>;
+  const fired = o.lines.filter(l => l.fired);
+  const st = o.status === 'voided' ? -1 : o.paidAt && o.readyAt ? 2 : fired.length && fired.every(l => l.kds === 'done') ? 1 : 0;
+  const steps = ['Order received', 'Prepared', 'Picked up by the rider', 'Delivered'];
+  const tel = digits(g.out.phone ?? '');
+  return <Page title={o.no} g={g}>
+    {st < 0 ? <div style={card} role="alert"><b>This order was cancelled</b><p style={{ color: MUTED }}>{o.note}</p></div> : <>
+      {v.map && <div aria-hidden style={{ ...card, height: 140, position: 'relative', background: 'repeating-linear-gradient(45deg,color-mix(in srgb,var(--bn-ink) 5%,transparent) 0 12px,transparent 12px 24px)' }}>
+        <span style={{ position: 'absolute', top: 54, left: ['8%', '30%', '62%', '86%'][st], width: 32, height: 32, borderRadius: 99, background: 'var(--bn-p)', color: 'var(--ink-0)', display: 'grid', placeItems: 'center' }}><Icon name="bike" size={18} /></span></div>}
+      <div style={card} className="stack sm">
+        <b style={{ fontFamily: 'var(--bn-font)', fontSize: 22 }} aria-live="polite">{steps[st]}</b>
+        {v.eta && o.readyBy && st < 3 && <span>Arrives around <b>{hhmm(o.readyBy + 15 * 60e3)}</b></span>}
+        {steps.map((s, i) => <div key={s} className="row" style={{ gap: 10, opacity: i <= st ? 1 : .45 }}><Icon name={i <= st ? 'circle-check' : 'circle'} size={18} style={{ color: i <= st ? 'var(--success)' : MUTED }} /><span>{s}</span></div>)}
+        {st === 2 && <span style={{ fontSize: 13, color: MUTED }}>{o.source} confirms when it arrives.</span>}
+      </div>
+      {v.driver && st >= 2 && <div style={card} className="row"><Icon name="user-round" /><span className="grow">Your rider from {o.source}</span></div>}
+    </>}
+    <div style={card} className="stack sm">{o.lines.map(l => <div key={l.id} className="row between"><span>{l.qty}× {l.name}</span><span>{idr(l.unitPrice * l.qty)}</span></div>)}<div className="row between"><b>Total</b><b>{idr(o.total)}</b></div></div>
+    {v.help && (tel ? <a className="btn" href={`https://wa.me/${tel.replace(/^0/, '62')}`} target="_blank" rel="noreferrer" style={{ minHeight: 48 }}><Icon name="message-circle" size={18} />{v.help}</a> : <span style={{ textAlign: 'center', color: MUTED }}>{v.help}</span>)}
   </Page>;
 }
 

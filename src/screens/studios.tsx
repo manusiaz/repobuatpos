@@ -64,7 +64,7 @@ const R: Record<string, [string, V?]> = {
   '/owner/more-studios-customer-screens/waiting-screen': ['wait'], '/owner/more-studios-customer-screens/order-ready-and-enjoy': ['ready'],
   '/owner/more-studios-customer-screens/menu-board': ['board'], '/owner/more-studios-customer-screens/queue-and-pickup-screen': ['queue'],
   '/owner/more-studios-customer-screens/qris-payment-on-phone': ['qrpay'], '/owner/more-studios-customer-screens/split-bill-from-phone': ['split'],
-  '/owner/more-studios-customer-screens/delivery-tracking': ['track'], '/order/customer-links/delivery-tracking': ['track'],
+  '/owner/more-studios-customer-screens/delivery-tracking': ['track'],
   '/owner/more-studios-customer-screens/closed-paused-and-sold-out': ['closed'],
   '/owner/messaging-and-automation/whatsapp-business-connection-and-number-verification': ['waba'],
   '/owner/messaging-and-automation/message-templates': ['templates'],

@@ -33,7 +33,7 @@ const SHELL: Record<Surface, Shell> = {
 const SCREEN_SURFACE: Record<string, Surface> = { Shifts: 'shifts', Loyalty: 'loyalty', 'Manager Dashboard': 'manager', 'Menu Studio': 'menu', 'Brand Studio': 'brand', Studios: 'studios' };
 
 function surfaceOf(p: { role: string; host: string; group: string; name: string; screen: string | null }): Surface {
-  if (p.screen) return SCREEN_SURFACE[p.screen];
+  if (p.screen && p.role !== 'customer') return SCREEN_SURFACE[p.screen]; // a guest link is never an editor
   const n = p.name;
   switch (p.role) {
     case 'Public': return p.host === 'bornis.id' ? 'landing' : 'auth';
