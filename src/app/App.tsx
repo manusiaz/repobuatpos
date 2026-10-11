@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { pageAt, type Page, type Surface } from '../system/registry.ts';
 import { canOpen } from '../system/access.ts';
 import { useDB } from '../data/store.ts';
+import { escalateDue } from '../data/actions.ts';
 import { setSession, useSession } from '../session.ts';
 import { Ctx, type AppCtx } from './context.tsx';
 import { BackOfficeShell, PublicShell } from './Shells.tsx';
@@ -33,6 +34,7 @@ export default function App({ path }: { path: string }) {
   const router = useRouter();
   const [outlet, setOutlet] = useState<string | null>(null);
   useEffect(() => { if (db && !outlet) setOutlet(user?.outletId ?? db.device.outletId); }, [db, user, outlet]);
+  useEffect(() => { escalateDue(); const t = setInterval(() => escalateDue(), 60e3); return () => clearInterval(t); }, []);
   const go = useCallback((p: string) => router.push(p), [router]);
   const ctx = useMemo<AppCtx | null>(() => db && user ? { page, db, user, me: db.employees.find(e => e.id === user.id), outletId: outlet ?? user.outletId, setOutlet, go } : null, [page, db, user, outlet, go]);
   if (!ctx) return <div style={{ padding: 24 }}><Loading /></div>;

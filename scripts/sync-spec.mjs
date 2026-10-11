@@ -43,6 +43,10 @@ const notes = read('BorNiz Design Notes.dc.html');
 const notesCode = notes.slice(notes.indexOf('const C = {'), notes.indexOf('class Component'));
 const surfaces = vm.runInNewContext(notesCode.replace(/\bconst\b/g, 'var') + ';({PAGES,ORDER})', {});
 
+const guide = read('BorNiz Operations Guide.dc.html');
+const gCode = guide.slice(guide.indexOf('const HOW = {'), guide.indexOf('const ROLE_OF'));
+const ops = vm.runInNewContext(gCode.replace(/\bconst\b/g, 'var') + ';({ HOW, RULES: RULES.map(r => [r[0], r[1], r[3], r[4].map(x => [x.m, x.t])]) })', {});
+
 // Page → mode / dedicated screen / studio / data object. Same precedence as the Back Office prototype.
 const auth = W.BN_AUTH;
 const pages = [];
@@ -70,7 +74,7 @@ const files = {
   'pages.json': { pages, modes: W.BN_MODEUI },
   'authority.json': { objects: auth.objects, src: auth.SRC, ladder: auth.LADDER, loopholes: auth.LOOP },
   'alerts.json': { groups: W.BN_ALERTS, roles: W.BN_ALERT_ROLES, guest: W.BN_GUEST, destinations: W.BN_DEST },
-  'catalog.json': { perms, apps, brandThemes, links, records: rec, live, surfaces: surfaces.PAGES, surfaceOrder: surfaces.ORDER },
+  'catalog.json': { perms, apps, brandThemes, links, records: rec, live, surfaces: surfaces.PAGES, surfaceOrder: surfaces.ORDER, help: ops.HOW, rules: ops.RULES },
   'docs.json': { diagrams, logic, product: W.BN_PM },
 };
 for (const [f, data] of Object.entries(files)) fs.writeFileSync(new URL('../src/system/' + f, import.meta.url), JSON.stringify(data));

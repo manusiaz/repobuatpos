@@ -75,9 +75,29 @@ export function OutletPicker() {
     {mine.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}</select>;
 }
 
+/** Help: the day-to-day tasks for your role (Operations Guide) and the rules that apply. Each task opens its app. */
+export function Help() {
+  const { user, page } = useApp();
+  const [open, setOpen] = useState(false);
+  const tasks = (catalog.help as unknown as Record<string, [string, string, [string, string][]][]>)[user.role] ?? [];
+  const m = page.mode;
+  return <>
+    <button className="btn btn-ghost btn-sm" onClick={() => setOpen(true)} aria-label="Help"><Icon name="circle-help" size={18} /><span className="hide-sm">Help</span></button>
+    <Sheet open={open} onClose={() => setOpen(false)} title="Help" sub={`${page.title} · ${m === 'record' ? 'created at the POS, read only here' : m === 'incoming' ? 'incoming: accept, update or reply' : m === 'approve' ? 'approve or reject with your approval PIN' : 'what you do here, step by step'}`}>
+      <div className="stack lg">
+        {tasks.length === 0 && <p className="muted">Guests and BorNiz staff don’t have a task list. Ask your manager.</p>}
+        {tasks.map(([when, title, list]) => <section key={when} className="stack sm"><span className="cap">{when} · {title}</span>
+          {list.map(([t, app]) => { const s = SURFACE_OF[app]; return <div key={t} className="row between" style={{ borderTop: '1px solid var(--border)', paddingTop: 8 }}><span style={{ fontSize: 14 }}>{t}</span>{s ? <Link className="btn btn-sm" href={surfaceHome(s)} onClick={() => setOpen(false)}>Show me</Link> : <span className="faint" style={{ fontSize: 12 }}>{app}</span>}</div>; })}
+        </section>)}
+        <section className="stack sm"><span className="cap">Rules everyone follows</span>{(catalog.rules as unknown as [string, string, string, [string, string][]][]).slice(0, 6).map(([t, , where, rs]) => <details key={t}><summary style={{ cursor: 'pointer', fontWeight: 600 }}>{t} <span className="faint" style={{ fontWeight: 400 }}>· {where}</span></summary><ul style={{ margin: '6px 0', paddingLeft: 18, fontSize: 14 }}>{rs.map(([m, x]) => <li key={x}><b>{m}</b> {x}</li>)}</ul></details>)}</section>
+      </div>
+    </Sheet>
+  </>;
+}
+
 /** Floating chrome for full-screen device apps (POS, KDS, waiter): apps, alerts, user. */
 export function DeviceChrome({ dark }: { dark?: boolean }) {
   return <div className="row" data-theme={dark ? 'dark' : undefined} style={{ position: 'fixed', right: 12, bottom: 12, zIndex: 40, padding: 4, borderRadius: 16, background: 'var(--bg-surface)', boxShadow: 'var(--shadow-e2)', border: '1px solid var(--border)' }}>
-    <Launcher /><Bell /><UserSwitch compact />
+    <Help /><Launcher /><Bell /><UserSwitch compact />
   </div>;
 }

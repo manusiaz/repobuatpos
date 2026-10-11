@@ -24,4 +24,4 @@ export const missingPhotos = (lines: OpnameLine[], requireAll = false) =>
   lines.filter(l => (requireAll || l.counted !== l.systemQty) && !l.photo);
 export const opnameApprover = (lines: OpnameLine[]) => levelRequired('opname', opnameVariance(lines));
 export const postOpname = (lines: OpnameLine[], outletId: string, opnameId: string, by: string, at = Date.now()): Movement[] =>
-  lines.filter(l => l.counted !== l.systemQty).map(l => ({ outletId, stockItemId: l.stockItemId, qty: l.counted - l.systemQty, type: 'opname_adjustment', sourceId: opnameId, by, at }));
+  lines.filter(l => l.counted !== l.systemQty).map(l => ({ outletId, stockItemId: l.stockItemId, qty: Math.round((l.counted - l.systemQty) * 1000) / 1000, type: 'opname_adjustment', sourceId: opnameId, by, at }));

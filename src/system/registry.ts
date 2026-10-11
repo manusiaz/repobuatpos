@@ -87,7 +87,7 @@ function build(r: Raw): Page {
     path, slug: path.split('/').pop() || 'home', name: r.name, title: r.name.replace(/\s*\([^)]*\)\s*$/, ''),
     role: r.role.toLowerCase(), host: r.host, area: r.area, group: r.group, mode, object: r.object,
     template: surface === 'backoffice' ? templateOf(r.mode, r.name, r.group) : null,
-    surface, shell: SHELL[surface], prototype: PROTOTYPE[surface],
+    surface, shell: surface === 'online' && (r.role === 'owner' || r.role === 'manager') ? 'backoffice' : SHELL[surface], prototype: PROTOTYPE[surface],
   };
 }
 
@@ -112,7 +112,7 @@ const EXTRA: Page[] = [
   { path: '/account', name: 'Account', surface: 'auth', role: 'public', group: 'Auth' },
   // Sitemap gap: counting is done on the PIC tablet (Authority, CLAUDE.md opname rules) but the PIC sitemap has no page for it.
   { path: '/pic/floor/stock-opname', name: 'Stock opname (blind count)', surface: 'pic', role: 'pic', group: 'Floor' },
-].map(x => ({ ...x, slug: x.path.slice(1), title: x.name, host: '', area: 'Surface root', mode: 'screen' as Mode, object: null, template: null,
+].map(x => ({ ...x, slug: x.path.slice(1), title: x.name, host: '', area: PROTOTYPE[x.surface as Surface], mode: 'screen' as Mode, object: null, template: null,
   surface: x.surface as Surface, shell: SHELL[x.surface as Surface], prototype: PROTOTYPE[x.surface as Surface], extra: true }));
 
 export const PAGES: Page[] = [...sitemap, ...EXTRA];

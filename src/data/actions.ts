@@ -6,10 +6,10 @@ import type { Approval, DB, Order, OrderLine, Product, Rec, Role } from './schem
 import { orderTotals, QRIS_TTL_MS, type Method, type Source } from '../domain/order.ts';
 import { canDecide, levelRequired, type Level, type RequestType, PIN_TRIES, PIN_LOCK_MS } from '../domain/approval.ts';
 import { earn, reversal, tierOf, canRedeem } from '../domain/loyalty.ts';
-import { deductForSale, level as stockLevel, opnameApprover, postOpname, type OpnameLine } from '../domain/stock.ts';
+import { deductForSale, level as stockLevel, missingPhotos, opnameApprover, postOpname, type OpnameLine } from '../domain/stock.ts';
 import { flashPrice, resolve } from '../domain/promo.ts';
 import { closeCheck } from '../domain/shift.ts';
-import { idr } from '../domain/money.ts';
+import { idr, roundCash } from '../domain/money.ts';
 import alertsCatalog from '../system/alerts.json' with { type: 'json' };
 
 const now = () => Date.now();
@@ -20,7 +20,7 @@ export const priceAt = (d: DB, p: Product, outletId: string) => d.outletProducts
 // Alert engine: recipients come from the alert catalog (spec/bn-alerts.js) when the alert is listed there.
 const ALERT_TO: Record<string, Role[]> = Object.fromEntries((alertsCatalog.groups as [string, string, [string, string, Record<string, number>][]][])
   .flatMap(g => g[2].map(a => [a[0].toLowerCase(), Object.keys(a[2]).filter(r => r !== 'guest') as Role[]])));
-function notify(d: DB, alert: string, level: 'info' | 'warn' | 'high', fallback: Role[], outletId: string | null, text: string, href: string | null = null) {
+export function notify(d: DB, alert: string, level: 'info' | 'warn' | 'high', fallback: Role[], outletId: string | null, text: string, href: string | null = null) {
   const to = ALERT_TO[alert.toLowerCase()] ?? fallback;
   d.notices.unshift({ id: uid('n'), alert, level, to, outletId, text, href, at: now(), read: false });
   if (d.notices.length > 200) d.notices.length = 200;
@@ -111,12 +111,16 @@ export function gatewayWebhook(paymentId: string, status: 'settled' | 'failed' |
     if (!p || p.status !== 'pending') return; // idempotent on gateway_ref
     p.status = status;
     const o = findOrder(d, p.orderId);
-    if (status === 'settled') settleIfDone(d, o, 'gateway'); else o.status = 'open';
+    if (status === 'settled') settleIfDone(d, o, 'gateway'); else o.status = backFromPaying(o);
   }, paymentId);
 }
+/** A failed or cancelled payment never un-sends a ticket: fired orders go back to their kitchen state. */
+const backFromPaying = (o: Order): Order['status'] => !o.lines.some(l => l.fired) ? 'open' : o.lines.every(l => l.kds === 'done') ? 'ready' : 'sent';
 function settleIfDone(d: DB, o: Order, by: string) {
   const paid = d.payments.filter(p => p.orderId === o.id && p.status === 'settled').reduce((a, p) => a + p.amount, 0);
-  if (paid < o.total) return;
+  // cash rounding (lg-total) is a separate line applied last: a cash bill is settled at the rounded amount
+  const cash = d.payments.some(p => p.orderId === o.id && p.method === 'cash' && p.status === 'settled');
+  if (paid < (cash ? Math.min(o.total, roundCash(o.total)) : o.total)) return;
   o.status = 'paid'; o.paidAt = now();
   if (o.promoIds.length) o.promoIds.forEach(id => { const p = d.promos.find(x => x.id === id); if (p) p.used = (p.used ?? 0) + 1; });
   // order.paid → Inventory (recipe deduction), Loyalty (earn), Notifications (thank-you automation)
@@ -135,7 +139,7 @@ function settleIfDone(d: DB, o: Order, by: string) {
   }
 }
 export function cancelPayment(paymentId: string, by: string) {
-  commit('payment.cancelled', by, d => { const p = d.payments.find(x => x.id === paymentId); if (p && p.status === 'pending') { p.status = 'failed'; findOrder(d, p.orderId).status = 'open'; } }, paymentId);
+  commit('payment.cancelled', by, d => { const p = d.payments.find(x => x.id === paymentId); if (p && p.status === 'pending') { p.status = 'failed'; const o = findOrder(d, p.orderId); o.status = backFromPaying(o); } }, paymentId);
 }
 
 // ── Approvals (one engine, lg-approval) ──────────────────────────────────────────────────
@@ -160,15 +164,18 @@ export function requestApproval(a: { type: RequestType; title: string; amount?: 
   }, a.title, a.outletId);
   return { id, level: lvl };
 }
-export function decide(approvalId: string, by: string, decision: 'approved' | 'rejected' | 'recount', note = ''): string | null {
+/** `extra` merges into the request payload, e.g. { promote: false } for the owner's "Keep local" on a local menu item. */
+export function decide(approvalId: string, by: string, decision: 'approved' | 'rejected' | 'recount', note = '', extra?: Record<string, unknown>): string | null {
   const d0 = snapshot(), a = d0.approvals.find(x => x.id === approvalId), e = emp(d0, by);
   if (!a || !e) return 'Not found';
   const lvl: Level = e.role === 'owner' ? 'owner' : e.role === 'manager' ? 'manager' : e.role === 'pic' ? 'pic' : 'cashier';
+  if (a.type === 'opname' && decision === 'approved') { const op = d0.opnames.find(x => x.id === a.subjectId); if (op && missingPhotos(op.lines.filter(l => typeof l.counted === 'number'), op.requirePhotoAll).length) return 'Photo proof missing on a line with a difference. Ask for it before signing.'; }
   if (!canDecide({ level: a.level, requestedBy: a.requestedBy, countedBy: a.countedBy }, { id: by, level: lvl }))
     return by === a.requestedBy || by === a.countedBy ? 'You can’t decide your own request.' : `Needs ${a.level}. Escalate instead.`;
   commit('approval.' + decision, by, d => {
     const r = d.approvals.find(x => x.id === approvalId)!;
     Object.assign(r, { status: decision, decidedBy: by, decidedAt: now(), decisionNote: note });
+    if (extra) r.payload = { ...(r.payload ?? {}), ...extra };
     if (decision === 'approved') applyDecision(d, r);
     if (decision === 'recount' && r.type === 'opname') { const op = d.opnames.find(o => o.id === r.subjectId); if (op) op.status = 'recount'; }
     if (decision === 'rejected') rejectEffects(d, r);
@@ -202,7 +209,7 @@ function applyDecision(d: DB, r: Approval) {
       if (pl.toStock) d.movements.push(...deductForSale(d.recipes, o.lines, o.outletId, o.id, r.decidedBy ?? '').map(m => ({ ...m, qty: -m.qty, type: 'refund_return' as const })));
       break;
     }
-    case 'local_item': { const p = d.products.find(x => x.id === r.subjectId); if (p) { p.status = 'live'; if (pl.promote || p.promoteRequested) { p.scope = 'global'; p.ownerOutletId = null; d.outlets.forEach(o => { if (!d.outletProducts.some(x => x.productId === p.id && x.outletId === o.id)) d.outletProducts.push({ productId: p.id, outletId: o.id, localPrice: null, is86: false, hidden: false }); }); } } break; }
+    case 'local_item': { const p = d.products.find(x => x.id === r.subjectId); if (p) { p.status = 'live'; if (pl.promote ?? p.promoteRequested) { p.scope = 'global'; p.ownerOutletId = null; d.outlets.forEach(o => { if (!d.outletProducts.some(x => x.productId === p.id && x.outletId === o.id)) d.outletProducts.push({ productId: p.id, outletId: o.id, localPrice: null, is86: false, hidden: false }); }); } } break; }
     case 'price': { const p = d.products.find(x => x.id === r.subjectId); if (p && pl.price) { if (pl.outletId) { const op = d.outletProducts.find(x => x.productId === p.id && x.outletId === pl.outletId); if (op) op.localPrice = pl.price; } else p.basePrice = pl.price; } break; }
     case 'opname': { const op = d.opnames.find(x => x.id === r.subjectId); if (op) { op.status = 'posted'; op.approvedBy = r.decidedBy ?? null; d.movements.push(...postOpname(op.lines, op.outletId, op.id, r.decidedBy ?? '')); } break; }
     case 'variance': { const s = d.sessions.find(x => x.id === r.subjectId); if (s) { s.status = 'closed'; s.closedAt = now(); } break; }
@@ -214,7 +221,7 @@ function applyDecision(d: DB, r: Approval) {
     case 'promo': { const p = pl.promo; if (p) { const i = d.promos.findIndex(x => x.id === p.id); if (i >= 0) d.promos[i] = p; else d.promos.push(p); } break; }
     case 'perm': { if (pl.employee) { const e = pl.employee; const i = d.employees.findIndex(x => x.id === e.id); if (i >= 0) d.employees[i] = e; else d.employees.push(e); } if (pl.key) d.perms[pl.key] = pl.code; break; }
     case 'asset': case 'expense': case 'transfer': case 'leave': case 'timesheet': case 'budget': { if (pl.rec && pl.object) { const l = d.records[pl.object] ?? (d.records[pl.object] = []); const i = l.findIndex(x => x.id === pl.rec.id); const row = { ...pl.rec, c: 'Approved' }; if (i >= 0) l[i] = row; else l.unshift(row); } break; }
-    case 'points': { if (pl.customerId) d.ledger.push({ customerId: pl.customerId, points: pl.points, reason: 'Adjustment · ' + r.note, at: now() }); break; }
+    case 'points': { if (pl.customerId && pl.points < 0 && d.ledger.filter(l => l.customerId === pl.customerId).reduce((a, l) => a + l.points, 0) + pl.points < 0) break; if (pl.customerId) d.ledger.push({ customerId: pl.customerId, points: pl.points, reason: 'Adjustment · ' + r.note, at: now() }); break; }
   }
 }
 
@@ -276,7 +283,7 @@ export function closeSession(sessionId: string, counted: number, note: string, b
   commit('drawer.counted', by, d => {
     const x = d.sessions.find(y => y.id === sessionId)!;
     Object.assign(x, { counted, variance: chk.variance, note, status: chk.level && chk.level !== 'pic' ? 'needs_approval' : 'closed', closedAt: chk.level && chk.level !== 'pic' ? null : now() });
-    d.clock.push({ id: uid('ck'), employeeId: by, outletId: x.outletId, kind: 'out', at: now() });
+    if (by === x.cashierId) d.clock.push({ id: uid('ck'), employeeId: by, outletId: x.outletId, kind: 'out', at: now() }); // a PIC counting someone else's drawer stays clocked in
   }, sessionId, s.outletId);
   if (chk.level) requestApproval({ type: 'variance', title: `Drawer variance ${idr(chk.variance)} · ${sessionId}`, amount: Math.abs(chk.variance), requestedBy: by, outletId: s.outletId, subjectId: sessionId, note });
   return chk;
@@ -300,8 +307,9 @@ export function updateOpnameLine(opnameId: string, stockItemId: string, patch: P
 }
 export function submitOpname(opnameId: string, by: string) {
   const op = snapshot().opnames.find(x => x.id === opnameId)!;
-  const lines = op.lines.filter(l => !Number.isNaN(l.counted));
-  commit('opname.submitted', by, d => { const o = d.opnames.find(x => x.id === opnameId)!; o.lines = o.lines.filter(l => !Number.isNaN(l.counted)).map(l => ({ ...l, locked: true })); o.status = 'locked'; }, opnameId, op.outletId);
+  const counted = (l: OpnameLine) => typeof l.counted === 'number' && Number.isFinite(l.counted); // NaN becomes null across tabs (JSON)
+  const lines = op.lines.filter(counted);
+  commit('opname.submitted', by, d => { const o = d.opnames.find(x => x.id === opnameId)!; o.lines = o.lines.filter(counted).map(l => ({ ...l, locked: true })); o.status = 'locked'; }, opnameId, op.outletId);
   const value = lines.reduce((a, l) => a + Math.abs((l.counted - l.systemQty) * l.unitCost), 0);
   return requestApproval({ type: 'opname', title: `Opname ${op.area} · variance ${idr(Math.round(value))}`, amount: Math.round(value), requestedBy: by, countedBy: by, outletId: op.outletId, subjectId: opnameId, note: `${lines.length} lines counted · approver ${opnameApprover(lines)}` });
 }
@@ -431,3 +439,9 @@ export function archiveProduct(productId: string, by: string) {
 }
 export function hideAtOutlet(productId: string, outletId: string, hidden: boolean, by: string) { commit('product.hidden', by, d => { const x = d.outletProducts.find(y => y.productId === productId && y.outletId === outletId); if (x) x.hidden = hidden; }, productId, outletId); }
 export function saveModifierGroup(g: DB['modifierGroups'][0], by: string) { commit('modifier.saved', by, d => { const i = d.modifierGroups.findIndex(x => x.id === g.id); if (i >= 0) d.modifierGroups[i] = g; else d.modifierGroups.push(g); }, g.name); }
+/** Escalation ladder for unanswered requests: PIC 5 min → manager 30 min → owner (lg-approval, Alerts). Idempotent. */
+export function escalateDue(at = now()) {
+  const due = snapshot().approvals.filter(a => a.status === 'waiting' && ((a.level === 'pic' && at - a.at > 5 * 60e3) || (a.level === 'manager' && at - a.at > 35 * 60e3)));
+  if (!due.length) return;
+  commit('approval.escalated', 'system', d => due.forEach(x => { const r = d.approvals.find(y => y.id === x.id)!; r.level = r.level === 'pic' ? 'manager' : 'owner'; notify(d, 'Escalated', 'warn', [r.level], r.outletId, `${r.title} unanswered · now with the ${r.level}`); }));
+}

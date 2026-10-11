@@ -103,7 +103,7 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .table th{position:sticky;top:0;background:var(--bg-sunken);text-align:left;font:600 12px/1.2 var(--font-body);color:var(--fg-2);padding:10px 14px;white-space:nowrap;z-index:1}
 .table td{padding:0 14px;height:48px;border-top:1px solid var(--border);vertical-align:middle}
 .table tr.click{cursor:pointer}.table tr.click:hover td{background:var(--bg-canvas)}
-.table .r{text-align:right}
+.table .r{text-align:right;white-space:nowrap}
 .scroll-x{overflow-x:auto}
 
 .avatar{width:36px;height:36px;border-radius:99px;display:grid;place-items:center;font:700 14px/1 var(--font-display);color:#fff;background:var(--accent);flex:none}
@@ -136,7 +136,7 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 .shake{animation:shake 300ms}
 
 /* shells */
-.bo{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100dvh}
+.bo{background:var(--bg-canvas);color:var(--fg-1);display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100dvh}
 .bo-side{position:sticky;top:0;height:100dvh;overflow:auto;border-right:1px solid var(--border);background:var(--bg-surface);padding:16px 12px;display:flex;flex-direction:column;gap:6px}
 .bo-main{min-width:0;display:flex;flex-direction:column}
 .bo-top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:10px var(--margin);background:color-mix(in srgb,var(--bg-canvas) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}

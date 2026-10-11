@@ -5,7 +5,7 @@ import { nav, PAGES, surfaceHome } from '../system/registry.ts';
 import { relatedPages } from '../system/graph-lite.ts';
 import { Icon, Badge } from '../ui/kit.tsx';
 import { useApp } from './context.tsx';
-import { Bell, Launcher, OutletPicker, UserSwitch } from './chrome.tsx';
+import { Bell, Help, Launcher, OutletPicker, UserSwitch } from './chrome.tsx';
 
 export function BackOfficeShell({ children }: { children: ReactNode }) {
   const { page, user } = useApp();
@@ -18,7 +18,7 @@ export function BackOfficeShell({ children }: { children: ReactNode }) {
     <aside className={'bo-side' + (side ? ' open' : '')} aria-label="Navigation">
       <Link href={home} className="row" style={{ padding: '4px 6px 12px', textDecoration: 'none', color: 'var(--fg-1)' }}>
         <span style={{ width: 36, height: 36, borderRadius: 11, background: 'var(--role)', color: '#fff', display: 'grid', placeItems: 'center', fontFamily: 'var(--font-display)', fontWeight: 700 }}>B</span>
-        <span className="stack" style={{ gap: 0 }}><b>Kopi Biru</b><span className="faint" style={{ fontSize: 12 }}>{role === 'admin' ? 'BorNiz HQ' : role === 'manager' ? 'Manager · Senayan + Kemang' : 'Owner · 3 outlets · Pro'}</span></span>
+        <span className="stack" style={{ gap: 0 }}><b>{role === 'admin' ? 'BorNiz' : 'Kopi Biru'}</b><span className="faint" style={{ fontSize: 12 }}>{role === 'admin' ? 'BorNiz HQ' : role === 'manager' ? 'Manager · Senayan + Kemang' : 'Owner · 3 outlets · Pro'}</span></span>
       </Link>
       <input className="search" placeholder={`Search ${PAGES.length} pages`} value={q} onChange={e => setQ(e.target.value)} aria-label="Search pages" />
       <Link className="nav-i" href={home} aria-current={page.path === home ? 'page' : undefined}><Icon name="activity" size={18} />{role === 'admin' ? 'Platform overview' : 'Live dashboard'}</Link>
@@ -40,7 +40,7 @@ export function BackOfficeShell({ children }: { children: ReactNode }) {
         <span className="faint grow hide-sm" style={{ fontSize: 13 }}>{page.role === 'system' ? 'System' : page.area} › {page.group}</span>
         <span className="grow only-mobile" />
         {role !== 'admin' && <OutletPicker />}
-        <Launcher /><Bell /><UserSwitch />
+        <Help /><Launcher /><Bell /><UserSwitch />
       </header>
       <main className="bo-body">{children}<Connected /></main>
     </div>
