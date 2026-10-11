@@ -169,7 +169,7 @@ function Exchange({ o, flow }: { o: Order; flow: Flow }) {
     const id = newOrder(outletId, me.id, 'pos', { type: 'take', customerId: o.customerId, sessionId: session?.id ?? null, note: `Exchange for ${o.no}` });
     take.forEach(pid => addLine(id, pid, [], 1, '', me.id));
     setMade(id);
-    flow.run({ action: 'Refund', type: 'refund', amount: backAmt, subjectId: o.id, note: `Exchange · new bill`, payload: { toStock: true }, title: `Exchange return ${idr(backAmt)} · ${o.no}` });
+    flow.run({ action: 'Refund', type: 'refund', amount: backAmt, subjectId: o.id, note: `Exchange · new bill`, payload: { toStock: true, lineIds: back }, title: `Exchange return ${idr(backAmt)} · ${o.no}` });
   };
   return <div className="stack">
     <span className="cap">Items coming back</span>

@@ -63,4 +63,5 @@ export function attendance(db: DB, empId: string, outletId: string, s: Slot, t =
 
 const LIVE: string[] = ['open', 'held', 'sent', 'preparing', 'ready', 'served', 'paying'];
 export const isLive = (status: string) => LIVE.includes(status);
-export const isPaid = (status: string) => status === 'paid' || status === 'part_refunded';
+/** Sold = paid, part refunded or refunded: the same set as insight/metrics soldOrders (refunds are reported apart). */
+export const isPaid = (status: string) => status === 'paid' || status === 'part_refunded' || status === 'refunded';

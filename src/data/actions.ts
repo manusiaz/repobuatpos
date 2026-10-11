@@ -3,7 +3,7 @@
 // Loyalty, Catalog, Themes). A service writes only through commit(); effects of one event run in the same commit.
 import { commit, snapshot, uid } from './store.ts';
 import type { Approval, DB, Order, Product, Rec, Role } from './schema.ts';
-import { orderTotals, QRIS_TTL_MS, type Method, type Source } from '../domain/order.ts';
+import { lineTotal, orderTotals, QRIS_TTL_MS, type Method, type Source } from '../domain/order.ts';
 import { canDecide, levelRequired, type Level, type RequestType, PIN_TRIES, PIN_LOCK_MS } from '../domain/approval.ts';
 import { earn, reversal, tierOf, canRedeem } from '../domain/loyalty.ts';
 import { deductForSale, level as stockLevel, levels, portionsLeft, missingPhotos, opnameApprover, postOpname, type OpnameLine } from '../domain/stock.ts';
@@ -28,10 +28,10 @@ export function notify(d: DB, alert: string, level: 'info' | 'warn' | 'high', fa
 
 function recalc(d: DB, o: Order) {
   const out = outletOf(d, o.outletId);
-  const net = o.lines.reduce((a, l) => a + (l.flashPrice ?? l.unitPrice) * l.qty, 0);
-  const promo = resolve(d.promos.filter(p => o.promoIds.includes(p.id)), net);
-  const t = orderTotals(o.lines.map(l => ({ unitPrice: l.unitPrice, flashPrice: l.flashPrice, modifiers: l.mods.map(m => m.price), qty: l.qty, discountPct: l.discountPct })),
-    out, { pct: o.discountPct, amount: promo.discount });
+  const lines = o.lines.map(l => ({ unitPrice: l.unitPrice, flashPrice: l.flashPrice, modifiers: l.mods.map(m => m.price), qty: l.qty, discountPct: l.discountPct }));
+  // promo value and min spend are worked out on what the guest is charged: modifiers in, item discounts out
+  const promo = resolve(d.promos.filter(p => o.promoIds.includes(p.id)), lines.map(lineTotal).reduce((a, b) => a + b, 0));
+  const t = orderTotals(lines, out, { pct: o.discountPct, amount: promo.discount });
   Object.assign(o, { subtotal: t.subtotal, discount: t.orderDiscount, service: t.service, tax: t.tax, total: t.total });
 }
 const findOrder = (d: DB, id: string) => d.orders.find(o => o.id === id)!;
@@ -117,11 +117,19 @@ export function startPayment(orderId: string, method: Method, amount: number, by
   if (!online && (method === 'qris' || method === 'va' || method === 'ewallet')) throw new Error('Offline: QRIS, VA and e-wallet need internet. Use cash or card.');
   commit('payment.created', by, d => {
     const o = findOrder(d, orderId);
+    if (CLOSED.includes(o.status)) throw new Error(`${o.no} is already closed (${o.status}). Nothing was charged.`);
     guardGuest(d, o, by);
+    if (method === 'deposit' || method === 'kasbon') {
+      const c = d.customers.find(x => x.id === o.customerId);
+      if (!c) throw new Error('Attach the customer first: deposit and kasbon belong to a member account.');
+      if (method === 'deposit' && c.deposit < amount) throw new Error(`Deposit balance too low (${idr(c.deposit)}).`);
+    }
     o.status = 'paying';
+    // the money goes into the drawer of whoever takes it (another register, a handed-over bill, a QR bill paid at the counter)
+    const drawer = d.sessions.find(s => s.outletId === o.outletId && s.cashierId === by && s.status === 'open')?.id ?? o.sessionId;
     const instant = method === 'cash' || method === 'card' || method === 'deposit' || method === 'kasbon';
     d.payments.push({ id, orderId, outletId: o.outletId, method, amount, tip, status: instant ? 'settled' : 'pending', ref: (method === 'qris' ? 'QRIS-' : 'REF-') + id.slice(-6).toUpperCase(),
-      at: now(), expiresAt: method === 'qris' ? now() + QRIS_TTL_MS : null, sessionId: o.sessionId });
+      at: now(), expiresAt: method === 'qris' ? now() + QRIS_TTL_MS : null, sessionId: drawer });
     if (method === 'deposit' && o.customerId) { const c = d.customers.find(x => x.id === o.customerId)!; c.deposit -= amount; }
     if (method === 'kasbon' && o.customerId) { const c = d.customers.find(x => x.id === o.customerId)!; c.credit += amount; }
     if (instant) settleIfDone(d, o, by);
@@ -139,9 +147,13 @@ export function gatewayWebhook(paymentId: string, status: 'settled' | 'failed' |
     else { o.status = backFromPaying(o); notify(d, 'Payment failed / declined', 'warn', ['cashier'], o.outletId, `${o.no}${o.table ? ' · ' + o.table : ''} · ${p.method.toUpperCase()} ${status} · ${idr(p.amount)}`); }
   }, paymentId);
 }
+/** Paid, refunded or voided bills take no more payments. */
+export const CLOSED: Order['status'][] = ['paid', 'part_refunded', 'refunded', 'voided'];
 /** A failed or cancelled payment never un-sends a ticket: fired orders go back to their kitchen state. */
 const backFromPaying = (o: Order): Order['status'] => !o.lines.some(l => l.fired) ? 'open' : o.lines.every(l => l.kds === 'done') ? 'ready' : 'sent';
 function settleIfDone(d: DB, o: Order, by: string) {
+  // a payment that lands on a bill already paid or voided (QRIS paid after cash, late webhook) is money to give back, not a second sale
+  if (CLOSED.includes(o.status)) { notify(d, 'Payment failed / declined', 'warn', ['cashier', 'pic'], o.outletId, `${o.no} is already ${o.status} but another payment settled · refund it to the guest`); return; }
   const paid = d.payments.filter(p => p.orderId === o.id && p.status === 'settled').reduce((a, p) => a + p.amount, 0);
   // cash rounding (lg-total) is a separate line applied last: a cash bill is settled at the rounded amount
   const cash = d.payments.some(p => p.orderId === o.id && p.method === 'cash' && p.status === 'settled');
@@ -238,12 +250,33 @@ function applyDecision(d: DB, r: Approval) {
     case 'void': { const o = d.orders.find(x => x.id === r.subjectId); if (o) { if (pl.lineId) o.lines = o.lines.filter(l => l.id !== pl.lineId); else o.status = 'voided'; recalc(d, o); } break; }
     case 'refund': {
       const o = d.orders.find(x => x.id === r.subjectId); if (!o) break;
-      const pay = d.payments.find(p => p.orderId === o.id && p.status === 'settled');
-      d.refunds.push({ id: uid('rf'), orderId: o.id, paymentId: pay?.id ?? '', amount: r.amount, reason: r.note, approvalId: r.id, at: now(), toStock: !!pl.toStock });
+      // Paid back over the payments it was paid with, never more than each one took (real money first, cash rounding last).
+      const pays = d.payments.filter(p => p.orderId === o.id && p.status === 'settled').sort((a, b) => Number(a.ref === 'ROUNDING') - Number(b.ref === 'ROUNDING'));
+      const back = (pid: string) => d.refunds.filter(x => x.paymentId === pid).reduce((a, x) => a + x.amount, 0);
+      const drawer = d.sessions.find(s => s.outletId === o.outletId && s.cashierId === r.requestedBy && s.status === 'open')?.id ?? null;
+      const cust = d.customers.find(c => c.id === o.customerId);
+      let left = r.amount, paidBack = 0;
+      for (const p of pays) {
+        const amt = Math.min(left, p.amount - back(p.id)); if (amt <= 0) continue;
+        left -= amt; paidBack += amt;
+        d.refunds.push({ id: uid('rf'), orderId: o.id, paymentId: p.id, amount: amt, reason: r.note, approvalId: r.id, at: now(), toStock: !!pl.toStock, sessionId: p.method === 'cash' ? drawer ?? p.sessionId : p.sessionId });
+        if (p.method === 'deposit' && cust) cust.deposit += amt;
+        if (p.method === 'kasbon' && cust) cust.credit -= amt;
+      }
+      if (!paidBack) break; // already refunded in full (a second request for the same bill)
       const refunded = d.refunds.filter(x => x.orderId === o.id).reduce((a, x) => a + x.amount, 0);
       o.status = refunded >= o.total ? 'refunded' : 'part_refunded';
-      d.ledger.filter(l => l.orderId === o.id && l.points > 0).forEach(l => d.ledger.push(reversal(l)));
-      if (pl.toStock) d.movements.push(...deductForSale(d.recipes, o.lines, o.outletId, o.id, r.decidedBy ?? '').map(m => ({ ...m, qty: -m.qty, type: 'refund_return' as const })));
+      // beans: reverse the share refunded so far, minus what earlier refunds already reversed
+      for (const cid of new Set(d.ledger.filter(l => l.orderId === o.id && l.points > 0).map(l => l.customerId))) {
+        const mine = d.ledger.filter(l => l.orderId === o.id && l.customerId === cid);
+        const earned = mine.filter(l => l.points > 0).reduce((a, l) => a + l.points, 0), reversed = -mine.filter(l => l.points < 0).reduce((a, l) => a + l.points, 0);
+        const due = Math.round(earned * Math.min(1, refunded / (o.total || 1))) - reversed;
+        if (due > 0) d.ledger.push({ ...reversal({ customerId: cid, points: due, reason: '', orderId: o.id, at: now() }) });
+      }
+      // stock comes back for the refunded items only; an amount-only partial refund returns nothing
+      const lineIds = pl.lineIds as string[] | undefined;
+      const lines = lineIds?.length ? o.lines.filter(l => lineIds.includes(l.id)) : paidBack >= o.total ? o.lines : [];
+      if (pl.toStock && lines.length) d.movements.push(...deductForSale(d.recipes, lines, o.outletId, o.id, r.decidedBy ?? '').map(m => ({ ...m, qty: -m.qty, type: 'refund_return' as const })));
       break;
     }
     case 'local_item': { const p = d.products.find(x => x.id === r.subjectId); if (p) { p.status = 'live'; if (pl.promote ?? p.promoteRequested) { p.scope = 'global'; p.ownerOutletId = null; d.outlets.forEach(o => { if (!d.outletProducts.some(x => x.productId === p.id && x.outletId === o.id)) d.outletProducts.push({ productId: p.id, outletId: o.id, localPrice: null, is86: false, hidden: false }); }); } } break; }
@@ -311,11 +344,13 @@ export function openSession(outletId: string, cashierId: string, float: number) 
 }
 export function sessionCash(d: DB, sessionId: string) {
   const s = d.sessions.find(x => x.id === sessionId)!;
-  const cashSales = d.payments.filter(p => p.sessionId === sessionId && p.method === 'cash' && p.status === 'settled').reduce((a, p) => a + p.amount, 0);
+  const cash = d.payments.filter(p => p.sessionId === sessionId && p.method === 'cash' && p.status === 'settled');
+  const cashSales = cash.reduce((a, p) => a + p.amount, 0), cashTips = cash.reduce((a, p) => a + p.tip, 0);
   const mv = d.cashMoves.filter(c => c.sessionId === sessionId && c.status === 'done');
   const cashIn = mv.filter(c => c.kind === 'in').reduce((a, c) => a + c.amount, 0), cashOut = mv.filter(c => c.kind !== 'in').reduce((a, c) => a + c.amount, 0);
-  const cashRefunds = d.refunds.filter(r => d.payments.find(p => p.id === r.paymentId)?.sessionId === sessionId && d.payments.find(p => p.id === r.paymentId)?.method === 'cash').reduce((a, r) => a + r.amount, 0);
-  return { openingFloat: s.openingFloat, cashSales, cashIn, cashOut, cashRefunds };
+  // cash handed back from this drawer (the refund's drawer, else the drawer that took it); rounding rows move no money
+  const cashRefunds = d.refunds.filter(r => { const p = d.payments.find(x => x.id === r.paymentId); return p?.method === 'cash' && p.ref !== 'ROUNDING' && (r.sessionId ?? p.sessionId) === sessionId; }).reduce((a, r) => a + r.amount, 0);
+  return { openingFloat: s.openingFloat, cashSales, cashTips, cashIn, cashOut, cashRefunds };
 }
 export function cashMove(sessionId: string, kind: 'in' | 'out' | 'drop', amount: number, reason: string, by: string) {
   const d0 = snapshot(), s = d0.sessions.find(x => x.id === sessionId)!;

@@ -37,6 +37,8 @@ export interface Summary {
   /** (net sales − COGS) / net sales, 0..1; null when nothing sold. */
   grossMargin: number | null;
   refunds: number; refundCount: number; voids: number; voidCount: number; discounts: number;
+  /** Service charge and PB1 on the sold orders (PB1 is collected for the tax office, not income). */
+  service: number; tax: number;
 }
 export function summary(db: DB, outlet: OutletScope, r: Range): Summary {
   const sold = soldOrders(db, outlet, r), cost = costMap(db);
@@ -47,10 +49,19 @@ export function summary(db: DB, outlet: OutletScope, r: Range): Summary {
   return {
     revenue, orders: sold.length, avgTicket: sold.length ? Math.round(revenue / sold.length) : 0, net, cogs,
     grossMargin: net > 0 ? (net - cogs) / net : null,
-    refunds: vr.refunds.reduce((a, x) => a + x.amount, 0), refundCount: vr.refunds.length,
+    // one refund can be paid back over several payments (split bill): count refunds, not rows
+    refunds: vr.refunds.reduce((a, x) => a + x.amount, 0), refundCount: new Set(vr.refunds.map(x => x.approvalId ?? x.id)).size,
     voids: vr.voids.reduce((a, o) => a + o.total, 0), voidCount: vr.voids.length,
     discounts: sold.reduce((a, o) => a + o.discount, 0),
+    service: sold.reduce((a, o) => a + o.service, 0), tax: sold.reduce((a, o) => a + o.tax, 0),
   };
+}
+/** P&L lines. Revenue (order totals) is already after discounts and includes PB1, so sales are shown before discounts
+ *  and without PB1, and discounts are subtracted once. */
+export function profitAndLoss(s: Summary, payroll: number, expenses: number): [string, number][] {
+  const rows: [string, number][] = [['Sales (excl. PB1, before discounts)', s.revenue - s.tax + s.discounts], ['Discounts', -s.discounts], ['Refunds', -s.refunds],
+    ['COGS (recipes)', -s.cogs], ['Payroll', -payroll], ['Expenses', -expenses]];
+  return [...rows, ['Net profit', rows.reduce((a, x) => a + x[1], 0)]];
 }
 
 /** Relative change; null when there is no base to compare with. */
@@ -121,7 +132,8 @@ export function byChannel(db: DB, outlet: OutletScope, r: Range) {
 export function byMethod(db: DB, outlet: OutletScope, r: Range) {
   const m = new Map<Method, { method: Method; amount: number; count: number }>();
   for (const p of db.payments) {
-    if (p.status !== 'settled' || !inScope(p, outlet) || !within(p.at, r)) continue;
+    // cash rounding (ref ROUNDING) settles the bill but no money changes hands: it is not cash in the drawer
+    if (p.status !== 'settled' || p.ref === 'ROUNDING' || !inScope(p, outlet) || !within(p.at, r)) continue;
     const x = m.get(p.method) ?? { method: p.method, amount: 0, count: 0 }; x.amount += p.amount; x.count++; m.set(p.method, x);
   }
   return [...m.values()].sort((a, b) => b.amount - a.amount);

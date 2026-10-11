@@ -2,7 +2,7 @@
 // Register-only services (POS surface). Built on the shared service layer: order math always goes through patchOrder
 // (recalc), payments through startPayment / gatewayWebhook, approvals through requestApproval / decide.
 import { commit, snapshot, uid } from '../store.ts';
-import { gatewayWebhook, newOrder, patchOrder, startPayment } from '../actions.ts';
+import { CLOSED, gatewayWebhook, newOrder, patchOrder, startPayment } from '../actions.ts';
 import type { Approval, Device, OrderLine } from '../schema.ts';
 
 const now = () => Date.now();
@@ -52,6 +52,7 @@ export function mergeBills(targetId: string, sourceId: string, by: string) {
  *  settles at its total while the drawer only expects the cash that was actually taken. */
 export function payCash(orderId: string, due: number, remaining: number, by: string, tip = 0) {
   const o = order(orderId)!;
+  if (CLOSED.includes(o.status)) throw new Error(`${o.no} is already closed (${o.status}). Nothing was charged.`);
   const down = remaining - due;
   if (down > 0) commit('payment.rounding', by, d => {
     d.payments.push({ id: uid('pay'), orderId, outletId: o.outletId, method: 'cash', amount: down, tip: 0, status: 'settled', ref: 'ROUNDING', at: now(), expiresAt: null, sessionId: null });
