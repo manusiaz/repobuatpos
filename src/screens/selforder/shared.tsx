@@ -70,7 +70,7 @@ export function ItemRow({ i, onOpen, badge, t, count = 0 }: { i: MenuItem; onOpe
       {(badge || i.flash != null) && !i.sold && <span style={{ position: 'absolute', top: 6, left: 6, height: 20, padding: '0 7px', borderRadius: 99, background: 'var(--bn-acc)', fontSize: 10, fontWeight: 800, lineHeight: '20px' }}>{i.flash != null ? t('Flash sale') : badge}</span>}
     </span>
     <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <b style={{ fontSize: 15 }}>{i.p.name}</b>
+      <b style={{ fontSize: 15 }}>{i.p.name}{i.badges.map(([k, l, ic]) => <Icon key={k} name={ic} size={14} aria-label={l} style={{ marginLeft: 4, verticalAlign: '-2px', color: 'var(--bn-p)' }} />)}</b>
       <span style={{ fontSize: 13, color: MUTED, lineHeight: 1.35 }}>{itemDesc(db, i)}</span>
       {i.sold ? <b style={{ fontSize: 14, color: MUTED }}>{t('Sold out')}</b> : <span><b style={{ fontSize: 14 }}>{idr(unit(i))}</b>{i.flash != null && <s style={{ fontSize: 12, color: MUTED, marginLeft: 6 }}>{idr(i.price).replace('IDR ', '')}</s>}</span>}
     </span>

@@ -3,7 +3,9 @@
 import type { DB } from '../data/schema.ts';
 import { menuDesign } from '../data/actions/studio.ts';
 
+export const BADGES: [string, string, string][] = [['spicy', 'Spicy', 'flame'], ['veg', 'Vegetarian', 'leaf'], ['nuts', 'Contains nuts', 'nut'], ['dairy', 'Contains dairy', 'milk'], ['halal', 'Halal', 'badge-check'], ['new', 'New', 'sparkles']];
 export const STUDIO_DEFAULTS = {
+  'custom-badges-and-allergen-diet-icons': { which: 'spicy', spicy: '', veg: '', nuts: '', dairy: '', halal: '', new: '', legend: true },
   'style-per-category': { cat: 'coffee', layout: 'grid', bg: 'page', banner: '' },
   'auto-theme-by-time': { on: true, dark: '18:00', light: '06:00', paper: '#14161C', ink: '#F5F2EE' },
   'upsell-and-goes-well-with-rules': { trigger: 'p1', suggest: 'p7,p8', title: 'Goes well with', max: 2, cart: true },
@@ -41,3 +43,16 @@ export function themeNow<T extends { paper: string; ink: string }>(db: DB, theme
 }
 /** Beans promised on the feedback page ("20 beans for your feedback" → 20). */
 export const feedbackBeans = (db: DB) => Number(/(\d+)\s*beans?/i.exec(studioValue(db, 'feedback-and-rating-page').reward)?.[1] ?? 0);
+
+/** Diet and allergen badges the owner put on a product (Menu Studio › badges & allergen icons). */
+export function badgesOf(db: DB, productId: string): [string, string, string][] {
+  const v = studioValue(db, 'custom-badges-and-allergen-diet-icons') as Record<string, string | boolean>;
+  return BADGES.filter(([k]) => String(v[k] ?? '').split(',').map(x => x.trim()).includes(productId));
+}
+/** Price sent to a delivery platform: base price + the channel markup, rounded (Menu Studio › menu & price per channel). */
+export function channelPrice(db: DB, base: number, source: string): number {
+  const v = studioValue(db, 'menu-and-price-per-channel'), key = ({ gofood: 'gofood', grabfood: 'grab', shopeefood: 'shopee' } as Record<string, 'gofood' | 'grab' | 'shopee'>)[source];
+  if (!key) return base;
+  const r = Number(v.round) || 100;
+  return Math.ceil((base * (1 + Number(v[key]) / 100)) / r) * r;
+}

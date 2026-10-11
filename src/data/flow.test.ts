@@ -2,9 +2,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { snapshot } from './store.ts';
-import { addLine, bumpDone, decide, gatewayWebhook, newOrder, patchOrder, patchOutlet, publish, rateOrder, sellable, sendToKitchen, setSetting, startPayment, stockEntry, verifyPin, watchKitchen } from './actions.ts';
+import { addLine, bumpDone, decide, gatewayWebhook, newOrder, patchOrder, patchOutlet, publish, rateOrder, sellable, simulatePlatformOrder, sendToKitchen, setSetting, startPayment, stockEntry, verifyPin, watchKitchen } from './actions.ts';
 import { addOutlet, saveBusiness } from './actions/business.ts';
 import { menuDesign } from './actions/studio.ts';
+import { badgesOf } from '../system/studio.ts';
 import { receiptDoc } from '../devices/receipt.ts';
 import { toText } from '../devices/layout.ts';
 import { PAYMENT_PAGE, payOn, referral, roundStep } from '../system/settings.ts';
@@ -146,4 +147,15 @@ test('One system: what the owner publishes in Menu Studio changes the live QR me
   const before = balance(snapshot().ledger, guest.id);
   rateOrder(id, 5, 'Mantap'); rateOrder(id, 5, 'again');
   assert.equal(balance(snapshot().ledger, guest.id) - before, 30, 'feedback beans as promised, once');
+});
+
+test('One system: delivery apps are billed at the channel price, and diet badges reach the QR menu', () => {
+  publish('menu', { x: { ...menuDesign(snapshot()).x, 'menu-and-price-per-channel': { gofood: 20, round: 500 }, 'custom-badges-and-allergen-diet-icons': { spicy: 'p1', veg: 'p1,p4' } } }, 'budi', 'Channel prices + badges');
+  const id = simulatePlatformOrder('sen', 'gofood');
+  for (const l of order(id).lines) {
+    const base = snapshot().products.find(p => p.id === l.productId)!.basePrice;
+    assert.equal(l.unitPrice, Math.ceil(base * 1.2 / 500) * 500, `${l.name} at the GoFood price`);
+  }
+  assert.deepEqual(badgesOf(snapshot(), 'p1').map(b => b[0]), ['spicy', 'veg']);
+  assert.deepEqual(badgesOf(snapshot(), 'p2'), []);
 });

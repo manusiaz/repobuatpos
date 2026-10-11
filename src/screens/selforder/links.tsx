@@ -133,10 +133,11 @@ export function Voucher({ g }: { g: G }) {
     <div style={card} className="stack sm"><b>Have a code?</b>
       <div className="row"><input className="input grow" value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="Voucher code" aria-label="Voucher code" /><button className="btn btn-primary" style={{ height: 48 }} disabled={!code.trim()} onClick={enter}>Claim</button></div>
       {err && <span role="alert" style={{ fontSize: 13, color: 'var(--danger-fg)' }}>{err}</span>}</div>
-    {list.map(p => { const ok = usable(p), left = p.quota != null ? p.quota - (p.used ?? 0) : null; return <div key={p.id} style={{ ...card, display: 'flex', gap: 14, opacity: ok ? 1 : .55, borderLeft: '6px solid var(--bn-acc)' }}>
+    {list.map(p => { const ok = usable(p), left = p.quota != null ? p.quota - (p.used ?? 0) : null, vv = studioValue(db, 'voucher-and-promo-visuals'), filled = vv.fill !== 'outline';
+      return <div key={p.id} style={{ ...card, display: 'flex', gap: 14, opacity: ok ? 1 : .55, borderRadius: vv.shape === 'pill' ? 999 : undefined, border: vv.shape === 'ticket' ? '2px dashed var(--bn-p)' : undefined, background: filled ? (vv.fill === 'brand' ? 'var(--bn-soft)' : 'color-mix(in srgb,var(--bn-acc) 18%,var(--bn-paper))') : card.background }}>
       <span className="stack grow" style={{ gap: 4 }}><b style={{ fontSize: 16 }}>{p.name}</b>
-        <span style={{ fontSize: 13, color: MUTED }}>{[p.minSpend ? `Min. spend ${idr(p.minSpend)}` : 'No minimum', left != null ? `${left.toLocaleString('en-US')} left` : '', p.endsAt ? 'until ' + dateShort(p.endsAt) : ''].filter(Boolean).join(' · ')}</span>
-        <span className="mono" style={{ fontSize: 14, fontWeight: 700 }}>{p.code}</span></span>
+        <span style={{ fontSize: 13, color: MUTED }}>{[p.minSpend ? `Min. spend ${idr(p.minSpend)}` : 'No minimum', vv.expiry && left != null ? `${left.toLocaleString('en-US')} left` : '', p.endsAt ? 'until ' + dateShort(p.endsAt) : ''].filter(Boolean).join(' · ')}</span>
+        {vv.code && <span className="mono" style={{ fontSize: 14, fontWeight: 700 }}>{p.code}</span>}</span>
       <span className="stack" style={{ gap: 6, justifyContent: 'center' }}>
         {!ok ? <span className="badge b-danger">{left === 0 ? 'Used up' : 'Expired'}</span> : <>
           <button className="btn btn-primary btn-sm" onClick={() => use(p.code!)}>Use now</button>

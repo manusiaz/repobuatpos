@@ -1,7 +1,7 @@
 'use client';
 // Service layer. Mirrors the service events in spec/bn-diagrams.js (Orders, Payments, Inventory, Shifts, Approvals,
 // Loyalty, Catalog, Themes). A service writes only through commit(); effects of one event run in the same commit.
-import { feedbackBeans, studioValue } from '../system/studio.ts';
+import { channelPrice, feedbackBeans, studioValue } from '../system/studio.ts';
 import { commit, snapshot, uid } from './store.ts';
 import type { Approval, DB, Order, Product, Rec, Role } from './schema.ts';
 import { lineTotal, orderTotals, QRIS_TTL_MS, type Method, type Source } from '../domain/order.ts';
@@ -506,6 +506,8 @@ export function simulatePlatformOrder(outletId: string, source: Source = 'gofood
   const load = d0.orders.filter(o => o.outletId === outletId && ['sent', 'preparing'].includes(o.status)).length;
   const id = newOrder(outletId, source, source, { type: 'delivery', status: 'open', tier, readyBy: readyBy(tier, source, load) });
   ps.forEach(p => addLine(id, p.id, [], 1, '', source));
+  // the platform charged its own menu price (base + channel markup from Menu Studio); the bill shows what the platform sold
+  commit('online.priced', source, d => { const o = findOrder(d, id); o.lines.forEach(l => { l.unitPrice = channelPrice(d, l.unitPrice, source); }); recalc(d, o); }, id);
   commit('online.received', source, d => notify(d, 'New online order', 'warn', ['cashier', 'pic'], outletId, `${source} order ${findOrder(d, id).no} waiting to be accepted`, '/pos/selling/ride-hailing-orders-inbox'));
   return id;
 }

@@ -1,5 +1,5 @@
 'use client';
-import { STUDIO_DEFAULTS } from '../../system/studio.ts';
+import { BADGES, STUDIO_DEFAULTS } from '../../system/studio.ts';
 import { linkTo } from '../../system/hosts.ts';
 // "More pages" in Menu Studio: every extra customer page or screen, as a settings spec + a live preview from store data.
 // Settings live in the menu design (design.x[key]) and publish with the rest of the menu.
@@ -24,7 +24,6 @@ function Picker({ label, value, set, ctx }: { label: string; value: Val | undefi
   const v = ids(value);
   return <Block title={label}><div className="row wrap">{ctx.db.products.filter(p => p.status === 'live').map(p => <button key={p.id} type="button" className="chip" aria-pressed={v.includes(p.id)} onClick={() => set((v.includes(p.id) ? v.filter(x => x !== p.id) : [...v, p.id]).join(','))}>{p.name}</button>)}</div></Block>;
 }
-const BADGES: [string, string, string][] = [['spicy', 'Spicy', 'flame'], ['veg', 'Vegetarian', 'leaf'], ['nuts', 'Contains nuts', 'nut'], ['dairy', 'Contains dairy', 'milk'], ['halal', 'Halal', 'badge-check'], ['new', 'New', 'sparkles']];
 const CHANNELS: [string, string][] = [['dine', 'Dine-in'], ['take', 'Takeaway'], ['gofood', 'GoFood'], ['grab', 'GrabFood'], ['shopee', 'ShopeeFood']];
 
 export const EXTRAS: Extra[] = [
@@ -158,7 +157,7 @@ export const EXTRAS: Extra[] = [
       return <div style={{ padding: 24, background: WHITE, color: 'var(--ink-950)', height: '100%', overflow: 'auto' }}><table className="table"><thead><tr><th>Product</th>{CHANNELS.map(([k, l]) => <th key={k} className="r">{l}</th>)}</tr></thead>
         <tbody>{all.map(x => <tr key={x.p.id}><td>{x.p.name}</td>{CHANNELS.map(([k]) => <td key={k} className="r num">{idr(Math.ceil((x.price * (1 + Number(g[k]) / 100)) / r) * r)}</td>)}</tr>)}</tbody></table></div>; } },
 
-  { key: 'custom-badges-and-allergen-diet-icons', label: 'Badges & allergen icons', icon: 'leaf', device: 'phone', defaults: { which: 'spicy', ...Object.fromEntries(BADGES.map(([k]) => [k, ''])), legend: true },
+  { key: 'custom-badges-and-allergen-diet-icons', label: 'Badges & allergen icons', icon: 'leaf', device: 'phone', defaults: STUDIO_DEFAULTS['custom-badges-and-allergen-diet-icons'],
     fields: () => [f.seg('which', 'Edit badge', BADGES.map(([k, l]) => `${k}:${l}`).join('|'), 2), f.tog('legend', 'Show icon legend on the menu')],
     extra: (g, set, ctx) => <Picker label={'Products with “' + BADGES.find(b => b[0] === g.which)?.[1] + '”'} value={g[String(g.which)]} set={v => set(String(g.which), v)} ctx={ctx} />,
     preview: (g, ctx) => <Page ctx={ctx} title="Menu">{guestProducts(ctx.db, ctx.outletId).slice(0, 8).map(x => { const bs = BADGES.filter(([k]) => ids(g[k]).includes(x.p.id));

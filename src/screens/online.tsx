@@ -5,6 +5,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useApp } from '../app/context.tsx';
+import { studioValue } from '../system/studio.ts';
 import { IntegrationsPanel } from '../integrations/Panel.tsx';
 import { OutletPicker, DeviceChrome } from '../app/chrome.tsx';
 import { Badge, Empty, Field, Icon, Kpi, Seg, Sheet, Toggle, ago, hhmm, toast, useNow } from '../ui/kit.tsx';
@@ -319,6 +320,6 @@ function Integrations({ c, title }: { c: Ctx; title: string | null }) {
         <div className="row between" style={{ fontSize: 13 }}><span className="muted">Menu sync</span><span>{live} items live · {n86} sold out synced</span></div>
         <div className="row between" style={{ fontSize: 13 }}><span className="muted">Today</span><span>{today.length} orders · {idr(today.filter(o => o.status === 'paid').reduce((a, o) => a + o.total, 0))} picked up</span></div>
       </section>; })}</div>
-    <p className="faint" style={{ fontSize: 12 }}>Busy mode and channel pauses are run from the online orders screen on the register. Prices on each platform follow the menu price list; orders are never re-priced in BorNiz.</p>
+    <p className="faint" style={{ fontSize: 12 }}>Busy mode and channel pauses are run from the online orders screen on the register. Platform prices are the menu price plus the channel markup set in Menu Studio › menu &amp; price per channel ({(([['gofood', 'gofood'], ['grabfood', 'grab'], ['shopeefood', 'shopee']]) as const).map(([ch, k]) => `${CHANNEL[ch].name} +${studioValue(c.db, 'menu-and-price-per-channel')[k]}%`).join(' · ')}, rounded up to IDR {studioValue(c.db, 'menu-and-price-per-channel').round}), so the commission is covered.</p>
   </>;
 }
