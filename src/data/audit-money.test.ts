@@ -3,7 +3,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { snapshot } from './store.ts';
-import { addLine, applyVoucher, closeSession, cashMove, decide, gatewayWebhook, newOrder, openSession, patchOrder, requestApproval, sessionCash, startPayment } from './actions.ts';
+import { addLine, applyVoucher, closeSession, cashMove, decide, gatewayWebhook, newOrder, openSession, patchOrder, requestApproval, sessionCash, setSetting, startPayment } from './actions.ts';
+import { PAYMENT_PAGE } from '../system/settings.ts';
 import { patchLine, payCash } from './actions/pos.ts';
 import { picCountDrawer } from './actions/pic.ts';
 import { expectedCash } from '../domain/shift.ts';
@@ -57,6 +58,7 @@ test('Split bill cash + QRIS, full refund: the drawer only gives back the cash p
 });
 
 test('Refunds go back to the deposit and off the kasbon they were paid with', () => {
+  setSetting(PAYMENT_PAGE + ':kasbon', true, 'budi'); // the owner offers kasbon (off by default in Payment methods)
   const dep = sale('sen', 'tono', [['p3', 1]], { customerId: 'c3' });
   const before = snapshot().customers.find(c => c.id === 'c3')!.deposit;
   startPayment(dep, 'deposit', order(dep).total, 'tono');
@@ -202,6 +204,7 @@ test('P&L: discounts counted once, PB1 is not income', () => {
 });
 
 test('Deposit and kasbon need a member with the balance', () => {
+  setSetting(PAYMENT_PAGE + ':kasbon', true, 'budi'); // the owner offers kasbon (off by default in Payment methods)
   const id = sale('sen', 'tono', [['p2', 1]]);
   assert.throws(() => startPayment(id, 'deposit', order(id).total, 'tono'), /customer/i);
   assert.throws(() => startPayment(id, 'kasbon', order(id).total, 'tono'), /customer/i);
