@@ -1,4 +1,7 @@
 'use client';
+import { ReadScale } from '../../devices/ui.tsx';
+import { thisDevice } from '../../devices/routing.ts';
+import { printTickets } from '../../devices/hardware.ts';
 import { productImage } from '../../ui/kit.tsx';
 // Every sheet that edits the current order. One sheet at a time; approvals replace the sheet body in place.
 import { useState, type ReactNode } from 'react';
@@ -188,14 +191,14 @@ function Scan() {
 }
 
 function Weighed({ close }: BodyProps) {
-  const { me, ensureOrder } = usePos();
+  const { db, me, ensureOrder } = usePos();
   const [name, setName] = useState('Weighed item'), [perKg, setPerKg] = useState(120000), [w, setW] = useState(0);
   const price = Math.round(perKg * w / 100) * 100;
   return <div className="stack">
     <Field label="Item"><input className="input" value={name} onChange={e => setName(e.target.value)} /></Field>
     <Field label="Price per kg"><input className="input num" inputMode="numeric" value={perKg} onChange={e => setPerKg(Number(e.target.value.replace(/\D/g, '')) || 0)} /></Field>
     <div className="sunken row between"><span className="stack" style={{ gap: 0 }}><span className="muted">Scale</span><b className="num" style={{ fontSize: 28 }}>{w.toFixed(3)} kg</b></span>
-      <span className="row"><button className="btn" onClick={() => setW(0)}>Zero</button><button className="btn btn-primary" onClick={() => setW(Math.round((0.15 + Math.random()) * 1000) / 1000)}><Icon name="scale" />Read scale</button></span></div>
+      <span className="row"><button className="btn" onClick={() => setW(0)}>Zero</button><ReadScale db={db} deviceId={thisDevice(db)} onWeight={setW} /></span></div>
     <Field label="Or type the weight (kg)"><input className="input num" inputMode="decimal" value={w || ''} onChange={e => setW(Number(e.target.value.replace(',', '.')) || 0)} /></Field>
     <button className="btn btn-primary btn-pay" disabled={!w || !perKg} onClick={() => { addOpenLine(ensureOrder(), `${name} · ${w.toFixed(3)} kg`, price, me.id, { station: 'kitchen' }); close(); }}>Add {idr(price)}</button>
   </div>;
@@ -371,7 +374,7 @@ function Ticket() {
     ...by.flatMap(([st, ls]) => [`${st.toUpperCase()} · ${ls.length} item${ls.length > 1 ? 's' : ''}`, ...ls.flatMap(l => [`${l.qty} x ${l.name.toUpperCase()}`, ...l.mods.map(m => `  > ${m.name.toUpperCase()}`), ...(l.note ? [`  ** ${l.note.toUpperCase()} **`] : [])]), '']),
     ...(o.note ? [`NOTE: ${o.note}`] : [])];
   return <div className="stack"><Paper lines={lines} />
-    <button className="btn btn-primary btn-pos" onClick={() => { logDevice('print.kitchen_ticket', o.no, me.id, o.outletId); toast('Ticket sent to the kitchen printer'); }}><Icon name="printer" />Reprint ticket</button></div>;
+    <button className="btn btn-primary btn-pos" onClick={() => { printTickets(db, o, me.id, true).then(r => toast(r.message)); }}><Icon name="printer" />Reprint ticket</button></div>;
 }
 function Redeem({ close }: BodyProps) {
   const { db, cur, me, go } = usePos();

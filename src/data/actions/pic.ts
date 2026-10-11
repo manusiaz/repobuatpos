@@ -87,7 +87,7 @@ export function saveHandover(row: Rec, by: string) { commit('handover.saved', by
 export function closeShift(row: Rec, summary: string, by: string) {
   commit('shift.closed', by, d => {
     putRecord(d, 'handover', { ...row, e: by, at: now() });
-    notice(d, 'Shift ending', 'info', ['manager', 'owner'], row.a, `Shift report · ${summary} · closed by ${name(d, by)}`, '/owner/team/shifts-and-schedules');
+    notice(d, 'Shift report', 'info', ['manager', 'owner'], row.a, `Shift report · ${summary} · closed by ${name(d, by)}`, '/owner/team/shifts-and-schedules');
   }, row.id, row.a);
 }
 export function passPic(outletId: string, day: number, slot: 'pagi' | 'siang' | 'malam', to: string, note: string, by: string) {
@@ -96,13 +96,13 @@ export function passPic(outletId: string, day: number, slot: 'pagi' | 'siang' | 
     const from = r.slots[slot].pic;
     r.slots[slot].pic = to; r.slots[slot].crew = r.slots[slot].crew.filter(x => x !== to);
     putRecord(d, 'pic_pass', { id: uid('pp'), a: outletId, b: slot, c: from, d: to, e: note, at: now() });
-    notice(d, 'Shift ending', 'info', ['manager'], outletId, `PIC passed from ${name(d, from)} to ${name(d, to)}${note ? ' · ' + note : ''}`, '/pic/cash-and-handover/pass-pic-to-another-person');
+    notice(d, 'PIC passed', 'info', ['manager'], outletId, `PIC passed from ${name(d, from)} to ${name(d, to)}${note ? ' · ' + note : ''}`, '/pic/cash-and-handover/pass-pic-to-another-person');
   }, `${outletId} ${slot}`, outletId);
 }
 /** Incident row: a outlet · b kind · c text (with order/table ref) · d amount · e who logged it. */
 export function logIncident(outletId: string, kind: string, text: string, amount: number, by: string) {
   commit('incident.logged', by, d => {
     putRecord(d, 'incident', { id: uid('in'), a: outletId, b: kind, c: text, d: String(amount), e: by, at: now() });
-    if (kind !== 'complaint' || amount > 0) notice(d, kind === 'complaint' ? 'Bad review' : 'Waste above normal', 'info', ['manager'], outletId, `${kind[0].toUpperCase() + kind.slice(1)} · ${text}${amount ? ' · ' + idr(amount) : ''} · ${name(d, by)}`, '/pic/floor/incident-log');
+    if (kind === 'complaint' && amount > 0) notice(d, 'Bad review', 'info', ['manager'], outletId, `${kind[0].toUpperCase() + kind.slice(1)} · ${text}${amount ? ' · ' + idr(amount) : ''} · ${name(d, by)}`, '/pic/floor/incident-log');
   }, kind, outletId);
 }

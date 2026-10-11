@@ -5,6 +5,7 @@ import { productImage } from '../../ui/kit.tsx';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { addLine, clearOrder, patchOrder, priceAt, sendToKitchen, setQty } from '../../data/actions.ts';
 import { enqueue } from '../../data/actions/pos.ts';
+import { findByCode, useWedgeScanner } from '../../devices/scanner.ts';
 import { flashPrice } from '../../domain/promo.ts';
 import { lineTotal } from '../../domain/order.ts';
 import { balance, tierOf } from '../../domain/loyalty.ts';
@@ -29,6 +30,8 @@ export function Register() {
     if (p.modifierGroupIds.length) return go(P('product-options-sheet', { p: id }));
     addLine(ensureOrder(), id, [], 1, '', me.id); enqueue('order.line_added');
   };
+  // a USB/Bluetooth barcode scanner types fast and ends with Enter: add the product straight away
+  useWedgeScanner(code => { const p = findByCode(db, code); if (p && products.includes(p)) tap(p.id); else toast(`${code} · not on this outlet's menu`); }, { enabled: !route.s });
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
       if (route.s) return; // a sheet owns the keyboard

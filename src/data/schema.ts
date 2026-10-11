@@ -27,7 +27,7 @@ export interface Order {
   subtotal: IDR; discount: IDR; service: IDR; tax: IDR; total: IDR; createdAt: number; paidAt: number | null; cashierId: string | null;
   tier?: 'rush' | 'standard' | 'saver'; readyBy?: number; idemKey: string; note?: string; rating?: number;
 }
-export interface Payment { id: string; orderId: string; outletId: string; method: Method; amount: IDR; tip: IDR; status: PaymentStatus; ref: string; at: number; expiresAt: number | null; sessionId: string | null }
+export interface Payment { id: string; orderId: string; outletId: string; method: Method; amount: IDR; tip: IDR; status: PaymentStatus; ref: string; at: number; expiresAt: number | null; sessionId: string | null; /** set by the payment gateway */ provider?: string; qr?: string; va?: string; deeplink?: string }
 export interface Refund { id: string; orderId: string; paymentId: string; amount: IDR; reason: string; approvalId: string | null; at: number; toStock: boolean; /** drawer the cash went out of (cash refunds) */ sessionId?: string | null; /** lines returned to stock by this refund */ lineIds?: string[] }
 export interface Approval { id: string; type: RequestType; title: string; subjectId: string | null; amount: IDR; pct: number; level: Level; status: 'waiting' | 'approved' | 'rejected' | 'recount'; requestedBy: string; countedBy?: string; outletId: string; note: string; at: number; decidedBy?: string; decidedAt?: number; decisionNote?: string; payload?: Record<string, unknown> }
 export interface Session { id: string; outletId: string; cashierId: string; openedAt: number; openingFloat: IDR; closedAt: number | null; counted: IDR | null; variance: IDR | null; status: 'open' | 'counting' | 'needs_approval' | 'closed'; note: string }

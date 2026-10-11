@@ -10,6 +10,7 @@ import { deductForSale, level as stockLevel, levels, portionsLeft, missingPhotos
 import { flashPrice, resolve } from '../domain/promo.ts';
 import { closeCheck } from '../domain/shift.ts';
 import { idr, roundCash } from '../domain/money.ts';
+import { approvalAlert, decidedAlert } from './alerts/names.ts';
 import alertsCatalog from '../system/alerts.json' with { type: 'json' };
 import { perm } from '../system/perms.ts';
 
@@ -209,7 +210,7 @@ export function verifyPin(employeeId: string, pin: string): string | null {
   if (f.until > now()) return `Locked for ${Math.ceil((f.until - now()) / 60e3)} min after ${PIN_TRIES} wrong tries. Owner can reset.`;
   const e = snapshot().employees.find(x => x.id === employeeId);
   if (e && e.approvalPin === pin) { delete pinFails[employeeId]; return null; }
-  f.n++; if (f.n >= PIN_TRIES) { f.until = now() + PIN_LOCK_MS; f.n = 0; commit('pin.locked', 'system', d => notify(d, 'Approval PIN locked', 'high', ['manager', 'owner'], null, `${e?.name ?? employeeId}: approval PIN locked after ${PIN_TRIES} wrong tries`)); }
+  f.n++; if (f.n >= PIN_TRIES) { f.until = now() + PIN_LOCK_MS; f.n = 0; commit('pin.locked', 'system', d => notify(d, 'Too many wrong PINs', 'high', ['manager', 'owner'], null, `${e?.name ?? employeeId}: approval PIN locked after ${PIN_TRIES} wrong tries`)); }
   pinFails[employeeId] = f;
   return `Wrong PIN. ${PIN_TRIES - f.n} tries left.`;
 }
@@ -220,7 +221,7 @@ export function requestApproval(a: { type: RequestType; title: string; amount?: 
     const row: Approval = { id, type: a.type, title: a.title, subjectId: a.subjectId ?? null, amount: a.amount ?? 0, pct: a.pct ?? 0, level: lvl, status: 'waiting', requestedBy: a.requestedBy, countedBy: a.countedBy, outletId: a.outletId, note: a.note ?? '', at: now(), payload: a.payload };
     if (lvl === 'cashier') { row.status = 'approved'; row.decidedBy = a.requestedBy; row.decidedAt = now(); applyDecision(d, row); }
     d.approvals.unshift(row);
-    if (lvl !== 'cashier') notify(d, 'Approval needed', lvl === 'owner' ? 'high' : 'warn', [lvl === 'pic' ? 'pic' : lvl], a.outletId, `${a.title} · ${lvl.toUpperCase()} to decide`, lvl === 'owner' ? '/owner/monitor/notifications-and-activity-center' : lvl === 'manager' ? '/manager/operations/approvals' : '/pic/approvals/approval-queue');
+    if (lvl !== 'cashier') notify(d, approvalAlert(a.type, a.amount ?? 0, a.payload), lvl === 'owner' ? 'high' : 'warn', [lvl === 'pic' ? 'pic' : lvl], a.outletId, `${a.title} · ${lvl.toUpperCase()} to decide`, lvl === 'owner' ? '/owner/monitor/notifications-and-activity-center' : lvl === 'manager' ? '/manager/operations/approvals' : '/pic/approvals/approval-queue');
   }, a.title, a.outletId);
   return { id, level: lvl };
 }
@@ -241,12 +242,12 @@ export function decide(approvalId: string, by: string, decision: 'approved' | 'r
     if (decision === 'approved') applyDecision(d, r);
     if (decision === 'recount' && r.type === 'opname') { const op = d.opnames.find(o => o.id === r.subjectId); if (op) op.status = 'recount'; }
     if (decision === 'rejected') rejectEffects(d, r);
-    notify(d, 'Request ' + decision, 'info', ['cashier', 'pic', 'manager'], r.outletId, `${r.title} · ${decision} by ${emp(d, by)?.name}`);
+    notify(d, decidedAlert(r.type), 'info', ['cashier', 'pic', 'manager'], r.outletId, `${r.title} · ${decision} by ${emp(d, by)?.name}`);
   }, a.title, a.outletId);
   return null;
 }
 export function escalate(approvalId: string, by: string) {
-  commit('approval.escalated', by, d => { const r = d.approvals.find(x => x.id === approvalId)!; r.level = r.level === 'pic' ? 'manager' : 'owner'; notify(d, 'Escalated', 'warn', [r.level], r.outletId, r.title + ' escalated to ' + r.level); }, approvalId);
+  commit('approval.escalated', by, d => { const r = d.approvals.find(x => x.id === approvalId)!; r.level = r.level === 'pic' ? 'manager' : 'owner'; notify(d, 'Approval not answered', 'warn', [r.level], r.outletId, r.title + ' escalated to ' + r.level); }, approvalId);
 }
 function rejectEffects(d: DB, r: Approval) {
   if (r.type === 'local_item' && r.subjectId) { const p = d.products.find(x => x.id === r.subjectId); if (p) p.status = 'archived'; }
@@ -481,7 +482,7 @@ export function redeem(customerId: string, cost: number, reward: string, by: str
 }
 export function replyReview(id: string, reply: string, by: string) { commit('review.replied', by, d => { d.reviews.find(r => r.id === id)!.reply = reply; }, id); }
 export function rateOrder(orderId: string, stars: number, text = '') {
-  commit('review.created', 'guest', d => { const o = findOrder(d, orderId); o.rating = stars; d.reviews.unshift({ id: uid('rv'), outletId: o.outletId, customerId: o.customerId, name: d.customers.find(c => c.id === o.customerId)?.name.split(' ')[0] ?? 'Guest', stars, text, at: now(), reply: null, orderId }); if (stars <= 2) notify(d, 'Low rating', 'warn', ['pic', 'manager'], o.outletId, `${stars}★ on ${o.no}: ${text || 'no comment'}`); }, orderId);
+  commit('review.created', 'guest', d => { const o = findOrder(d, orderId); o.rating = stars; d.reviews.unshift({ id: uid('rv'), outletId: o.outletId, customerId: o.customerId, name: d.customers.find(c => c.id === o.customerId)?.name.split(' ')[0] ?? 'Guest', stars, text, at: now(), reply: null, orderId }); }, orderId);
 }
 
 // ── Online & delivery (incoming only) ───────────────────────────────────────────────────
@@ -572,5 +573,5 @@ export function watchKitchen(at = now()) {
 export function escalateDue(at = now()) {
   const due = snapshot().approvals.filter(a => a.status === 'waiting' && ((a.level === 'pic' && at - a.at > 5 * 60e3) || (a.level === 'manager' && at - a.at > 35 * 60e3)));
   if (!due.length) return;
-  commit('approval.escalated', 'system', d => due.forEach(x => { const r = d.approvals.find(y => y.id === x.id)!; r.level = r.level === 'pic' ? 'manager' : 'owner'; notify(d, 'Escalated', 'warn', [r.level], r.outletId, `${r.title} unanswered · now with the ${r.level}`); }));
+  commit('approval.escalated', 'system', d => due.forEach(x => { const r = d.approvals.find(y => y.id === x.id)!; r.level = r.level === 'pic' ? 'manager' : 'owner'; notify(d, 'Approval not answered', 'warn', [r.level], r.outletId, `${r.title} unanswered · now with the ${r.level}`); }));
 }

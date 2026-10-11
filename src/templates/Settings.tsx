@@ -14,6 +14,7 @@ import { LIMITS } from '../domain/approval.ts';
 import { idr } from '../domain/money.ts';
 import { PageHead } from './common.tsx';
 import { IntegrationsPanel } from '../integrations/Panel.tsx';
+import { downloadJournalCsv } from '../integrations/server/accounting/journal.ts';
 
 type Section = { t: string; body: ReactNode };
 
@@ -48,7 +49,7 @@ export default function Settings() {
 
   function build(): Section[] {
     const n = page.name.toLowerCase();
-    if (/accounting/.test(n)) return [{ t: 'Accounting', body: <IntegrationsPanel kinds={['accounting']} /> }];
+    if (/accounting/.test(n)) return [{ t: 'Accounting', body: <IntegrationsPanel kinds={['accounting']} /> }, { t: 'Journal export', body: <JournalExport /> }];
     if (/bank account/.test(n)) return [{ t: 'Bank & payouts', body: <IntegrationsPanel kinds={['bank']} /> }];
     if (/tax|fees/.test(n)) return db.outlets.map(o => ({ t: o.name, body: <OutletTax o={o} /> }));
     if (/opening hours/.test(n)) return [{ t: 'Opening hours', body: <div className="stack">{db.outlets.map(o => <OutletHours key={o.id} o={o} />)}</div> }];
@@ -120,5 +121,17 @@ function Danger() {
     <b>Reset demo data</b><p className="muted">Restores the Kopi Biru demo. Production accounts are deleted only by the owner after a 14-day hold; data is exported first.</p>
     <Field label={`Type ${db.tenant.name} to confirm`}><input className="input" value={t} onChange={e => setT(e.target.value)} /></Field>
     <div><button className="btn btn-danger" disabled={t !== db.tenant.name || user.role !== 'owner'} onClick={() => { resetDemo(); toast('Demo data restored'); }}>Reset everything</button></div>
+  </div>;
+}
+
+/** Daily journal (sales, PB1, service, discounts, payments per method, refunds) from the one sales math, for any accounting tool. */
+function JournalExport() {
+  const { db } = useApp();
+  const [out, setOut] = useState('all'), [days, setDays] = useState(30);
+  const csv = db.integrations.find(i => i.connector === 'journal-csv');
+  return <div className="stack">
+    <div className="row wrap"><Field label="Outlet"><select className="input" value={out} onChange={e => setOut(e.target.value)}><option value="all">All outlets</option>{db.outlets.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}</select></Field>
+      <Field label="Period"><select className="input" value={days} onChange={e => setDays(Number(e.target.value))}>{[7, 30, 90].map(d => <option key={d} value={d}>Last {d} days</option>)}</select></Field></div>
+    <button className="btn btn-primary" style={{ alignSelf: 'flex-start' }} onClick={() => { const to = Date.now(); downloadJournalCsv(db, out, { from: to - days * 864e5, to }, csv?.config); toast('Journal CSV downloaded'); }}><Icon name="download" size={18} />Export journal CSV</button>
   </div>;
 }

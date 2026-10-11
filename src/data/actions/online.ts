@@ -36,7 +36,7 @@ export function setBusy(outletId: string, extra: 0 | 10 | 20, minutes: number, r
   const until = extra ? Date.now() + Math.min(minutes, BUSY_MAX_MIN) * 60e3 : 0;
   commit('online.busy', by, d => {
     d.settings[skey(outletId, 'busy.extra')] = extra; d.settings[skey(outletId, 'busy.until')] = until; d.settings[skey(outletId, 'busy.reason')] = reason.trim();
-    if (extra) notice(d, 'Busy mode', 'warn', ['pic', 'manager'], outletId, `Busy mode +${extra} min on every platform for ${Math.min(minutes, BUSY_MAX_MIN)} min · ${reason.trim()}`, '/online');
+    if (extra) notice(d, 'Busy mode on', 'warn', ['pic', 'manager'], outletId, `Busy mode +${extra} min on every platform for ${Math.min(minutes, BUSY_MAX_MIN)} min · ${reason.trim()}`, '/online');
   }, 'busy', outletId);
   return null;
 }
@@ -91,7 +91,7 @@ export function handOver(orderId: string, by: string) {
 export function handOverWithoutCode(orderId: string, reason: string, approverId: string, by: string) {
   const o = snapshot().orders.find(x => x.id === orderId);
   if (o?.status !== 'ready') return;
-  commit('online.handover_without_code', approverId, d => notice(d, 'Hand-over without code', 'warn', ['pic', 'manager'], o.outletId, `${o.source} ${o.no} handed over without pickup code · ${reason} · signed by ${d.employees.find(e => e.id === approverId)?.name ?? approverId}`), orderId, o.outletId);
+  commit('online.handover_without_code', approverId, d => notice(d, 'Pickup code mismatch', 'warn', ['pic', 'manager'], o.outletId, `${o.source} ${o.no} handed over without pickup code · ${reason} · signed by ${d.employees.find(e => e.id === approverId)?.name ?? approverId}`), orderId, o.outletId);
   pickedUp(orderId, by);
 }
 

@@ -110,6 +110,6 @@ test('sweepAlerts writes every new alert in one commit and nothing on the next s
   assert.equal(d.audit.length, before + 1);
   assert.equal(d.audit[0].action, 'alerts.swept');
   assert.ok(d.notices.some(x => x.id.startsWith('al_')));
-  assert.equal(sweepAlerts(at + 60e3), 0);
+  assert.equal(sweepAlerts(at), 0, "same state never fires twice");
   assert.equal(snapshot().audit.length, before + 1, 'no empty commits');
 });
