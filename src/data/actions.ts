@@ -160,8 +160,8 @@ export function gatewayWebhook(paymentId: string, status: 'settled' | 'failed' |
 /** Paid, refunded or voided bills take no more payments. */
 export const CLOSED: Order['status'][] = ['paid', 'part_refunded', 'refunded', 'voided'];
 /** A failed or cancelled payment never un-sends a ticket: fired orders go back to their kitchen state. */
-const backFromPaying = (o: Order): Order['status'] => !o.lines.some(l => l.fired) ? 'open' : o.lines.every(l => l.kds === 'done') ? 'ready' : 'sent';
-function settleIfDone(d: DB, o: Order, by: string) {
+export const backFromPaying = (o: Order): Order['status'] => !o.lines.some(l => l.fired) ? 'open' : o.lines.every(l => l.kds === 'done') ? 'ready' : 'sent';
+export function settleIfDone(d: DB, o: Order, by: string) {
   // a payment that lands on a bill already paid or voided (QRIS paid after cash, late webhook) is money to give back, not a second sale
   if (CLOSED.includes(o.status) || o.paidAt) { notify(d, 'Payment failed / declined', 'warn', ['cashier', 'pic'], o.outletId, `${o.no} is already ${o.status} but another payment settled · refund it to the guest`); return; }
   const paid = d.payments.filter(p => p.orderId === o.id && p.status === 'settled').reduce((a, p) => a + p.amount, 0);

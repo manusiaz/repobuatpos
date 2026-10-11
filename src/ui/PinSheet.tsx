@@ -3,9 +3,10 @@
 // not the login password, no remember-me, 5 wrong tries lock it 15 min and alert manager + owner. Built once; never build another confirm.
 import { useEffect, useState } from 'react';
 import { Sheet, Numpad, Avatar } from './kit.tsx';
-import { verifyPin } from '../data/actions.ts';
+import { checkApprovalPin, whenChecked } from '../data/actions/auth.ts';
 import { PIN_LEN } from '../domain/approval.ts';
 import { useApp } from '../app/context.tsx';
+import { REMOTE } from '../data/remote.ts';
 
 export interface PinRequest { title: string; detail?: string; verb?: string; onOk: (approverId: string) => void }
 
@@ -20,9 +21,11 @@ export function PinSheet({ req, onClose }: { req: PinRequest | null; onClose: ()
     if (!/^\d$/.test(k)) return;
     const p = (pin + k).slice(0, PIN_LEN); setPin(p); setErr('');
     if (p.length === PIN_LEN) {
-      const e = verifyPin(who, p);
-      if (e) { setErr(e); setShake(true); setTimeout(() => { setShake(false); setPin(''); }, 320); }
-      else { onClose(); req.onOk(who); }
+      // on Supabase the server checks the PIN first; decide() then runs inside the 2-minute proof window it opens
+      whenChecked(checkApprovalPin(who, p), e => {
+        if (e) { setErr(e); setShake(true); setTimeout(() => { setShake(false); setPin(''); }, 320); }
+        else { onClose(); req.onOk(who); }
+      });
     }
   };
   return <Sheet open onClose={onClose} side="center" title={req.verb ?? 'Confirm with your approval PIN'} sub={req.title}>
@@ -32,7 +35,7 @@ export function PinSheet({ req, onClose }: { req: PinRequest | null; onClose: ()
       <div className={'pin-dots' + (shake ? ' shake' : '')} aria-label={`${pin.length} of ${PIN_LEN} digits`}>{Array.from({ length: PIN_LEN }, (_, i) => <i key={i} className={i < pin.length ? 'on' : ''} />)}</div>
       {err && <p className="err" role="alert" style={{ color: 'var(--danger-fg)' }}>{err}</p>}
       <div style={{ width: 'min(320px,100%)' }}><Numpad onKey={key} extra="" /></div>
-      <p className="faint" style={{ fontSize: 12 }}>Approval PIN, not your password. Demo PIN 246810.</p>
+      <p className="faint" style={{ fontSize: 12 }}>Approval PIN, not your password.{REMOTE ? '' : ' Demo PIN 246810.'}</p>
     </div>
   </Sheet>;
 }

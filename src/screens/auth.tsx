@@ -4,9 +4,11 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useApp } from '../app/context.tsx';
-import { setSession } from '../session.ts';
+import { grantSession, setSession } from '../session.ts';
 import { setDeviceOutlet, setSetting } from '../data/actions.ts';
-import { inviteEmployee, setPlan } from '../data/actions/auth.ts';
+import { accountSignIn, accountSignOut, accountSignUp, accountUser, checkLoginPin, createBusiness, inviteEmployee, newPassword, resendConfirmation, sendPasswordReset, setPlan, whenChecked } from '../data/actions/auth.ts';
+import { REMOTE } from '../data/remote.ts';
+import { remoteInfo, remoteSnapshot } from '../data/supabaseStore.ts';
 import type { Employee, Role } from '../data/schema.ts';
 import { bps, idr } from '../domain/money.ts';
 import { Avatar, Badge, Field, Icon, Numpad, Seg, Status, dateShort, toast, useNow } from '../ui/kit.tsx';
@@ -80,10 +82,10 @@ const Links = ({ children }: { children: ReactNode }) => <div className="row bet
 
 function View({ slug }: { slug: string }) {
   switch (slug) {
-    case 'login': case 'account': return <Login />;
-    case 'register': return <Register />;
-    case 'forgot-password': return <Forgot />;
-    case 'reset-password': return <Reset />;
+    case 'login': case 'account': return REMOTE ? <AccountLogin /> : <Login />;
+    case 'register': return REMOTE ? <AccountRegister /> : <Register />;
+    case 'forgot-password': return REMOTE ? <AccountForgot /> : <Forgot />;
+    case 'reset-password': return REMOTE ? <AccountReset /> : <Reset />;
     case 'verify-email-otp': return <Otp />;
     case '2fa-challenge': return <TwoFA />;
     case 'onboarding-business-profile': return <Business />;
@@ -103,6 +105,7 @@ function View({ slug }: { slug: string }) {
 // ── Sign in ─────────────────────────────────────────────────────────────────────────────
 /** Owner and manager sign in with an account; owners confirm with 2FA. Shared devices use a PIN instead. */
 function finishLogin(e: { id: string; role: Role; outletId: string }, go: (p: string) => void) {
+  if (REMOTE) grantSession(e.id, false);
   setSession(e); try { sessionStorage.removeItem(FKEY); } catch { /* ignore */ }
   go(e.role === 'owner' ? '/owner' : '/manager');
 }
@@ -469,6 +472,10 @@ function PinLogin() {
     if (!/^\d$/.test(k)) return;
     const p = (pin + k).slice(0, 4); setPin(p); setErr('');
     if (p.length < 4) return;
+    if (REMOTE) return whenChecked(checkLoginPin(who.id, p), e => {
+      if (e) { setErr(e); setTimeout(() => setPin(''), 300); return; }
+      grantSession(who.id, true); setSession({ id: who.id, role: who.role, outletId: o.id }); toast(`Welcome, ${who.name}`); go(POS_HOME);
+    });
     if (p !== who.pin) { setTries(t => t + 1); setErr(tries + 1 >= 5 ? 'Too many tries. Ask your manager to reset your PIN.' : `Wrong PIN. ${4 - tries} tries left.`); setTimeout(() => setPin(''), 300); return; }
     setSession({ id: who.id, role: who.role, outletId: o.id }); toast(`Welcome, ${who.name}`); go(POS_HOME);
   };
@@ -480,7 +487,180 @@ function PinLogin() {
         <div className={'pin-dots' + (err ? ' shake' : '')} aria-label={`${pin.length} of 4 digits`}>{[0, 1, 2, 3].map(i => <i key={i} className={i < pin.length ? 'on' : ''} />)}</div>
         {err && <p role="alert" style={{ color: 'var(--danger-fg)', textAlign: 'center' }}>{err}</p>}
         <div style={{ opacity: tries >= 5 ? .4 : 1, pointerEvents: tries >= 5 ? 'none' : undefined }}><Numpad onKey={key} extra="" /></div>
-        <div className="row between"><button className="btn btn-ghost" onClick={() => setWho(null)}><Icon name="arrow-left" size={18} />Not {who.name}?</button><span className="faint" style={{ fontSize: 13 }}>Demo PIN 1234</span></div>
+        <div className="row between"><button className="btn btn-ghost" onClick={() => setWho(null)}><Icon name="arrow-left" size={18} />Not {who.name}?</button>{!REMOTE && <span className="faint" style={{ fontSize: 13 }}>Demo PIN 1234</span>}</div>
       </>}
   </div>;
+}
+
+// ── Supabase accounts (REMOTE): email + password, email confirmation, business creation with starter data ──────────────
+/** Open the signed-in account's business in this tab as its owner / manager. */
+function enterBusiness(go: (p: string) => void, path?: string) {
+  const { member } = remoteInfo();
+  if (!member) return false;
+  const role: Role = member.role === 'manager' ? 'manager' : 'owner';
+  const d = remoteSnapshot(), outletId = d.employees.find(x => x.id === member.employeeId)?.outlets[0] ?? d.outlets[0]?.id ?? '';
+  finishLogin({ id: member.employeeId, role, outletId }, () => {});
+  go(path ?? (role === 'owner' ? '/owner' : '/manager'));
+  return true;
+}
+function useAccount() {
+  const [u, setU] = useState<{ email: string; name: string; phone: string } | null | undefined>(undefined);
+  useEffect(() => { accountUser().then(x => setU(x ? { email: x.email ?? '', name: String(x.user_metadata?.name ?? ''), phone: String(x.user_metadata?.phone ?? '') } : null)).catch(() => setU(null)); }, []);
+  return u;
+}
+const signOutAndReload = async () => { await accountSignOut(); location.reload(); };
+const isEmail = (s: string) => /^\S+@\S+\.\S+$/.test(s.trim());
+
+function ConfirmEmail({ email }: { email: string }) {
+  const [state, setState] = useState<string>('');
+  return <div className="stack">
+    <Head h="Confirm your email" sub={<>We sent a link to <b>{email}</b>. Open it on this device to finish creating your account.</>} />
+    <Note><Icon name="mail" /><span>No email after a few minutes? Check spam, or send it again. Only a few emails per hour can be sent.</span></Note>
+    {state && <Note tone={state === 'sent' ? 'success' : 'danger'}><Icon name={state === 'sent' ? 'check' : 'circle-alert'} /><span>{state === 'sent' ? 'Sent again.' : state}</span></Note>}
+    <button className="btn btn-lg" onClick={async () => setState(await resendConfirmation(email) ?? 'sent')}>Send the link again</button>
+    <Links><Link href={A + 'login'}>I confirmed it · log in</Link></Links>
+  </div>;
+}
+
+function AccountLogin() {
+  const { go } = useApp();
+  const acct = useAccount();
+  const [email, setEmail] = useState(''), [pw, setPw] = useState(''), [err, setErr] = useState(''), [busy, setBusy] = useState(false), [unconfirmed, setUnconfirmed] = useState(false), [show, setShow] = useState(false);
+  if (acct === undefined) return <Head h="Welcome back" sub="Checking your sign-in…" />;
+  const m = remoteInfo().member;
+  if (acct && m) return <div className="stack">
+    <Head h={`Signed in to ${m.name}`} sub={<>As <b>{acct.email}</b>. This browser stays signed in for the register, kitchen and back office.</>} />
+    <button className="btn btn-primary btn-lg" onClick={() => enterBusiness(go)}>Open the {m.role === 'manager' ? 'manager' : 'owner'} dashboard</button>
+    <Link className="btn btn-lg" href={A + 'cashier-pin-login'}>Use as a shared register (staff PIN)</Link>
+    <button className="btn btn-ghost" onClick={signOutAndReload}><Icon name="log-out" size={18} />Sign out</button>
+  </div>;
+  if (acct) return <CreateBusiness name={acct.name} phone={acct.phone} />;
+  if (unconfirmed) return <ConfirmEmail email={email} />;
+  const submit = async (ev: FormEvent) => {
+    ev.preventDefault();
+    if (!isEmail(email)) return setErr('Enter the email you signed up with.');
+    if (pw.length < 8) return setErr('Passwords have at least 8 characters.');
+    setBusy(true); setErr('');
+    const r = await accountSignIn(email, pw);
+    setBusy(false);
+    if (r.unconfirmed) return setUnconfirmed(true);
+    if (r.error) return setErr(r.error);
+    if (!enterBusiness(go)) go(A + 'register');
+  };
+  return <form className="stack" onSubmit={submit} noValidate>
+    <Head h="Welcome back" sub="Log in to manage your outlets." />
+    <Field label="Email"><input className={'input' + (err ? ' bad' : '')} type="email" autoComplete="username" value={email} onChange={e => { setEmail(e.target.value); setErr(''); }} placeholder="you@business.id" autoFocus /></Field>
+    <Field label="Password">
+      <div className="row"><input className="input grow" type={show ? 'text' : 'password'} autoComplete="current-password" value={pw} onChange={e => { setPw(e.target.value); setErr(''); }} />
+        <button type="button" className="btn btn-ghost icon-btn" onClick={() => setShow(s => !s)} aria-label={show ? 'Hide password' : 'Show password'}><Icon name={show ? 'eye-off' : 'eye'} /></button></div>
+    </Field>
+    {err && <Note tone="danger"><Icon name="circle-alert" /><span>{err}</span></Note>}
+    <button className="btn btn-primary btn-lg" disabled={busy}>{busy ? 'Logging in…' : 'Log in'}</button>
+    <Links><Link href={A + 'forgot-password'}>Forgot password?</Link><Link href={A + 'register'}>Create an account</Link><Link href={A + 'cashier-pin-login'}>Staff PIN login</Link></Links>
+  </form>;
+}
+
+function AccountRegister() {
+  const { go } = useApp();
+  const acct = useAccount();
+  const [f, setF] = useState({ name: '', phone: '', email: '', pw: '' }), [agree, setAgree] = useState(true), [tried, setTried] = useState(false), [busy, setBusy] = useState(false), [err, setErr] = useState(''), [confirm, setConfirm] = useState(false), [fresh, setFresh] = useState(false);
+  if (acct === undefined) return <Head h="Start free, no card needed" sub="Checking your sign-in…" />;
+  if (fresh || (acct && !remoteInfo().member)) return <CreateBusiness name={acct?.name || f.name} phone={acct?.phone || f.phone} />;
+  if (acct) return <div className="stack"><Head h="You already have a business" sub={<>Signed in as <b>{acct.email}</b>.</>} />
+    <button className="btn btn-primary btn-lg" onClick={() => enterBusiness(go)}>Open it</button><button className="btn btn-ghost" onClick={signOutAndReload}>Sign out to create another account</button></div>;
+  if (confirm) return <ConfirmEmail email={f.email} />;
+  const errs = { name: !f.name.trim() ? 'Enter your name' : '', phone: digits(f.phone).length < 10 ? 'Enter a WhatsApp number, e.g. 0812 3456 7890' : '', email: !isEmail(f.email) ? 'Enter your email' : '', pw: f.pw.length < 8 ? 'At least 8 characters' : '' };
+  const ok = !Object.values(errs).some(Boolean) && agree;
+  const submit = async (e: FormEvent) => {
+    e.preventDefault(); setTried(true); if (!ok) return;
+    setBusy(true); setErr('');
+    const r = await accountSignUp({ email: f.email, password: f.pw, name: f.name.trim(), phone: f.phone });
+    setBusy(false);
+    if (r.error) return setErr(r.error);
+    if (r.confirm) setConfirm(true); else setFresh(true);
+  };
+  const field = (k: keyof typeof f, label: string, type: string, ph: string, ac: string) =>
+    <Field label={label} error={tried ? errs[k] : undefined}><input className={'input' + (tried && errs[k] ? ' bad' : '')} type={type} inputMode={type === 'tel' ? 'tel' : undefined} autoComplete={ac} placeholder={ph} value={f[k]} onChange={e => setF({ ...f, [k]: e.target.value })} /></Field>;
+  return <form className="stack" onSubmit={submit} noValidate>
+    <Head h="Start free, no card needed" sub="Set up your first outlet in about 5 minutes." />
+    {field('name', 'Your name', 'text', 'Budi Hartono', 'name')}
+    {field('phone', 'WhatsApp number', 'tel', '0812 3456 7890', 'tel')}
+    {field('email', 'Email', 'email', 'budi@kopibiru.id', 'email')}
+    {field('pw', 'Password', 'password', '8+ characters', 'new-password')}
+    <label className="row" style={{ fontSize: 14, minHeight: 44 }}><input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} style={{ width: 20, height: 20 }} />I agree to the <Link href="/terms-of-service">terms</Link> and <Link href="/privacy-policy">privacy policy</Link></label>
+    {err && <Note tone="danger"><Icon name="circle-alert" /><span>{err}</span></Note>}
+    <button className="btn btn-primary btn-lg" disabled={busy || (tried && !ok)}>{busy ? 'Creating…' : 'Create account'}</button>
+    <Links><Link href={A + 'login'}>I already have an account</Link></Links>
+  </form>;
+}
+
+/** Signed in, no business yet: name it, set your own PINs, start empty or from the Kopi Biru demo. */
+function CreateBusiness({ name, phone }: { name: string; phone: string }) {
+  const { go } = useApp();
+  const [f, setF] = useState({ name: '', owner: name, outlet: '', pin: '', approvalPin: '' }), [demo, setDemo] = useState<'demo' | 'empty'>('empty');
+  const [busy, setBusy] = useState(-1), [err, setErr] = useState('');
+  const errs: Record<keyof typeof f, string> = { name: f.name.trim().length < 2 ? 'Name your business' : '', owner: !f.owner.trim() ? 'Enter your name' : '', outlet: '',
+    pin: !/^\d{4}$/.test(f.pin) ? '4 digits' : '', approvalPin: !/^\d{6}$/.test(f.approvalPin) ? '6 digits' : '' };
+  const ok = !Object.values(errs).some(Boolean);
+  const start = async () => {
+    setBusy(0); setErr('');
+    const e = await createBusiness({ name: f.name.trim(), owner: f.owner.trim(), phone, outlet: f.outlet.trim(), pin: f.pin, approvalPin: f.approvalPin, demo: demo === 'demo' }, setBusy);
+    setBusy(-1);
+    if (e) return setErr(e);
+    toast('Your business is ready');
+    enterBusiness(go, A + OB[0]);
+  };
+  const input = (k: keyof typeof f, label: string, pin = 0, ph = '') =>
+    <Field label={label} error={f[k] && errs[k] ? errs[k] : undefined}><input className="input" value={f[k]} placeholder={ph} type={pin ? 'password' : 'text'} inputMode={pin ? 'numeric' : undefined} autoComplete="off"
+      onChange={e => setF({ ...f, [k]: pin ? e.target.value.replace(/\D/g, '').slice(0, pin) : e.target.value })} /></Field>;
+  return <div className="stack">
+    <Head h="Create your business" sub="One account runs every outlet, register and kitchen screen." />
+    {input('name', 'Business name', 0, 'Kopi Biru')}
+    {input('owner', 'Your name')}
+    <Choices value={demo} onChange={setDemo} items={[['empty', 'Start empty', 'One outlet, your own menu'], ['demo', 'Start with demo data', 'Kopi Biru: 3 outlets, menu, staff and 2 weeks of sales']]} />
+    {demo === 'empty' && input('outlet', 'First outlet name', 0, 'Main outlet')}
+    <div className="row wrap" style={{ alignItems: 'flex-start' }}><div className="grow">{input('pin', 'Your staff PIN', 4)}</div><div className="grow">{input('approvalPin', 'Your approval PIN', 6)}</div></div>
+    <span className="faint" style={{ fontSize: 13 }}>The staff PIN signs you in on a register; the approval PIN confirms refunds, voids and discounts. Both are stored hashed.{demo === 'demo' ? ' Demo staff use PIN 1234 and approval PIN 246810: change them in Employees.' : ''}</span>
+    {err && <Note tone="danger"><Icon name="circle-alert" /><span>{err}</span></Note>}
+    <button className="btn btn-primary btn-lg" disabled={!ok || busy >= 0} onClick={start}>{busy >= 0 ? `Setting up… ${busy}%` : 'Create business'}</button>
+    <Links><button className="btn btn-ghost btn-sm" onClick={signOutAndReload}>Use another account</button></Links>
+  </div>;
+}
+
+function AccountForgot() {
+  const [email, setEmail] = useState(''), [sent, setSent] = useState(false), [err, setErr] = useState('');
+  const submit = async (ev: FormEvent) => {
+    ev.preventDefault();
+    if (!isEmail(email)) return setErr('Enter the email you signed up with.');
+    const e = await sendPasswordReset(email);
+    if (e && /rate|limit|seconds/i.test(e)) return setErr(e);
+    setSent(true); // same answer whether or not the account exists, so the form can't be used to find accounts
+  };
+  if (sent) return <div className="stack">
+    <Head h="Check your email" sub={<>If an account matches <b>{email}</b>, we sent a link to choose a new password.</>} />
+    <Note><Icon name="clock" />Open the link on this device. Staff who forgot their PIN should ask their manager.</Note>
+    <Links><Link href={A + 'login'}>Back to log in</Link></Links>
+  </div>;
+  return <form className="stack" onSubmit={submit} noValidate>
+    <Head h="Reset your password" sub="We’ll email you a link to choose a new one." />
+    <Field label="Email" error={err || undefined}><input className={'input' + (err ? ' bad' : '')} type="email" value={email} onChange={e => { setEmail(e.target.value); setErr(''); }} autoFocus autoComplete="username" /></Field>
+    <button className="btn btn-primary btn-lg">Send reset link</button>
+    <Links><Link href={A + 'login'}>Back to log in</Link></Links>
+  </form>;
+}
+
+function AccountReset() {
+  const acct = useAccount();
+  const [pw, setPw] = useState(''), [pw2, setPw2] = useState(''), [tried, setTried] = useState(false), [done, setDone] = useState(false), [fail, setFail] = useState('');
+  const err = pw.length < 8 ? 'At least 8 characters' : pw !== pw2 ? 'Passwords don’t match' : '';
+  if (acct === undefined) return <Head h="Choose a new password" sub="Checking your link…" />;
+  if (!acct) return <div className="stack"><Head h="Open the link from your email" sub="The reset link signs you in for a short time. Open it on this device, or ask for a new one." /><Link className="btn btn-primary btn-lg" href={A + 'forgot-password'}>Send a new link</Link></div>;
+  if (done) return <div className="stack"><Head h="Password changed" sub="Use it next time you log in." /><Link className="btn btn-primary btn-lg" href={A + 'login'}>Continue</Link></div>;
+  return <form className="stack" onSubmit={async e => { e.preventDefault(); setTried(true); if (err) return; const x = await newPassword(pw); if (x) setFail(x); else setDone(true); }} noValidate>
+    <Head h="Choose a new password" sub={<>For <b>{acct.email}</b>. Use something you don’t use anywhere else.</>} />
+    <Field label="New password"><input className="input" type="password" autoComplete="new-password" value={pw} onChange={e => setPw(e.target.value)} autoFocus /></Field>
+    <Field label="Repeat password" error={tried ? err || undefined : undefined}><input className={'input' + (tried && err ? ' bad' : '')} type="password" autoComplete="new-password" value={pw2} onChange={e => setPw2(e.target.value)} /></Field>
+    {fail && <Note tone="danger"><Icon name="circle-alert" /><span>{fail}</span></Note>}
+    <button className="btn btn-primary btn-lg">Save password</button>
+  </form>;
 }

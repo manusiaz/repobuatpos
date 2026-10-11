@@ -1,10 +1,12 @@
 'use client';
 // One store for every surface. Local adapter: localStorage + BroadcastChannel, so the POS, KDS, customer display,
 // self-order and dashboards open in different tabs stay in sync live (the production adapter is Supabase realtime,
-// see supabase/migrations). Every write goes through commit() → audit log + realtime broadcast.
+// see supabase/migrations and supabaseStore.ts, used when REMOTE). Every write goes through commit() → audit log + realtime broadcast.
 import { useSyncExternalStore } from 'react';
 import type { DB } from './schema.ts';
 import { DB_VERSION, seed } from './seed.ts';
+import { REMOTE } from './remote.ts';
+import { remoteCommit, remoteGet, remoteRestart, remoteSnapshot, remoteSubscribe, type CommitOpts } from './supabaseStore.ts';
 
 const KEY = 'borniz-db';
 let db: DB | null = null;
@@ -33,17 +35,19 @@ if (typeof window !== 'undefined') window.addEventListener('storage', e => { if 
 
 function get(): DB { if (!db) db = load(); return db; }
 const serverSnap = () => null;
-const subscribe = (f: () => void) => { subs.add(f); return () => { subs.delete(f); }; };
+const subscribe = REMOTE ? remoteSubscribe : (f: () => void) => { subs.add(f); return () => { subs.delete(f); }; };
 
-/** Returns null during server render and hydration; templates show their loading skeleton. */
-export function useDB(): DB | null { return useSyncExternalStore(subscribe, get, serverSnap); }
+/** Returns null during server render and hydration (and while the remote adapter loads); templates show their loading skeleton. */
+export function useDB(): DB | null { return useSyncExternalStore(subscribe, REMOTE ? remoteGet : get, serverSnap); }
 export function useDBSelect<T>(pick: (d: DB) => T): T | null { const d = useDB(); return d ? pick(d) : null; }
-export const snapshot = () => get();
+export const snapshot = REMOTE ? remoteSnapshot : () => get();
 
 export const uid = (p = '') => p + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-3);
 
-/** The only way to change data. `actor` and `action` land in the audit log (never edited or deleted). */
-export function commit(action: string, actor: string, mutate: (d: DB) => void, subject = '', outletId?: string) {
+/** The only way to change data. `actor` and `action` land in the audit log (never edited or deleted).
+    `opts` only matter on Supabase: `expect` = server precondition on a document, `quiet` = no toast when the server refuses. */
+export function commit(action: string, actor: string, mutate: (d: DB) => void, subject = '', outletId?: string, opts?: CommitOpts) {
+  if (REMOTE) return remoteCommit(action, actor, mutate, subject, outletId, opts);
   const next = structuredClone(get());
   mutate(next);
   next.audit.unshift({ id: uid('au'), actor, action, subject, at: Date.now(), outletId });
@@ -53,4 +57,4 @@ export function commit(action: string, actor: string, mutate: (d: DB) => void, s
   channel?.postMessage(action);
   subs.forEach(f => f());
 }
-export function resetDemo() { localStorage.removeItem(KEY); reload(); channel?.postMessage('reset'); }
+export function resetDemo() { if (REMOTE) { remoteRestart(); return; } localStorage.removeItem(KEY); reload(); channel?.postMessage('reset'); }
