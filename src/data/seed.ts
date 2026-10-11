@@ -129,7 +129,7 @@ export function seed(now = Date.now()): DB {
     ],
     audit: [], notices: [
       { id: 'n1', alert: 'Low stock', level: 'warn', to: ['pic', 'manager'], outletId: 'kem', text: 'Oat milk below par at Kemang', href: '/owner/inventory/low-stock-alerts-and-reorder-rules', at: now - 34 * 60e3, read: false },
-      { id: 'n2', alert: 'Printer offline', level: 'warn', to: ['pic', 'cashier'], outletId: 'sen', text: 'Epson TM-m30 at Senayan offline for 9 min', href: '/owner/account/devices-printer-edc-cash-drawer', at: now - 9 * 60e3, read: false },
+      { id: 'n2', alert: 'Printer offline', level: 'warn', to: ['pic', 'cashier'], outletId: 'sen', text: 'Epson TM-m30 at Senayan offline for 9 min', href: '/owner/account/devices', at: now - 9 * 60e3, read: false },
     ],
     theme: { name: 'Kopi Biru', p: '#1F4FD8', acc: '#F2B544', ink: '#14213D', paper: '#F7F4EE', font: 'space', banner: 'g1', img: '' },
     staffBrand: { accent: '#F26B1D', logo: '', workspace: 'Kopi Biru', density: 'comfy' },

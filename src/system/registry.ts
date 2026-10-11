@@ -101,6 +101,17 @@ const EXTRA: Page[] = [
   { path: '/online', name: 'Online orders', surface: 'online', role: 'cashier', group: 'Selling' },
   { path: '/studios', name: 'Customization studios', surface: 'studios', role: 'owner', group: 'Studios' },
   { path: '/graph', name: 'Knowledge graph', surface: 'graph', role: 'system', group: 'System' },
+  // Surface roots, so every app has a short address (the screen opens its default view).
+  { path: '/pos', name: 'POS register', surface: 'pos', role: 'cashier', group: 'Selling' },
+  { path: '/pic', name: 'PIC home', surface: 'pic', role: 'pic', group: 'My shift' },
+  { path: '/kds', name: 'Kitchen display', surface: 'kds', role: 'kitchen', group: 'Screens' },
+  { path: '/display', name: 'Customer display', surface: 'display', role: 'customer', group: 'Screens' },
+  { path: '/order', name: 'QR menu', surface: 'selforder', role: 'customer', group: 'QR menu' },
+  { path: '/kiosk', name: 'Kiosk', surface: 'kiosk', role: 'customer', group: 'Kiosk' },
+  { path: '/admin', name: 'BorNiz admin', surface: 'admin', role: 'admin', group: 'Platform' },
+  { path: '/account', name: 'Account', surface: 'auth', role: 'public', group: 'Auth' },
+  // Sitemap gap: counting is done on the PIC tablet (Authority, CLAUDE.md opname rules) but the PIC sitemap has no page for it.
+  { path: '/pic/floor/stock-opname', name: 'Stock opname (blind count)', surface: 'pic', role: 'pic', group: 'Floor' },
 ].map(x => ({ ...x, slug: x.path.slice(1), title: x.name, host: '', area: 'Surface root', mode: 'screen' as Mode, object: null, template: null,
   surface: x.surface as Surface, shell: SHELL[x.surface as Surface], prototype: PROTOTYPE[x.surface as Surface], extra: true }));
 
@@ -118,8 +129,11 @@ export function nav(role: 'owner' | 'manager' | 'admin'): NavGroup[] {
     for (const p of sitemap.filter(x => x.role === r)) { let g = gs.find(x => x.title === p.group); if (!g) gs.push(g = { title: p.group, pages: [] }); g.pages.push(p); }
     return gs;
   };
-  if (role === 'manager') return [...take('manager'), ...take('owner').filter(g => !g.title.startsWith('More studios'))];
-  return take(role);
+  // Order follows the Back Office prototype: daily modules first, studios last.
+  const FIRST = role === 'manager' ? ['Same as owner', 'Monitor', 'Operations', 'Create', 'Waiting for owner'] : ['Monitor', 'Sales', 'Catalog', 'Inventory', 'Customers', 'Promo', 'Team', 'Outlets', 'Finance', 'Reports'];
+  const order = (gs: NavGroup[]) => [...FIRST.map(t => gs.find(g => g.title === t)).filter((g): g is NavGroup => !!g), ...gs.filter(g => !FIRST.includes(g.title))];
+  if (role === 'manager') { const m = take('manager'); return order([...m, ...take('owner').filter(g => !g.title.startsWith('More studios') && !m.some(x => x.title === g.title))]); }
+  return order(take(role));
 }
 /** First page of a surface, used by launcher tiles. */
 export const surfaceHome = (s: Surface) => PAGES.find(p => p.surface === s && p.extra)?.path ?? pagesOf(s)[0]?.path ?? '/';

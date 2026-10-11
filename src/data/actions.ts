@@ -10,13 +10,18 @@ import { deductForSale, level as stockLevel, opnameApprover, postOpname, type Op
 import { flashPrice, resolve } from '../domain/promo.ts';
 import { closeCheck } from '../domain/shift.ts';
 import { idr } from '../domain/money.ts';
+import alertsCatalog from '../system/alerts.json' with { type: 'json' };
 
 const now = () => Date.now();
 const emp = (d: DB, id: string) => d.employees.find(e => e.id === id);
 const outletOf = (d: DB, id: string) => d.outlets.find(o => o.id === id)!;
 export const priceAt = (d: DB, p: Product, outletId: string) => d.outletProducts.find(x => x.productId === p.id && x.outletId === outletId)?.localPrice ?? p.basePrice;
 
-function notify(d: DB, alert: string, level: 'info' | 'warn' | 'high', to: Role[], outletId: string | null, text: string, href: string | null = null) {
+// Alert engine: recipients come from the alert catalog (spec/bn-alerts.js) when the alert is listed there.
+const ALERT_TO: Record<string, Role[]> = Object.fromEntries((alertsCatalog.groups as [string, string, [string, string, Record<string, number>][]][])
+  .flatMap(g => g[2].map(a => [a[0].toLowerCase(), Object.keys(a[2]).filter(r => r !== 'guest') as Role[]])));
+function notify(d: DB, alert: string, level: 'info' | 'warn' | 'high', fallback: Role[], outletId: string | null, text: string, href: string | null = null) {
+  const to = ALERT_TO[alert.toLowerCase()] ?? fallback;
   d.notices.unshift({ id: uid('n'), alert, level, to, outletId, text, href, at: now(), read: false });
   if (d.notices.length > 200) d.notices.length = 200;
 }
@@ -151,7 +156,7 @@ export function requestApproval(a: { type: RequestType; title: string; amount?: 
     const row: Approval = { id, type: a.type, title: a.title, subjectId: a.subjectId ?? null, amount: a.amount ?? 0, pct: a.pct ?? 0, level: lvl, status: 'waiting', requestedBy: a.requestedBy, countedBy: a.countedBy, outletId: a.outletId, note: a.note ?? '', at: now(), payload: a.payload };
     if (lvl === 'cashier') { row.status = 'approved'; row.decidedBy = a.requestedBy; row.decidedAt = now(); applyDecision(d, row); }
     d.approvals.unshift(row);
-    if (lvl !== 'cashier') notify(d, 'Approval needed', lvl === 'owner' ? 'high' : 'warn', [lvl === 'pic' ? 'pic' : lvl], a.outletId, `${a.title} · ${lvl.toUpperCase()} to decide`, lvl === 'owner' ? '/owner/monitor/notifications-and-activity-center' : lvl === 'manager' ? '/manager/operations/approvals-void-refund-discount' : '/pic/approvals/approval-queue-void-discount-refund-within-limit');
+    if (lvl !== 'cashier') notify(d, 'Approval needed', lvl === 'owner' ? 'high' : 'warn', [lvl === 'pic' ? 'pic' : lvl], a.outletId, `${a.title} · ${lvl.toUpperCase()} to decide`, lvl === 'owner' ? '/owner/monitor/notifications-and-activity-center' : lvl === 'manager' ? '/manager/operations/approvals' : '/pic/approvals/approval-queue');
   }, a.title, a.outletId);
   return { id, level: lvl };
 }
@@ -182,6 +187,8 @@ function rejectEffects(d: DB, r: Approval) {
 }
 function applyDecision(d: DB, r: Approval) {
   const pl = (r.payload ?? {}) as Record<string, any>;
+  if (pl.settingKey) d.settings[pl.settingKey] = pl.settingValue;
+  if (pl.outletPatch) Object.assign(d.outlets.find(o => o.id === pl.outletPatch.id) ?? {}, pl.outletPatch.patch);
   switch (r.type) {
     case 'discount': { const o = d.orders.find(x => x.id === r.subjectId); if (o) { o.discountPct = r.pct; recalc(d, o); } break; }
     case 'void': { const o = d.orders.find(x => x.id === r.subjectId); if (o) { if (pl.lineId) o.lines = o.lines.filter(l => l.id !== pl.lineId); else o.status = 'voided'; recalc(d, o); } break; }
@@ -203,6 +210,10 @@ function applyDecision(d: DB, r: Approval) {
     case 'po': { const po = d.pos.find(x => x.id === r.subjectId); if (po) po.status = 'sent'; break; }
     case 'publish': { const v = d.versions.find(x => x.id === r.subjectId); if (v) { v.status = 'published'; if (v.kind === 'menu') Object.assign(d.theme, v.data); if (v.kind === 'brand') Object.assign(d.staffBrand, v.data); } break; }
     case 'waste': case 'adjust': { if (pl.stockItemId) d.movements.push({ outletId: r.outletId, stockItemId: pl.stockItemId, qty: pl.qty, type: r.type === 'waste' ? 'waste' : 'adjust', sourceId: r.id, by: r.decidedBy ?? '', at: now() }); break; }
+    case 'supplier': { const s = pl.supplier; if (s) { const i = d.suppliers.findIndex(x => x.id === s.id); if (i >= 0) d.suppliers[i] = s; else d.suppliers.push(s); } break; }
+    case 'promo': { const p = pl.promo; if (p) { const i = d.promos.findIndex(x => x.id === p.id); if (i >= 0) d.promos[i] = p; else d.promos.push(p); } break; }
+    case 'perm': { if (pl.employee) { const e = pl.employee; const i = d.employees.findIndex(x => x.id === e.id); if (i >= 0) d.employees[i] = e; else d.employees.push(e); } if (pl.key) d.perms[pl.key] = pl.code; break; }
+    case 'asset': case 'expense': case 'transfer': case 'leave': case 'timesheet': case 'budget': { if (pl.rec && pl.object) { const l = d.records[pl.object] ?? (d.records[pl.object] = []); const i = l.findIndex(x => x.id === pl.rec.id); const row = { ...pl.rec, c: 'Approved' }; if (i >= 0) l[i] = row; else l.unshift(row); } break; }
     case 'points': { if (pl.customerId) d.ledger.push({ customerId: pl.customerId, points: pl.points, reason: 'Adjustment · ' + r.note, at: now() }); break; }
   }
 }
@@ -350,13 +361,17 @@ export function rateOrder(orderId: string, stars: number, text = '') {
 }
 
 // ── Online & delivery (incoming only) ───────────────────────────────────────────────────
+/** Ready-by is calculated from tier + channel prep + kitchen load, never typed (Online Orders). */
+export const readyBy = (tier: 'rush' | 'standard' | 'saver', source: Source, openTickets: number, at = now()) =>
+  at + ((tier === 'rush' ? 10 : tier === 'standard' ? 18 : 30) + (source === 'web' ? 2 : 4) + Math.min(20, openTickets)) * 60e3;
 export function simulatePlatformOrder(outletId: string, source: Source = 'gofood') {
   const d0 = snapshot(), r = Math.random;
   const ps = d0.products.filter(p => p.status === 'live').sort(() => r() - .5).slice(0, 1 + Math.floor(r() * 3));
   const tier = (['rush', 'standard', 'saver'] as const)[Math.floor(r() * 3)];
-  const id = newOrder(outletId, source, source, { type: 'delivery', status: 'open', tier, readyBy: now() + (tier === 'rush' ? 12 : tier === 'standard' ? 20 : 35) * 60e3 });
+  const load = d0.orders.filter(o => o.outletId === outletId && ['sent', 'preparing'].includes(o.status)).length;
+  const id = newOrder(outletId, source, source, { type: 'delivery', status: 'open', tier, readyBy: readyBy(tier, source, load) });
   ps.forEach(p => addLine(id, p.id, [], 1, '', source));
-  commit('online.received', source, d => notify(d, 'New online order', 'warn', ['cashier', 'pic'], outletId, `${source} order ${findOrder(d, id).no} waiting to be accepted`, '/pos/selling/ride-hailing-orders-inbox-gofood-grabfood-shopeefood'));
+  commit('online.received', source, d => notify(d, 'New online order', 'warn', ['cashier', 'pic'], outletId, `${source} order ${findOrder(d, id).no} waiting to be accepted`, '/pos/selling/ride-hailing-orders-inbox'));
   return id;
 }
 export function acceptOnline(orderId: string, by: string) { sendToKitchen(orderId, by); commit('online.accepted', by, d => { const o = findOrder(d, orderId); o.cashierId = by; }, orderId); }
@@ -385,3 +400,34 @@ export function saveRecord(object: string, row: Rec, by: string) { commit(object
 export function deleteRecord(object: string, id: string, by: string) { commit(object + '.deleted', by, d => { d.records[object] = (d.records[object] ?? []).filter(x => x.id !== id); }, id); }
 export function seedRecords(object: string, rows: Rec[]) { if (!snapshot().records[object]) commit(object + '.seeded', 'system', d => { d.records[object] = rows; }); }
 export function setSetting(key: string, value: boolean | string | number, by: string) { commit('setting.changed', by, d => { d.settings[key] = value; }, key); }
+
+// ── Back-office records with their own tables ───────────────────────────────────────────
+export function saveSupplier(s: DB['suppliers'][0], by: string) {
+  const role = emp(snapshot(), by)?.role;
+  if (role !== 'owner') return requestApproval({ type: 'supplier', title: `Supplier · ${s.name}`, requestedBy: by, outletId: 'sen', payload: { supplier: s } });
+  commit('supplier.saved', by, d => { const i = d.suppliers.findIndex(x => x.id === s.id); if (i >= 0) d.suppliers[i] = s; else d.suppliers.push(s); }, s.name);
+  return null;
+}
+export function saveEmployee(e: DB['employees'][0], by: string) {
+  const role = emp(snapshot(), by)?.role;
+  if (e.role === 'manager' && role !== 'owner') return requestApproval({ type: 'perm', title: `Make ${e.name} a manager`, requestedBy: by, outletId: e.outlets[0] ?? 'sen', payload: { employee: e } });
+  commit('employee.saved', by, d => { const i = d.employees.findIndex(x => x.id === e.id); if (i >= 0) d.employees[i] = e; else d.employees.push(e); }, e.name, e.outlets[0]);
+  return null;
+}
+export function saveReservation(r: DB['reservations'][0], by: string) { commit('reservation.saved', by, d => { const i = d.reservations.findIndex(x => x.id === r.id); if (i >= 0) d.reservations[i] = r; else d.reservations.push(r); }, r.name, r.outletId); }
+export function savePromo(p: DB['promos'][0], by: string) {
+  if (emp(snapshot(), by)?.role !== 'owner') return requestApproval({ type: 'promo', title: `Promo · ${p.name}`, requestedBy: by, outletId: 'sen', payload: { promo: p } });
+  commit('promo.saved', by, d => { const i = d.promos.findIndex(x => x.id === p.id); if (i >= 0) d.promos[i] = p; else d.promos.push(p); }, p.name);
+  return null;
+}
+export function patchOutlet(id: string, patch: Partial<DB['outlets'][0]>, by: string) { commit('outlet.updated', by, d => { Object.assign(d.outlets.find(o => o.id === id)!, patch); }, id, id); }
+export function setStation(categoryId: string, station: DB['categories'][0]['station'], by: string) { commit('routing.changed', by, d => { d.categories.find(c => c.id === categoryId)!.station = station; }, categoryId); }
+export function resendMessage(id: string, by: string) { commit('message.resent', by, d => { const m = d.messages.find(x => x.id === id); if (m) { m.status = 'sent'; m.at = now(); } }, id); }
+export function archiveProduct(productId: string, by: string) {
+  const d0 = snapshot(), p = d0.products.find(x => x.id === productId)!, e = emp(d0, by);
+  if (e?.role !== 'owner' && !(p.scope === 'local' && e?.role === 'manager' && e.outlets.includes(p.ownerOutletId ?? ''))) return 'Outlets can’t delete a global item. Hide it at your outlet or mark it sold out.';
+  commit('product.archived', by, d => { d.products.find(x => x.id === productId)!.status = 'archived'; }, p.name);
+  return null;
+}
+export function hideAtOutlet(productId: string, outletId: string, hidden: boolean, by: string) { commit('product.hidden', by, d => { const x = d.outletProducts.find(y => y.productId === productId && y.outletId === outletId); if (x) x.hidden = hidden; }, productId, outletId); }
+export function saveModifierGroup(g: DB['modifierGroups'][0], by: string) { commit('modifier.saved', by, d => { const i = d.modifierGroups.findIndex(x => x.id === g.id); if (i >= 0) d.modifierGroups[i] = g; else d.modifierGroups.push(g); }, g.name); }
