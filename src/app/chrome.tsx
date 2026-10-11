@@ -5,6 +5,7 @@ import Link from 'next/link';
 import catalog from '../system/catalog.json' with { type: 'json' };
 import { PAGES, PROTOTYPE, surfaceHome, type Surface } from '../system/registry.ts';
 import { canOpen } from '../system/access.ts';
+import { homeOf } from '../system/pagemap.ts';
 import { Icon, Sheet, ago, Avatar, Badge } from '../ui/kit.tsx';
 import { markRead } from '../data/actions.ts';
 import { setSession } from '../session.ts';
@@ -23,7 +24,7 @@ export function Launcher() {
     <Sheet open={open} onClose={() => setOpen(false)} side="center" title="Apps & pages" sub="Every BorNiz app you can use, and search across all pages.">
       <div className="stack">
         <input className="search" autoFocus placeholder="Search pages: opname, QRIS, payroll…" value={q} onChange={e => setQ(e.target.value)} />
-        {hits.length > 0 ? <div className="stack sm">{hits.map(p => <Link key={p.path} href={p.path} onClick={() => setOpen(false)} className="nav-i"><span className="grow">{p.name}<br /><span className="faint" style={{ fontSize: 12 }}>{p.role} · {p.group}</span></span><Badge>{p.template ?? p.prototype}</Badge></Link>)}</div>
+        {hits.length > 0 ? <div className="stack sm">{hits.map(p => <Link key={p.path} href={p.path} onClick={() => setOpen(false)} className="nav-i"><span className="grow">{p.name}<br /><span className="faint" style={{ fontSize: 12 }}>{p.role} · {p.group}</span></span><Badge>{homeOf(p.path)?.title ?? p.prototype}</Badge></Link>)}</div>
           : <div className="grid" style={{ ['--min' as string]: '200px' }}>{apps.map(a => <button key={a.name} className="card tight row" style={{ cursor: 'pointer', textAlign: 'left' }} onClick={() => { setOpen(false); go(surfaceHome(SURFACE_OF[a.screen])); }}>
             <span style={{ width: 40, height: 40, borderRadius: 12, background: a.color, display: 'grid', placeItems: 'center', color: '#fff', flex: 'none' }}><Icon name={a.icon} /></span>
             <span className="stack" style={{ gap: 0 }}><b style={{ fontSize: 14 }}>{a.name}</b><span className="muted" style={{ fontSize: 12 }}>{a.job}</span></span></button>)}</div>}

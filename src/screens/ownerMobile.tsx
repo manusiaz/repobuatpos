@@ -1,4 +1,5 @@
 'use client';
+import { realNav, ReleaseTag } from '../app/Shells.tsx';
 // Owner mobile (spec/BorNiz Owner Mobile.dc.html): the owner dashboard below 768px. Bottom tabs, cards instead of tables,
 // chips for filters, approvals one-handed with 52px buttons. Each tab is its own URL under /system/mobile/.
 import { useMemo, useState, type ReactNode } from 'react';
@@ -9,7 +10,7 @@ import { Badge, Empty, Icon, Status, ago, hhmm, useNow, type Tone } from '../ui/
 import { LineChart } from '../ui/Chart.tsx';
 import { idr, idrShort } from '../domain/money.ts';
 import { markRead } from '../data/actions.ts';
-import { nav, pagesOf } from '../system/registry.ts';
+import { pagesOf } from '../system/registry.ts';
 import type { DB } from '../data/schema.ts';
 import { delta, openOrders, pct, period, series, startOfDay, summary, WEEK, SOURCE_LABEL, METHOD_LABEL } from './insight/metrics.ts';
 import { amountOf, myQueue, outletsLive, typeLabel, useDecide, verbs, watchItems } from './insight/live.tsx';
@@ -168,7 +169,7 @@ function Alerts({ notices, now, by }: { notices: DB['notices']; now: number; by:
 }
 
 function More({ role }: { role: 'owner' | 'manager' }) {
-  const groups = useMemo(() => nav(role), [role]);
+  const groups = useMemo(() => realNav(role).map(([title, pages]) => ({ title, pages })), [role]);
   const [open, setOpen] = useState<string | null>(null);
   return <div className="stack sm">
     <Link href="/owner/customers/loyalty-program" className="card row" style={{ padding: 14, textDecoration: 'none', color: 'var(--fg-1)', minHeight: 56 }}><Icon name="award" /><b className="grow">Loyalty</b><Icon name="chevron-right" /></Link>
@@ -177,7 +178,7 @@ function More({ role }: { role: 'owner' | 'manager' }) {
     <section className="card" style={{ padding: 0 }}>{groups.map((g, i) => <div key={g.title} style={{ borderTop: i ? '1px solid var(--border)' : 0 }}>
       <button className="row between" style={{ width: '100%', minHeight: 52, padding: '0 16px', background: 'none', border: 0, cursor: 'pointer', textAlign: 'left' }} aria-expanded={open === g.title} onClick={() => setOpen(open === g.title ? null : g.title)}>
         <b className="grow" style={{ fontSize: 15 }}>{g.title}</b><span className="faint" style={{ fontSize: 13 }}>{g.pages.length}</span><Icon name={open === g.title ? 'chevron-up' : 'chevron-down'} size={18} /></button>
-      {open === g.title && <div className="stack" style={{ gap: 0, padding: '0 8px 8px' }}>{g.pages.map(p => <Link key={p.path} href={p.path} className="nav-i" style={{ minHeight: 44 }}>{p.title}</Link>)}</div>}
+      {open === g.title && <div className="stack" style={{ gap: 0, padding: '0 8px 8px' }}>{g.pages.map(p => <Link key={p.id} href={p.path} className="nav-i" style={{ minHeight: 44 }}><span className="grow">{p.title}</span>{p.release !== 'MVP' && <ReleaseTag r={p.release} />}</Link>)}</div>}
     </div>)}</section>
   </div>;
 }

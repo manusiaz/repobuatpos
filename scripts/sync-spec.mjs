@@ -36,6 +36,9 @@ const brandThemes = evalExpr(block(brandSrc, 'var THEMES = {', '};'), 'THEMES');
 
 const conn = read('BorNiz Connections.dc.html');
 const links = evalExpr(block(conn, 'const LINKS = window.BN_LINKS = {', '\n};').replace('const LINKS = window.BN_LINKS =', 'var LINKS ='), 'LINKS');
+// P carries the linked-pages panel of pages missing from LINKS (Online Orders, Authority, Alerts …): merge both.
+const P = vm.runInNewContext(conn.slice(conn.indexOf('const P = {'), conn.indexOf('\n};', conn.indexOf('const P = {')) + 3).replace('const P', 'var P') + ';P', {});
+for (const [k, v] of Object.entries(P)) { const extra = v.slice(2).filter(x => Array.isArray(x)); const cur = links[k] ?? (links[k] = []); for (const [t, l] of extra) if (t !== k && !cur.some(x => x[0] === t)) cur.push([t, l]); }
 const rec = evalExpr(block(conn, 'const REC = {', '\n};').replace('const REC', 'var REC'), 'REC');
 const live = evalExpr(block(conn, 'const LIVE = [').replace('const LIVE', 'var LIVE'), 'LIVE');
 

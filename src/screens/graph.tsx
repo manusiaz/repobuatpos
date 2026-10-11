@@ -7,15 +7,15 @@ import { buildGraph, neighbours, type GEdge, type GNode, type NodeKind } from '.
 import { surfaceHome, type Surface } from '../system/registry.ts';
 import { Badge, Icon, Empty, type Tone } from '../ui/kit.tsx';
 
-const KINDS: NodeKind[] = ['page', 'surface', 'object', 'role', 'event', 'doc'];
-const COLOR: Record<NodeKind, string> = { page: 'var(--accent)', surface: 'var(--info)', object: 'var(--success)', role: 'var(--violet)', event: 'var(--warning)', doc: 'var(--fg-3)' };
-const TONE: Record<NodeKind, Tone> = { page: 'accent', surface: 'info', object: 'success', role: 'violet', event: 'warning', doc: 'neutral' };
+const KINDS: NodeKind[] = ['page', 'feature', 'surface', 'object', 'role', 'event', 'doc'];
+const COLOR: Record<NodeKind, string> = { page: 'var(--accent)', feature: 'var(--ember-300)', surface: 'var(--info)', object: 'var(--success)', role: 'var(--violet)', event: 'var(--warning)', doc: 'var(--fg-3)' };
+const TONE: Record<NodeKind, Tone> = { page: 'accent', feature: 'neutral', surface: 'info', object: 'success', role: 'violet', event: 'warning', doc: 'neutral' };
 const EDGE_LABEL: Record<string, [string, string]> = {
   'renders-in': ['Renders in', 'Pages rendered here'], reads: ['Reads', 'Read by'], writes: ['Writes', 'Written by'], opens: ['Opens', 'Opened by'],
   links: ['Links to', 'Linked from'], live: ['Live with', 'Live with'], emits: ['Emits', 'Emitted by'], updates: ['Updates', 'Updated by'],
 };
 
-const hrefOf = (n: GNode) => n.kind === 'page' ? n.id : n.kind === 'surface' ? surfaceHome(n.id.slice(2) as Surface) : null;
+const hrefOf = (n: GNode) => n.kind === 'feature' ? n.id : n.kind === 'page' ? String(n.meta?.path) : n.kind === 'surface' ? surfaceHome(n.id.slice(2) as Surface) : null;
 const setUrl = (id: string | null) => { const u = new URL(location.href); if (id) u.searchParams.set('node', id); else u.searchParams.delete('node'); history.replaceState(null, '', u); };
 
 export default function Screen() {
