@@ -11,8 +11,12 @@ import { level as stockLevel } from '../../domain/stock.ts';
 import { idr } from '../../domain/money.ts';
 import { Badge, Empty, Field, Icon, Kpi, Seg, Sheet, Status, Toggle, ago, hhmm, toast } from '../../ui/kit.tsx';
 import type { Order, OrderLine } from '../../data/schema.ts';
-import { P, Paper, Row, TabLinks, isOpenBill, itemsOf, label, paidOf, receiptLines, startOfDay, usePos, useApproval, usePerm, warnStyle } from './shared.tsx';
+import { P, Paper, Row, TabLinks, isOpenBill, itemsOf, label, paidOf, startOfDay, usePos, useApproval, usePerm, warnStyle } from './shared.tsx';
 import { CustomerList } from './OrderSheets.tsx';
+import { paperOf, receiptPrinter, thisDevice } from '../../devices/routing.ts';
+import { openDrawer, printReceipt } from '../../devices/hardware.ts';
+import { receiptDoc } from '../../devices/receipt.ts';
+import { toText } from '../../devices/layout.ts';
 
 const lt = (l: OrderLine) => lineTotal({ unitPrice: l.unitPrice, flashPrice: l.flashPrice, modifiers: l.mods.map(m => m.price), qty: l.qty, discountPct: l.discountPct });
 const PAID: Order['status'][] = ['paid', 'part_refunded', 'refunded'];
@@ -101,10 +105,12 @@ function Detail({ o }: { o: Order }) {
 
 function Receipt({ o }: { o: Order }) {
   const { db, me } = usePos();
+  const dev = thisDevice(db), p = receiptPrinter(db, o.outletId, dev);
   const copies = db.audit.filter(a => a.action === 'print.receipt' && a.subject === o.no).length;
-  return <div className="stack"><Paper lines={receiptLines(db, o, true)} />
-    <span className="faint" style={{ fontSize: 13 }}>{copies ? `Printed ${copies} time${copies > 1 ? 's' : ''} before. Reprints are marked COPY.` : 'Reprints are marked COPY.'}</span>
-    <button className="btn btn-primary btn-pos" onClick={() => { logDevice('print.receipt', o.no, me.id, o.outletId); toast('Receipt sent to the printer'); }}><Icon name="printer" />Print copy</button></div>;
+  const [busy, setBusy] = useState(false);
+  return <div className="stack"><Paper lines={toText(receiptDoc(db, o, p ? paperOf(p) : '80', { copy: copies > 0 }))} />
+    <span className="faint" style={{ fontSize: 13 }}>{copies ? `Printed ${copies} time${copies > 1 ? 's' : ''} before. Reprints are marked COPY.` : 'Reprints are marked COPY.'} {p ? `Prints on ${p.name}.` : 'No receipt printer on this register: send an e-receipt instead.'}</span>
+    <button className="btn btn-primary btn-pos" disabled={busy} onClick={async () => { setBusy(true); const r = await printReceipt(db, o, dev, me.id); setBusy(false); toast(r.message); }}><Icon name="printer" />{copies ? 'Print copy' : 'Print receipt'}</button></div>;
 }
 function EReceipt({ o }: { o: Order }) {
   const { db, me } = usePos();
@@ -274,7 +280,7 @@ function Override() {
   return <div className="grid" style={{ ['--min' as string]: '320px', alignItems: 'start' }}>
     <div className="card stack"><h3>Override on this register</h3>
       <p className="muted" style={{ fontSize: 14 }}>The PIC or manager types their own approval PIN here. Every override is logged with both names.</p>
-      {can('Open drawer without sale') !== 'n' && <button className="btn btn-pos" style={warnStyle(can('Open drawer without sale'))} onClick={() => flow.verify('Open drawer without sale', 'Open drawer · no sale', by => { logDevice('drawer.no_sale', `by ${db.employees.find(e => e.id === by)?.name} for ${me.name}`, by, outletId); toast('Drawer opened · logged'); })}><Icon name="archive" />Open drawer without sale</button>}
+      {can('Open drawer without sale') !== 'n' && <button className="btn btn-pos" style={warnStyle(can('Open drawer without sale'))} onClick={() => flow.verify('Open drawer without sale', 'Open drawer · no sale', by => { const note = `by ${db.employees.find(e => e.id === by)?.name} for ${me.name}`; logDevice('drawer.no_sale', note, by, outletId); openDrawer(db, thisDevice(db), 'no_sale', note, by).then(r => toast(r.ok ? 'Drawer opened · logged' : r.message)); })}><Icon name="archive" />Open drawer without sale</button>}
       <span className="cap">Your requests waiting · {waiting.length}</span>
       {waiting.length === 0 ? <p className="muted">Nothing waiting.</p> : waiting.map(a => <div key={a.id} className="row"><span className="grow" style={{ fontSize: 14 }}>{a.title}<br /><span className="faint">{a.level.toUpperCase()} · {ago(a.at)}</span></span><button className="btn btn-sm" onClick={() => flow.resume(a.id, a.title, a.level)}>Enter PIN</button></div>)}
     </div>

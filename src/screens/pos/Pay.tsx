@@ -4,11 +4,15 @@ import { QR } from '../../ui/qr.tsx';
 // QRIS / VA / e-wallet only settle through gatewayWebhook; the "simulate" buttons stand in for the bank.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { cancelPayment, gatewayWebhook, holdOrder, patchOrder, startPayment } from '../../data/actions.ts';
-import { enqueue, logDevice, payCash, sendReceipt } from '../../data/actions/pos.ts';
+import { enqueue, payCash, sendReceipt } from '../../data/actions/pos.ts';
 import { lineTotal, methodAvailable, type Method } from '../../domain/order.ts';
 import { roundCash, idr } from '../../domain/money.ts';
 import { Badge, Empty, Field, Icon, Numpad, Seg, Status, ago, toast, useNow } from '../../ui/kit.tsx';
 import type { Order, Payment } from '../../data/schema.ts';
+import { thisDevice, ownerOf, receiptPrinter } from '../../devices/routing.ts';
+import { edcDriver, edcRef, manualDriver, type ChargeReq, type ChargeRes, type EdcDriver } from '../../devices/edc.ts';
+import { openDrawer, printReceipt, showOnPole } from '../../devices/hardware.ts';
+import { setPaymentRef } from '../../data/actions/devices.ts';
 import { P, REG, Stepper, AmountPad, itemsOf, paidOf, uiGet, uiSet, usePos, useApproval } from './shared.tsx';
 
 const METHODS: [string, string, string, string, string][] = [
@@ -64,6 +68,7 @@ function PayBody({ o, mode }: { o: Order; mode: string }) {
   const online = db.device.online;
   const active = SLUG_OF[mode] ?? mode;
   const Panel = PANELS[mode] ?? NonePanel;
+  useEffect(() => { showOnPole(db, thisDevice(db), 'Total ' + o.no, idr(remaining + tip)); }, [remaining, tip]); // eslint-disable-line react-hooks/exhaustive-deps
   return <div className="pos-pay">
     <div className="stack" style={{ padding: 20, background: 'var(--bg-sunken)', gap: 10 }}>
       <span className="cap">Order {o.no} · {itemsOf(o)} items · {o.type === 'dine' ? o.table ?? 'Dine-in' : o.type === 'take' ? 'Takeaway' : 'Delivery'}</span>
@@ -105,12 +110,15 @@ function useCharge(o: Order) {
 }
 
 function CashPanel({ o, remaining, tip }: PanelProps) {
-  const { me, setting, route, go } = usePos();
+  const { db, me, setting, route, go } = usePos();
   const step = setting('rounding', 100), due = step ? roundCash(remaining, step) : remaining, toPay = due + tip;
   const [tender, setTender] = useState(0);
   const change = tender - toPay;
   const quick = [...new Set([toPay, Math.ceil(toPay / 10000) * 10000, Math.ceil(toPay / 50000) * 50000, Math.ceil(toPay / 100000) * 100000, Math.ceil(toPay / 100000) * 100000 + 50000])].slice(0, 5);
-  const done = () => { if (change < 0 || !tender) return; uiSet('lastPaid', { id: o.id, change, method: 'Cash' }); payCash(o.id, due, remaining, me.id, tip); enqueue('payment.cash'); };
+  const done = () => {
+    if (change < 0 || !tender) return; uiSet('lastPaid', { id: o.id, change, method: 'Cash' }); payCash(o.id, due, remaining, me.id, tip); enqueue('payment.cash');
+    openDrawer(db, thisDevice(db), 'cash_sale', o.no, me.id, true).then(r => { if (!r.ok) toast(r.message); });
+  };
   useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Enter') { e.preventDefault(); done(); } }; addEventListener('keydown', k); return () => removeEventListener('keydown', k); });
   return <div className="stack">
     <h3>Cash</h3>
@@ -163,19 +171,41 @@ function GatewayPanel({ o, remaining, tip, m }: PanelProps & { m: 'qris' | 'ewal
 }
 const Blocked = () => <div className="empty"><Icon name="wifi-off" size={36} /><h3 style={{ color: 'var(--fg-1)' }}>Offline</h3><p>QRIS, VA and e-wallet need internet. Use cash or card; they queue and sync when the connection is back.</p></div>;
 
+/** Card: the configured EDC driver. Manual (standalone EDC) and bank ECR links still pending → the cashier types the slip. */
 function CardPanel({ o, remaining, tip }: PanelProps) {
-  const { db, outletId, go } = usePos();
+  const { db, me, go } = usePos();
   const charge = useCharge(o);
-  const edc = db.devices.find(d => d.outletId === outletId && d.kind === 'edc');
-  return <div className="stack" style={{ alignItems: 'center', textAlign: 'center' }}>
-    <h3 style={{ alignSelf: 'flex-start' }}>Card · EDC</h3>
-    <Icon name="credit-card" size={48} style={{ color: 'var(--accent)' }} />
-    <b style={{ fontSize: 20 }}>Tap, insert or swipe on the EDC</b>
-    <span className="muted">{edc ? `${idr(remaining + tip)} sent to ${edc.name}` : 'No EDC paired at this outlet.'}{edc && edc.status !== 'online' && ' · EDC offline'}</span>
-    {!edc && <button className="btn" onClick={() => go(P('edc-pairing'))}>Pair an EDC</button>}
-    <div className="banner b-info" style={{ alignSelf: 'stretch', textAlign: 'left' }}><Icon name="flask-conical" /><span className="grow">Demo: the EDC answers.</span>
-      <button className="btn btn-sm btn-success" disabled={!edc} onClick={() => charge('card', remaining, tip)}>Approved on EDC</button>
-      <button className="btn btn-sm" onClick={() => go(P('payment-failed', { m: 'card' }))}>Declined</button></div>
+  const dev = thisDevice(db), i = db.integrations.find(x => x.kind === 'edc' && x.enabled && ownerOf(db, x) === dev);
+  const drv = edcDriver(i), manual = drv.mode !== 'auto' ? (drv.mode === 'manual' ? drv : manualDriver(drv.bank)) : null;
+  const [code, setCode] = useState(''), [last4, setLast4] = useState(''), [trace, setTrace] = useState(''), [err, setErr] = useState(''), [busy, setBusy] = useState(false);
+  const amount = remaining + tip, ref = o.no + '-' + db.payments.filter(p => p.orderId === o.id).length;
+  const settle = (r: ChargeRes, bank: string) => {
+    if (r.status !== 'approved') { toast(r.message ?? 'Card declined'); go(P('payment-failed', { m: 'card' })); return; }
+    const id = charge('card', remaining, tip);
+    if (id) setPaymentRef(id, edcRef(bank, r), me.id);
+  };
+  const ask = async (d: EdcDriver, req: ChargeReq) => { setBusy(true); setErr(''); try { settle(await d.charge(req), d.bank); } catch (e) { setErr((e as Error).message); } setBusy(false); };
+  return <div className="stack">
+    <h3>Card · EDC</h3>
+    <div className="sunken row between"><span className="stack" style={{ gap: 0 }}><span className="muted">{manual ? `Key this amount on the ${drv.bank === 'EDC' ? '' : drv.bank + ' '}EDC` : 'Sent to the terminal'}</span><span className="faint" style={{ fontSize: 13 }}>{i?.name ?? 'Standalone EDC'}</span></span><b className="num" style={{ fontSize: 28 }}>{idr(amount)}</b></div>
+    {drv.mode === 'pending' && <div className="banner b-warning"><Icon name="plug-zap" /><span>{drv.bank} ECR link is set up but its driver is pending. Charge on the EDC and type the approval code from the slip.</span></div>}
+    {manual ? <form className="stack" onSubmit={e => { e.preventDefault(); ask(manual, { amount, ref, entry: { approvalCode: code, last4, trace } }); }}>
+      <div className="grid" style={{ ['--min' as string]: '140px', gap: 8 }}>
+        <Field label="Approval code"><input className="input mono" autoFocus maxLength={6} value={code} onChange={e => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} placeholder="APPR CODE" aria-label="Approval code" /></Field>
+        <Field label="Card last 4" optional={i?.config.requireLast4 === false}><input className="input mono" inputMode="numeric" maxLength={4} value={last4} onChange={e => setLast4(e.target.value.replace(/\D/g, ''))} placeholder="1234" /></Field>
+        <Field label="Trace no." optional><input className="input mono" inputMode="numeric" maxLength={6} value={trace} onChange={e => setTrace(e.target.value.replace(/\D/g, ''))} placeholder="000123" /></Field>
+      </div>
+      {err && <div role="alert" className="banner b-danger"><Icon name="circle-alert" />{err}</div>}
+      <button className="btn btn-primary btn-pay" disabled={busy || code.length !== 6}>Approved on EDC · {idr(amount)}</button>
+      <button type="button" className="btn btn-pos" onClick={() => go(P('payment-failed', { m: 'card' }))}>Declined on EDC</button>
+    </form> : <>
+      <div className="stack" style={{ alignItems: 'center', textAlign: 'center' }}><Icon name="credit-card" size={48} style={{ color: 'var(--accent)' }} /><b style={{ fontSize: 20 }}>Tap, insert or swipe on the EDC</b></div>
+      {err && <div role="alert" className="banner b-danger"><Icon name="circle-alert" />{err}</div>}
+      <div className="banner b-info"><Icon name="flask-conical" /><span className="grow">{drv.bank}: the terminal answers.</span>
+        <button className="btn btn-sm btn-success" disabled={busy} onClick={() => ask(drv, { amount, ref })}>Approve</button>
+        <button className="btn btn-sm" disabled={busy} onClick={() => ask(drv, { amount, ref, outcome: 'declined' })}>Decline</button></div>
+    </>}
+    {!i && <button className="btn btn-ghost" onClick={() => go(P('edc-pairing'))}>Set up the EDC for this register</button>}
   </div>;
 }
 
@@ -315,8 +345,12 @@ function Success() {
   const c = db.customers.find(x => x.id === o?.customerId);
   const [r, setR] = useState<string>(setting('receipt', 'print'));
   const [to, setTo] = useState(r === 'email' ? c?.email ?? '' : c?.phone ?? '');
+  const dev = thisDevice(db), rp = o && receiptPrinter(db, o.outletId, dev), auto = !!rp?.config.autoPrint;
+  const change = o && last.id === o.id ? last.change ?? 0 : 0;
+  const print = () => o && printReceipt(db, o, dev, me.id, { change }).then(x => toast(x.message));
+  useEffect(() => { if (o) showOnPole(db, dev, change ? 'Change' : 'Terima kasih', change ? idr(change) : idr(o.total)); }, [o?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const finish = () => {
-    if (o && r === 'print') logDevice('print.receipt', o.no, me.id, o.outletId);
+    if (o && r === 'print' && !auto) print();
     if (o && (r === 'wa' || r === 'email') && to.trim()) sendReceipt(o.id, r, to.trim(), me.id);
     go(REG);
   };
@@ -335,6 +369,9 @@ function Success() {
         <button key={k} aria-pressed={r === k} onClick={() => { setR(k); setTo(k === 'email' ? c?.email ?? '' : c?.phone ?? ''); }} style={{ height: 44 }}>{l}</button>)}</div>
       {(r === 'wa' || r === 'email') && <input className="input" value={to} onChange={e => setTo(e.target.value)} placeholder={r === 'wa' ? 'WhatsApp number' : 'Email'} aria-label="Send receipt to" />}
     </div>
-    <button className="btn btn-primary btn-pay btn-block" onClick={finish}>New sale</button>
+    <div className="row" style={{ alignSelf: 'stretch', justifyContent: 'center' }}>
+      <button className="btn btn-pos" onClick={print}><Icon name="printer" />{auto || db.audit.some(a => a.action === 'print.receipt' && a.subject === o.no) ? 'Print again' : 'Print receipt'}</button>
+      {auto && <span className="faint" style={{ fontSize: 13, alignSelf: 'center' }}>Printed automatically on {rp!.name}</span>}</div>
+        <button className="btn btn-primary btn-pay btn-block" onClick={finish}>New sale</button>
   </div>;
 }
