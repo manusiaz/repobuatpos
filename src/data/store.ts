@@ -50,6 +50,8 @@ export function commit(action: string, actor: string, mutate: (d: DB) => void, s
   if (REMOTE) return remoteCommit(action, actor, mutate, subject, outletId, opts);
   const next = structuredClone(get());
   mutate(next);
+  // Offline: keep the same sync queue the Supabase adapter keeps, so the offline count and "synced N" read the same here.
+  if (!next.device.online && actor !== 'device') next.device.queue.push({ id: uid('q'), action, at: Date.now() });
   next.audit.unshift({ id: uid('au'), actor, action, subject, at: Date.now(), outletId });
   if (next.audit.length > 800) next.audit.length = 800;
   db = next;

@@ -268,11 +268,19 @@ async function moved() {
   else { await sb().auth.signOut().catch(() => {}); goHome(c); }
   remoteRestart();
 }
+const offline = () => typeof navigator !== 'undefined' && navigator.onLine === false;
+/** The account's business, remembered on this device: a register reloaded without internet still opens its own data and queue. */
+async function memberOf(): Promise<Membership | null> {
+  const k = 'borniz-member:' + userId, saved = ls.get<Membership | null>(k, null);
+  if (offline() && saved) return saved;
+  try { const m = await (await lib()).membership(); ls.set(k, m); return m; }
+  catch (e) { if (saved && retryable(e as Any)) return saved; throw e; }
+}
 async function enter() {
   try {
-    const { membership, goHome } = await lib();
+    const { goHome } = await lib();
     goHome(undefined, true); // staff use this browser's home; a guest page resolves its own below
-    const m = userId ? await membership() : null;
+    const m = userId ? await memberOf() : null;
     if (m) return await enterMember(m);
     if (await guestSlug().then(s => s ? enterGuest(s) : false)) return;
   } catch (e) { toast(humanError((e as Error)?.message ?? String(e)).text); }
@@ -288,8 +296,10 @@ let chain: Promise<void> = Promise.resolve();
 export function remoteRestart() { return chain = chain.then(() => { stop(); emit(); return enterFor(); }).catch(() => {}); }
 async function boot() {
   const { sb } = await lib();
-  userId = (await sb().auth.getSession()).data.session?.user.id ?? null;
-  sb().auth.onAuthStateChange((_e, s) => { const u = s?.user.id ?? null; if (u !== userId) { userId = u; setTimeout(remoteRestart, 0); } });
+  // Offline with an expired token the session can't refresh: still the same person on this device until they sign out.
+  userId = (await sb().auth.getSession()).data.session?.user.id ?? (offline() ? ls.get<string | null>('borniz-uid', null) : null);
+  ls.set('borniz-uid', userId);
+  sb().auth.onAuthStateChange((e, s) => { const u = s?.user.id ?? (e !== 'SIGNED_OUT' && offline() ? userId : null); if (u !== userId) { userId = u; ls.set('borniz-uid', u); setTimeout(remoteRestart, 0); } });
   addEventListener('online', () => { flush(); if (mode === 'member') resync(); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) flush(); });
   await (chain = chain.then(enterFor));

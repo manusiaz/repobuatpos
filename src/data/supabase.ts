@@ -1,6 +1,6 @@
 'use client';
 // The one Supabase client (auth session in localStorage, shared by every tab of this browser).
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createClient, isAuthRetryableFetchError, type SupabaseClient } from '@supabase/supabase-js';
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 const KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
@@ -36,8 +36,8 @@ export interface Membership { tenantId: string; slug: string; name: string; empl
 const PICK = 'borniz-tenant';
 /** The signed-in account's business (the last one picked on this browser when it belongs to several). */
 export async function membership(): Promise<Membership | null> {
-  const { data: u } = await sb().auth.getUser();
-  if (!u.user) return null;
+  const { data: u, error: ue } = await sb().auth.getUser();
+  if (!u.user) { if (isAuthRetryableFetchError(ue)) throw ue; return null; } // no internet is not "signed out"
   const { data, error } = await sb().from('members').select('tenant_id, employee_id, role, tenants(slug, name)').eq('user_id', u.user.id);
   if (error) throw error;
   const rows = (data ?? []).map(r => { const t = (Array.isArray(r.tenants) ? r.tenants[0] : r.tenants) as { slug: string; name: string } | null;
