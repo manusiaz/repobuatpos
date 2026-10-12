@@ -35,7 +35,7 @@ export default function Screen() {
 
   return <div style={{ minHeight: '100dvh', background: 'var(--bg-canvas)' }}>
     <div style={{ maxWidth: 520, margin: '0 auto', minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--bg-canvas)', boxShadow: '0 0 0 1px var(--border)' }}>
-      <header className="row between" style={{ position: 'sticky', top: 0, zIndex: 20, padding: '14px 16px 10px', background: 'color-mix(in srgb,var(--bg-canvas) 90%,transparent)', backdropFilter: 'blur(10px)', borderBottom: '1px solid var(--border)' }}>
+      <header className="row between glass" style={{ position: 'sticky', top: 0, zIndex: 20, padding: '14px 16px 10px', ['--glass-bg' as string]: 'color-mix(in srgb,var(--bg-canvas) 90%,transparent)', borderBottom: '1px solid var(--border)' }}>
         <div className="stack" style={{ gap: 0 }}><h2>{TITLE[view]}</h2><span className="muted" style={{ fontSize: 13 }}>{db.tenant.name} · {scope}{!db.device.online && ' · offline'}</span></div>
         <div className="row"><Link href={user.role === 'owner' ? '/owner' : '/manager'} className="btn btn-ghost btn-sm" aria-label="Desktop dashboard"><Icon name="monitor" size={18} /></Link><UserSwitch compact /></div>
       </header>

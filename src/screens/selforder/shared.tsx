@@ -56,7 +56,7 @@ export const itemDesc = (db: DB, i: MenuItem) => i.p.desc || (groupsOf(db, i.p).
 
 /** Screen header for inner pages: back, title, optional right slot. */
 export function Bar({ title, onBack, right }: { title: ReactNode; onBack?: () => void; right?: ReactNode }) {
-  return <div style={{ position: 'sticky', top: 0, zIndex: 6, display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'color-mix(in srgb,var(--bn-paper) 92%,transparent)', backdropFilter: 'blur(10px)', borderBottom: `1px solid ${LINE}` }}>
+  return <div className="glass" style={{ position: 'sticky', top: 0, zIndex: 6, display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', ['--glass-bg' as string]: 'color-mix(in srgb,var(--bn-paper) 92%,transparent)', borderBottom: `1px solid ${LINE}` }}>
     {onBack && <button className="btn btn-ghost icon-btn" onClick={onBack} aria-label="Back"><Icon name="arrow-left" /></button>}
     <h1 style={{ flex: 1, fontSize: 20, fontWeight: 800, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</h1>{right}
   </div>;
