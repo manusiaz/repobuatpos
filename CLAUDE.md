@@ -64,5 +64,5 @@ Add a page in the design system sitemap → `npm run spec` → it routes automat
 
 ## Known gaps (local adapter vs production)
 - Data lives in the browser (localStorage + BroadcastChannel): one browser, one origin. Subdomain routing therefore needs the Supabase adapter before go-live (each subdomain has its own storage). Production: Supabase realtime on the same tables; swap `store.ts`, keep `actions.ts` signatures.
-- Payment gateway, WhatsApp (WABA), delivery-app webhooks and printers are simulated ("Simulate…" buttons). QR images are drawn stand-ins; the real QRIS payload comes from the gateway.
+- Payment gateway, WhatsApp (WABA), delivery-app webhooks and printers are simulated ("Simulate…" buttons). On Supabase with Xendit or Midtrans connected, QRIS/VA/e-wallet are real: `startPayment` asks the gateway (`chargePayment`) and every screen draws the gateway payload (`src/ui/qr.tsx`, QR v1–20). The local adapter and the simulator still draw stand-ins.
 - Approval PIN is verified in the browser by the local adapter; production verifies it only in `bn.decide`.

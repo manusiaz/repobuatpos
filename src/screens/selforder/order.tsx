@@ -351,7 +351,7 @@ export function Qris({ g }: { g: G }) {
       <i className="dot" />{expired ? 'This code has expired' : `${g.t('Waiting for payment')} · ${mmss(left)}`}</span>
     <span style={{ color: MUTED, fontSize: 14 }}>Total · {cart?.no} · Table {tableNo(g.table)}</span>
     <b style={{ fontFamily: 'var(--bn-font)', fontSize: 36, fontWeight: 800, lineHeight: 1 }}>{idr(pend.amount + pend.tip)}</b>
-    <div ref={svg} style={{ width: 'min(280px, 78vw)', padding: 14, borderRadius: 22, background: 'var(--ink-0)', boxShadow: `0 0 0 1px ${LINE}`, opacity: expired ? .25 : 1 }}><QR value={pend.ref} label={`QRIS code for ${idr(pend.amount + pend.tip)}`} /></div>
+    <div ref={svg} style={{ width: 'min(280px, 78vw)', padding: 14, borderRadius: 22, background: 'var(--ink-0)', boxShadow: `0 0 0 1px ${LINE}`, opacity: expired ? .25 : 1 }}><QR value={pend.qr ?? pend.ref} label={`QRIS code for ${idr(pend.amount + pend.tip)}`} /></div>
     <span className="mono" style={{ color: MUTED }}>{pend.ref}</span>
     {expired ? <>
       <span style={{ fontSize: 14, color: MUTED }}>No money was taken.</span>

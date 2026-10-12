@@ -220,7 +220,7 @@ function Qris(p: P) {
       <span className="mono" style={{ fontSize: '1.2cqw', color: 'var(--ink-400)' }}>{pay.ref}</span>
     </div>
     <div style={{ justifySelf: 'center', width: '32cqw', borderRadius: '2.4cqw', background: 'var(--ink-0)', padding: '2.2cqw', animation: 'cdPulse 1.6s infinite', display: 'flex', flexDirection: 'column', gap: '1cqw' }}>
-      <div style={{ aspectRatio: '1' }}><QR value={pay.ref + pay.amount} label={`QRIS code for ${idr(amount)}`} /></div>
+      <div style={{ aspectRatio: '1' }}><QR value={pay.qr ?? pay.ref + pay.amount} label={`QRIS code for ${idr(amount)}`} /></div>
       <span style={{ textAlign: 'center', color: 'var(--ink-950)', fontSize: '1.4cqw', fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase' }}>QRIS · {db.tenant.name}</span>
     </div>
   </div>;

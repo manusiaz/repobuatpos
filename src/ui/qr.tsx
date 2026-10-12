@@ -1,9 +1,9 @@
-// Real QR codes (ISO/IEC 18004): byte mode, error correction M, versions 1–10 (up to 213 bytes), best of 8 masks.
-// Compact port of the reference algorithm; enough for table links like https://…/order?t=12.
+// Real QR codes (ISO/IEC 18004): byte mode, error correction M, versions 1–20 (up to 666 bytes), best of 8 masks.
+// Compact port of the reference algorithm; covers table links and gateway QRIS payloads.
 import { memo } from 'react';
 
-const ECC = [10, 16, 26, 18, 24, 16, 18, 22, 22, 26];   // EC codewords per block, level M, v1–10
-const BLOCKS = [1, 1, 1, 2, 2, 4, 4, 4, 5, 5];
+const ECC = [10, 16, 26, 18, 24, 16, 18, 22, 22, 26, 30, 22, 22, 24, 24, 28, 28, 26, 26, 26];   // EC codewords per block, level M, v1–20
+const BLOCKS = [1, 1, 1, 2, 2, 4, 4, 4, 5, 5, 5, 8, 9, 9, 10, 10, 11, 13, 14, 16];
 
 function gfMul(x: number, y: number) { let z = 0; for (let i = 7; i >= 0; i--) { z = (z << 1) ^ ((z >>> 7) * 0x11d); z ^= ((y >>> i) & 1) * x; } return z; }
 function rsDivisor(deg: number) {
@@ -28,8 +28,8 @@ function alignPos(v: number, size: number) {
 export function qrMatrix(text: string): boolean[][] {
   const bytes = Array.from(new TextEncoder().encode(text));
   let v = 1;
-  while (v <= 10 && 4 + (v < 10 ? 8 : 16) + bytes.length * 8 > dataCodewords(v) * 8) v++;
-  if (v > 10) throw new Error('Text too long for a table QR');
+  while (v <= 20 && 4 + (v < 10 ? 8 : 16) + bytes.length * 8 > dataCodewords(v) * 8) v++;
+  if (v > 20) throw new Error('Text too long for a QR code');
   const size = v * 4 + 17, cap = dataCodewords(v);
   // data bits
   const bits: number[] = []; const put = (val: number, n: number) => { for (let i = n - 1; i >= 0; i--) bits.push((val >>> i) & 1); };

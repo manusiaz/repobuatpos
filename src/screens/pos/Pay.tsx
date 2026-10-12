@@ -161,8 +161,8 @@ function GatewayPanel({ o, remaining, tip, m }: PanelProps & { m: 'qris' | 'ewal
   const failMethod = () => { gatewayResult(p.id, 'failed').catch(e => toast((e as Error).message)); go(P('payment-failed', { m })); };
   return <div className="stack" style={{ alignItems: 'center', textAlign: 'center' }}>
     <div className="row between" style={{ alignSelf: 'stretch' }}><h3>{title}</h3>{left != null ? <Badge tone={left < 60 ? 'danger' : 'warning'} dot>Waiting · {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}</Badge> : <Badge tone="warning" dot>Waiting for the bank</Badge>}</div>
-    {m === 'qris' ? <QrArt seed={p.ref} /> : <div className="sunken stack sm" style={{ alignSelf: 'stretch' }}><Icon name={m === 'va' ? 'landmark' : 'wallet'} size={32} style={{ alignSelf: 'center' }} />
-      <b className="mono" style={{ fontSize: 20 }}>{m === 'va' ? '8808 ' + p.ref.replace(/\D/g, '').padEnd(10, '0').slice(0, 10).replace(/(\d{4})(?=\d)/g, '$1 ') : 'Push sent · ' + p.ref}</b>
+    {m === 'qris' || (m === 'ewallet' && p.deeplink) ? <QrArt seed={p.qr ?? p.deeplink ?? p.ref} /> : <div className="sunken stack sm" style={{ alignSelf: 'stretch' }}><Icon name={m === 'va' ? 'landmark' : 'wallet'} size={32} style={{ alignSelf: 'center' }} />
+      <b className="mono" style={{ fontSize: 20 }}>{m === 'va' ? (p.va ?? '8808 ' + p.ref.replace(/\D/g, '').padEnd(10, '0').slice(0, 10)).replace(/(\d{4})(?=\d)/g, '$1 ') : 'Push sent · ' + p.ref}</b>
       <span className="muted">{m === 'va' ? 'BCA virtual account · the order stays open until the bank confirms.' : 'The guest confirms in their app.'}</span></div>}
     <b className="num" style={{ fontSize: 24 }}>{idr(p.amount + p.tip)}</b>
     <span className="muted" style={{ fontSize: 14, maxWidth: 420 }}>{m === 'qris' ? 'Also showing on the customer display. Ask the guest to scan with any bank or e-wallet.' : ''} It settles only when the bank confirms.</span>

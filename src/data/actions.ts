@@ -147,6 +147,9 @@ export function startPayment(orderId: string, method: Method, amount: number, by
     if (method === 'kasbon' && o.customerId) { const c = d.customers.find(x => x.id === o.customerId)!; c.credit += amount; }
     if (instant) settleIfDone(d, o, by);
   }, orderId);
+  if (method === 'qris' || method === 'va' || method === 'ewallet') void import('./remote.ts')
+    .then(async r => { if (r.REMOTE) await (await import('./actions/dispatch.ts')).chargePayment(id); })
+    .catch(e => import('../ui/kit.tsx').then(k => k.toast((e as Error).message)));
   return id;
 }
 /** Simulates the gateway webhook (the only thing allowed to settle QRIS / VA / e-wallet). */

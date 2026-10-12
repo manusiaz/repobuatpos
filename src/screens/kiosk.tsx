@@ -180,7 +180,7 @@ function Pay({ L, order, back, reset }: { L: LangT; order: Order | null; back: (
     return <div style={{ flex: 1, padding: '7cqw 6cqw', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4cqw', textAlign: 'center' }}>
       <span style={{ padding: '1.6cqw 4cqw', borderRadius: 99, background: ms > 0 ? 'var(--warning-soft)' : 'var(--danger-soft)', color: ms > 0 ? 'var(--warning-fg)' : 'var(--danger-fg)', fontSize: '3.6cqw', fontWeight: 800 }}>{ms > 0 ? `${L.t('Waiting for payment')} · ${mmss(ms)}` : 'This code has expired'}</span>
       <b style={{ ...HEAD, fontSize: '9cqw' }}>{idr(pend.amount)}</b>
-      <div style={{ width: '64cqw', padding: '4cqw', borderRadius: '5cqw', background: 'var(--ink-0)', boxShadow: `0 0 0 2px ${LINE}`, opacity: ms > 0 ? 1 : .25 }}><QR value={pend.ref} label={`QRIS code for ${idr(pend.amount)}`} /></div>
+      <div style={{ width: '64cqw', padding: '4cqw', borderRadius: '5cqw', background: 'var(--ink-0)', boxShadow: `0 0 0 2px ${LINE}`, opacity: ms > 0 ? 1 : .25 }}><QR value={pend.qr ?? pend.ref} label={`QRIS code for ${idr(pend.amount)}`} /></div>
       <span style={{ fontSize: '4cqw', color: MUTED, lineHeight: 1.4 }}>Scan with any bank or e-wallet app. Your number appears as soon as it’s paid.</span>
       <span className="mono" style={{ color: MUTED }}>{pend.ref}</span>
       <div style={{ marginTop: 'auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '3cqw' }}>
