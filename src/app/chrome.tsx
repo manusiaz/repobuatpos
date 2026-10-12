@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import catalog from '../system/catalog.json' with { type: 'json' };
 import { PAGES, PROTOTYPE, surfaceHome, type Surface } from '../system/registry.ts';
-import { canOpen } from '../system/access.ts';
+import { canOpen, canReach } from '../system/access.ts';
 import { homeOf } from '../system/pagemap.ts';
 import { Icon, Sheet, ago, Avatar, Badge } from '../ui/kit.tsx';
 import { markRead } from '../data/actions.ts';
@@ -17,7 +17,7 @@ export function Launcher() {
   const { user, go } = useApp();
   const [open, setOpen] = useState(false), [q, setQ] = useState('');
   useEffect(() => { const k = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setOpen(o => !o); } }; addEventListener('keydown', k); return () => removeEventListener('keydown', k); }, []);
-  const apps = catalog.apps.filter(a => a.roles.includes(user.role) && SURFACE_OF[a.screen]);
+  const apps = catalog.apps.filter(a => a.roles.includes(user.role) && SURFACE_OF[a.screen] && canReach(user.role, surfaceHome(SURFACE_OF[a.screen])));
   const hits = useMemo(() => q.length < 2 ? [] : PAGES.filter(p => canOpen(user.role, p) && (p.name + ' ' + p.group).toLowerCase().includes(q.toLowerCase())).slice(0, 30), [q, user.role]);
   return <>
     <button className="btn btn-ghost btn-sm" onClick={() => setOpen(true)} aria-label="Apps"><Icon name="layout-grid" size={18} /><span className="hide-sm">Apps</span><span className="mono faint hide-sm">⌘K</span></button>

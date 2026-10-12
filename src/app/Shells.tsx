@@ -4,29 +4,31 @@ import Link from 'next/link';
 import { PAGES, surfaceHome } from '../system/registry.ts';
 import { FEATURES, REAL, homeOf, featuresOf, type RealPage, type Release } from '../system/pagemap.ts';
 import { linksOf } from '../system/connections.ts';
+import { canReach } from '../system/access.ts';
 import { Icon } from '../ui/kit.tsx';
 import { useApp } from './context.tsx';
 import { staffBrand } from '../data/actions/studio.ts';
 import { Bell, Help, Launcher, OutletPicker, UserSwitch } from './chrome.tsx';
 
 export function BackOfficeShell({ children }: { children: ReactNode }) {
-  const { page, user, db } = useApp();
+  const { page, user, db, me } = useApp();
   const sb = staffBrand(db); // Brand Studio: workspace name, logo and owner accent on staff tools
   const role = user.role === 'manager' ? 'manager' : user.role === 'admin' ? 'admin' : 'owner';
-  const groups = useMemo(() => realNav(role), [role]);
+  // staff roles (PIC, cashier, kitchen, waiter) reach a few back-office pages: show only what they can open
+  const groups = useMemo(() => realNav(role).map(([m, l]) => [m, l.filter(r => canReach(user.role, r.path))] as [string, RealPage[]]).filter(([, l]) => l.length), [role, user.role]);
   const [q, setQ] = useState(''), [open, setOpen] = useState<Record<string, boolean>>({}), [side, setSide] = useState(false);
-  const home = role === 'admin' ? '/admin' : role === 'manager' ? '/manager' : '/owner';
+  const home = STAFF_HOME[user.role] ?? '/owner';
   const here = homeOf(page.path);
   const ql = q.toLowerCase();
   return <div className="bo" data-role={role} data-theme={role === 'admin' ? 'dark' : undefined} style={role === 'owner' ? { ['--role' as string]: sb.c.primary, ['--role-soft' as string]: `color-mix(in srgb, ${sb.c.primary} 10%, var(--bg-surface))`, ['--role-fg' as string]: `color-mix(in srgb, ${sb.c.primary} 75%, var(--fg-1))` } : undefined}>
     <aside className={'bo-side' + (side ? ' open' : '')} aria-label="Navigation">
       <Link href={home} className="row" style={{ padding: '4px 6px 12px', textDecoration: 'none', color: 'var(--fg-1)' }}>
         <span style={{ width: 36, height: 36, borderRadius: 11, background: role !== 'admin' && sb.logo ? `center / cover url("${sb.logo}")` : 'var(--role)', color: '#fff', display: 'grid', placeItems: 'center', fontFamily: 'var(--font-display)', fontWeight: 700 }}>{role !== 'admin' && sb.logo ? '' : (role === 'admin' ? 'B' : sb.workspace.slice(0, 1))}</span>
-        <span className="stack" style={{ gap: 0 }}><b>{role === 'admin' ? 'BorNiz' : sb.workspace}</b><span className="faint" style={{ fontSize: 12 }}>{role === 'admin' ? 'BorNiz HQ' : role === 'manager' ? 'Manager · Senayan + Kemang' : 'Owner · 3 outlets · Pro'}</span></span>
+        <span className="stack" style={{ gap: 0 }}><b>{role === 'admin' ? 'BorNiz' : sb.workspace}</b><span className="faint" style={{ fontSize: 12 }}>{role === 'admin' ? 'BorNiz HQ' : user.role === 'owner' ? 'Owner · 3 outlets · Pro' : `${me?.name ?? user.role} · ${user.role}`}</span></span>
       </Link>
       <input className="search" placeholder={`Search ${FEATURES.size} features`} value={q} onChange={e => setQ(e.target.value)} aria-label="Search pages and features" />
       {role !== 'admin' && <Link className="nav-i" href="/graph"><Icon name="waypoints" size={18} />Knowledge graph</Link>}
-      {ql ? <div className="stack sm">{[...FEATURES.values()].filter(f => (f.name + ' ' + f.page.title).toLowerCase().includes(ql)).slice(0, 40).map(f =>
+      {ql ? <div className="stack sm">{[...FEATURES.values()].filter(f => (f.name + ' ' + f.page.title).toLowerCase().includes(ql) && canReach(user.role, f.path)).slice(0, 40).map(f =>
         <Link key={f.path} href={f.path} className="nav-i" onClick={() => setSide(false)}><span className="grow">{f.name}<br /><span className="faint" style={{ fontSize: 12 }}>{f.page.title} · {f.kind}</span></span></Link>)}</div>
       : groups.map(([mod, pages]) => {
         const isOpen = open[mod] ?? pages.some(rp => rp.id === here?.id); // design v1.0: one icon row per module, the current one open
@@ -52,6 +54,7 @@ export function BackOfficeShell({ children }: { children: ReactNode }) {
   </div>;
 }
 
+const STAFF_HOME: Partial<Record<string, string>> = { owner: '/owner', manager: '/manager', pic: '/pic', cashier: '/pos', kitchen: '/kds', waiter: '/waiter', admin: '/admin' };
 const MOD_ICON: Record<string, string> = { Home: 'activity', Sales: 'receipt', Catalog: 'utensils-crossed', Inventory: 'package', Customers: 'users', Team: 'user-round-cog', Outlets: 'store', Finance: 'wallet', Reports: 'chart-column', Marketing: 'megaphone', Studios: 'palette', Settings: 'settings', Platform: 'server' };
 const MODULES = ['Home', 'Sales', 'Catalog', 'Inventory', 'Customers', 'Team', 'Outlets', 'Finance', 'Reports', 'Marketing', 'Studios', 'Settings', 'Platform'];
 /** Navigation = real pages (src/system/pagemap.ts), not the ~600 sitemap features. */
@@ -63,10 +66,10 @@ export const ReleaseTag = ({ r }: { r: Release }) => <span className="badge" sty
 
 /** Features of the current page as tabs (page, tab, setting). Sheets and steps open from inside the page. */
 function PageTabs() {
-  const { page } = useApp();
+  const { page, user } = useApp();
   const here = homeOf(page.path);
   if (!here || page.surface !== 'backoffice') return null;
-  const tabs = featuresOf(here.id).filter(f => f.kind === 'page' || f.kind === 'tab' || f.kind === 'setting');
+  const tabs = featuresOf(here.id).filter(f => (f.kind === 'page' || f.kind === 'tab' || f.kind === 'setting') && canReach(user.role, f.path));
   if (tabs.length < 2) return null;
   return <nav className="row" style={{ overflowX: 'auto', gap: 6, flex: 'none', maxWidth: '100%' }} aria-label={here.title + ' sections'}>
     {tabs.map(f => <Link key={f.path} href={f.path} className="chip" aria-pressed={f.path === page.path} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', color: f.path === page.path ? 'var(--bg-surface)' : 'var(--fg-1)' }}>{f.name.replace(/^(Settings|Menu studio|Brand studio) · /, '').replace(/\s*\([^)]*\)$/, '')}{f.release !== here.release && <ReleaseTag r={f.release} />}</Link>)}
@@ -75,9 +78,9 @@ function PageTabs() {
 
 /** Linked pages, from the design rules: LINKS (spec Connections) first, then pages that share this page's data. */
 export function Connected() {
-  const { page } = useApp();
+  const { page, user } = useApp();
   const here = homeOf(page.path);
-  const links = useMemo(() => (here ? linksOf(here) : []), [here]);
+  const links = useMemo(() => (here ? linksOf(here).filter(l => canReach(user.role, l.to.path)) : []), [here, user.role]);
   if (!here || !links.length) return null;
   const design = links.filter(l => l.kind === 'design'), data = links.filter(l => l.kind === 'data').slice(0, 10);
   const chip = { textDecoration: 'none', color: 'var(--fg-1)', whiteSpace: 'normal', height: 'auto', minHeight: 34, padding: '6px 12px', maxWidth: '100%', flex: '0 1 auto', textAlign: 'left' } as const;

@@ -1,5 +1,5 @@
 import type { Role } from '../data/schema.ts';
-import type { Page, Surface } from './registry.ts';
+import { pageAt, type Page, type Surface } from './registry.ts';
 
 // Who may open which surface. Mirrors the launcher role lists in spec/bn-launcher.js (APPS).
 const ALL = 'all' as const;
@@ -16,6 +16,8 @@ export function canOpen(role: Role, page: Page) {
   if (page.surface === 'backoffice' && page.role === 'system' && role !== 'owner' && role !== 'manager') return false;
   return a.includes(role);
 }
+/** A link is shown only if this role can open where it goes. */
+export const canReach = (role: Role, path: string) => { const p = pageAt(path.split(/[?#]/)[0]); return !!p && canOpen(role, p); };
 /** Manager on an owner-gated action: "Send to owner" instead of Save/Publish (Roles, lg-menu). */
 export const GATED = /(price|publish|payroll|refund|billing|plan|bank|withdraw|royalt|delete|profit|p&l|supplier|points adjustment|limits|franchise|lock|api key)/i;
 export const isGated = (role: Role, page: Page) => role === 'manager' && GATED.test(page.name);
