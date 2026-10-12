@@ -147,6 +147,12 @@ export function topProducts(db: DB, outlet: OutletScope, r: Range, n = 5) {
   }
   return [...m.values()].sort((a, b) => b.qty - a.qty).slice(0, n);
 }
+/** Revenue (or order count) per hour of the day, index 0..23. */
+export function byHour(db: DB, outlet: OutletScope, r: Range, metric: 'revenue' | 'orders' = 'revenue'): number[] {
+  const h = Array<number>(24).fill(0);
+  for (const o of soldOrders(db, outlet, r)) h[new Date(soldAt(o)).getHours()] += metric === 'revenue' ? o.total : 1;
+  return h;
+}
 export function voidsAndRefunds(db: DB, outlet: OutletScope, r: Range): { voids: Order[]; refunds: Refund[]; pending: Approval[] } {
   const orderOutlet = new Map(db.orders.map(o => [o.id, o.outletId]));
   return {

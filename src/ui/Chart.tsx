@@ -5,7 +5,8 @@ import { useEffect, useRef } from 'react';
 import { Chart, LineController, LineElement, PointElement, BarController, BarElement, CategoryScale, LinearScale, Filler, Tooltip } from 'chart.js';
 Chart.register(LineController, LineElement, PointElement, BarController, BarElement, CategoryScale, LinearScale, Filler, Tooltip);
 
-export interface Series { label: string; data: number[]; compare?: boolean }
+/** compare: dashed grey line · forecast: dashed accent line · band: a low/high pair (low first) filled between, line mode */
+export interface Series { label: string; data: number[]; compare?: boolean; forecast?: boolean; band?: 'low' | 'high' }
 export function LineChart({ labels, series, height = 240, kind = 'bar', format = (v: number) => String(v) }: { labels: string[]; series: Series[]; height?: number; kind?: 'line' | 'bar'; format?: (v: number) => string }) {
   const ref = useRef<HTMLCanvasElement>(null);
   // rebuild only when the numbers change: callers pass fresh arrays on every render (clock ticks), which restarted the draw-in from zero
@@ -17,6 +18,8 @@ export function LineChart({ labels, series, height = 240, kind = 'bar', format =
       type: kind,
       data: { labels, datasets: series.map(s => {
         const now = s.data.reduce((a, v, i) => (v ? i : a), -1);
+        if (s.band) return { label: s.label, data: s.data, tension: .4, borderWidth: 0, pointRadius: 0, pointHoverRadius: 0, borderColor: 'transparent', backgroundColor: accent + '24', fill: s.band === 'high' ? '-1' : false, order: 2 };
+        if (s.forecast) return { label: s.label, data: s.data, tension: .4, borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, borderColor: accent, borderDash: [6, 4], backgroundColor: 'transparent', fill: false, order: 1 };
         return kind === 'bar' && s.compare ? { type: 'line' as const, label: s.label, data: s.data, tension: .4, borderWidth: 1.5, pointRadius: 0, borderColor: muted, borderDash: [5, 5], backgroundColor: 'transparent', fill: false, order: 0 } : {
         label: s.label, data: s.data, tension: .4, borderWidth: kind === 'bar' ? 0 : s.compare ? 1.5 : 2.5, pointRadius: 0, pointHoverRadius: 4,
         borderColor: s.compare ? muted : accent, borderDash: s.compare ? [5, 5] : [], order: 1,

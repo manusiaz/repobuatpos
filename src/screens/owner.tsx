@@ -12,6 +12,7 @@ import type { DB, Order } from '../data/schema.ts';
 import { byChannel, byMethod, DAY, delta, historyStart, lateOrders, openOrders, pct, period, series, soldAt, soldOrders, startOfDay, summary, topProducts, voidsAndRefunds, type Gran, type Period , SOURCE_LABEL, METHOD_LABEL } from './insight/metrics.ts';
 import { amountOf, myQueue, outletsLive, typeLabel, useDecide, verbs, watchItems } from './insight/live.tsx';
 import { useQuery } from './insight/query.ts';
+import { TopRecommendations } from './insight/insights.tsx';
 
 const Q = { outlet: 'all', period: 'today', gran: 'hour' };
 const PERIODS = [['today', 'Today'], ['7d', '7 days'], ['30d', '30 days'], ['12m', '12 months']] as const;
@@ -80,6 +81,7 @@ export default function Screen() {
     <Outlets db={db} outlet={outlet} now={now} onPick={id => setQ({ outlet: id })} />
 
     <section className="grid" style={{ ['--min' as string]: '280px', alignItems: 'start' }}>
+      <TopRecommendations outlet={outlet} />
       <LiveTx db={db} outlet={outlet} now={now} />
       <TopProducts db={db} outlet={outlet} range={spec.range} label={per === 'today' ? 'today' : PERIODS.find(p => p[0] === per)?.[1].toLowerCase() ?? ''} />
       <Mix db={db} outlet={outlet} range={spec.range} />
