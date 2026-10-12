@@ -5,6 +5,7 @@
 import { useState, type ReactNode } from 'react';
 import { categoryLook, comboOf, giftCardOf, referralCode, referralOffer, studioValue } from '../../system/studio.ts';
 import { linkTo } from '../../system/hosts.ts';
+import { itemName } from '../../system/tools.ts';
 import { payOn } from '../../system/settings.ts';
 import { menuDesign } from '../../data/actions/studio.ts';
 import { addCombo, cancelPayment } from '../../data/actions.ts';
@@ -25,26 +26,26 @@ const link = (g: G, to: string) => ({ href: to, onClick: (e: { preventDefault: (
 const BG = { page: 'transparent', surface: SURFACE, brand: 'color-mix(in srgb,var(--bn-p) 10%,var(--bn-paper))' } as const;
 /** A menu category in the look the owner gave it (list, grid, big photo or printed; page, card or brand-tint background; banner). */
 export function CatSection({ g, catId, name, list, right, badge, count, onOpen }: { g: G; catId: string; name: string; list: MenuItem[]; right?: ReactNode; badge?: (i: MenuItem) => string | undefined; count: (id: string) => number; onOpen: (id: string) => void }) {
-  const s = categoryLook(g.db, catId), boxed = s.bg !== 'page';
+  const s = categoryLook(g.db, catId), boxed = s.bg !== 'page', nm = (i: MenuItem) => itemName(g.db, i.p, g.L.lang);
   const head = s.banner
     ? <div style={{ aspectRatio: '3/1', borderRadius: 18, background: `linear-gradient(180deg,transparent 35%,color-mix(in srgb,var(--ink-950) 60%,transparent)),url(${s.banner}) center/cover`, color: 'var(--ink-0)', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: 14, gap: 8 }}>
       <h2 style={{ fontSize: 22, fontWeight: 800 }}>{name}</h2>{right}</div>
     : <div className="row between"><h2 style={{ fontSize: 20, fontWeight: 800 }}>{name}</h2><span style={{ color: 'var(--bn-p)' }}>{right}</span></div>;
   const price = (i: MenuItem) => i.sold ? <b style={{ fontSize: 14, color: MUTED }}>{g.t('Sold out')}</b> : <b style={{ fontSize: 14 }}>{idr(unit(i))}</b>;
   const tile = (i: MenuItem) => { const n = count(i.p.id);
-    return <button key={i.p.id} type="button" onClick={() => onOpen(i.p.id)} disabled={i.sold} aria-label={`${i.p.name}, ${i.sold ? g.t('Sold out') : idr(unit(i))}`}
+    return <button key={i.p.id} type="button" onClick={() => onOpen(i.p.id)} disabled={i.sold} aria-label={`${nm(i)}, ${i.sold ? g.t('Sold out') : idr(unit(i))}`}
       style={{ border: 0, padding: 8, borderRadius: 18, background: SURFACE, color: 'var(--bn-ink)', textAlign: 'left', cursor: i.sold ? 'not-allowed' : 'pointer', opacity: i.sold ? .55 : 1, display: 'flex', flexDirection: 'column', gap: 6, position: 'relative', boxShadow: boxed && s.bg === 'surface' ? `0 0 0 1px ${LINE}` : 'none' }}>
       <span style={{ display: 'block', aspectRatio: s.layout === 'big' ? '16/9' : '1/1', borderRadius: 14, background: i.sold ? 'var(--bg-sunken)' : productImage(i.p) }} />
-      <span style={{ padding: '0 4px 4px', display: 'flex', flexDirection: 'column', gap: 2 }}><b style={{ fontSize: s.layout === 'big' ? 17 : 15, lineHeight: 1.25 }}>{i.p.name}{i.badges.map(([k, l, ic]) => <Icon key={k} name={ic} size={14} aria-label={l} style={{ marginLeft: 4, verticalAlign: '-2px', color: 'var(--bn-p)' }} />)}</b>
+      <span style={{ padding: '0 4px 4px', display: 'flex', flexDirection: 'column', gap: 2 }}><b style={{ fontSize: s.layout === 'big' ? 17 : 15, lineHeight: 1.25 }}>{nm(i)}{i.badges.map(([k, l, ic]) => <Icon key={k} name={ic} size={14} aria-label={l} style={{ marginLeft: 4, verticalAlign: '-2px', color: 'var(--bn-p)' }} />)}</b>
         {s.layout === 'big' && i.p.desc && <span style={{ fontSize: 13, color: MUTED }}>{i.p.desc}</span>}{price(i)}</span>
       {(n > 0 || badge?.(i)) && <span style={{ position: 'absolute', top: 14, right: 14, minWidth: 28, height: 28, padding: '0 8px', borderRadius: 99, background: n ? 'var(--bn-p)' : 'var(--bn-acc)', color: n ? 'var(--ink-0)' : 'var(--bn-ink)', fontSize: n ? 13 : 11, fontWeight: 800, lineHeight: '28px', textAlign: 'center' }}>{n || badge?.(i)}</span>}
     </button>; };
   const printed = (i: MenuItem) => <button key={i.p.id} type="button" onClick={() => onOpen(i.p.id)} disabled={i.sold} style={{ border: 0, borderBottom: `1px dashed ${LINE}`, background: 'transparent', color: 'var(--bn-ink)', padding: '10px 2px', minHeight: 48, textAlign: 'left', cursor: i.sold ? 'not-allowed' : 'pointer', opacity: i.sold ? .55 : 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-    <span style={{ display: 'flex', alignItems: 'baseline', gap: 6, width: '100%' }}><b style={{ fontSize: 15, fontFamily: 'var(--bn-font)' }}>{i.p.name}</b><span aria-hidden style={{ flex: 1, borderBottom: `1px dotted ${MUTED}`, transform: 'translateY(-4px)' }} />{price(i)}{count(i.p.id) > 0 && <b style={{ color: 'var(--bn-p)', fontSize: 13 }}>×{count(i.p.id)}</b>}</span>
+    <span style={{ display: 'flex', alignItems: 'baseline', gap: 6, width: '100%' }}><b style={{ fontSize: 15, fontFamily: 'var(--bn-font)' }}>{nm(i)}</b><span aria-hidden style={{ flex: 1, borderBottom: `1px dotted ${MUTED}`, transform: 'translateY(-4px)' }} />{price(i)}{count(i.p.id) > 0 && <b style={{ color: 'var(--bn-p)', fontSize: 13 }}>×{count(i.p.id)}</b>}</span>
     {i.p.desc && <span style={{ fontSize: 13, color: MUTED }}>{i.p.desc}</span>}</button>;
   return <section className="stack" style={{ margin: boxed ? '8px 14px' : 0, padding: boxed ? 12 : '10px 14px', borderRadius: boxed ? 22 : 0, background: BG[s.bg], gap: s.layout === 'text' ? 4 : 10 }} aria-label={name}>
     {head}
-    {s.layout === 'list' ? list.map(i => <ItemRow key={i.p.id} i={i} t={g.t} badge={badge?.(i)} count={count(i.p.id)} onOpen={() => onOpen(i.p.id)} />)
+    {s.layout === 'list' ? list.map(i => <ItemRow key={i.p.id} i={i} lang={g.L.lang} t={g.t} badge={badge?.(i)} count={count(i.p.id)} onOpen={() => onOpen(i.p.id)} />)
       : s.layout === 'text' ? list.map(printed)
       : <div style={{ display: 'grid', gridTemplateColumns: s.layout === 'grid' ? 'repeat(auto-fill,minmax(150px,1fr))' : '1fr', gap: 10 }}>{list.map(tile)}</div>}
   </section>;

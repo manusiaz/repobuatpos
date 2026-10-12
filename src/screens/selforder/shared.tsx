@@ -1,5 +1,6 @@
 'use client';
 import { guestLang } from '../../system/settings.ts';
+import { guestLanguages, itemName } from '../../system/tools.ts';
 import { productImage } from '../../ui/kit.tsx';
 // Self-order plumbing: table from the URL, the table's open bill (a real store order, source 'qr'), the remembered
 // member, language, and the small building blocks every QR-menu and customer-link view shares.
@@ -34,7 +35,7 @@ export function useGuest() {
   const qt = sp.get('t') ?? routeQuery().t ?? null; // order.bornis.id/<tenant>/t/07 carries the table in the path
   const table = qt ? 'T-' + qt.replace(/^T-?/i, '').padStart(2, '0') : saved;
   useEffect(() => { if (qt && table !== saved) setSaved(table); }, [qt, table, saved, setSaved]);
-  const L = useLang(guestLang(db));
+  const L = useLang(guestLanguages(db, guestLang(db)).first);
   const [meId, setMe] = useLocal<string | null>('bn-guest-customer', null);
   const me = db.customers.find(c => c.id === meId) ?? null;
   const out = db.outlets.find(o => o.id === outletId)!;
@@ -62,15 +63,15 @@ export function Bar({ title, onBack, right }: { title: ReactNode; onBack?: () =>
   </div>;
 }
 
-export function ItemRow({ i, onOpen, badge, t, count = 0 }: { i: MenuItem; onOpen: () => void; badge?: string; t: (s: string) => string; count?: number }) {
-  const { db } = useApp();
-  return <button type="button" onClick={onOpen} disabled={i.sold} aria-label={`${i.p.name}, ${i.sold ? t('Sold out') : idr(unit(i))}`}
+export function ItemRow({ i, onOpen, badge, t, count = 0, lang = 'en' }: { i: MenuItem; onOpen: () => void; badge?: string; t: (s: string) => string; count?: number; lang?: string }) {
+  const { db } = useApp(), name = itemName(db, i.p, lang);
+  return <button type="button" onClick={onOpen} disabled={i.sold} aria-label={`${name}, ${i.sold ? t('Sold out') : idr(unit(i))}`}
     style={{ border: 0, padding: 10, borderRadius: 18, background: SURFACE, display: 'flex', gap: 12, alignItems: 'center', textAlign: 'left', cursor: i.sold ? 'not-allowed' : 'pointer', opacity: i.sold ? .55 : 1, color: 'var(--bn-ink)', width: '100%' }}>
     <span style={{ width: 84, height: 84, flex: 'none', borderRadius: 14, background: i.sold ? 'var(--bg-sunken)' : productImage(i.p), position: 'relative' }}>
       {(badge || i.flash != null) && !i.sold && <span style={{ position: 'absolute', top: 6, left: 6, height: 20, padding: '0 7px', borderRadius: 99, background: 'var(--bn-acc)', fontSize: 10, fontWeight: 800, lineHeight: '20px' }}>{i.flash != null ? t('Flash sale') : badge}</span>}
     </span>
     <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <b style={{ fontSize: 15 }}>{i.p.name}{i.badges.map(([k, l, ic]) => <Icon key={k} name={ic} size={14} aria-label={l} style={{ marginLeft: 4, verticalAlign: '-2px', color: 'var(--bn-p)' }} />)}</b>
+      <b style={{ fontSize: 15 }}>{name}{i.badges.map(([k, l, ic]) => <Icon key={k} name={ic} size={14} aria-label={l} className="bn-ico" style={{ marginLeft: 4, verticalAlign: '-2px', color: 'var(--bn-icon, var(--bn-p))' }} />)}</b>
       <span style={{ fontSize: 13, color: MUTED, lineHeight: 1.35 }}>{itemDesc(db, i)}</span>
       {i.sold ? <b style={{ fontSize: 14, color: MUTED }}>{t('Sold out')}</b> : <span><b style={{ fontSize: 14 }}>{idr(unit(i))}</b>{i.flash != null && <s style={{ fontSize: 12, color: MUTED, marginLeft: 6 }}>{idr(i.price).replace('IDR ', '')}</s>}</span>}
     </span>

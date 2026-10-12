@@ -1,5 +1,6 @@
 'use client';
 import { same } from './same.tsx';
+import { TOOL_DEFAULTS } from '../../system/tools.ts';
 // Print studio: labels, tickets, coupons, letterhead, printed menu, receipts. Every preview prints a real order / PO / catalog.
 import { idr } from '../../domain/money.ts';
 import { Empty, hhmm } from '../../ui/kit.tsx';
@@ -117,11 +118,11 @@ function Receipt({ v, x }: PP) {
 }
 
 export const PRINT: Tool[] = [
-  { id: 'cup', group: 'PRINT', name: 'Cup sticker & drink label', icon: 'cup-soda', plan: 'free', desc: 'Labels printed per drink on a 40–58mm label printer, so baristas and customers can tell orders apart.', def: { size: '50x30', name: true, mods: true, queue: true, logo: true, foot: 'Enjoy, {name}!' }, Preview: Cup,
+  { id: 'cup', group: 'PRINT', name: 'Cup sticker & drink label', icon: 'cup-soda', plan: 'free', desc: 'Labels printed per drink on a 40–58mm label printer, so baristas and customers can tell orders apart.', def: { ...TOOL_DEFAULTS.cup }, Preview: Cup,
     fields: () => [F.seg('Label size', 'size', [['40x30', '40×30'], ['50x30', '50×30'], ['58', '58 roll']]), F.toggle('Customer name', 'name'), F.toggle('Modifiers (sugar, ice, size)', 'mods'), F.toggle('Queue number', 'queue'), F.toggle('Logo', 'logo'), F.text('Footer line', 'foot'), F.note('Use {name}, {table} or {queue} as placeholders. Prints automatically when a drink is sent to the bar.')] },
-  { id: 'kticket', group: 'PRINT', name: 'Kitchen ticket & stations', icon: 'chef-hat', plan: 'free', desc: 'Layout of printed kitchen tickets and which items print at which station.', def: { station: 'bar', fs: 'l', table: true, notes: true, cut: true, dup: false }, Preview: Ticket,
+  { id: 'kticket', group: 'PRINT', name: 'Kitchen ticket & stations', icon: 'chef-hat', plan: 'free', desc: 'Layout of printed kitchen tickets and which items print at which station.', def: { ...TOOL_DEFAULTS.kticket }, Preview: Ticket,
     fields: () => [F.seg('Preview station', 'station', [['bar', 'Bar'], ['kitchen', 'Kitchen'], ['pastry', 'Pastry']]), F.seg('Item text size', 'fs', [['m', 'Medium'], ['l', 'Large'], ['xl', 'XL']]), F.toggle('Large table number', 'table'), F.toggle('Highlight notes (inverted)', 'notes'), F.toggle('Auto-cut per ticket', 'cut'), F.toggle('Print a copy for expo', 'dup'), F.note('Stations come from each category. Edit printers in Settings → Devices.')] },
-  { id: 'coupon', group: 'PRINT', name: 'Coupon on receipt', icon: 'ticket-percent', plan: 'pro', desc: 'Prints a bounce-back coupon under the receipt to bring guests back.', def: { head: 'Come back this week', offer: '15% off your next coffee', code: 'BIRU15', exp: 7, min: 'Min. spend IDR 50,000', bar: true, rule: 'every' }, Preview: Coupon,
+  { id: 'coupon', group: 'PRINT', name: 'Coupon on receipt', icon: 'ticket-percent', plan: 'pro', desc: 'Prints a bounce-back coupon under the receipt to bring guests back.', def: { ...TOOL_DEFAULTS.coupon }, Preview: Coupon,
     fields: () => [F.text('Headline', 'head'), F.text('Offer', 'offer'), F.text('Code', 'code'), F.range('Valid for', 'exp', 1, 30, 1, ' days'), F.text('Condition', 'min'), F.seg('Print when', 'rule', [['every', 'Every receipt'], ['member', 'Members'], ['over', 'Over 100k']]), F.toggle('Barcode for scanning', 'bar')] },
   { id: 'letter', group: 'PRINT', name: 'Letterhead, invoices & PDF reports', icon: 'file-text', plan: 'free', desc: 'Header and footer used on invoices, purchase orders and exported PDF reports.', def: { co: 'PT Kopi Biru Nusantara', addr: 'Jl. Asia Afrika 8, Senayan, Jakarta 10270', npwp: '01.234.567.8-901.000', pos: 'left', accent: 'primary', foot: 'Thank you for your business.', sign: true }, Preview: Letter,
     pairs: (v, x) => { const c = themeColor(x.db.theme, v.accent); return [[onColor(c, x.db.theme.ink), c, 'Logo initials on accent']]; },

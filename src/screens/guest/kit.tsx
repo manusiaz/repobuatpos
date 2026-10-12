@@ -46,7 +46,8 @@ export function useLocal<T>(key: string, init: T): [T, (v: T) => void] {
   const set = useCallback((x: T) => { setV(x); try { localStorage.setItem(key, JSON.stringify(x)); } catch { /* ignore */ } }, [key]);
   return [v, set];
 }
-export type Lang = 'en' | 'id';
+/** 'en' / 'id' have UI copy; other languages the owner adds (Studios › Languages) translate menu item names. */
+export type Lang = string;
 const ID: Record<string, string> = {
   'Search the menu': 'Cari menu', 'View cart': 'Lihat keranjang', All: 'Semua', Coffee: 'Kopi', 'Non-coffee': 'Non-kopi', Pastry: 'Pastry', Rice: 'Nasi', Others: 'Lainnya',
   'Sold out': 'Habis', Add: 'Tambah', 'Your order': 'Pesananmu', Checkout: 'Lanjut bayar', 'Start order': 'Mulai pesan', 'Open until': 'Buka sampai', Rewards: 'Hadiah',

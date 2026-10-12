@@ -9,11 +9,14 @@ import { REMOTE, authHeaders } from '../remote.ts';
 import type { DB, Message } from '../schema.ts';
 import { reportIntegration } from './integrations.ts';
 import { subscribed, type OutEvent } from '../../integrations/server/webhooks/events.ts';
+import { emailFrom, quietNow, toolValue } from '../../system/tools.ts';
+import { linkTo } from '../../system/hosts.ts';
 
-export interface Outgoing { messageId: string; channel: Message['channel']; to: string; template: string; params: string[]; subject: string; text: string; tenantId: string }
+export interface Outgoing { messageId: string; channel: Message['channel']; to: string; template: string; params: string[]; subject: string; text: string; tenantId: string; from?: string }
 export interface Result { ok: boolean; status?: string; simulated?: boolean; message?: string; permanent?: boolean }
 export interface Transport { message(x: Outgoing): Promise<Result>; webhook?(integrationId: string, e: OutEvent): Promise<Result> }
-export type Render = (db: DB, m: Message) => Pick<Outgoing, 'params' | 'subject' | 'text'>;
+/** `marketing` messages wait out the quiet hours (Studios › Opt-in & consent); transactional ones never wait. */
+export type Render = (db: DB, m: Message) => Pick<Outgoing, 'params' | 'subject' | 'text' | 'from'> & { marketing?: boolean };
 
 const TICK_MS = 3000, DELIVER_MS = 1500, MAX_TRIES = 6, DAY = 864e5;
 const backoff = (n: number) => Math.min(5000 * 2 ** n, 10 * 60e3);
@@ -72,9 +75,11 @@ export async function tick({ now = Date.now(), transport = REMOTE ? remoteTransp
   const db = snapshot();
   for (const m of db.messages) {
     if (m.status !== 'queued' || m.at > now || m.channel === 'push' || flight.has(m.id) || waiting(m.id, now)) continue;
+    const { marketing, ...out } = render(db, m);
+    if (marketing && quietNow(db, now)) continue;
     flight.add(m.id);
     try {
-      const r = await transport.message({ messageId: m.id, channel: m.channel, to: m.to, template: m.template, tenantId: db.tenant.id, ...render(db, m) });
+      const r = await transport.message({ messageId: m.id, channel: m.channel, to: m.to, template: m.template, tenantId: db.tenant.id, ...out });
       if (r.ok) { tries.delete(m.id); setMessageStatus(m.id, r.status === 'delivered' || r.status === 'read' || r.status === 'failed' ? r.status : 'sent'); if (r.simulated) simulated.set(m.id, now); }
       else if (r.permanent || failed(m.id, now) >= MAX_TRIES) { tries.delete(m.id); setMessageStatus(m.id, 'failed'); }
     } finally { flight.delete(m.id); }
@@ -111,8 +116,10 @@ async function loadRender(): Promise<Render> {
   return (db, m) => {
     const o = m.orderId ? db.orders.find(x => x.id === m.orderId) : undefined;
     const vars: Record<string, unknown> = { brand: db.tenant.name, ...orderVars(db, o?.outletId ?? db.outlets[0]?.id ?? '', m.customerId ?? undefined) };
-    const t = templates(db).find(x => x.id === m.template), body = t?.body ?? '';
-    return { params: [...body.matchAll(/\{\{(\w+)\}\}/g)].map(x => (typeof vars[x[1]] === 'string' ? vars[x[1]] as string : '')), subject: `${t?.name ?? m.template.replace(/_/g, ' ')} · ${db.tenant.name}`, text: fillVars(body, vars) };
+    const t = templates(db).find(x => x.id === m.template), body = t?.body ?? '', marketing = t?.cat === 'MARKETING', c = toolValue(db, 'optin');
+    const foot = m.channel === 'email' && c.footer ? `\n\nUnsubscribe: ${linkTo('/order/customer-links/unsubscribe-message-preferences')}` : m.channel === 'sms' && marketing ? `\nReply ${c.stop} to stop` : '';
+    return { params: [...body.matchAll(/\{\{(\w+)\}\}/g)].map(x => (typeof vars[x[1]] === 'string' ? vars[x[1]] as string : '')), subject: `${t?.name ?? m.template.replace(/_/g, ' ')} · ${db.tenant.name}`, text: fillVars(body, vars) + foot,
+      ...(m.channel === 'email' && emailFrom(db) ? { from: emailFrom(db) } : {}), marketing };
   };
 }
 

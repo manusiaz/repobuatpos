@@ -5,6 +5,9 @@ import { studioValue } from '../system/studio.ts';
 import { pickupLanes } from '../domain/order.ts';
 import { screenMode, type ScreenMode } from '../system/settings.ts';
 import { productImage } from '../ui/kit.tsx';
+import { playSfx } from '../ui/sound.ts';
+import { fillTool, guestVars, toolValue } from '../system/tools.ts';
+import { GuestStyle } from './guest/look.tsx';
 // Customer display (spec: BorNiz Customer Display). A fixed 16:9 canvas in cqw units that never scrolls, worn in the
 // merchant brand. It mirrors the outlet's open POS order and follows it on its own: cart → QRIS → paid → receipt →
 // thank-you → rating → idle. Every state is also its own URL; opening one directly shows it without timers.
@@ -114,8 +117,8 @@ export default function Screen() {
     idle: <Idle {...props} />, cart: <Cart {...props} />, qris: <Qris {...props} />, paid: <Paid {...props} />, fail: <Fail {...props} />, rate: <Rate {...props} />,
     pair: <Pair {...props} />, tip: <Tip {...props} />, member: <Member {...props} />, split: <Split {...props} />, receipt: <Receipt {...props} />, thanks: <Thanks {...props} />,
   };
-  return <div data-guest style={{ ...brandVars(db.theme), height: '100dvh', display: 'grid', placeItems: 'center', background: 'var(--ink-950)', overflow: 'hidden' }}>
-    <style>{CSS}</style>
+  return <div data-guest style={{ ...brandVars(db.theme), ...guestVars(db, db.theme), height: '100dvh', display: 'grid', placeItems: 'center', background: 'var(--ink-950)', overflow: 'hidden' }}>
+    <style>{CSS}</style><GuestStyle db={db} />
     <div key={view} style={{ width: 'min(100vw, calc(100dvh * 16 / 9))', aspectRatio: '16 / 9', position: 'relative', overflow: 'hidden', containerType: 'inline-size', background: 'var(--bn-ink)', color: 'var(--ink-0)', userSelect: 'none' }}>
       {page.slug === 'display' && mode !== 'customer' ? <Board db={db} outletId={outletId} mode={mode} /> : body[view]}
       {view !== 'pair' && (!reg || !db.device.online) && <button onClick={() => to('pair')} style={{ position: 'absolute', top: '1.4cqw', right: '1.4cqw', zIndex: 5, border: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '.6cqw', height: '3cqw', padding: '0 1.2cqw', borderRadius: 99, background: 'color-mix(in srgb,var(--ink-950) 70%,transparent)', color: 'var(--ink-0)', fontSize: '1.1cqw', fontWeight: 600 }}>
@@ -230,6 +233,7 @@ function Qris(p: P) {
 function Paid({ db, L, now, outletId }: P) {
   const o = L.lastPaid;
   const slides = useSlides(db, outletId, now);
+  useEffect(() => { if (o && Date.now() - (o.paidAt ?? 0) < 30e3) playSfx(db, 'sfx-pay-success', 'display'); }, [o?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!o) return <Waiting icon="check" title="No payment yet today" sub="Paid orders show here." />;
   const cust = db.customers.find(c => c.id === o.customerId);
   const pts = db.ledger.filter(r => r.orderId === o.id && r.points > 0).reduce((a, r) => a + r.points, 0);
@@ -267,6 +271,7 @@ function Paid({ db, L, now, outletId }: P) {
 function Fail({ db, L, now }: P) {
   const p: Payment | null = L.pending && L.pending.expiresAt && now >= L.pending.expiresAt ? L.pending : L.failed;
   const expired = !p || p.status === 'expired' || p.status === 'pending';
+  useEffect(() => { if (p) playSfx(db, 'sfx-pay-fail', 'display'); }, [p?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   return <div style={{ ...DARK, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2cqw', textAlign: 'center' }}>
     <span style={{ width: '14cqw', height: '14cqw', borderRadius: 999, background: 'var(--danger)', display: 'grid', placeItems: 'center' }}><Icon name="x" strokeWidth={2.5} style={{ width: '8cqw', height: '8cqw' }} /></span>
     <b style={{ ...HEAD, fontSize: '4.6cqw' }}>{expired ? 'This code has expired' : 'Payment didn’t go through'}</b>
@@ -369,7 +374,8 @@ const fmtPhone = (d: string) => (d + '_'.repeat(Math.max(0, 12 - d.length))).rep
 
 function Member({ db, L, to }: P) {
   const o = L.current;
-  const [phone, setPhone] = useState(''), [step, setStep] = useState<'phone' | 'name' | 'done'>('phone'), [name, setName] = useState(''), [optIn, setOptIn] = useState(true), [who, setWho] = useState('');
+  const [phone, setPhone] = useState(''), [step, setStep] = useState<'phone' | 'name' | 'done'>('phone'), [name, setName] = useState(''), [optIn, setOptIn] = useState(false), [who, setWho] = useState(''); // promos only when ticked (Studios › Opt-in & consent)
+  const askOptIn = toolValue(db, 'optin').checkout;
   useEffect(() => { if (step !== 'done') return; const t = setTimeout(() => to(o?.lines.length ? 'cart' : 'idle'), 2600); return () => clearTimeout(t); }, [step, o, to]);
   const pts = o ? earn(o.subtotal - o.discount) : 0;
   const attach = (id: string) => { if (o) patchOrder(o.id, { customerId: id }, 'guest'); };
@@ -377,7 +383,7 @@ function Member({ db, L, to }: P) {
     const c = findCustomer(db, phone);
     if (c) { attach(c.id); setWho(firstName(c.name)); setStep('done'); } else setStep('name');
   };
-  const join = () => { const r = findOrJoin(name || 'Guest', phone, optIn); attach(r.id); setWho(firstName(name) || ''); setStep('done'); };
+  const join = () => { const r = findOrJoin(name || 'Guest', phone, askOptIn && optIn); attach(r.id); setWho(firstName(name) || ''); setStep('done'); };
   if (o?.customerId && step === 'phone') {
     const c = db.customers.find(x => x.id === o.customerId)!;
     return <Waiting icon="badge-check" title={`${firstName(c.name)} is on this order`} sub={`${balance(db.ledger, c.id).toLocaleString('en-US')} beans · ${tierOf(db.ledger, c.id).name}`} paper />;
@@ -399,7 +405,7 @@ function Member({ db, L, to }: P) {
         <button disabled={digits(phone).length < 10} onClick={next} style={{ height: '6cqw', borderRadius: '1.6cqw', border: 0, background: 'var(--bn-p)', color: 'var(--ink-0)', fontSize: '2cqw', fontWeight: 800, cursor: 'pointer', opacity: digits(phone).length < 10 ? .4 : 1 }}>Continue</button>
       </> : <>
         <input className="input" autoFocus value={name} onChange={e => setName(e.target.value)} placeholder="First name" aria-label="First name" style={{ height: '7cqw', fontSize: '2.6cqw', borderRadius: '1.6cqw', border: '2px solid var(--bn-p)', color: 'var(--bn-ink)' }} />
-        <label style={{ display: 'flex', alignItems: 'center', gap: '1.2cqw', fontSize: '1.6cqw', cursor: 'pointer' }}><input type="checkbox" checked={optIn} onChange={e => setOptIn(e.target.checked)} style={{ width: '2.4cqw', height: '2.4cqw', accentColor: 'var(--bn-p)' }} />Send me offers on WhatsApp</label>
+        {askOptIn && <label style={{ display: 'flex', alignItems: 'center', gap: '1.2cqw', fontSize: '1.6cqw', cursor: 'pointer' }}><input type="checkbox" checked={optIn} onChange={e => setOptIn(e.target.checked)} style={{ width: '2.4cqw', height: '2.4cqw', accentColor: 'var(--bn-p)' }} />Send me offers on WhatsApp</label>}
         <div style={{ display: 'flex', gap: '1.2cqw' }}>
           <button onClick={join} style={{ flex: 1, height: '6cqw', borderRadius: '1.6cqw', border: 0, background: 'var(--bn-p)', color: 'var(--ink-0)', fontSize: '2cqw', fontWeight: 800, cursor: 'pointer' }}>Join and earn beans</button>
           <button onClick={() => setStep('phone')} style={{ height: '6cqw', padding: '0 2cqw', borderRadius: '1.6cqw', border: `1px solid ${LINE}`, background: 'var(--ink-0)', color: 'var(--bn-ink)', fontSize: '1.8cqw', fontWeight: 700, cursor: 'pointer' }}>Back</button>
@@ -512,5 +518,12 @@ function Waiting({ icon, title, sub, paper }: { icon: string; title: string; sub
 function Board({ db, outletId, mode }: { db: DB; outletId: string; mode: ScreenMode }) {
   const key = mode === 'pickup' ? 'queue-pickup-screen' : 'menu-board-tv-digital-signage';
   const x = EXTRAS.find(e => e.key === key)!, v = mode === 'pickup' ? studioValue(db, 'queue-pickup-screen') : studioValue(db, 'menu-board-tv-digital-signage');
-  return <div style={{ position: 'absolute', inset: 0 }}>{x.preview(v as never, { d: menuDesign(db), db, outletId, lang: 'en' })}</div>;
+  // Studios › Order ready: "Queue / customer display" announces the newest ready order with the published headline.
+  const r = toolValue(db, 'ready'), now = useNow(5000);
+  const last = mode === 'pickup' && r.c_disp ? db.orders.filter(o => o.outletId === outletId && o.readyAt && now - o.readyAt < 90e3).sort((a, b) => (b.readyAt ?? 0) - (a.readyAt ?? 0))[0] : undefined;
+  const who = last && firstName(db.customers.find(c => c.id === last.customerId)?.name);
+  return <div style={{ position: 'absolute', inset: 0 }}>{x.preview(v as never, { d: menuDesign(db), db, outletId, lang: 'en' })}
+    {last && <div role="status" className="cd-in" style={{ position: 'absolute', left: '3cqw', right: '3cqw', bottom: '3cqw', padding: '1.6cqw 2.4cqw', borderRadius: '2cqw', background: 'var(--bn-p)', color: 'var(--ink-0)', display: 'flex', alignItems: 'center', gap: '2cqw', boxShadow: 'var(--shadow-e2)' }}>
+      <b style={{ ...HEAD, fontSize: '4.4cqw' }}>{last.no}</b><span style={{ fontSize: '2.2cqw', fontWeight: 700 }}>{fillTool(r.head, { name: who || last.no, order: last.no })}</span></div>}
+  </div>;
 }

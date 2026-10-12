@@ -9,8 +9,8 @@ export function thisDevice(db: DB): string | null {
 }
 export const outletOfDevice = (db: DB, deviceId: string | null) => db.devices.find(d => d.id === deviceId)?.outletId ?? db.device.outletId;
 
-export type Station = 'receipt' | 'all' | Category['station'];
-export const STATIONS: [Station, string][] = [['receipt', 'Receipt (counter)'], ['bar', 'Bar tickets'], ['kitchen', 'Kitchen tickets'], ['pastry', 'Pastry tickets'], ['all', 'Receipt + every kitchen ticket']];
+export type Station = 'receipt' | 'all' | 'label' | Category['station'];
+export const STATIONS: [Station, string][] = [['receipt', 'Receipt (counter)'], ['bar', 'Bar tickets'], ['kitchen', 'Kitchen tickets'], ['pastry', 'Pastry tickets'], ['all', 'Receipt + every kitchen ticket'], ['label', 'Cup stickers (label printer)']];
 export const stationOf = (i: Integration) => (String(i.config.station || 'receipt')) as Station;
 export const paperOf = (i: Integration): Paper => (String(i.config.paper) === '58' ? '58' : '80');
 export const copiesOf = (i: Integration) => Math.max(1, Math.min(5, Number(i.config.copies) || 1));

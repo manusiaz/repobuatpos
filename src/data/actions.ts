@@ -16,6 +16,7 @@ import { approvalAlert, decidedAlert } from './alerts/names.ts';
 import { escalationOn, payOn, photoRequired, type PayId } from '../system/settings.ts';
 import alertsCatalog from '../system/alerts.json' with { type: 'json' };
 import { perm } from '../system/perms.ts';
+import { toolValue } from '../system/tools.ts';
 
 const now = () => Date.now();
 const emp = (d: DB, id: string) => d.employees.find(e => e.id === id);
@@ -367,7 +368,7 @@ export function waGuest(d: DB, o: Order, template: 'e_receipt' | 'order_ready') 
 export function orderReady(d: DB, o: Order, roles: Role[] = ['waiter', 'cashier'], suffix = '') {
   o.readyAt = Date.now();
   notify(d, 'Order ready', 'info', roles, o.outletId, `${o.no}${o.table ? ' · ' + o.table : ''} ready${suffix}`);
-  waGuest(d, o, 'order_ready');
+  if (toolValue(d, 'ready').c_wa) waGuest(d, o, 'order_ready'); // Studios › Order ready › WhatsApp
 }
 export function bump(orderId: string, station: string | 'all', by: string) {
   commit('ticket.bumped', by, d => {

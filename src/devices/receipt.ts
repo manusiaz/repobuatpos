@@ -4,6 +4,8 @@ import type { DB, Order, OrderLine } from '../data/schema.ts';
 import { idr } from '../domain/money.ts';
 import { linkTo } from '../system/hosts.ts';
 import { menuDesign } from '../data/actions/studio.ts';
+import { ticketLayout } from '../system/tools.ts';
+import { couponOps } from './labels.ts';
 import type { Paper } from './escpos.ts';
 import type { Doc, Op } from './layout.ts';
 
@@ -68,6 +70,7 @@ export function receiptDoc(db: DB, o: Order, paper: Paper, opts: ReceiptOpts = {
   ops.push({ t: 'feed', n: 1 }, { t: 'text', s: opts.footer ?? (String(rc.f1 || '') || 'Terima kasih!'), align: 'center', bold: true });
   if (rc.f2) ops.push({ t: 'text', s: String(rc.f2), align: 'center' });
   if (rc.wifiOn && rc.wifi) ops.push({ t: 'text', s: 'WiFi ' + String(rc.wifi), align: 'center' });
+  ops.push(...couponOps(db, o)); // Customization Studio › Coupon on receipt
   ops.push({ t: 'text', s: 'Powered by BorNiz', align: 'center' });
   if (opts.copy) ops.push({ t: 'text', s: '*** COPY ***', align: 'center', bold: true });
   ops.push({ t: 'feed', n: 3 });
@@ -76,30 +79,32 @@ export function receiptDoc(db: DB, o: Order, paper: Paper, opts: ReceiptOpts = {
   return { paper, ops };
 }
 
-export interface TicketOpts { reprint?: boolean; cut?: boolean }
+export interface TicketOpts { reprint?: boolean; cut?: boolean; expo?: boolean }
 
-/** Kitchen ticket for one station: only the lines given (the fired lines routed there), big table/order number. */
+/** Kitchen ticket for one station: only the lines given (the fired lines routed there), big table/order number.
+ *  Item size, table size, inverted notes and auto-cut follow Customization Studio › Kitchen ticket. */
 export function kitchenDoc(db: DB, o: Order, station: string, lines: OrderLine[], paper: Paper, opts: TicketOpts = {}): Doc {
+  const k = ticketLayout(db);
   const by = db.employees.find(e => e.id === o.cashierId)?.name;
   const at = Math.max(0, ...lines.map(l => l.firedAt ?? 0)) || o.createdAt;
   const ops: Op[] = [
-    { t: 'text', s: station.toUpperCase() + (opts.reprint ? ' - REPRINT' : ''), align: 'center', bold: true, invert: true },
-    { t: 'text', s: (o.type === 'dine' ? o.table ?? 'DINE-IN' : o.type === 'take' ? 'TAKEAWAY' : 'DELIVERY').toUpperCase(), align: 'center', bold: true, size: 'wide' },
+    { t: 'text', s: (opts.expo ? 'EXPO COPY' : station.toUpperCase()) + (opts.reprint ? ' - REPRINT' : ''), align: 'center', bold: true, invert: true },
+    { t: 'text', s: (o.type === 'dine' ? o.table ?? 'DINE-IN' : o.type === 'take' ? 'TAKEAWAY' : 'DELIVERY').toUpperCase(), align: 'center', bold: true, size: k.table },
     { t: 'text', s: o.no, align: 'center', bold: true, size: 'wide' },
     { t: 'lr', l: `${SOURCE[o.source] ?? o.source}${o.type === 'dine' ? ` - ${o.guests} pax` : ''}`, r: clock(at) },
     ...(by ? [{ t: 'text', s: 'By ' + by } as Op] : []),
     { t: 'rule', ch: '=' },
   ];
   for (const l of lines) {
-    ops.push({ t: 'text', s: `${l.qty} x ${l.name.toUpperCase()}`, bold: true, size: 'wide' });
-    l.mods.forEach(m => ops.push({ t: 'text', s: '  > ' + m.name.toUpperCase(), bold: true }));
-    if (l.note) ops.push({ t: 'text', s: '  ** ' + l.note.toUpperCase() + ' **' });
+    ops.push({ t: 'text', s: `${l.qty} x ${l.name.toUpperCase()}${opts.expo ? ' (' + l.station.toUpperCase() + ')' : ''}`, bold: true, size: k.item });
+    l.mods.forEach(m => ops.push({ t: 'text', s: '  > ' + m.name.toUpperCase(), bold: true, ...(k.bigMods ? { size: 'tall' as const } : {}) }));
+    if (l.note) ops.push({ t: 'text', s: '  ** ' + l.note.toUpperCase() + ' **', ...(k.notes ? { bold: true, invert: true } : {}) });
     if (isAllergy(l)) ops.push({ t: 'text', s: '!! ALLERGY: ' + (l.note || l.mods.map(m => m.name).join(', ')).toUpperCase() + ' !!', bold: true, invert: true });
     ops.push({ t: 'feed', n: 1 });
   }
   if (o.note) ops.push({ t: 'rule' }, { t: 'text', s: 'NOTE: ' + o.note, bold: true });
   ops.push({ t: 'rule', ch: '=' }, { t: 'lr', l: `${lines.reduce((a, l) => a + l.qty, 0)} item(s)`, r: o.no }, { t: 'feed', n: 3 });
-  if (opts.cut !== false) ops.push({ t: 'cut' });
+  if ((opts.cut ?? k.cut) !== false) ops.push({ t: 'cut' });
   return { paper, ops };
 }
 

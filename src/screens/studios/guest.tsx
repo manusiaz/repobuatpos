@@ -1,6 +1,7 @@
 'use client';
 // Customer screens: what guests see on their phone and on the TVs. Built from live orders, menu, 86 list and outlet hours.
 import { same } from './same.tsx';
+import { TOOL_DEFAULTS } from '../../system/tools.ts';
 import { balance } from '../../domain/loyalty.ts';
 import { Icon } from '../../ui/kit.tsx';
 import { Caption, F, first, latest, outletName, Phone, Stage, customerOf, thousands, onColor, type PP, type Tool } from './core.tsx';
@@ -74,10 +75,10 @@ function Ready({ v, x }: PP) {
 const auto: [string, string] = ['auto', 'Live'];
 export const GUEST: Tool[] = [
   { id: 'wait', group: 'CUSTOMER SCREENS', name: 'Waiting screen', icon: 'hourglass', plan: 'free', desc: 'What guests see on their phone while the order is being prepared. Fill the wait with hospitality, not a spinner.', Preview: Waiting,
-    def: { step: 'auto', prog: 'steps', eta: true, greet: 'Sit back, {name}. We’re brewing.', p_upsell: true, p_loyal: true, p_wifi: true, p_music: true, p_game: false, p_story: true, p_promo: true, p_ig: false, p_ad: false, adby: 'Susu Segar Lembang' },
+    def: { ...TOOL_DEFAULTS.wait },
     fields: () => [F.seg('Show step', 'step', [auto, ['0', 'Received'], ['1', 'Preparing'], ['2', 'Almost']]), F.seg('Progress style', 'prog', [['steps', 'Steps'], ['bar', 'Bar'], ['ring', 'Ring']]), F.toggle('Show estimated time', 'eta'), F.text('Greeting', 'greet'), F.head('PLACEMENTS WHILE WAITING'), F.toggle('Add-on suggestion', 'p_upsell'), F.toggle('Points progress', 'p_loyal'), F.toggle('Wi-Fi card', 'p_wifi'), F.toggle('Now playing in store', 'p_music'), F.toggle('Mini game', 'p_game'), F.toggle('Brand story', 'p_story'), F.toggle('Promo for next visit', 'p_promo'), F.toggle('Follow on Instagram', 'p_ig'), F.toggle('Sponsored partner placement', 'p_ad'), F.text('Partner name', 'adby')] },
   { id: 'ready', group: 'CUSTOMER SCREENS', name: 'Order ready & enjoy', icon: 'party-popper', plan: 'free', desc: 'The moment the order is ready: notification, ready screen and the after-meal follow-up.', Preview: Ready,
-    def: { head: 'Selamat menikmati, {name}!', sub: 'Pesanan {order} siap di counter.', where: 'pickup', c_page: true, c_push: true, c_wa: true, c_disp: true, c_vibe: true, cta: 'rate', confetti: true, later: 'Terima kasih sudah mampir. Sampai jumpa lagi!' },
+    def: { ...TOOL_DEFAULTS.ready },
     pairs: (_, x) => [[onColor(x.db.theme.p, x.db.theme.ink), x.db.theme.p, 'Button label on primary']],
     fields: () => [F.text('Headline', 'head'), F.text('Subtext', 'sub'), F.seg('Order is', 'where', [['pickup', 'Pickup'], ['table', 'Served'], ['delivery', 'Delivered']]), F.head('NOTIFY THROUGH'), F.toggle('Ready screen on phone', 'c_page'), F.toggle('Push notification', 'c_push'), F.toggle('WhatsApp (WABA)', 'c_wa'), F.toggle('Queue / customer display', 'c_disp'), F.toggle('Sound + vibrate on phone', 'c_vibe'), F.head('AFTER'), F.seg('Main action', 'cta', [['rate', 'Rate'], ['reorder', 'Reorder'], ['share', 'Share']]), F.toggle('Confetti', 'confetti'), F.text('Message 1 hour later', 'later')] },
   { id: 'board', group: 'CUSTOMER SCREENS', name: 'Menu board (TV)', icon: 'tv', plan: 'pro', desc: 'Digital menu boards for TVs above the counter. Prices and sold-out items update live.', ...same('menu-board-tv-digital-signage') },

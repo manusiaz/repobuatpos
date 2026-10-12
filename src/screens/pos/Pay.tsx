@@ -15,6 +15,7 @@ import { thisDevice, ownerOf, receiptPrinter } from '../../devices/routing.ts';
 import { edcDriver, edcRef, manualDriver, type ChargeReq, type ChargeRes, type EdcDriver } from '../../devices/edc.ts';
 import { openDrawer, printReceipt, showOnPole } from '../../devices/hardware.ts';
 import { setPaymentRef } from '../../data/actions/devices.ts';
+import { playSfx } from '../../ui/sound.ts';
 import { P, REG, Stepper, AmountPad, itemsOf, paidOf, uiGet, uiSet, usePos, useApproval } from './shared.tsx';
 
 const METHODS: [string, string, string, string, string][] = [
@@ -322,6 +323,7 @@ function FailedPanel({ o }: PanelProps) {
   const last = db.payments.filter(p => p.orderId === o.id && (p.status === 'failed' || p.status === 'expired')).at(-1);
   const m = (q.get('m') ?? last?.method ?? 'card') as Method;
   const expired = last?.status === 'expired' || (m === 'qris' && !q.get('m'));
+  useEffect(() => { playSfx(db, 'sfx-pay-fail'); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [t, s] = m === 'qris' ? (expired ? ['QRIS expired', 'The code expired before it was paid. Show a new one or pick another method.'] : ['QRIS cancelled', 'The QR was cancelled before payment.'])
     : m === 'card' ? ['Payment declined', 'The issuer declined the card (code 51). Ask for another card or method.'] : [`${NAME[m]} failed`, 'The bank reported a failure. Nothing was charged. Try again or pick another method.'];
   return <div className="stack" style={{ alignItems: 'center', textAlign: 'center', padding: '24px 0' }}>
@@ -351,7 +353,7 @@ function Success() {
   const dev = thisDevice(db), rp = o && receiptPrinter(db, o.outletId, dev), auto = !!rp?.config.autoPrint;
   const change = o && last.id === o.id ? last.change ?? 0 : 0;
   const print = () => o && printReceipt(db, o, dev, me.id, { change }).then(x => toast(x.message));
-  useEffect(() => { if (o) showOnPole(db, dev, change ? 'Change' : 'Terima kasih', change ? idr(change) : idr(o.total)); }, [o?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (o) { showOnPole(db, dev, change ? 'Change' : 'Terima kasih', change ? idr(change) : idr(o.total)); playSfx(db, 'sfx-pay-success'); } }, [o?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const finish = () => {
     if (o && r === 'print' && !auto) print();
     if (o && (r === 'wa' || r === 'email') && to.trim()) sendReceipt(o.id, r, to.trim(), me.id);

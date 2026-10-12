@@ -5,9 +5,11 @@ import { reportIntegration } from '../data/actions/integrations.ts';
 import { logDevice } from '../data/actions/pos.ts';
 import { logDrawer, type DrawerReason } from '../data/actions/devices.ts';
 import { kickDoc, kitchenDoc, receiptDoc, type ReceiptOpts } from './receipt.ts';
+import { cupDoc } from './labels.ts';
+import { ticketLayout } from '../system/tools.ts';
 import { toEscPos } from './layout.ts';
 import { canKick, printDoc, sendBytes } from './printer.ts';
-import { copiesOf, outletOfDevice, ownerOf, paperOf, receiptPrinter, stationPrinter } from './routing.ts';
+import { copiesOf, outletOfDevice, ownerOf, paperOf, printersAt, receiptPrinter, stationOf, stationPrinter } from './routing.ts';
 import { serialSend } from './transports.ts';
 import { readScale } from './scale.ts';
 import { poleBytes } from './escpos.ts';
@@ -38,6 +40,11 @@ export async function printTickets(db: DB, o: Order, by: string, reprint = false
     if (!p) { res.push({ ok: false, message: `No ${s} printer · the ticket shows on the KDS` }); continue; }
     res.push(await run(p, () => printDoc(p, kitchenDoc(db, o, s, lines.filter(l => l.station === s), paperOf(p), { reprint })), `${s} ticket printed`));
   }
+  // Customization Studio › Kitchen ticket: an expo copy of every line at the pass; › Cup sticker: one label per drink.
+  const pass = ticketLayout(db).expo && st.length && receiptPrinter(db, o.outletId, null);
+  if (pass) res.push(await run(pass, () => printDoc(pass, kitchenDoc(db, o, 'expo', lines, paperOf(pass), { reprint, expo: true })), 'Expo copy printed'));
+  const label = printersAt(db, o.outletId).find(i => stationOf(i) === 'label'), cups = label && !reprint && cupDoc(db, o, lines);
+  if (label && cups) res.push(await run(label, () => printDoc(label, cups), 'Cup stickers printed'));
   if (res.some(r => r.ok)) logDevice(reprint ? 'print.kitchen_reprint' : 'print.kitchen_ticket', o.no, by, o.outletId);
   return { ok: res.length > 0 && res.every(r => r.ok), message: res.map(r => r.message).join(' · ') || 'Nothing to print' };
 }

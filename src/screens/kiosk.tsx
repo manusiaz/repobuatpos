@@ -2,6 +2,8 @@
 import { categoryLook, comboOf, themeNow } from '../system/studio.ts';
 import { ComboBuilder, comboHere } from './guest/combo.tsx';
 import { guestLang } from '../system/settings.ts';
+import { guestLanguages, guestVars, itemName, LANG_NAMES } from '../system/tools.ts';
+import { GuestStyle } from './guest/look.tsx';
 import { payOn } from '../system/settings.ts';
 import { gatewayResult } from '../data/actions/dispatch.ts';
 import { productImage } from '../ui/kit.tsx';
@@ -34,7 +36,7 @@ export default function Screen() {
   const [orderId, setOrderId] = useLocal<string | null>('bn-kiosk-order:' + outletId, null);
   const [type, setType] = useLocal<'dine' | 'take' | null>('bn-kiosk-type', null);
   const order = db.orders.find(o => o.id === orderId) ?? null;
-  const L = useLang(guestLang(db));
+  const L = useLang(guestLanguages(db, guestLang(db)).first);
   const to = (v: View) => go(pathOf(v));
   const reset = () => { if (order && !placed(order) && order.status === 'open' && order.lines.length) clearOrder(order.id, 'kiosk'); setOrderId(null); setType(null); to('attract'); };
 
@@ -44,7 +46,9 @@ export default function Screen() {
   const paying = !!order && db.payments.some(p => p.orderId === order.id && p.status === 'pending');
   useEffect(() => { if (view !== 'attract' && !paying && now - last.current > 60e3 && !(order && placed(order))) reset(); }); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return <div data-guest onPointerDown={() => { last.current = Date.now(); }} style={{ ...brandVars(themeNow(db, db.theme)), height: '100dvh', display: 'grid', placeItems: 'center', background: 'var(--ink-900)', overflow: 'hidden' }}>
+  const theme = themeNow(db, db.theme);
+  return <div data-guest onPointerDown={() => { last.current = Date.now(); }} style={{ ...brandVars(theme), ...guestVars(db, theme), height: '100dvh', display: 'grid', placeItems: 'center', background: 'var(--ink-900)', overflow: 'hidden' }}>
+    <GuestStyle db={db} />
     <div style={{ width: 'min(100vw, calc(100dvh * 9 / 16))', aspectRatio: '9 / 16', position: 'relative', overflow: 'hidden', containerType: 'inline-size', background: 'var(--bn-paper)', display: 'flex', flexDirection: 'column', userSelect: 'none' }}>
       {view === 'attract' && <Attract L={L} start={() => { last.current = Date.now(); to('menu'); }} />}
       {view === 'menu' && <Menu L={L} order={order} type={type} setType={setType} ensure={() => {
@@ -74,8 +78,8 @@ function Attract({ L, start }: { L: LangT; start: () => void }) {
       <b style={{ ...HEAD, fontSize: '10cqw', lineHeight: .95 }}>{db.tenant.name}<br />{L.lang === 'id' ? 'Pesan di sini, tanpa antre' : 'Order here, skip the line'}</b>
       <span style={{ fontSize: '4cqw', opacity: .9 }}>{L.lang === 'id' ? 'Bayar dengan QRIS atau kartu' : 'Pay with QRIS or card'}</span>
       <span style={{ ...PRIMARY, background: 'var(--ink-0)', color: 'var(--bn-p)', height: 'max(64px, 17cqw)', fontSize: '6cqw', display: 'grid', placeItems: 'center' }}>{L.t('Tap to start')}</span>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '2cqw' }} onClick={e => e.stopPropagation()}>{(['en', 'id'] as const).map(k =>
-        <button key={k} aria-pressed={L.lang === k} onClick={() => L.setLang(k)} style={{ height: 'max(48px, 10cqw)', padding: '0 4cqw', borderRadius: 99, border: '1px solid color-mix(in srgb,var(--ink-0) 50%,transparent)', background: L.lang === k ? 'var(--ink-0)' : 'transparent', color: L.lang === k ? 'var(--bn-p)' : 'var(--ink-0)', fontSize: '3.4cqw', fontWeight: 700, cursor: 'pointer' }}>{k === 'en' ? 'English' : 'Bahasa Indonesia'}</button>)}</div>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '2cqw' }} onClick={e => e.stopPropagation()}>{guestLanguages(db, L.lang).langs.map(k =>
+        <button key={k} aria-pressed={L.lang === k} onClick={() => L.setLang(k)} style={{ height: 'max(48px, 10cqw)', padding: '0 4cqw', borderRadius: 99, border: '1px solid color-mix(in srgb,var(--ink-0) 50%,transparent)', background: L.lang === k ? 'var(--ink-0)' : 'transparent', color: L.lang === k ? 'var(--bn-p)' : 'var(--ink-0)', fontSize: '3.4cqw', fontWeight: 700, cursor: 'pointer' }}>{LANG_NAMES[k]?.[0] ?? k}</button>)}</div>
     </div>
   </div>;
 }
@@ -91,7 +95,7 @@ function Menu({ L, order, type, setType, ensure, toPay }: { L: LangT; order: Ord
     <b style={{ ...HEAD, fontSize: '9cqw', textAlign: 'center' }}>{t('Where will you eat?')}</b>
     {([['dine', 'utensils', 'Eat here'], ['take', 'shopping-bag', 'Take away']] as const).map(([k, ic, l]) =>
       <button key={k} onClick={() => setType(k)} style={{ ...CARD, borderRadius: '6cqw', height: '34cqw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2cqw' }}>
-        <Icon name={ic} style={{ width: '16cqw', height: '16cqw' }} /><b style={{ fontSize: '6cqw' }}>{t(l)}</b></button>)}
+        <Icon name={ic} className="bn-ico" style={{ width: '16cqw', height: '16cqw', color: 'var(--bn-icon)' }} /><b style={{ fontSize: '6cqw' }}>{t(l)}</b></button>)}
   </div>;
   const list = items.filter(i => cat === 'all' || i.cat === cat).sort((a, b) => (best.indexOf(a.p.id) + 1 || 99) - (best.indexOf(b.p.id) + 1 || 99));
   const inCart = (id: string) => order?.status === 'open' ? order.lines.filter(l => l.productId === id).reduce((a, l) => a + l.qty, 0) : 0;
@@ -115,7 +119,7 @@ function Menu({ L, order, type, setType, ensure, toPay }: { L: LangT; order: Ord
       {list.map(i => { const n = inCart(i.p.id); return <button key={i.p.id} disabled={i.sold} onClick={() => groupsOf(db, i.p).length ? setOpen(i) : add(i)} aria-label={`${i.p.name}, ${i.sold ? t('Sold out') : idr(unit(i))}`}
         style={{ ...CARD, boxShadow: 'none', padding: 0, overflow: 'hidden', textAlign: 'left', position: 'relative', opacity: i.sold ? .55 : 1, cursor: i.sold ? 'not-allowed' : 'pointer', display: lay === 'list' || lay === 'text' ? 'flex' : 'block', alignItems: 'center', minHeight: 'max(64px, 13cqw)' }}>
         {lay !== 'text' && <span style={{ display: 'block', flex: 'none', width: lay === 'list' ? '24cqw' : undefined, aspectRatio: lay === 'big' ? '16/9' : '1', background: i.sold ? 'var(--bg-sunken)' : productImage(i.p) }} />}
-        <span style={{ display: 'block', padding: '3cqw', flex: 1 }}><b style={{ display: 'block', fontSize: lay === 'big' ? '5cqw' : '4cqw', lineHeight: 1.2 }}>{i.p.name}</b>
+        <span style={{ display: 'block', padding: '3cqw', flex: 1 }}><b style={{ display: 'block', fontSize: lay === 'big' ? '5cqw' : '4cqw', lineHeight: 1.2 }}>{itemName(db, i.p, L.lang)}</b>
           {i.sold ? <b style={{ fontSize: '4cqw', color: MUTED }}>{t('Sold out')}</b> : <><b style={{ fontSize: '4cqw', color: 'var(--bn-p)' }}>{idr(unit(i))}</b>{i.flash != null && <s style={{ fontSize: '3cqw', color: MUTED, marginLeft: '1.4cqw' }}>{idr(i.price).replace('IDR ', '')}</s>}</>}</span>
         {n > 0 && <span style={{ position: 'absolute', top: '2.4cqw', right: '2.4cqw', minWidth: '9cqw', height: '9cqw', padding: '0 2cqw', borderRadius: 99, background: 'var(--bn-p)', color: 'var(--ink-0)', fontSize: '4cqw', fontWeight: 800, lineHeight: '9cqw', textAlign: 'center' }}>{n}</span>}
         {i.flash != null && !i.sold && <span style={{ position: 'absolute', top: '2.4cqw', left: '2.4cqw', padding: '.8cqw 2cqw', borderRadius: 99, background: 'var(--bn-acc)', fontSize: '2.8cqw', fontWeight: 800 }}>{t('Flash sale')}</span>}
@@ -142,7 +146,7 @@ function ItemSheet({ i, L, close, add }: { i: MenuItem; L: LangT; close: () => v
     <div role="dialog" aria-modal="true" aria-label={i.p.name} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, maxHeight: '88%', zIndex: 9, background: 'var(--bn-paper)', borderRadius: '7cqw 7cqw 0 0', display: 'flex', flexDirection: 'column', animation: 'slideU var(--dur-slow) var(--ease-out)' }}>
       <div style={{ flex: 'none', display: 'flex', gap: '4cqw', padding: '5cqw', alignItems: 'center' }}>
         <span style={{ width: '22cqw', height: '22cqw', borderRadius: '5cqw', background: productImage(i.p), flex: 'none' }} />
-        <span style={{ flex: 1, minWidth: 0 }}><b style={{ ...HEAD, display: 'block', fontSize: '6cqw' }}>{i.p.name}</b><span style={{ fontSize: '4cqw', color: MUTED }}>{idr(unit(i))}</span></span>
+        <span style={{ flex: 1, minWidth: 0 }}><b style={{ ...HEAD, display: 'block', fontSize: '6cqw' }}>{itemName(db, i.p, L.lang)}</b><span style={{ fontSize: '4cqw', color: MUTED }}>{idr(unit(i))}</span></span>
         <button onClick={close} aria-label="Close" style={{ width: TOUCH, height: TOUCH, borderRadius: 99, border: 0, background: 'var(--ink-0)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><Icon name="x" size={28} /></button>
       </div>
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: '0 5cqw 4cqw', fontSize: '4cqw' }}><OptionPicker groups={groups} sel={sel} onChange={setSel} t={L.t} h={TOUCH} font="4cqw" /></div>

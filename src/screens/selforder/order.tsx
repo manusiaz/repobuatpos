@@ -10,14 +10,16 @@ import { idr } from '../../domain/money.ts';
 import { balance, tierOf, TIERS } from '../../domain/loyalty.ts';
 import { usable } from '../../domain/promo.ts';
 import { addLine, applyVoucher, cancelPayment, patchOrder, sendToKitchen, setQty, startPayment } from '../../data/actions.ts';
-import { findOrJoin, guestCall, orderPlaced } from '../../data/actions/selforder.ts';
+import { findOrJoin, guestCall, orderPlaced, setOptIn } from '../../data/actions/selforder.ts';
 import { menuDesign } from '../../data/actions/studio.ts';
 import { payOn } from '../../system/settings.ts';
-import { firstName, groupsOf, LINE, missingGroup, mmss, modsFrom, modsText, MUTED, OptionPicker, progress, QR, SURFACE, TINT, unit, useMenu, Wordmark, type Sel } from '../guest/kit.tsx';
+import { groupsOf, LINE, missingGroup, mmss, modsFrom, modsText, MUTED, OptionPicker, progress, QR, SURFACE, TINT, unit, useMenu, Wordmark, type Sel } from '../guest/kit.tsx';
 import { back, Bar, CartBar, ItemRow, newLines, Notices, Pill, settledOf, so, tableNo, Totals, type G } from './shared.tsx';
 import { CatSection, ComboCard, homeCount, splitOn } from './more.tsx';
 import { billSplit, dueOf, referralWelcome } from '../../data/actions/selforder.ts';
 import { referralOffer } from '../../system/studio.ts';
+import { ReadyCard, ReadyWatch, WaitPanel } from './progress.tsx';
+import { guestLanguages, itemName, LANG_NAMES, toolValue } from '../../system/tools.ts';
 
 const card = { padding: 16, borderRadius: 18, background: SURFACE } as const;
 const choice = (on: boolean) => ({ border: `2px solid ${on ? 'var(--bn-p)' : LINE}`, background: on ? TINT : SURFACE, color: 'var(--bn-ink)', borderRadius: 14, cursor: 'pointer' });
@@ -29,7 +31,7 @@ export function Landing({ g }: { g: G }) {
   const { db, t, out, table } = g;
   return <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
     <div style={{ flex: 1, minHeight: 320, background: 'var(--bn-banner)', color: 'var(--ink-0)', padding: '20px 18px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-      <div className="row between"><Pill><Icon name="scan-line" size={14} />Table {tableNo(table)} detected</Pill><button onClick={() => g.go(so('language-picker'))} style={{ border: 0, cursor: 'pointer', background: 'none', padding: 0 }}><Pill><Icon name="languages" size={14} />{g.L.lang === 'en' ? 'EN' : 'ID'}</Pill></button></div>
+      <div className="row between"><Pill><Icon name="scan-line" size={14} />Table {tableNo(table)} detected</Pill><button onClick={() => g.go(so('language-picker'))} style={{ border: 0, cursor: 'pointer', background: 'none', padding: 0 }}><Pill><Icon name="languages" size={14} />{g.L.lang.toUpperCase()}</Pill></button></div>
       <div className="stack" style={{ gap: 10 }}>
         <Wordmark name={db.tenant.name} size={56} radius={16} />
         <h1 style={{ fontSize: 40, fontWeight: 800, lineHeight: 1 }}>{db.tenant.name}</h1>
@@ -41,7 +43,7 @@ export function Landing({ g }: { g: G }) {
       <button className="btn btn-primary btn-block" style={{ height: 58, fontSize: 17, borderRadius: 18 }} onClick={() => g.go(so('menu-home'))}>{t('Start order')}<Icon name="arrow-right" /></button>
       {g.latest && <button className="btn btn-block" style={{ height: 52, borderRadius: 16 }} onClick={() => g.go(so('order-status'))}><Icon name="chef-hat" />{t('Track my order')} · {g.latest.no}</button>}
       <div className="row" style={{ justifyContent: 'center', gap: 16, fontSize: 14 }}>
-        <a href={so('language-picker')} onClick={e => { e.preventDefault(); g.go(so('language-picker')); }}>English · Bahasa Indonesia</a>
+        <a href={so('language-picker')} onClick={e => { e.preventDefault(); g.go(so('language-picker')); }}>{guestLanguages(db, g.L.lang).langs.map(k => LANG_NAMES[k]?.[0] ?? k).join(' · ')}</a>
         <a href={so('member-card-and-points')} onClick={e => { e.preventDefault(); g.go(so('member-card-and-points')); }}>{db.tenant.name} Rewards</a>
       </div>
     </div>
@@ -49,7 +51,7 @@ export function Landing({ g }: { g: G }) {
 }
 
 export function Language({ g }: { g: G }) {
-  const opts = [['en', 'English', 'Order in English'], ['id', 'Bahasa Indonesia', 'Pesan dalam Bahasa Indonesia']] as const;
+  const opts = guestLanguages(g.db, g.L.lang).langs.map(k => [k, ...(LANG_NAMES[k] ?? [k, k])] as const); // Studios › Languages
   return <>
     <Bar title={g.t('Choose language')} onBack={() => back(g.go, so('scan-landing'))} />
     <div className="stack" style={{ padding: 16, gap: 12 }} role="radiogroup" aria-label="Language">
@@ -57,7 +59,7 @@ export function Language({ g }: { g: G }) {
         <span style={{ width: 44, height: 44, borderRadius: 99, background: 'var(--bn-p)', color: 'var(--ink-0)', display: 'grid', placeItems: 'center', fontWeight: 800 }}>{k.toUpperCase()}</span>
         <span className="stack" style={{ gap: 2, flex: 1 }}><b style={{ fontSize: 17 }}>{l}</b><span style={{ fontSize: 14, color: MUTED }}>{s}</span></span>
         {g.L.lang === k && <Icon name="check" />}</button>)}
-      <span style={{ fontSize: 13, color: MUTED }}>Menu items show in the language the store wrote them in.</span>
+      <span style={{ fontSize: 13, color: MUTED }}>Menu items show in your language where the store translated them.</span>
     </div>
   </>;
 }
@@ -100,7 +102,7 @@ export function Home({ g }: { g: G }) {
   return <div style={{ paddingBottom: 96 }}>
     <div style={{ height: 210, background: 'var(--bn-banner)', color: 'var(--ink-0)', padding: 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
       <div className="row between"><Pill>Table {tableNo(table)} · {t('Dine-in')}</Pill>
-        <button onClick={() => g.L.setLang(g.L.lang === 'en' ? 'id' : 'en')} aria-label="Switch language" style={{ border: 0, background: 'none', padding: 0, cursor: 'pointer' }}><Pill>{g.L.lang === 'en' ? 'EN · ID' : 'ID · EN'}</Pill></button></div>
+        <button onClick={() => g.go(so('language-picker'))} aria-label="Switch language" style={{ border: 0, background: 'none', padding: 0, cursor: 'pointer' }}><Pill><Icon name="languages" size={14} />{g.L.lang.toUpperCase()}</Pill></button></div>
       <div className="stack" style={{ gap: 4 }}><h1 style={{ fontSize: 32, fontWeight: 800, lineHeight: 1 }}>{db.tenant.name}</h1><span style={{ fontSize: 13, opacity: .88 }}>{g.hrs.open ? `${t('Open until')} ${out.closes}` : g.hrs.text} · {out.name}</span></div>
     </div>
     <Notices g={g} />
@@ -109,14 +111,14 @@ export function Home({ g }: { g: G }) {
     {(flash.length > 0 || promos.length > 0) && <div className="row" style={{ gap: 10, overflowX: 'auto', padding: '2px 14px 6px', scrollbarWidth: 'none' }}>
       {flash.map(i => <button key={i.p.id} onClick={() => openItem(g, i.p.id)} style={{ flex: 'none', width: 250, padding: 14, borderRadius: 18, border: 0, background: 'var(--bn-ink)', color: 'var(--ink-0)', textAlign: 'left', cursor: 'pointer', display: 'flex', gap: 12, alignItems: 'center' }}>
         <span style={{ width: 52, height: 52, borderRadius: 12, background: productImage(i.p), flex: 'none' }} />
-        <span className="stack" style={{ gap: 2 }}><span style={{ fontSize: 11, fontWeight: 800, color: 'var(--bn-acc)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{t('Flash sale')}</span><b style={{ fontSize: 14 }}>{i.p.name}</b><span style={{ fontSize: 13 }}>{idr(i.flash!)} <s style={{ opacity: .7 }}>{idr(i.price).replace('IDR ', '')}</s></span></span></button>)}
+        <span className="stack" style={{ gap: 2 }}><span style={{ fontSize: 11, fontWeight: 800, color: 'var(--bn-acc)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{t('Flash sale')}</span><b style={{ fontSize: 14 }}>{itemName(db, i.p, g.L.lang)}</b><span style={{ fontSize: 13 }}>{idr(i.flash!)} <s style={{ opacity: .7 }}>{idr(i.price).replace('IDR ', '')}</s></span></span></button>)}
       {promos.map(p => <button key={p.id} onClick={() => g.go(so('claim-voucher'))} style={{ flex: 'none', width: 220, padding: 14, borderRadius: 18, border: 0, background: 'var(--bn-acc)', color: 'var(--bn-ink)', textAlign: 'left', cursor: 'pointer' }}>
         <b style={{ display: 'block', fontSize: 15 }}>{p.name}</b><span style={{ fontSize: 13 }}>Code <b className="mono">{p.code}</b>{p.minSpend ? ` · min. ${idr(p.minSpend)}` : ''}</span></button>)}
     </div>}
     <ComboCard g={g} />
     <section className="stack" style={{ padding: '10px 14px', gap: 10 }} aria-label={t('Bestsellers')}>
       <h2 style={{ fontSize: 20, fontWeight: 800 }}>{t('Bestsellers')}</h2>
-      {bestItems.map((i, k) => <ItemRow key={i.p.id} i={i} t={t} badge={k < 2 ? 'Bestseller' : undefined} count={countIn(g, i.p.id)} onOpen={() => openItem(g, i.p.id)} />)}
+      {bestItems.map((i, k) => <ItemRow key={i.p.id} i={i} lang={g.L.lang} t={t} badge={k < 2 ? 'Bestseller' : undefined} count={countIn(g, i.p.id)} onOpen={() => openItem(g, i.p.id)} />)}
     </section>
     {cats.map(c => { const list = items.filter(i => i.cat === c.id), max = homeCount(g, c.id);
       return <CatSection key={c.id} g={g} catId={c.id} name={t(c.name)} list={list.slice(0, max)} count={id => countIn(g, id)} onOpen={id => openItem(g, id)}
@@ -161,7 +163,7 @@ export function Search({ g }: { g: G }) {
     </div>
     <div className="stack" style={{ padding: '12px 14px', gap: 10 }}>
       <span className="cap">{q.trim() ? `${hits.length} result${hits.length === 1 ? '' : 's'}` : g.t('Popular right now')}</span>
-      {hits.map(i => <ItemRow key={i.p.id} i={i} t={g.t} count={countIn(g, i.p.id)} onOpen={() => openItem(g, i.p.id)} />)}
+      {hits.map(i => <ItemRow key={i.p.id} i={i} lang={g.L.lang} t={g.t} count={countIn(g, i.p.id)} onOpen={() => openItem(g, i.p.id)} />)}
       {q.trim() && !hits.length && <Empty icon="search-x" title={g.t('No results')}>Nothing on the menu matches “{q}”. Try “kopi”, “latte” or a category.</Empty>}
     </div>
     <CartBar g={g} />
@@ -196,7 +198,7 @@ export function Item({ g }: { g: G }) {
     </div>
     <div className="stack" style={{ padding: '18px 16px', gap: 18 }}>
       <div className="stack" style={{ gap: 6 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800 }}>{it.p.name}</h1>
+        <h1 style={{ fontSize: 26, fontWeight: 800 }}>{itemName(g.db, it.p, g.L.lang)}</h1>
         {it.p.desc && <span style={{ fontSize: 14, color: MUTED }}>{it.p.desc}</span>}
         <span>{it.sold ? <b style={{ color: 'var(--danger-fg)' }}>{t('Sold out')} today</b> : <><b style={{ fontSize: 18 }}>{idr(unit(it))}</b>{it.flash != null && <s style={{ marginLeft: 8, color: MUTED }}>{idr(it.price)}</s>}</>}</span>
       </div>
@@ -265,14 +267,14 @@ export function Cart({ g }: { g: G }) {
 export function Checkout({ g }: { g: G }) {
   const { db, cart, me, t } = g;
   const [name, setName] = useState(me?.name ?? ''), [phone, setPhone] = useState(me?.phone ?? ''), [tipPct, setTip] = useState(0), [pay, setPay] = useState<'qris' | 'cashier'>(db.device.online && payOn(db, 'qris') ? 'qris' : 'cashier');
-  const [code, setCode] = useState(''), [err, setErr] = useState(''), [busy, setBusy] = useState(false);
+  const [code, setCode] = useState(''), [err, setErr] = useState(''), [busy, setBusy] = useState(false), [promos, setPromos] = useState(false);
   useEffect(() => { if (me) { setName(n => n || me.name); setPhone(p => p || me.phone); } }, [me]);
   if (!cart || !cart.lines.length) return <><Bar title={t('Checkout')} onBack={() => g.go(so('cart'))} /><Empty icon="shopping-basket" title={t('Your cart is empty')} action={<button className="btn btn-primary" onClick={() => g.go(so('menu-home'))}>{t('See the menu')}</button>} /></>;
   const split = billSplit(db, cart.id).shares.length > 0;
   if (cart.status === 'paying' || split) return <><Bar title={t('Checkout')} onBack={() => g.go(so('cart'))} /><Empty icon={split ? 'split' : 'qr-code'} title={split ? 'Your table is splitting this bill' : 'Payment in progress'}
     action={<button className="btn btn-primary" onClick={() => g.go(split ? so('checkout-and-payment', { split: '1' }) : so('qris-payment'))}>{split ? 'Pay my share' : 'Open the QRIS code'}</button>} /></>;
   const due = cart.total - settledOf(db, cart);
-  const ask = studioValue(db, 'checkout-flow-fields');
+  const ask = studioValue(db, 'checkout-flow-fields'), consent = toolValue(db, 'optin');
   const ro = referralOffer(db), welcome = !!me && ro.friendPct > 0 && !cart.discountPct && (db.records.referrals ?? []).some(r => r.a === me.id && r.e === 'joined');
   const tip = pay === 'qris' && ask.tips ? Math.round(cart.subtotal * tipPct / 100 / 100) * 100 : 0;
   const hasNew = newLines(cart).length > 0;
@@ -286,7 +288,7 @@ export function Checkout({ g }: { g: G }) {
     setBusy(true);
     try {
       let customerId = cart.customerId;
-      if (phone.trim()) { const r = findOrJoin(name, phone, true, g.ref); customerId = r.id; g.setMe(r.id); }
+      if (phone.trim()) { const r = findOrJoin(name, phone, consent.checkout && promos, g.ref); if (!r.created && consent.checkout && promos) setOptIn(r.id, true); customerId = r.id; g.setMe(r.id); }
       if (customerId !== cart.customerId) patchOrder(cart.id, { customerId }, 'guest');
       referralWelcome(cart.id); // a friend's first order: the referral page's "% off" (Menu Studio › referral page)
       if (pay === 'cashier') { if (hasNew) { sendToKitchen(cart.id, 'guest'); orderPlaced(cart.id, true); } g.go(so('order-status')); }
@@ -306,6 +308,7 @@ export function Checkout({ g }: { g: G }) {
         {ask.name !== 'off' && <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder={ask.name === 'required' ? 'Your first name' : 'Your first name (optional)'} aria-label="Your first name" autoComplete="given-name" />}
         {ask.phone !== 'off' && <input className="input" value={phone} onChange={e => setPhone(e.target.value)} placeholder={ask.phone === 'required' ? 'WhatsApp number, e.g. 0812 3456 7890' : 'WhatsApp number (optional)'} aria-label="WhatsApp number" inputMode="tel" autoComplete="tel" />}
         <span style={{ fontSize: 13, color: MUTED }}>Receipt and “ready” alert go to WhatsApp. Members earn beans on this order.</span>
+        {consent.checkout && ask.phone !== 'off' && !me?.optIn && <label className="row" style={{ gap: 10, minHeight: 44, fontSize: 14, cursor: 'pointer' }}><input type="checkbox" checked={promos} onChange={e => setPromos(e.target.checked)} style={{ width: 22, height: 22, accentColor: 'var(--bn-p)' }} />Send me offers and news on WhatsApp</label>}
       </div>
       {pay === 'qris' && ask.tips && <div style={card} className="stack">
         <b>{t('Tip for the team')}</b>
@@ -383,7 +386,6 @@ export function Status({ g }: { g: G }) {
     <Empty icon="chef-hat" title="No order yet" action={<button className="btn btn-primary" onClick={() => g.go(so('menu-home'))}>{t('See the menu')}</button>}>Orders from Table {tableNo(table)} in the last 2 hours show here.</Empty></>;
   const st = progress(latest), step = Math.max(0, st);
   const H = [[t('Order received'), 'Sent to the kitchen and bar'], [t('Being prepared'), 'The team is making your order'], [t('Almost ready'), 'Some items are done'], [t('Ready!'), `Your order is on its way to Table ${tableNo(table)}`]][step];
-  const cust = db.customers.find(c => c.id === latest.customerId);
   const due = latest.total - settledOf(db, latest);
   const billAsked = db.notices.some(n => n.alert === 'Guest call' && n.outletId === latest.outletId && n.text === `${table} · Ask for the bill` && n.at > latest.createdAt);
   return <div style={{ paddingBottom: 32 }}>
@@ -391,12 +393,12 @@ export function Status({ g }: { g: G }) {
       <div className="row between"><b style={{ fontFamily: 'var(--bn-font)', fontSize: 18 }}>{db.tenant.name}</b><span className="mono" style={{ opacity: .85 }}>{latest.no} · {table}</span></div>
       <h1 style={{ fontSize: 30, fontWeight: 800 }} aria-live="polite">{H[0]}</h1>
       <span style={{ fontSize: 14, opacity: .9 }}>{H[1]}</span>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6, marginTop: 4 }}>{['Received', 'Preparing', 'Almost', 'Ready'].map((x, i) => <div key={x} className="stack" style={{ gap: 6, opacity: i <= step ? 1 : .6 }}>
-        <span style={{ height: 6, borderRadius: 9, background: i <= step ? 'var(--bn-acc)' : 'color-mix(in srgb,var(--ink-0) 25%,transparent)', transition: 'background 300ms' }} /><span style={{ fontSize: 12, fontWeight: 600 }}>{t(x)}</span></div>)}</div>
+      {(step === 3 || toolValue(db, 'wait').prog === 'steps') && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6, marginTop: 4 }}>{['Received', 'Preparing', 'Almost', 'Ready'].map((x, i) => <div key={x} className="stack" style={{ gap: 6, opacity: i <= step ? 1 : .6 }}>
+        <span style={{ height: 6, borderRadius: 9, background: i <= step ? 'var(--bn-acc)' : 'color-mix(in srgb,var(--ink-0) 25%,transparent)', transition: 'background 300ms' }} /><span style={{ fontSize: 12, fontWeight: 600 }}>{t(x)}</span></div>)}</div>}
     </div>
     <div className="stack" style={{ padding: 14, gap: 12 }}>
-      {step === 3 && <div style={{ ...card, textAlign: 'center' }} className="stack sm"><Icon name="party-popper" size={28} style={{ alignSelf: 'center', color: 'var(--bn-p)' }} /><b style={{ fontSize: 18 }}>Selamat menikmati{cust ? ', ' + firstName(cust.name) : ''}!</b>
-        <button className="btn" onClick={() => g.go(so('feedback-and-rating', { o: latest.id }))}><Icon name="star" />Rate your visit</button></div>}
+      {step === 3 ? <ReadyCard g={g} o={latest} /> : <WaitPanel g={g} o={latest} step={step} />}
+      <ReadyWatch g={g} o={latest} ready={step === 3} />
       <div style={card} className="stack sm">
         {latest.lines.filter(l => l.fired).map(l => <div key={l.id} className="row between" style={{ fontSize: 14 }}><span className="grow">{l.qty}× {l.name}{l.mods.length > 0 && <span style={{ color: MUTED }}> · {modsText(l.mods)}</span>}</span>
           <span className="badge" style={{ background: l.kds === 'done' ? 'var(--success-soft)' : l.kds === 'cooking' ? 'var(--warning-soft)' : 'var(--bg-sunken)', color: l.kds === 'done' ? 'var(--success-fg)' : l.kds === 'cooking' ? 'var(--warning-fg)' : MUTED }}>{l.kds === 'done' ? t('Ready') : l.kds === 'cooking' ? t('Preparing') : t('Received')}</span></div>)}

@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 type Claim = { claimed: boolean; status?: string; provider_id?: string };
 
 export const POST = handle(async (req: Request) => {
-  const b = await body<{ messageId?: string; channel?: Channel; to?: string; template?: string; lang?: string; params?: unknown[]; subject?: string; text?: string; tenantId?: string }>(req);
+  const b = await body<{ messageId?: string; channel?: Channel; to?: string; template?: string; lang?: string; params?: unknown[]; subject?: string; text?: string; from?: string; tenantId?: string }>(req);
   const channel = b.channel as Channel;
   if (!b.messageId || !KIND_OF[channel] || !b.to?.trim() || !b.template) throw new HttpError(400, 'messageId, channel (wa | email | sms), to and template are required');
   if (DEMO) return json({ ok: true, demo: true, status: 'sent', providerId: 'sim-' + b.messageId, simulated: true });
@@ -27,7 +27,7 @@ export const POST = handle(async (req: Request) => {
   }
   const ctx = await ctxOf(m.tenantId, i);
   const input = channel === 'wa' ? { to: b.to, template: b.template, lang: str(b.lang) || str(ctx.config.lang, 'id'), params: (b.params ?? []).map(String), idempotencyKey: b.messageId }
-    : channel === 'email' ? { to: b.to, subject: str(b.subject, b.template), text: str(b.text), idempotencyKey: b.messageId }
+    : channel === 'email' ? { to: b.to, subject: str(b.subject, b.template), text: str(b.text), from: str(b.from) || undefined, idempotencyKey: b.messageId }
     : { to: b.to, text: str(b.text), idempotencyKey: b.messageId };
   try {
     const r = await s.send(input, ctx);

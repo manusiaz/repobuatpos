@@ -2,7 +2,8 @@
 // KDS ticket card (Kitchen Display prototype): channel + table, timer, red strip for rush / allergy / notes,
 // items 20px (tap = done), 64px bump. No prices anywhere on the kitchen screen.
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import type { Order } from '../../data/schema.ts';
+import type { DB, Order } from '../../data/schema.ts';
+import { playSfx } from '../../ui/sound.ts';
 import { Icon, hhmm } from '../../ui/kit.tsx';
 import { CHANNEL, TIER, dueText, isOnline, lineMods, linesAt, minsLeft, mmss, ticketLabel, type Station } from './model.ts';
 
@@ -111,11 +112,5 @@ export function useWakeLock() {
   }, []);
   return on;
 }
-let ac: AudioContext | null = null;
-/** sfx-order-in: two short tones. */
-export function chime() {
-  try {
-    ac ??= new AudioContext();
-    [660, 880].forEach((f, i) => { const o = ac!.createOscillator(), g = ac!.createGain(), t = ac!.currentTime + i * .14; o.frequency.value = f; o.connect(g); g.connect(ac!.destination); g.gain.setValueAtTime(.2, t); g.gain.exponentialRampToValueAtTime(.0001, t + .25); o.start(t); o.stop(t + .27); });
-  } catch { /* audio blocked until first tap */ }
-}
+/** sfx-order-in: the new-order sound published in Studios › Custom sounds (kitchen chime switch included). */
+export const chime = (db: DB) => playSfx(db, 'sfx-order-in', 'kds');

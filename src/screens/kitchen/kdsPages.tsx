@@ -284,7 +284,7 @@ function Settings({ k }: { k: Kctx }) {
       <div style={{ marginTop: 10 }}><Grid min={220}>{LAYOUTS.map(l => <button key={l.id} type="button" aria-pressed={k.layout === l.id} onClick={() => put('layout', l.id)} style={{ minHeight: 120, borderRadius: 16, padding: 16, textAlign: 'left', cursor: 'pointer', background: 'var(--bg-raised)', color: 'var(--fg-1)', border: `3px solid ${k.layout === l.id ? 'var(--accent)' : 'var(--border)'}`, display: 'flex', flexDirection: 'column', gap: 4 }}>
         <b style={{ fontSize: fs(18) }}>{l.id} · {l.t}</b><span style={{ fontSize: fs(15), color: 'var(--fg-2)' }}>{l.d} {l.when}</span></button>)}</Grid></div></Box>
     <Box><div className="row between wrap"><span><b style={{ fontSize: fs(17) }}>Sound on new ticket</b><br /><span style={{ fontSize: fs(15), color: 'var(--fg-2)' }}>Two-tone chime when a ticket arrives.</span></span>
-      <span className="row"><KBtn onClick={chime}>Play test sound</KBtn><Toggle on={k.sound} onChange={v => put('sound', v)} label="Sound on new ticket" /></span></div></Box>
+      <span className="row"><KBtn onClick={() => chime(k.db)}>Play test sound</KBtn><Toggle on={k.sound} onChange={v => put('sound', v)} label="Sound on new ticket" /></span></div></Box>
     <Box><b style={{ fontSize: fs(17) }}>Ticket colors</b><p style={{ fontSize: fs(15), color: 'var(--fg-2)', margin: '4px 0 10px' }}>By timer colors the whole header amber and red. By channel keeps a channel band and colors only the timer.</p>
       {seg('colors', k.cfg.colors, [['timer', 'By timer'], ['channel', 'By channel']])}</Box>
     <Box><b style={{ fontSize: fs(17) }}>Text size</b><div style={{ marginTop: 10 }}>{seg('size', k.cfg.scale > 1 ? 'large' : 'normal', [['normal', 'Normal'], ['large', 'Large']])}</div></Box>

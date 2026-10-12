@@ -62,9 +62,9 @@ export default function Screen() {
   const seen = useRef<Set<string> | null>(null);
   useEffect(() => {
     const ids = new Set(tickets.map(t => t.id));
-    if (seen.current) { const fresh = tickets.filter(t => !seen.current!.has(t.id)); if (fresh.length) { if (sound) chime(); toast(`New ticket · ${fresh.map(t => t.table ?? t.no).join(', ')}`); } }
+    if (seen.current) { const fresh = tickets.filter(t => !seen.current!.has(t.id)); if (fresh.length) { if (sound) chime(db); toast(`New ticket · ${fresh.map(t => t.table ?? t.no).join(', ')}`); } }
     seen.current = ids;
-  }, [tickets, sound]);
+  }, [tickets, sound]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Scheduled online orders fire and approved sold-out requests (permission 'a') apply even when only the KDS is open.
   useOnlineAutomation(db, outletId, now);

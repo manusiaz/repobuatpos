@@ -154,4 +154,4 @@ test('LAN bridge delivers the exact bytes to a printer socket (port 9100 stand-i
   bridge.close(); printer.close();
 });
 
-const GOLDEN = { r58: 'bea731baefa9697d', r80: 'abaa2d874f3818a1', k58: '77bae852023ce1a7', k80: 'fbb20f045d2f3350' };
+const GOLDEN = { r58: 'bea731baefa9697d', r80: 'abaa2d874f3818a1', k58: '075f26e0f86b8131', k80: '7b54a5045cbb0095' };

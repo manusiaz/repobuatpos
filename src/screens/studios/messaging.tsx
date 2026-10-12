@@ -9,6 +9,7 @@ import { idr, idrShort } from '../../domain/money.ts';
 import { Badge, Empty, Icon, Kpi, Seg, Status, Toggle, ago, dateShort, hhmm, toast, useNow } from '../../ui/kit.tsx';
 import { LineChart } from '../../ui/Chart.tsx';
 import { IntegrationsPanel } from '../../integrations/Panel.tsx';
+import { toolValue, TOOL_DEFAULTS } from '../../system/tools.ts';
 import { Caption, CopyRow, F, fillVars, orderVars, outletName, pct, Phone, Stage, type Ctx, type PP, type Tool, type V } from './core.tsx';
 
 // ── Templates ────────────────────────────────────────────────────────────────────────────
@@ -158,7 +159,7 @@ function lastVisit(db: DB, customerId: string) { return db.orders.filter(o => o.
 function inQuiet(t: number, from: string, to: string) { const d = new Date(t), m = d.getHours() * 60 + d.getMinutes(); const f = +from.slice(0, 2) * 60 + +from.slice(3), e = +to.slice(0, 2) * 60 + +to.slice(3); return f > e ? m >= f || m < e : m >= f && m < e; }
 function nextOpen(to: string) { const d = new Date(); d.setHours(+to.slice(0, 2), +to.slice(3), 0, 0); if (d.getTime() < Date.now()) d.setDate(d.getDate() + 1); return d.getTime(); }
 /** Live consent rules = the published Opt-in & consent version (drafts don't change sending). */
-export const quietOf = (db: DB) => { const s = (db.versions.find(v => v.status === 'published' && (v.data as V)?.tool === 'optin')?.data as V | undefined)?.values ?? {}; return { on: s.quiet ?? true, from: s.from ?? '21:00', to: s.to ?? '08:00' }; };
+export const quietOf = (db: DB) => { const s = toolValue(db, 'optin'); return { on: s.quiet, from: s.from, to: s.to }; };
 
 interface Auto { id: string; name: string; icon: string; tpl: string; trigger: string; desc: string; audience: (db: DB, v: V) => DB['customers'] }
 export const AUTOS: Auto[] = [
@@ -395,13 +396,13 @@ export const MESSAGING: Tool[] = [
   { id: 'flows', group: 'MESSAGING & AUTOMATION', name: 'Automations', icon: 'workflow', plan: 'pro', desc: 'Sends the right message after the right moment, like a thank-you on WhatsApp after a guest pays.', Preview: FlowsOverview },
   ...AUTOS.map(a => autoTool(a, 'pro')),
   { id: 'builder', group: 'MESSAGING & AUTOMATION', name: 'Automation flow builder', icon: 'git-branch-plus', plan: 'pro', desc: 'Build your own flow: trigger → wait → condition → send.', Panel: BuilderPanel, Preview: BuilderPreview },
-  { id: 'optin', group: 'MESSAGING & AUTOMATION', name: 'Opt-in & consent', icon: 'shield-check', plan: 'free', desc: 'Who may receive promos, quiet hours for marketing, and how guests unsubscribe.', def: { quiet: true, from: '21:00', to: '08:00', stop: 'STOP', checkout: true, footer: true }, Preview: ConsentPreview,
+  { id: 'optin', group: 'MESSAGING & AUTOMATION', name: 'Opt-in & consent', icon: 'shield-check', plan: 'free', desc: 'Who may receive promos, quiet hours for marketing, and how guests unsubscribe.', def: { ...TOOL_DEFAULTS.optin }, Preview: ConsentPreview,
     fields: () => [F.toggle('Quiet hours for marketing', 'quiet'), F.text('From', 'from', '21:00'), F.text('Until', 'to', '08:00'), F.text('Opt-out keyword', 'stop'), F.toggle('Ask for opt-in at checkout (unticked by default)', 'checkout'), F.toggle('Unsubscribe link in every email', 'footer'), F.note('Transactional messages (receipt, order ready, booking) send any time and never need opt-in.')] },
   { id: 'log', group: 'MESSAGING & AUTOMATION', name: 'Message log & delivery status', icon: 'scroll-text', plan: 'basic', desc: 'Every message sent: queued, sent, delivered, read or failed. Retry failed ones.', Preview: LogPreview,
     Panel: ({ v, set }) => <div className="stack"><div className="field"><label>Channel</label><Seg value={v.ch ?? 'all'} options={[['all', 'All'], ['wa', 'WA'], ['email', 'Email'], ['sms', 'SMS']] as const} onChange={c => set('ch', c)} /></div>
       <div className="field"><label>Status</label><select className="input" value={v.st ?? 'all'} onChange={e => set('st', e.target.value)}>{['all', 'queued', 'sent', 'delivered', 'read', 'failed'].map(s => <option key={s} value={s}>{s === 'all' ? 'All statuses' : s}</option>)}</select></div></div> },
   { id: 'credits', group: 'MESSAGING & AUTOMATION', name: 'Messaging credits & cost', icon: 'wallet', plan: 'basic', desc: 'Prepaid credit for WhatsApp, SMS and email, and what each conversation costs.', Panel: CreditsPanel, Preview: CreditsPreview },
-  { id: 'emaild', group: 'MESSAGING & AUTOMATION', name: 'Email sender domain', icon: 'at-sign', plan: 'pro', desc: 'Send receipts and campaigns from your own address instead of no-reply@bornis.id.', def: { from: 'Kopi Biru', addr: 'hello@kopibiru.id' }, Panel: EmailDomainPanel, Preview: EmailDomainPreview },
+  { id: 'emaild', group: 'MESSAGING & AUTOMATION', name: 'Email sender domain', icon: 'at-sign', plan: 'pro', desc: 'Send receipts and campaigns from your own address instead of no-reply@bornis.id.', def: { ...TOOL_DEFAULTS.emaild }, Panel: EmailDomainPanel, Preview: EmailDomainPreview },
   { id: 'perf', group: 'MESSAGING & AUTOMATION', name: 'Automation performance', icon: 'trending-up', plan: 'pro', desc: 'Return visits and revenue from guests after they got a message.', Preview: PerfPreview,
     Panel: ({ v, set }) => <div className="field"><label>Attribution window</label><Seg value={String(v.win ?? 7)} options={[['3', '3 days'], ['7', '7 days'], ['14', '14 days']] as const} onChange={w => set('win', Number(w))} /></div> },
 ];

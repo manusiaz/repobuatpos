@@ -6,7 +6,8 @@ import { connector } from '../../registry.ts';
 
 export type Channel = 'wa' | 'email' | 'sms';
 export interface WaInput { to: string; template: string; lang: string; params: string[]; idempotencyKey: string }
-export interface EmailInput { to: string; subject: string; text: string; html?: string; idempotencyKey: string }
+/** `from`: the merchant's own sender (Studios › Email sender domain); else the connector's From. */
+export interface EmailInput { to: string; subject: string; text: string; html?: string; from?: string; idempotencyKey: string }
 export interface SmsInput { to: string; text: string; idempotencyKey: string }
 export interface Sent { providerId: string; simulated?: boolean }
 export interface StatusUpdate { providerId: string; status: 'sent' | 'delivered' | 'read' | 'failed' }
@@ -74,7 +75,7 @@ export const resend: Sender<EmailInput> = {
   id: 'resend', channel: 'email',
   async send(x, ctx) {
     need(ctx, 'from', 'apiKey');
-    const body = { from: str(ctx.config.from), to: [x.to], subject: x.subject, text: x.text, ...(x.html ? { html: x.html } : {}), ...(str(ctx.config.replyTo) ? { reply_to: str(ctx.config.replyTo) } : {}) };
+    const body = { from: str(x.from) || str(ctx.config.from), to: [x.to], subject: x.subject, text: x.text, ...(x.html ? { html: x.html } : {}), ...(str(ctx.config.replyTo) ? { reply_to: str(ctx.config.replyTo) } : {}) };
     const r = await call(ctx, 'https://api.resend.com/emails', { method: 'POST', headers: { authorization: `Bearer ${ctx.secrets.apiKey}`, 'content-type': 'application/json', 'idempotency-key': x.idempotencyKey }, body: JSON.stringify(body) }, 'Resend');
     return { providerId: str(r.id) };
   },

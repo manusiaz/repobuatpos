@@ -1,6 +1,8 @@
 'use client';
 import { cnameTarget, config as hostConfig, linkTo } from '../../system/hosts.ts';
 import { productImage } from '../../ui/kit.tsx';
+import { SFX, tone } from '../../ui/sound.ts';
+import { TOOL_DEFAULTS } from '../../system/tools.ts';
 // Platform studio: fonts, icons, app icon, sounds, languages, white-label, domain & SSO, embeds, brand kit, theme from logo,
 // motion, price & number display, accessible kiosk, legal pages, saved themes. Theme changes go through publish('menu').
 import { useEffect, useState } from 'react';
@@ -82,20 +84,6 @@ function AppIcon({ v, x }: PP) {
 }
 
 // ── Sounds (WebAudio sine tones, each under 400 ms) ──────────────────────────────────────
-let ac: AudioContext | null = null;
-export function tone(hz: number[], vol = 70, step = .1, dur = .14) {
-  try {
-    ac ??= new AudioContext(); const c = ac;
-    hz.forEach((f, i) => { const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + i * step; o.type = 'sine'; o.frequency.value = f; o.connect(g); g.connect(c.destination);
-      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.25 * vol / 100, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + dur); o.start(t); o.stop(t + dur + .01); });
-  } catch { toast('Sound is blocked on this device'); }
-}
-export const SFX: Record<string, Record<string, number[]>> = {
-  'sfx-order-in': { default: [880, 1320], bell: [1046, 1568, 1318], marimba: [523, 784, 1046], off: [] },
-  'sfx-pay-success': { default: [523, 659, 784], coin: [1568, 2093], soft: [659, 784], off: [] },
-  'sfx-pay-fail': { default: [440, 330], low: [330, 247], off: [] },
-  'sfx-scan': { default: [1760], click: [2637], off: [] },
-};
 const SFX_LABEL: Record<string, string> = { 'sfx-order-in': 'New order (POS, KDS)', 'sfx-pay-success': 'Payment success', 'sfx-pay-fail': 'Payment failed', 'sfx-scan': 'Barcode scan' };
 function Sounds({ v }: PP) {
   return <Stage><div className="stack" style={{ width: 'min(480px,100%)' }}>{Object.keys(SFX).map(k => { const hz = SFX[k][v[k]] ?? []; return <div key={k} className="card tight row">
@@ -344,16 +332,16 @@ function Market({ x }: PP) {
 }
 
 export const PLATFORM: Tool[] = [
-  { id: 'fonts', group: 'PLATFORM', name: 'Custom fonts', icon: 'type', plan: 'pro', desc: 'Upload your own font files or pick from the library. Used on every customer-facing surface.', def: { head: 'space', body: 'body', scale: 100, upload: '' }, Preview: Fonts,
+  { id: 'fonts', group: 'PLATFORM', name: 'Custom fonts', icon: 'type', plan: 'pro', desc: 'Upload your own font files or pick from the library. Used on every customer-facing surface.', def: { ...TOOL_DEFAULTS.fonts }, Preview: Fonts,
     fields: () => [F.seg('Headings', 'head', [['space', 'Space Grotesk'], ['body', 'Instrument'], ['upload', 'Uploaded']]), F.seg('Body', 'body', [['body', 'Instrument'], ['space', 'Space Grotesk']]), F.range('Size scale', 'scale', 85, 120, 5, '%'), F.node(set => <FontUpload set={set} />), F.note('WOFF2, WOFF, TTF or OTF up to 2 MB. Make sure your license allows web use.', 'warn')] },
-  { id: 'icons', group: 'PLATFORM', name: 'Icon style', icon: 'shapes', plan: 'free', desc: 'One icon style across the menu, kiosk and member app.', def: { style: 'outline', stroke: 2, shape: 'rounded', color: 'primary' }, Preview: Icons,
+  { id: 'icons', group: 'PLATFORM', name: 'Icon style', icon: 'shapes', plan: 'free', desc: 'One icon style across the menu, kiosk and member app.', def: { ...TOOL_DEFAULTS.icons }, Preview: Icons,
     pairs: (v, x) => { const c = themeColor(x.db.theme, v.color); return v.style === 'filled' ? [[onColor(c, x.db.theme.ink), c, 'Icon on fill']] : [[c, x.db.theme.paper, 'Icon on background']]; },
     fields: (_, x) => [F.seg('Style', 'style', [['outline', 'Outline'], ['filled', 'Filled'], ['duo', 'Duotone']]), F.range('Stroke', 'stroke', 1, 3, .5, 'px'), F.seg('Container', 'shape', [['none', 'None'], ['rounded', 'Rounded'], ['circle', 'Circle']]), F.swatch('Color', 'color', themeSwatches(x.db.theme))] },
-  { id: 'appicon', group: 'PLATFORM', name: 'Favicon, app icon & share image', icon: 'app-window', plan: 'free', desc: 'What customers see in browser tabs, on their home screen and when a link is shared.', def: { name: 'Kopi Biru', bg: 'primary', shape: 'squircle', og: 'Order ahead at Kopi Biru', logo: '' }, Preview: AppIcon, Panel: AppIconPanel,
+  { id: 'appicon', group: 'PLATFORM', name: 'Favicon, app icon & share image', icon: 'app-window', plan: 'free', desc: 'What customers see in browser tabs, on their home screen and when a link is shared.', def: { ...TOOL_DEFAULTS.appicon }, Preview: AppIcon, Panel: AppIconPanel,
     pairs: (v, x) => { const c = themeColor(x.db.theme, v.bg); return [[onColor(c, x.db.theme.ink), c, 'Initials on icon']]; } },
-  { id: 'sounds', group: 'PLATFORM', name: 'Custom sounds', icon: 'volume-2', plan: 'pro', desc: 'Order chime, payment sounds and scan beep for POS, kitchen and customer display.', def: { 'sfx-order-in': 'bell', 'sfx-pay-success': 'default', 'sfx-pay-fail': 'default', 'sfx-scan': 'default', vol: 70, kds: true, disp: true }, Preview: Sounds,
+  { id: 'sounds', group: 'PLATFORM', name: 'Custom sounds', icon: 'volume-2', plan: 'pro', desc: 'Order chime, payment sounds and scan beep for POS, kitchen and customer display.', def: { ...TOOL_DEFAULTS.sounds }, Preview: Sounds,
     fields: v => [...Object.keys(SFX).map(k => F.seg(SFX_LABEL[k], k, Object.keys(SFX[k]).map(o => [o, o[0].toUpperCase() + o.slice(1)] as [string, string]))), F.range('Volume', 'vol', 0, 100, 5, '%'), F.toggle('Kitchen display chime', 'kds'), F.toggle('Customer display sounds', 'disp'), F.node(<button className="btn btn-block" onClick={() => Object.keys(SFX).forEach((k, i) => setTimeout(() => tone(SFX[k][v[k]] ?? [], v.vol), i * 600))}><Icon name="play" size={18} />Play all</button>)] },
-  { id: 'lang', group: 'PLATFORM', name: 'Languages & translations', icon: 'languages', plan: 'free', desc: 'Add languages and translate any menu item. Customers switch language on the menu.', def: { def: 'id', en: true, zh: false, ja: false, ko: false, edit: 'en' }, Preview: Lang, Panel: LangPanel },
+  { id: 'lang', group: 'PLATFORM', name: 'Languages & translations', icon: 'languages', plan: 'free', desc: 'Add languages and translate any menu item. Customers switch language on the menu.', def: { ...TOOL_DEFAULTS.lang }, Preview: Lang, Panel: LangPanel },
   { id: 'white', group: 'PLATFORM', name: 'White-label app', icon: 'smartphone', plan: 'enterprise', desc: 'Your own member app on the App Store and Google Play, built on BorNiz.', def: { name: 'Kopi Biru', sub: 'Order ahead & earn beans', bundle: 'id.kopibiru.app', color: 'primary' }, Preview: White,
     fields: (_, x) => [F.text('App name', 'name'), F.text('Subtitle', 'sub'), F.text('Bundle ID', 'bundle'), F.swatch('Brand color', 'color', themeSwatches(x.db.theme)), F.note('You need Apple Developer and Google Play accounts in your company name.', 'warn')] },
   { id: 'domain', group: 'PLATFORM', name: 'Custom domain & SSO', icon: 'globe', plan: 'enterprise', desc: 'Serve the menu and dashboard from your own domain, and sign staff in with company accounts.', def: { menu: 'order.kopibiru.id', dash: 'admin.kopibiru.id', sso: 'google', enforce: false }, Preview: Domain, Panel: DomainPanel },
@@ -361,7 +349,7 @@ export const PLATFORM: Tool[] = [
     fields: () => [F.toggle('WhatsApp chat button', 'wa'), F.toggle('Google Reviews widget', 'reviews'), F.toggle('Instagram feed', 'ig'), F.area('Custom HTML / script (head)', 'code'), F.note('Custom scripts run on menu pages only, never on checkout or payment pages.', 'warn')] },
   { id: 'kit', group: 'PLATFORM', name: 'Import brand kit', icon: 'download', plan: 'free', desc: 'Pull colors and fonts from a tokens file you already have (Figma, Canva, JSON or CSS).', Preview: Kit, Panel: KitPanel },
   { id: 'auto', group: 'PLATFORM', name: 'Auto theme from logo', icon: 'wand-sparkles', plan: 'free', desc: 'Upload a logo or photo and get three theme options built from its colors.', Preview: Auto, Panel: p => <AutoPanel {...p} v={{ mood: 'bold', pick: 0, ...p.v }} /> },
-  { id: 'anim', group: 'PLATFORM', name: 'Animation style', icon: 'sparkles', plan: 'free', desc: 'How much movement customers see on the menu and kiosk.', def: { level: 'subtle', reduce: true }, Preview: Anim,
+  { id: 'anim', group: 'PLATFORM', name: 'Animation style', icon: 'sparkles', plan: 'free', desc: 'How much movement customers see on the menu and kiosk.', def: { ...TOOL_DEFAULTS.anim }, Preview: Anim,
     fields: () => [F.seg('Level', 'level', [['none', 'None'], ['subtle', 'Subtle'], ['playful', 'Playful']]), F.toggle('Respect device reduced-motion setting', 'reduce')] },
   { id: 'prices', group: 'PLATFORM', name: 'Price display rules', icon: 'badge-dollar-sign', plan: 'free', desc: 'Rounding, strike-through for sale prices and whether menu prices include tax.', def: { step: 1, mode: 'nearest', strike: true, tax: 'excl', sym: 'idr', sep: 'comma', short: false }, Preview: Prices,
     fields: () => [F.seg('Round to', 'step', [[1, 'None'], [100, '100'], [500, '500'], [1000, '1,000']]), F.seg('Direction', 'mode', [['nearest', 'Nearest'], ['up', 'Up'], ['down', 'Down']]), F.toggle('Strike-through original on sale items', 'strike'), F.seg('Menu prices', 'tax', [['excl', 'Before tax'], ['incl', 'Tax-inclusive']]), F.seg('Currency', 'sym', [['idr', 'IDR'], ['rp', 'Rp']]), F.toggle('Short form (25k)', 'short')] },

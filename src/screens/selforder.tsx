@@ -7,6 +7,8 @@ import { useApp } from '../app/context.tsx';
 import { sendToKitchen } from '../data/actions.ts';
 import { orderPlaced } from '../data/actions/selforder.ts';
 import { brandVars } from './guest/kit.tsx';
+import { GuestHead, GuestStyle } from './guest/look.tsx';
+import { guestVars, guestZoom } from '../system/tools.ts';
 import { useGuest, type G } from './selforder/shared.tsx';
 import { AddMore, Call, Cart, Category, Checkout, Closed, Home, Item, Landing, Language, Qris, Search, Status } from './selforder/order.tsx';
 import { Booking, EmailThanks, Feedback, MemberCard, Prefs, Queue, Receipt, Track, Voucher, WaThanks } from './selforder/links.tsx';
@@ -31,8 +33,10 @@ export default function Screen() {
   const g = useGuest();
   const View = VIEWS[page.slug] ?? Landing;
 
-  return <div data-guest style={{ ...brandVars(themeNow(g.db, g.db.theme, g.now)), minHeight: '100dvh', background: 'color-mix(in srgb,var(--bn-ink) 9%,var(--bn-paper))' }}>
-    <main style={{ maxWidth: 520, margin: '0 auto', minHeight: '100dvh', background: 'var(--bn-paper)', position: 'relative', overflowX: 'hidden' }}>
+  const theme = themeNow(g.db, g.db.theme, g.now);
+  return <div data-guest style={{ ...brandVars(theme), ...guestVars(g.db, theme), minHeight: '100dvh', background: 'color-mix(in srgb,var(--bn-ink) 9%,var(--bn-paper))' }}>
+    <GuestStyle db={g.db} /><GuestHead db={g.db} slug={page.slug} theme={theme} />
+    <main style={{ maxWidth: 520, margin: '0 auto', minHeight: '100dvh', background: 'var(--bn-paper)', position: 'relative', overflowX: 'hidden', zoom: guestZoom(g.db) }}>
       <View g={g} />
     </main>
   </div>;
