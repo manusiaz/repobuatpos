@@ -23,7 +23,7 @@ export interface StockItem { id: string; name: string; unit: string; unitCost: I
 export interface Recipe { productId: string; stockItemId: string; qty: number }
 export interface Customer { id: string; name: string; phone: string; email: string; joinedAt: number; optIn: boolean; birthday?: string; credit: IDR; deposit: IDR }
 
-export interface OrderLine { id: string; productId: string; name: string; qty: number; unitPrice: IDR; flashPrice: IDR | null; mods: { name: string; price: IDR }[]; note: string; discountPct: number; station: Category['station']; kds: 'new' | 'cooking' | 'done'; fired: boolean; firedAt?: number }
+export interface OrderLine { id: string; productId: string; name: string; qty: number; unitPrice: IDR; flashPrice: IDR | null; mods: { name: string; price: IDR }[]; note: string; discountPct: number; station: Category['station']; kds: 'new' | 'cooking' | 'done'; fired: boolean; firedAt?: number; /** combo instance: its lines are priced, added and removed together */ combo?: string }
 export interface Order {
   id: string; no: string; outletId: string; sessionId: string | null; source: Source; type: 'dine' | 'take' | 'delivery'; status: OrderStatus;
   table: string | null; customerId: string | null; lines: OrderLine[]; discountPct: number; promoIds: string[]; guests: number;

@@ -1,5 +1,5 @@
 'use client';
-import { BADGES, STUDIO_DEFAULTS } from '../../system/studio.ts';
+import { BADGES, STUDIO_DEFAULTS, lookOf } from '../../system/studio.ts';
 import { linkTo } from '../../system/hosts.ts';
 // "More pages" in Menu Studio: every extra customer page or screen, as a settings spec + a live preview from store data.
 // Settings live in the menu design (design.x[key]) and publish with the rest of the menu.
@@ -28,12 +28,13 @@ const CHANNELS: [string, string][] = [['dine', 'Dine-in'], ['take', 'Takeaway'],
 
 export const EXTRAS: Extra[] = [
   { key: 'style-per-category', label: 'Style per category', icon: 'swatch-book', device: 'phone', defaults: STUDIO_DEFAULTS['style-per-category'],
-    fields: ctx => [f.seg('cat', 'Category', ctx.db.categories.map(c => `${c.id}:${c.name}`).join('|'), 2), f.seg('layout', 'Layout', 'list:List|grid:Grid|big:Big photo|text:Printed'), f.seg('bg', 'Background', 'page:Page|surface:Card|brand:Brand tint'), f.img('banner', 'Category banner', '3/1')],
-    preview: (g, ctx) => { const items = guestProducts(ctx.db, ctx.outletId).filter(x => x.p.categoryId === g.cat), cat = ctx.db.categories.find(c => c.id === g.cat);
-      return <Page ctx={ctx} title={cat?.name}><div style={{ margin: -16, padding: 16, background: g.bg === 'surface' ? 'var(--bn-surface)' : g.bg === 'brand' ? 'color-mix(in srgb,var(--bn-p) 10%,var(--bn-paper))' : 'transparent', display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ aspectRatio: '3/1', borderRadius: 'var(--bn-r)', background: g.banner ? `url(${g.banner}) center/cover` : 'var(--bn-banner)', display: 'flex', alignItems: 'flex-end', padding: 14, color: WHITE }}><H ctx={ctx}>{cat?.name}</H></div>
-        <div style={{ display: 'grid', gridTemplateColumns: g.layout === 'grid' ? '1fr 1fr' : '1fr', gap: 10 }}>{items.map(x => <div key={x.p.id} style={{ display: 'flex', flexDirection: g.layout === 'grid' || g.layout === 'big' ? 'column' : 'row', gap: 8, padding: g.layout === 'text' ? '8px 0' : 8, borderBottom: g.layout === 'text' ? '1px dashed var(--bn-line)' : 0, background: g.layout === 'text' ? 'transparent' : 'var(--bn-surface)', borderRadius: 'var(--bn-r-sm)' }}>
-          {g.layout !== 'text' && <span style={{ width: g.layout === 'list' ? 64 : '100%', aspectRatio: g.layout === 'big' ? '16/9' : '1/1', borderRadius: 'var(--bn-r-sm)', background: photoOf(x.p), flex: 'none' }} />}<span style={{ flex: 1 }}><b style={{ fontSize: 14 }}>{x.p.name}</b><br />{idr(x.price)}</span></div>)}</div></div></Page>; } },
+    // each category keeps its own look (layout.<id>, bg.<id>, banner.<id>); pick a category, then style it
+    fields: (ctx, g) => [f.seg('cat', 'Category', ctx.db.categories.map(c => `${c.id}:${c.name}`).join('|'), 2), f.seg('layout.' + g.cat, 'Layout', 'list:List|grid:Grid|big:Big photo|text:Printed'), f.seg('bg.' + g.cat, 'Background', 'page:Page|surface:Card|brand:Brand tint'), f.img('banner.' + g.cat, 'Category banner', '3/1')],
+    preview: (g, ctx) => { const items = guestProducts(ctx.db, ctx.outletId).filter(x => x.p.categoryId === g.cat), cat = ctx.db.categories.find(c => c.id === g.cat), s = lookOf(g, String(g.cat));
+      return <Page ctx={ctx} title={cat?.name}><div style={{ margin: -16, padding: 16, background: s.bg === 'surface' ? 'var(--bn-surface)' : s.bg === 'brand' ? 'color-mix(in srgb,var(--bn-p) 10%,var(--bn-paper))' : 'transparent', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {s.banner ? <div style={{ aspectRatio: '3/1', borderRadius: 'var(--bn-r)', background: `linear-gradient(180deg,transparent 40%,color-mix(in srgb,var(--ink-950) 55%,transparent)),url(${s.banner}) center/cover`, display: 'flex', alignItems: 'flex-end', padding: 14, color: WHITE }}><H ctx={ctx}>{cat?.name}</H></div> : <H ctx={ctx}>{cat?.name}</H>}
+        <div style={{ display: 'grid', gridTemplateColumns: s.layout === 'grid' ? '1fr 1fr' : '1fr', gap: 10 }}>{items.map(x => <div key={x.p.id} style={{ display: 'flex', flexDirection: s.layout === 'grid' || s.layout === 'big' ? 'column' : 'row', gap: 8, padding: s.layout === 'text' ? '8px 0' : 8, borderBottom: s.layout === 'text' ? '1px dashed var(--bn-line)' : 0, background: s.layout === 'text' ? 'transparent' : 'var(--bn-surface)', borderRadius: 'var(--bn-r-sm)' }}>
+          {s.layout !== 'text' && <span style={{ width: s.layout === 'list' ? 64 : '100%', aspectRatio: s.layout === 'big' ? '16/9' : '1/1', borderRadius: 'var(--bn-r-sm)', background: photoOf(x.p), flex: 'none' }} />}<span style={{ flex: 1 }}><b style={{ fontSize: 14 }}>{x.p.name}</b><br />{idr(x.price)}</span></div>)}</div></div></Page>; } },
 
   { key: 'auto-theme-by-time', label: 'Auto theme by time', icon: 'sun-moon', device: 'tablet', defaults: STUDIO_DEFAULTS['auto-theme-by-time'],
     fields: () => [f.tog('on', 'Switch theme automatically', 'Outlet local time'), f.text('light', 'Day theme from', 'HH:MM'), f.text('dark', 'Night theme from', 'HH:MM'), f.color('paper', 'Night background'), f.color('ink', 'Night text')],

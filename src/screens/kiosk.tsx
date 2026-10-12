@@ -1,5 +1,6 @@
 'use client';
-import { themeNow } from '../system/studio.ts';
+import { categoryLook, comboOf, themeNow } from '../system/studio.ts';
+import { ComboBuilder, comboHere } from './guest/combo.tsx';
 import { guestLang } from '../system/settings.ts';
 import { payOn } from '../system/settings.ts';
 import { gatewayResult } from '../data/actions/dispatch.ts';
@@ -12,7 +13,7 @@ import { useApp } from '../app/context.tsx';
 import { pagesOf } from '../system/registry.ts';
 import { Icon, toast, useNow } from '../ui/kit.tsx';
 import { idr } from '../domain/money.ts';
-import { addLine, cancelPayment, clearOrder, holdOrder, newOrder, patchOrder, sendToKitchen, setQty, startPayment } from '../data/actions.ts';
+import { addCombo, addLine, cancelPayment, clearOrder, holdOrder, newOrder, patchOrder, sendToKitchen, setQty, startPayment } from '../data/actions.ts';
 import { orderPlaced } from '../data/actions/selforder.ts';
 import type { Order } from '../data/schema.ts';
 import { brandVars, groupsOf, LINE, missingGroup, mmss, modsFrom, modsText, MUTED, OptionPicker, QR, unit, useLang, useLocal, useMenu, Wordmark, type MenuItem, type Sel } from './guest/kit.tsx';
@@ -83,8 +84,9 @@ function Attract({ L, start }: { L: LangT; start: () => void }) {
 function Menu({ L, order, type, setType, ensure, toPay }: { L: LangT; order: Order | null; type: 'dine' | 'take' | null; setType: (t: 'dine' | 'take' | null) => void; ensure: () => string; toPay: () => void }) {
   const { db, outletId } = useApp();
   const { items, cats, best } = useMenu(db, outletId);
-  const [cat, setCat] = useState('all'), [open, setOpen] = useState<MenuItem | null>(null);
+  const [cat, setCat] = useState('all'), [open, setOpen] = useState<MenuItem | null>(null), [combo, setCombo] = useState(false);
   const t = L.t;
+  const look = cat === 'all' ? null : categoryLook(db, cat), lay = look?.layout ?? 'grid', hasCombo = cat === 'all' && !!comboHere(db, outletId); // Menu Studio › style per category, combo builder
   if (!type && !order) return <div style={{ flex: 1, padding: '8cqw 6cqw', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '5cqw' }}>
     <b style={{ ...HEAD, fontSize: '9cqw', textAlign: 'center' }}>{t('Where will you eat?')}</b>
     {([['dine', 'utensils', 'Eat here'], ['take', 'shopping-bag', 'Take away']] as const).map(([k, ic, l]) =>
@@ -104,11 +106,16 @@ function Menu({ L, order, type, setType, ensure, toPay }: { L: LangT; order: Ord
     </div>
     <div style={{ flex: 'none', display: 'flex', gap: '2cqw', padding: '0 5cqw 3cqw', overflowX: 'auto' }}>{[['all', 'All'] as const, ...cats.map(c => [c.id, c.name] as const)].map(([k, l]) =>
       <button key={k} aria-pressed={cat === k} onClick={() => setCat(k)} style={{ flex: 'none', height: TOUCH, padding: '0 5cqw', border: 0, borderRadius: 99, background: cat === k ? 'var(--bn-ink)' : 'var(--ink-0)', color: cat === k ? 'var(--ink-0)' : 'var(--bn-ink)', fontSize: '4cqw', fontWeight: 700, cursor: 'pointer' }}>{t(l)}</button>)}</div>
-    <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: '0 5cqw 26cqw', display: 'grid', gridTemplateColumns: '1fr 1fr', gridAutoRows: 'min-content', gap: '3cqw' }}>
+    <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: look && look.bg !== 'page' ? '4cqw 5cqw 26cqw' : '0 5cqw 26cqw', display: 'grid', gridTemplateColumns: lay === 'grid' ? '1fr 1fr' : '1fr', gridAutoRows: 'min-content', gap: '3cqw',
+      background: look?.bg === 'surface' ? 'var(--ink-0)' : look?.bg === 'brand' ? 'color-mix(in srgb,var(--bn-p) 10%,var(--bn-paper))' : undefined }}>
+      {look?.banner && <span role="img" aria-label={cats.find(c => c.id === cat)?.name} style={{ gridColumn: '1 / -1', aspectRatio: '3/1', borderRadius: '5cqw', background: `url(${look.banner}) center/cover` }} />}
+      {hasCombo && <button onClick={() => setCombo(true)} style={{ ...CARD, gridColumn: '1 / -1', boxShadow: 'none', background: 'var(--bn-ink)', color: 'var(--ink-0)', padding: '4cqw 5cqw', display: 'flex', alignItems: 'center', gap: '3cqw', textAlign: 'left' }}>
+        <Icon name="list-ordered" style={{ width: '9cqw', height: '9cqw', color: 'var(--bn-acc)', flex: 'none' }} /><span style={{ flex: 1 }}><b style={{ display: 'block', fontSize: '5cqw', lineHeight: 1.15 }}>{comboOf(db).name}</b><span style={{ fontSize: '3.6cqw', opacity: .85 }}>{comboOf(db).steps.map(s => s.title).join(' + ')}</span></span>
+        <b style={{ fontSize: '4.6cqw', color: 'var(--bn-acc)' }}>{idr(comboOf(db).price)}</b></button>}
       {list.map(i => { const n = inCart(i.p.id); return <button key={i.p.id} disabled={i.sold} onClick={() => groupsOf(db, i.p).length ? setOpen(i) : add(i)} aria-label={`${i.p.name}, ${i.sold ? t('Sold out') : idr(unit(i))}`}
-        style={{ ...CARD, boxShadow: 'none', padding: 0, overflow: 'hidden', textAlign: 'left', position: 'relative', opacity: i.sold ? .55 : 1, cursor: i.sold ? 'not-allowed' : 'pointer' }}>
-        <span style={{ display: 'block', aspectRatio: '1', background: i.sold ? 'var(--bg-sunken)' : productImage(i.p) }} />
-        <span style={{ display: 'block', padding: '3cqw' }}><b style={{ display: 'block', fontSize: '4cqw', lineHeight: 1.2 }}>{i.p.name}</b>
+        style={{ ...CARD, boxShadow: 'none', padding: 0, overflow: 'hidden', textAlign: 'left', position: 'relative', opacity: i.sold ? .55 : 1, cursor: i.sold ? 'not-allowed' : 'pointer', display: lay === 'list' || lay === 'text' ? 'flex' : 'block', alignItems: 'center', minHeight: 'max(64px, 13cqw)' }}>
+        {lay !== 'text' && <span style={{ display: 'block', flex: 'none', width: lay === 'list' ? '24cqw' : undefined, aspectRatio: lay === 'big' ? '16/9' : '1', background: i.sold ? 'var(--bg-sunken)' : productImage(i.p) }} />}
+        <span style={{ display: 'block', padding: '3cqw', flex: 1 }}><b style={{ display: 'block', fontSize: lay === 'big' ? '5cqw' : '4cqw', lineHeight: 1.2 }}>{i.p.name}</b>
           {i.sold ? <b style={{ fontSize: '4cqw', color: MUTED }}>{t('Sold out')}</b> : <><b style={{ fontSize: '4cqw', color: 'var(--bn-p)' }}>{idr(unit(i))}</b>{i.flash != null && <s style={{ fontSize: '3cqw', color: MUTED, marginLeft: '1.4cqw' }}>{idr(i.price).replace('IDR ', '')}</s>}</>}</span>
         {n > 0 && <span style={{ position: 'absolute', top: '2.4cqw', right: '2.4cqw', minWidth: '9cqw', height: '9cqw', padding: '0 2cqw', borderRadius: 99, background: 'var(--bn-p)', color: 'var(--ink-0)', fontSize: '4cqw', fontWeight: 800, lineHeight: '9cqw', textAlign: 'center' }}>{n}</span>}
         {i.flash != null && !i.sold && <span style={{ position: 'absolute', top: '2.4cqw', left: '2.4cqw', padding: '.8cqw 2cqw', borderRadius: 99, background: 'var(--bn-acc)', fontSize: '2.8cqw', fontWeight: 800 }}>{t('Flash sale')}</span>}
@@ -117,6 +124,10 @@ function Menu({ L, order, type, setType, ensure, toPay }: { L: LangT; order: Ord
     {count > 0 && <button onClick={toPay} style={{ ...PRIMARY, position: 'absolute', left: '5cqw', right: '5cqw', bottom: '5cqw', height: 'max(64px, 17cqw)', display: 'flex', alignItems: 'center', padding: '0 5cqw', gap: '3cqw', boxShadow: 'var(--shadow-e2)' }}>
       <span>{count} {count > 1 ? 'items' : 'item'}</span><span style={{ marginLeft: 'auto' }}>Pay {idr(order!.total)}</span></button>}
     {open && <ItemSheet i={open} L={L} close={() => setOpen(null)} add={(mods, q) => { add(open, mods, q); setOpen(null); }} />}
+    {combo && <>
+      <div onClick={() => setCombo(false)} style={{ position: 'absolute', inset: 0, background: 'color-mix(in srgb,var(--ink-950) 45%,transparent)', zIndex: 8, animation: 'fade var(--dur-base) var(--ease-out)' }} />
+      <div role="dialog" aria-modal="true" aria-label={comboOf(db).name} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '88%', zIndex: 9, background: 'var(--bn-paper)', borderRadius: '7cqw 7cqw 0 0', overflow: 'hidden', animation: 'slideU var(--dur-slow) var(--ease-out)' }}>
+        <ComboBuilder db={db} outletId={outletId} kiosk onClose={() => setCombo(false)} onAdd={picks => { try { addCombo(ensure(), comboOf(db), picks, 'kiosk'); setCombo(false); } catch (e) { toast((e as Error).message); } }} /></div></>}
   </>;
 }
 
@@ -205,10 +216,10 @@ function Pay({ L, order, back, reset }: { L: LangT; order: Order | null; back: (
     <b style={{ ...HEAD, fontSize: '8cqw' }}>Pay {idr(order.total)}</b>
     <div style={{ flex: '0 1 auto', minHeight: 0, overflow: 'auto', padding: '4cqw', borderRadius: '5cqw', background: 'var(--ink-0)', display: 'flex', flexDirection: 'column', gap: '2.4cqw', fontSize: '3.8cqw' }}>
       {order.lines.map(l => <div key={l.id} style={{ display: 'flex', alignItems: 'center', gap: '2cqw' }}>
-        <span style={{ flex: 1, minWidth: 0 }}>{l.name}{l.mods.length > 0 && <span style={{ display: 'block', fontSize: '3cqw', color: MUTED }}>{modsText(l.mods)}</span>}</span>
-        <button aria-label={`Fewer ${l.name}`} onClick={() => setQty(order.id, l.id, l.qty - 1, 'kiosk')} style={{ ...CARD, width: 'max(48px,10cqw)', height: 'max(48px,10cqw)', borderRadius: '3cqw', display: 'grid', placeItems: 'center' }}><Icon name={l.qty > 1 ? 'minus' : 'trash-2'} size={20} /></button>
+        <span style={{ flex: 1, minWidth: 0 }}>{l.name}{(l.mods.length > 0 || l.combo) && <span style={{ display: 'block', fontSize: '3cqw', color: MUTED }}>{modsText(l.mods, l.combo ? l.note : undefined)}</span>}</span>
+        <button aria-label={`Fewer ${l.name}`} onClick={() => setQty(order.id, l.id, l.qty - 1, 'kiosk')} style={{ ...CARD, width: 'max(48px,10cqw)', height: 'max(48px,10cqw)', borderRadius: '3cqw', display: 'grid', placeItems: 'center' }}><Icon name={l.qty > 1 && !l.combo ? 'minus' : 'trash-2'} size={20} /></button>
         <b style={{ minWidth: '5cqw', textAlign: 'center' }}>{l.qty}</b>
-        <button aria-label={`More ${l.name}`} onClick={() => setQty(order.id, l.id, l.qty + 1, 'kiosk')} style={{ ...CARD, width: 'max(48px,10cqw)', height: 'max(48px,10cqw)', borderRadius: '3cqw', display: 'grid', placeItems: 'center' }}><Icon name="plus" size={20} /></button>
+        <button aria-label={`More ${l.name}`} disabled={!!l.combo} onClick={() => setQty(order.id, l.id, l.qty + 1, 'kiosk')} style={{ ...CARD, width: 'max(48px,10cqw)', height: 'max(48px,10cqw)', borderRadius: '3cqw', display: 'grid', placeItems: 'center' }}><Icon name="plus" size={20} /></button>
       </div>)}
       <div style={{ borderTop: `1px solid ${LINE}`, paddingTop: '2cqw', display: 'flex', flexDirection: 'column', gap: '1cqw', fontSize: '3.4cqw', color: MUTED }}>
         <span style={{ display: 'flex', justifyContent: 'space-between' }}><span>{L.t('Subtotal')}</span><span>{idr(order.subtotal)}</span></span>

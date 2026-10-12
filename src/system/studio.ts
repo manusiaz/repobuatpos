@@ -1,12 +1,13 @@
 // Menu Studio page values the live app reads (QR menu, kiosk, POS, display). The studio edits them; publishing puts them in
 // the menu design (design.x[key]); every surface reads them here, merged over these defaults, so a preview is never a dead end.
-import type { DB } from '../data/schema.ts';
+import type { Customer, DB } from '../data/schema.ts';
 import { menuDesign } from '../data/actions/studio.ts';
+import { referral } from './settings.ts';
 
 export const BADGES: [string, string, string][] = [['spicy', 'Spicy', 'flame'], ['veg', 'Vegetarian', 'leaf'], ['nuts', 'Contains nuts', 'nut'], ['dairy', 'Contains dairy', 'milk'], ['halal', 'Halal', 'badge-check'], ['new', 'New', 'sparkles']];
 export const STUDIO_DEFAULTS = {
   'custom-badges-and-allergen-diet-icons': { which: 'spicy', spicy: '', veg: '', nuts: '', dairy: '', halal: '', new: '', legend: true },
-  'style-per-category': { cat: 'coffee', layout: 'grid', bg: 'page', banner: '' },
+  'style-per-category': { cat: 'coffee', 'layout.coffee': 'grid', 'bg.coffee': 'page', 'banner.coffee': '' },
   'auto-theme-by-time': { on: true, dark: '18:00', light: '06:00', paper: '#14161C', ink: '#F5F2EE' },
   'upsell-and-goes-well-with-rules': { trigger: 'p1', suggest: 'p7,p8', title: 'Goes well with', max: 2, cart: true },
   'combo-bundle-builder-steps': { name: 'Breakfast combo', price: 49000, s1: 'Pick a drink', c1: 'coffee', s2: 'Pick a pastry', c2: 'pastry', s3: 'Add a side', c3: 'other' },
@@ -56,3 +57,37 @@ export function channelPrice(db: DB, base: number, source: string): number {
   const r = Number(v.round) || 100;
   return Math.ceil((base * (1 + Number(v[key]) / 100)) / r) * r;
 }
+
+/** Style per category: each category keeps its own layout, background and banner (`layout.<category id>` …).
+ *  Categories nobody styled are plain lists on the page background. */
+export type CatLook = { layout: 'list' | 'grid' | 'big' | 'text'; bg: 'page' | 'surface' | 'brand'; banner: string };
+export const lookOf = (v: Record<string, unknown>, catId: string): CatLook =>
+  ({ layout: String(v['layout.' + catId] ?? 'list') as CatLook['layout'], bg: String(v['bg.' + catId] ?? 'page') as CatLook['bg'], banner: String(v['banner.' + catId] ?? '') });
+export const categoryLook = (db: DB, catId: string) => lookOf(studioValue(db, 'style-per-category'), catId);
+
+/** Combo builder: name, price and the steps the owner filled in (a step needs a title and a category). */
+export function comboOf(db: DB) {
+  const v = studioValue(db, 'combo-bundle-builder-steps') as Record<string, string | number>;
+  const steps = [1, 2, 3].map(i => ({ title: String(v['s' + i] ?? '').trim(), cat: String(v['c' + i] ?? '') })).filter(s => s.title && s.cat);
+  return { name: String(v.name || 'Combo'), price: Math.max(0, Math.round(Number(v.price) || 0)), steps };
+}
+
+/** Gift card designer: the card guests buy and the amounts they can pick. */
+export function giftCardOf(db: DB) {
+  const v = studioValue(db, 'gift-card-designer');
+  const amounts = String(v.amounts).split(',').map(x => Math.round(Number(x.replace(/\D/g, '')))).filter(n => n > 0);
+  return { ...v, amounts: [...new Set(amounts)] };
+}
+
+/** Referral page: the words come from Menu Studio, and "50 beans" / "10% off" in them is the reward. Without a number the
+ *  Referral program settings decide the beans. Both rewards are given once, when the friend's first order is paid. */
+const beansIn = (s: string) => { const m = /(\d[\d.,]*)\s*beans?/i.exec(s); return m ? Number(m[1].replace(/[.,]/g, '')) : null; };
+const pctIn = (s: string) => Math.min(100, Number(/(\d+)\s*%/.exec(s)?.[1] ?? 0));
+export function referralOffer(db: DB) {
+  const v = studioValue(db, 'referral-page'), r = referral(db), friendPct = pctIn(v.give);
+  return { ...v, on: r.on, referrer: beansIn(v.get) ?? r.referrer, friend: beansIn(v.give) ?? (friendPct ? 0 : r.friend), friendPct };
+}
+export const referralCode = (db: DB, c: Customer) =>
+  `${String(studioValue(db, 'referral-page').prefix || 'REF').toUpperCase().replace(/[^A-Z0-9]/g, '')}-${c.id.replace(/[^a-z0-9]/gi, '').slice(-6).toUpperCase()}`;
+/** The member behind an invite: their code (KOPI-C1) or, from older links, their id. */
+export const referrerOf = (db: DB, ref: string) => db.customers.find(c => c.id === ref || referralCode(db, c) === ref.trim().toUpperCase());

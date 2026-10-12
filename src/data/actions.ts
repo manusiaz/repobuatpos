@@ -1,7 +1,7 @@
 'use client';
 // Service layer. Mirrors the service events in spec/bn-diagrams.js (Orders, Payments, Inventory, Shifts, Approvals,
 // Loyalty, Catalog, Themes). A service writes only through commit(); effects of one event run in the same commit.
-import { channelPrice, feedbackBeans, studioValue } from '../system/studio.ts';
+import { channelPrice, feedbackBeans, referralOffer, studioValue } from '../system/studio.ts';
 import { commit, snapshot, uid } from './store.ts';
 import type { Approval, DB, Order, Product, Rec, Role } from './schema.ts';
 import { lineTotal, orderTotals, QRIS_TTL_MS, type Method, type Source } from '../domain/order.ts';
@@ -10,6 +10,7 @@ import { earn, reversal, tierOf, canRedeem } from '../domain/loyalty.ts';
 import { deductForSale, level as stockLevel, levels, portionsLeft, missingPhotos, opnameApprover, postOpname, type OpnameLine } from '../domain/stock.ts';
 import { flashPrice, resolve } from '../domain/promo.ts';
 import { closeCheck, type ClockShot } from '../domain/shift.ts';
+import { comboPrices } from '../domain/split.ts';
 import { idr, roundCash } from '../domain/money.ts';
 import { approvalAlert, decidedAlert } from './alerts/names.ts';
 import { escalationOn, payOn, photoRequired, type PayId } from '../system/settings.ts';
@@ -38,6 +39,7 @@ export function notify(d: DB, alert: string, level: 'info' | 'warn' | 'high', fa
 }
 
 function recalc(d: DB, o: Order) {
+  if (!o.lines.length && d.records.gift_cards?.some(r => r.a === o.id)) return; // a gift card order is its amount: no lines, no PB1
   const out = outletOf(d, o.outletId);
   const lines = o.lines.map(l => ({ unitPrice: l.unitPrice, flashPrice: l.flashPrice, modifiers: l.mods.map(m => m.price), qty: l.qty, discountPct: l.discountPct }));
   // promo value and min spend are worked out on what the guest is charged: modifiers in, item discounts out
@@ -63,15 +65,31 @@ export function addLine(orderId: string, productId: string, mods: { name: string
     const o = findOrder(d, orderId), p = d.products.find(x => x.id === productId)!;
     if (d.outletProducts.find(x => x.productId === p.id && x.outletId === o.outletId)?.is86) return;
     const key = JSON.stringify([productId, mods, note]);
-    const same = o.lines.find(l => !l.fired && JSON.stringify([l.productId, l.mods, l.note]) === key);
+    const same = o.lines.find(l => !l.fired && !l.combo && JSON.stringify([l.productId, l.mods, l.note]) === key);
     if (same) same.qty += qty;
     else o.lines.push({ id: uid('l'), productId, name: p.name, qty, unitPrice: priceAt(d, p, o.outletId), flashPrice: flashPrice(d.promos, p.id), mods, note,
       discountPct: 0, station: d.categories.find(c => c.id === p.categoryId)?.station ?? 'bar', kds: 'new', fired: false });
     recalc(d, o);
   }, orderId);
 }
+/** Combo (Menu Studio › combo builder): one line per picked item, priced so the items add up to the combo price exactly;
+ *  options are charged on top. The kitchen sees each item at its own station with the combo name as the note. */
+export function addCombo(orderId: string, combo: { name: string; price: number }, picks: { productId: string; mods: { name: string; price: number }[] }[], by = 'guest') {
+  commit('order.combo_added', by, d => {
+    const o = findOrder(d, orderId), ok = sellable(d, o.outletId), ps = picks.map(x => d.products.find(p => p.id === x.productId));
+    if (!picks.length || ps.some((p, i) => !p || !ok(picks[i].productId))) throw new Error('Something in this combo just sold out. Pick another item.');
+    const units = comboPrices(combo.price, ps.map(p => priceAt(d, p!, o.outletId))), id = uid('cb');
+    ps.forEach((p, i) => o.lines.push({ id: uid('l'), productId: p!.id, name: p!.name, qty: 1, unitPrice: units[i], flashPrice: null, mods: picks[i].mods, note: combo.name,
+      discountPct: 0, station: d.categories.find(c => c.id === p!.categoryId)?.station ?? 'bar', kds: 'new', fired: false, combo: id }));
+    recalc(d, o);
+  }, orderId);
+}
 export function setQty(orderId: string, lineId: string, qty: number, by: string) {
-  commit('order.line_qty', by, d => { const o = findOrder(d, orderId); const l = o.lines.find(x => x.id === lineId); if (!l || l.fired) return; l.qty = qty; o.lines = o.lines.filter(x => x.qty > 0); recalc(d, o); }, orderId);
+  commit('order.line_qty', by, d => { const o = findOrder(d, orderId); const l = o.lines.find(x => x.id === lineId); if (!l || l.fired) return;
+    // a combo is one item: fewer removes the whole combo, more is a new combo from the builder
+    if (l.combo) { if (qty < l.qty) o.lines = o.lines.filter(x => x.combo !== l.combo || x.fired); }
+    else { l.qty = qty; o.lines = o.lines.filter(x => x.qty > 0); }
+    recalc(d, o); }, orderId);
 }
 export function patchOrder(orderId: string, patch: Partial<Order>, by: string) {
   commit('order.updated', by, d => { const o = findOrder(d, orderId); Object.assign(o, patch); recalc(d, o); }, orderId);
@@ -175,6 +193,14 @@ export function settleIfDone(d: DB, o: Order, by: string) {
   const cash = d.payments.some(p => p.orderId === o.id && p.method === 'cash' && p.status === 'settled');
   if (paid < (cash ? Math.min(o.total, roundCash(o.total)) : o.total)) return;
   o.status = 'paid'; o.paidAt = now();
+  // Gift card bought on the guest page (Menu Studio › gift card designer): the balance lands on the recipient's member
+  // account (pay with deposit / gift card at the POS) and they get a WhatsApp. records.gift_cards: a order · b recipient · c amount · d message · e state
+  for (const r of d.records.gift_cards ?? []) {
+    const c = r.a === o.id && r.e === 'pending' ? d.customers.find(x => x.id === r.b) : undefined;
+    if (!c) continue;
+    c.deposit += Number(r.c); r.e = 'issued';
+    d.messages.unshift({ id: uid('ms'), channel: 'wa', template: 'gift_card', to: c.phone, status: 'queued', at: now(), customerId: c.id, orderId: o.id });
+  }
   // Pay-first guest orders (QR menu, kiosk, web) go to the kitchen at settlement, wherever the gateway lands, not on the guest's open tab.
   if (o.total > 2_000_000) notify(d, 'Big order', 'info', ['pic', 'manager'], o.outletId, `${o.no} · ${idr(o.total)}`);
   if (GUEST_SOURCES.includes(o.source) && o.lines.some(l => !l.fired)) {
@@ -201,6 +227,14 @@ export function settleIfDone(d: DB, o: Order, by: string) {
     const tier = tierOf(d.ledger, o.customerId);
     const pts = earn(o.subtotal - o.discount, tier);
     if (pts > 0) d.ledger.push({ customerId: o.customerId, points: pts, reason: 'Order ' + o.no, orderId: o.id, at: now() });
+    // Invite a friend: the friend's first paid order rewards both, once (records.referrals: a friend · b member who invited · e joined|rewarded)
+    const ref = (d.records.referrals ?? []).find(r => r.a === o.customerId && r.e === 'joined');
+    if (ref) {
+      const r = referralOffer(d), friend = d.customers.find(x => x.id === ref.a);
+      if (r.friend > 0) d.ledger.push({ customerId: ref.a, points: r.friend, reason: 'Referral welcome', orderId: o.id, at: now() });
+      if (r.referrer > 0) d.ledger.push({ customerId: ref.b, points: r.referrer, reason: 'Referral · ' + (friend?.name ?? 'friend'), orderId: o.id, at: now() });
+      ref.e = 'rewarded'; ref.c = o.id;
+    }
     const c = d.customers.find(x => x.id === o.customerId);
     if (c?.optIn) d.messages.unshift({ id: uid('ms'), channel: 'wa', template: 'thanks_visit', to: c.phone, status: 'queued', at: now() + 60 * 60e3, customerId: c.id });
   }

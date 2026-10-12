@@ -3,6 +3,7 @@
 import { commit, snapshot, uid } from '../store.ts';
 import type { BusinessProfile, Outlet } from '../schema.ts';
 import { referral } from '../../system/settings.ts';
+import { referrerOf } from '../../system/studio.ts';
 
 const now = () => Date.now();
 
@@ -20,14 +21,13 @@ export function addOutlet(o: Omit<Outlet, 'id'>, by: string): string {
   return id;
 }
 
-/** Friend joined from a member's invite link: both get beans once (never for an existing member, never twice). */
-export function awardReferral(friendId: string, referrerId: string) {
-  const d0 = snapshot(), r = referral(d0);
-  if (!r.on || friendId === referrerId || !d0.customers.some(c => c.id === referrerId)) return false;
-  if (d0.ledger.some(l => l.customerId === friendId && l.reason.startsWith('Referral'))) return false;
+/** Friend joined from a member's invite link or code (Menu Studio › referral page): the link is kept, and both get their
+ *  reward once, when the friend's first order is paid (settleIfDone). Never for an existing member, never twice. */
+export function awardReferral(friendId: string, ref: string) {
+  const d0 = snapshot(), by = referrerOf(d0, ref);
+  if (!referral(d0).on || !by || friendId === by.id || (d0.records.referrals ?? []).some(r => r.a === friendId)) return false;
   commit('referral.joined', 'guest', d => {
-    if (r.friend > 0) d.ledger.push({ customerId: friendId, points: r.friend, reason: 'Referral welcome', at: now() });
-    if (r.referrer > 0) d.ledger.push({ customerId: referrerId, points: r.referrer, reason: 'Referral · ' + (d.customers.find(c => c.id === friendId)?.name ?? 'friend'), at: now() });
+    (d.records.referrals ??= []).unshift({ id: uid('rf'), a: friendId, b: by.id, c: '', d: '', e: 'joined', at: now() });
   }, friendId);
   return true;
 }

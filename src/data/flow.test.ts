@@ -130,10 +130,10 @@ test('One system: business profile and outlet details print on the receipt; a ne
 
   const friend = findOrJoin('Rani', '0813 1234 0000', true, 'c1');
   const beans = (cid: string) => balance(snapshot().ledger, cid);
-  assert.ok(friend.created && beans(friend.id) >= 50 + referral(snapshot()).friend, 'friend gets welcome + referral beans');
+  assert.ok(friend.created && beans(friend.id) === 50 && referral(snapshot()).on, 'friend gets welcome beans; the referral reward waits for the first paid order');
   const again = findOrJoin('Rani', '0813 1234 0000', true, 'c1');
   assert.equal(again.created, false);
-  assert.equal(snapshot().ledger.filter(l => l.reason.startsWith('Referral')).length, 2, 'beans given once, to both');
+  assert.equal((snapshot().records.referrals ?? []).filter(r => r.a === friend.id).length, 1, 'one invite per friend');
 });
 
 test('One system: what the owner publishes in Menu Studio changes the live QR menu (QRIS timer, feedback beans)', () => {

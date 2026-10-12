@@ -15,6 +15,9 @@ import { menuDesign } from '../../data/actions/studio.ts';
 import { payOn } from '../../system/settings.ts';
 import { firstName, groupsOf, LINE, missingGroup, mmss, modsFrom, modsText, MUTED, OptionPicker, progress, QR, SURFACE, TINT, unit, useMenu, Wordmark, type Sel } from '../guest/kit.tsx';
 import { back, Bar, CartBar, ItemRow, newLines, Notices, Pill, settledOf, so, tableNo, Totals, type G } from './shared.tsx';
+import { CatSection, ComboCard, homeCount, splitOn } from './more.tsx';
+import { billSplit, dueOf, referralWelcome } from '../../data/actions/selforder.ts';
+import { referralOffer } from '../../system/studio.ts';
 
 const card = { padding: 16, borderRadius: 18, background: SURFACE } as const;
 const choice = (on: boolean) => ({ border: `2px solid ${on ? 'var(--bn-p)' : LINE}`, background: on ? TINT : SURFACE, color: 'var(--bn-ink)', borderRadius: 14, cursor: 'pointer' });
@@ -110,14 +113,14 @@ export function Home({ g }: { g: G }) {
       {promos.map(p => <button key={p.id} onClick={() => g.go(so('claim-voucher'))} style={{ flex: 'none', width: 220, padding: 14, borderRadius: 18, border: 0, background: 'var(--bn-acc)', color: 'var(--bn-ink)', textAlign: 'left', cursor: 'pointer' }}>
         <b style={{ display: 'block', fontSize: 15 }}>{p.name}</b><span style={{ fontSize: 13 }}>Code <b className="mono">{p.code}</b>{p.minSpend ? ` · min. ${idr(p.minSpend)}` : ''}</span></button>)}
     </div>}
+    <ComboCard g={g} />
     <section className="stack" style={{ padding: '10px 14px', gap: 10 }} aria-label={t('Bestsellers')}>
       <h2 style={{ fontSize: 20, fontWeight: 800 }}>{t('Bestsellers')}</h2>
       {bestItems.map((i, k) => <ItemRow key={i.p.id} i={i} t={t} badge={k < 2 ? 'Bestseller' : undefined} count={countIn(g, i.p.id)} onOpen={() => openItem(g, i.p.id)} />)}
     </section>
-    {cats.map(c => { const list = items.filter(i => i.cat === c.id); return <section key={c.id} className="stack" style={{ padding: '10px 14px', gap: 10 }} aria-label={c.name}>
-      <div className="row between"><h2 style={{ fontSize: 20, fontWeight: 800 }}>{t(c.name)}</h2>{list.length > 3 && <button className="btn btn-ghost btn-sm" style={{ color: 'var(--bn-p)' }} onClick={() => g.go(so('category-full-menu', { c: c.id }))}>{t('See all')} · {list.length}</button>}</div>
-      {list.slice(0, 3).map(i => <ItemRow key={i.p.id} i={i} t={t} count={countIn(g, i.p.id)} onOpen={() => openItem(g, i.p.id)} />)}
-    </section>; })}
+    {cats.map(c => { const list = items.filter(i => i.cat === c.id), max = homeCount(g, c.id);
+      return <CatSection key={c.id} g={g} catId={c.id} name={t(c.name)} list={list.slice(0, max)} count={id => countIn(g, id)} onOpen={id => openItem(g, id)}
+        right={list.length > max && <button className="btn btn-ghost btn-sm" style={{ color: 'inherit' }} onClick={() => g.go(so('category-full-menu', { c: c.id }))}>{t('See all')} · {list.length}</button>} />; })}
     <CartBar g={g} />
   </div>;
 }
@@ -128,10 +131,8 @@ function MenuList({ g, cat, setCat }: { g: G; cat: string; setCat: (c: string) =
   const shown = cats.filter(c => cat === 'all' || c.id === cat);
   return <>
     <SearchAndChips g={g} cat={cat} onCat={setCat} />
-    {shown.map(c => <section key={c.id} className="stack" style={{ padding: '6px 14px 10px', gap: 10 }} aria-label={c.name}>
-      <h2 style={{ fontSize: 18, fontWeight: 800 }}>{g.t(c.name)}</h2>
-      {items.filter(i => i.cat === c.id).map(i => <ItemRow key={i.p.id} i={i} t={g.t} badge={best.indexOf(i.p.id) > -1 && best.indexOf(i.p.id) < 2 ? 'Bestseller' : undefined} count={countIn(g, i.p.id)} onOpen={() => openItem(g, i.p.id)} />)}
-    </section>)}
+    {shown.map(c => <CatSection key={c.id} g={g} catId={c.id} name={g.t(c.name)} list={items.filter(i => i.cat === c.id)} count={id => countIn(g, id)} onOpen={id => openItem(g, id)}
+      badge={i => best.indexOf(i.p.id) > -1 && best.indexOf(i.p.id) < 2 ? 'Bestseller' : undefined} />)}
   </>;
 }
 export function Category({ g }: { g: G }) {
@@ -236,9 +237,9 @@ export function Cart({ g }: { g: G }) {
         <span className="stack grow" style={{ gap: 2 }}><b style={{ fontSize: 15 }}>{l.name}</b>{(l.mods.length > 0 || l.note) && <span style={{ fontSize: 13, color: MUTED }}>{modsText(l.mods, l.note)}</span>}
           <b style={{ fontSize: 14 }}>{idr(((l.flashPrice ?? l.unitPrice) + l.mods.reduce((a, m) => a + m.price, 0)) * l.qty)}</b></span>
         <div className="row" style={{ gap: 2, background: 'var(--bg-sunken)', borderRadius: 14, padding: 2 }}>
-          <button className="btn btn-ghost icon-btn" disabled={cart.status === 'paying'} aria-label={`Fewer ${l.name}`} onClick={() => setQty(cart.id, l.id, l.qty - 1, 'guest')}><Icon name={l.qty > 1 ? 'minus' : 'trash-2'} size={18} /></button>
+          <button className="btn btn-ghost icon-btn" disabled={cart.status === 'paying'} aria-label={l.combo ? `Remove ${l.note}` : `Fewer ${l.name}`} onClick={() => setQty(cart.id, l.id, l.qty - 1, 'guest')}><Icon name={l.qty > 1 && !l.combo ? 'minus' : 'trash-2'} size={18} /></button>
           <b style={{ minWidth: 20, textAlign: 'center' }}>{l.qty}</b>
-          <button className="btn btn-ghost icon-btn" disabled={cart.status === 'paying'} aria-label={`More ${l.name}`} onClick={() => setQty(cart.id, l.id, l.qty + 1, 'guest')}><Icon name="plus" size={18} /></button>
+          <button className="btn btn-ghost icon-btn" disabled={cart.status === 'paying' || !!l.combo} aria-label={`More ${l.name}`} onClick={() => setQty(cart.id, l.id, l.qty + 1, 'guest')}><Icon name="plus" size={18} /></button>
         </div>
       </div>)}
       {sent.length > 0 && <div style={{ ...card, background: 'var(--bg-sunken)' }} className="stack sm">
@@ -254,7 +255,7 @@ export function Cart({ g }: { g: G }) {
     </div>
     <div style={{ position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: 0, width: 'min(520px,100vw)', padding: '12px 14px calc(14px + env(safe-area-inset-bottom))', background: 'var(--bn-paper)', borderTop: `1px solid ${LINE}`, zIndex: 20 }}>
       <button className="btn btn-primary btn-block" style={{ height: 58, fontSize: 16, borderRadius: 16 }} disabled={!g.canOrder || !lines.length && settledOf(db, cart) >= cart.total}
-        onClick={() => { if (note !== (cart.note ?? '')) patchOrder(cart.id, { note }, 'guest'); g.go(so(cart.status === 'paying' ? 'qris-payment' : 'checkout-and-payment')); }}>
+        onClick={() => { if (note !== (cart.note ?? '')) patchOrder(cart.id, { note }, 'guest'); g.go(billSplit(db, cart.id).shares.length ? so('checkout-and-payment', { split: '1' }) : so(cart.status === 'paying' ? 'qris-payment' : 'checkout-and-payment')); }}>
         {!g.canOrder ? (g.hrs.paused ? 'Ordering paused' : 'Closed · ' + g.hrs.text) : lines.length ? `${t('Checkout')} · ${idr(cart.total)}` : `Pay the bill · ${idr(cart.total - settledOf(db, cart))}`}</button>
     </div>
   </div>;
@@ -267,9 +268,12 @@ export function Checkout({ g }: { g: G }) {
   const [code, setCode] = useState(''), [err, setErr] = useState(''), [busy, setBusy] = useState(false);
   useEffect(() => { if (me) { setName(n => n || me.name); setPhone(p => p || me.phone); } }, [me]);
   if (!cart || !cart.lines.length) return <><Bar title={t('Checkout')} onBack={() => g.go(so('cart'))} /><Empty icon="shopping-basket" title={t('Your cart is empty')} action={<button className="btn btn-primary" onClick={() => g.go(so('menu-home'))}>{t('See the menu')}</button>} /></>;
-  if (cart.status === 'paying') return <><Bar title={t('Checkout')} onBack={() => g.go(so('cart'))} /><Empty icon="qr-code" title="Payment in progress" action={<button className="btn btn-primary" onClick={() => g.go(so('qris-payment'))}>Open the QRIS code</button>} /></>;
+  const split = billSplit(db, cart.id).shares.length > 0;
+  if (cart.status === 'paying' || split) return <><Bar title={t('Checkout')} onBack={() => g.go(so('cart'))} /><Empty icon={split ? 'split' : 'qr-code'} title={split ? 'Your table is splitting this bill' : 'Payment in progress'}
+    action={<button className="btn btn-primary" onClick={() => g.go(split ? so('checkout-and-payment', { split: '1' }) : so('qris-payment'))}>{split ? 'Pay my share' : 'Open the QRIS code'}</button>} /></>;
   const due = cart.total - settledOf(db, cart);
   const ask = studioValue(db, 'checkout-flow-fields');
+  const ro = referralOffer(db), welcome = !!me && ro.friendPct > 0 && !cart.discountPct && (db.records.referrals ?? []).some(r => r.a === me.id && r.e === 'joined');
   const tip = pay === 'qris' && ask.tips ? Math.round(cart.subtotal * tipPct / 100 / 100) * 100 : 0;
   const hasNew = newLines(cart).length > 0;
   const voucher = db.promos.find(p => cart.promoIds.includes(p.id));
@@ -284,8 +288,9 @@ export function Checkout({ g }: { g: G }) {
       let customerId = cart.customerId;
       if (phone.trim()) { const r = findOrJoin(name, phone, true, g.ref); customerId = r.id; g.setMe(r.id); }
       if (customerId !== cart.customerId) patchOrder(cart.id, { customerId }, 'guest');
+      referralWelcome(cart.id); // a friend's first order: the referral page's "% off" (Menu Studio › referral page)
       if (pay === 'cashier') { if (hasNew) { sendToKitchen(cart.id, 'guest'); orderPlaced(cart.id, true); } g.go(so('order-status')); }
-      else { startPayment(cart.id, 'qris', due, 'guest', tip); g.go(so('qris-payment')); }
+      else { startPayment(cart.id, 'qris', dueOf(cart.id), 'guest', tip); g.go(so('qris-payment')); }
     } catch (e) { setErr((e as Error).message); setBusy(false); }
   };
   const ways = ([
@@ -317,6 +322,8 @@ export function Checkout({ g }: { g: G }) {
         {voucher ? <span className="row between"><span><Icon name="ticket-percent" size={16} /> {voucher.name}</span><span style={{ color: 'var(--success-fg)', fontWeight: 700 }}>{cart.discount ? '−' + idr(cart.discount) : `min. ${idr(voucher.minSpend ?? 0)}`}</span></span>
           : <div className="row"><input className="input grow" value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="Voucher code" aria-label="Voucher code" /><button className="btn" style={{ height: 48 }} disabled={!code.trim()} onClick={() => { const e = applyVoucher(cart.id, code, 'guest'); if (e) setErr(e); else { setErr(''); toast('Voucher applied'); } }}>Apply</button></div>}
       </div>
+      {welcome && <div role="status" className="banner" style={{ background: 'var(--success-soft)', color: 'var(--success-fg)' }}><Icon name="gift" /><span>Invited by a friend: <b>{ro.give}</b>. It comes off when you place this order.</span></div>}
+      {splitOn(g) && settledOf(db, cart) === 0 && <button className="btn" style={{ height: 52, borderRadius: 16 }} onClick={() => g.go(so('checkout-and-payment', { split: '1' }))}><Icon name="split" />Split the bill · each phone pays its share</button>}
       <Totals db={db} o={cart} tip={tip} me={g.me} />
       {settledOf(db, cart) > 0 && <span style={{ fontSize: 14, color: MUTED }}>Already paid {idr(settledOf(db, cart))} · left to pay {idr(due)}</span>}
       {err && <div role="alert" className="banner" style={{ background: 'var(--danger-soft)', color: 'var(--danger-fg)' }}><Icon name="circle-alert" />{err}</div>}
@@ -398,6 +405,7 @@ export function Status({ g }: { g: G }) {
         <span className="stack" style={{ gap: 2 }}><b>{due > 0 ? `To pay ${idr(due)}` : `Paid ${idr(latest.total)}`}</b><span style={{ fontSize: 13, color: MUTED }}>{due > 0 ? (billAsked ? 'Bill requested · a waiter is coming' : 'Pay at the cashier or here with QRIS') : 'Receipt in your WhatsApp if you left a number'}</span></span>
         {due > 0 ? <button className="btn btn-primary" onClick={() => g.go(so('checkout-and-payment'))} disabled={!g.online}>Pay now</button> : <button className="btn" onClick={() => g.go(so('digital-receipt', { o: latest.id }))}>Receipt</button>}
       </div>
+      {due > 0 && splitOn(g) && <button className="btn" style={{ height: 52, borderRadius: 16 }} disabled={!g.online} onClick={() => g.go(so('checkout-and-payment', { split: '1' }))}><Icon name="split" />Split the bill between phones</button>}
       {g.recent.filter(o => o.id !== latest.id && o.lines.some(l => l.fired)).length > 0 && <span style={{ fontSize: 13, color: MUTED }}>Earlier at this table: {g.recent.filter(o => o.id !== latest.id && o.lines.some(l => l.fired)).map(o => o.no).join(', ')}</span>}
       <div className="row" style={{ gap: 10 }}>
         <button className="btn grow" style={{ height: 52, borderRadius: 16 }} onClick={() => g.go(so('call-waiter-request-bill'))}><Icon name="hand" />{t('Call waiter')}</button>

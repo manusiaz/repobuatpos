@@ -10,12 +10,18 @@ import { brandVars } from './guest/kit.tsx';
 import { useGuest, type G } from './selforder/shared.tsx';
 import { AddMore, Call, Cart, Category, Checkout, Closed, Home, Item, Landing, Language, Qris, Search, Status } from './selforder/order.tsx';
 import { Booking, EmailThanks, Feedback, MemberCard, Prefs, Queue, Receipt, Track, Voucher, WaThanks } from './selforder/links.tsx';
+import { ComboPage, GiftCards, PrintMenu, SplitBill, Store } from './selforder/more.tsx';
+import { routeQuery } from '../system/hosts.ts';
 
+// Menu Studio pages ride on the registry page they belong to (?combo, ?split, ?v=gift, ?print); the store front is
+// order.<root>/<tenant> without a table, the table landing is /<tenant>/t/<n>.
+const either = (q: (g: G) => boolean, A: ComponentType<{ g: G }>, B: ComponentType<{ g: G }>) => function View({ g }: { g: G }) { return q(g) ? <A g={g} /> : <B g={g} />; };
 const VIEWS: Record<string, ComponentType<{ g: G }>> = {
-  order: Landing, 'scan-landing': Landing, 'language-picker': Language, 'menu-home': Home, 'category-full-menu': Category, search: Search,
-  'item-detail-and-options': Item, cart: Cart, 'checkout-and-payment': Checkout, 'qris-payment': Qris, 'order-status': Status,
+  order: either(g => !(g.sp.get('t') ?? routeQuery().t), Store, Landing), 'scan-landing': Landing, 'language-picker': Language, 'menu-home': Home,
+  'category-full-menu': either(g => !!g.sp.get('print'), PrintMenu, Category), search: Search,
+  'item-detail-and-options': either(g => !!g.sp.get('combo'), ComboPage, Item), cart: Cart, 'checkout-and-payment': either(g => !!g.sp.get('split'), SplitBill, Checkout), 'qris-payment': Qris, 'order-status': Status,
   'call-waiter-request-bill': Call, 'add-more-to-existing-order': AddMore, 'table-closed-outside-opening-hours': Closed,
-  'digital-receipt': Receipt, 'member-card-and-points': MemberCard, 'claim-voucher': Voucher, 'feedback-and-rating': Feedback,
+  'digital-receipt': Receipt, 'member-card-and-points': either(g => g.sp.get('v') === 'gift', GiftCards, MemberCard), 'claim-voucher': Voucher, 'feedback-and-rating': Feedback,
   'online-booking': Booking, 'queue-status': Queue, 'delivery-tracking': Track, 'whatsapp-thank-you-message': WaThanks, 'thank-you-email': EmailThanks,
   'unsubscribe-message-preferences': Prefs,
 };
