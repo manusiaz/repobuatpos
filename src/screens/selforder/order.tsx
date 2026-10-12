@@ -322,7 +322,9 @@ export function Checkout({ g }: { g: G }) {
       </div>
       <div style={card} className="stack sm">
         <b>Voucher</b>
-        {voucher ? <span className="row between"><span><Icon name="ticket-percent" size={16} /> {voucher.name}</span><span style={{ color: 'var(--success-fg)', fontWeight: 700 }}>{cart.discount ? '−' + idr(cart.discount) : `min. ${idr(voucher.minSpend ?? 0)}`}</span></span>
+        {voucher ? <div role="status" className="row" style={{ padding: '10px 12px', borderRadius: 12, background: cart.discount ? 'var(--success-soft)' : 'var(--warning-soft)', color: cart.discount ? 'var(--success-fg)' : 'var(--warning-fg)', alignItems: 'flex-start' }}>
+          <Icon name={cart.discount ? 'circle-check' : 'circle-alert'} size={20} style={{ flex: 'none' }} />
+          <span className="stack" style={{ gap: 2 }}><b>{cart.discount ? t('Promo code applied!') : voucher.name}</b><span style={{ fontSize: 13 }}>{cart.discount ? `${voucher.name} · ${t('You save')} ${idr(cart.discount)}` : `${t('Spend at least')} ${idr(voucher.minSpend ?? 0)}`}</span></span></div>
           : <div className="row"><input className="input grow" value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="Voucher code" aria-label="Voucher code" /><button className="btn" style={{ height: 48 }} disabled={!code.trim()} onClick={() => { const e = applyVoucher(cart.id, code, 'guest'); if (e) setErr(e); else { setErr(''); toast('Voucher applied'); } }}>Apply</button></div>}
       </div>
       {welcome && <div role="status" className="banner" style={{ background: 'var(--success-soft)', color: 'var(--success-fg)' }}><Icon name="gift" /><span>Invited by a friend: <b>{ro.give}</b>. It comes off when you place this order.</span></div>}

@@ -176,7 +176,9 @@ function Pay({ L, order, back, reset }: { L: LangT; order: Order | null; back: (
   if (order && isPlaced) {
     const later = order.status === 'held';
     return <div style={{ flex: 1, background: later ? 'var(--bn-p)' : 'var(--success)', color: 'var(--ink-0)', padding: '8cqw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4cqw', textAlign: 'center' }}>
-      <span style={{ fontSize: '6cqw', fontWeight: 700 }}>{L.lang === 'id' ? 'Nomor kamu' : 'Your number'}</span>
+      <Icon name="circle-check" size={64} />
+      <b style={{ ...HEAD, fontSize: '7cqw' }}>{later ? (L.lang === 'id' ? 'Pesanan tersimpan' : 'Order saved') : (L.lang === 'id' ? 'Pesanan masuk!' : 'Order placed!')}</b>
+      <span style={{ fontSize: '5cqw', fontWeight: 700 }}>{L.lang === 'id' ? 'Nomor kamu' : 'Your number'}</span>
       <b style={{ ...HEAD, fontSize: '22cqw', lineHeight: .9 }} aria-live="polite">{order.no}</b>
       <span style={{ fontSize: '4.4cqw', lineHeight: 1.4 }}>{later ? `Pay ${idr(order.total)} at the counter and show this number. We start making it once paid.` : 'Watch the screen near the counter. We’ll call your number when it’s ready.'}</span>
       <span style={{ padding: '3cqw 5cqw', borderRadius: '4cqw', background: 'color-mix(in srgb,var(--ink-0) 18%,transparent)', fontSize: '3.8cqw' }}>{later ? 'Ticket printed · ' : 'Receipt printed · '}{order.type === 'take' ? 'Takeaway' : 'Dine-in'}</span>
