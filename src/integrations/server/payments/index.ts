@@ -1,9 +1,11 @@
-// Payment gateways. 'simulator' works end to end; Xendit, Midtrans and DOKU have their settings, secrets and webhook URL
-// in place and only need their API calls written here (createCharge, parseWebhook, refund, test).
+// Payment gateways. 'simulator' fakes charges end to end; Xendit and Midtrans are real API drivers (xendit.ts,
+// midtrans.ts); DOKU has its settings, secrets and webhook URL in place and only needs its API calls written.
 import { hmac, safeEqual } from '../sign.ts';
 import { NotConnected, str, type Ctx } from '../types.ts';
 import { connector } from '../../registry.ts';
 import type { Charge, ChargeInput, Gateway } from './types.ts';
+import { xendit } from './xendit.ts';
+import { midtrans } from './midtrans.ts';
 
 const SIM_SIG = 'x-simulator-signature';
 export const simulator: Gateway = {
@@ -36,5 +38,5 @@ const pending = (id: string): Gateway => {
     test: async (ctx: Ctx) => ({ ok: false, message: `${name}: settings saved (${Object.keys(ctx.secrets).length} secret${Object.keys(ctx.secrets).length === 1 ? '' : 's'} stored); the API driver is not written yet.` }) };
 };
 
-export const GATEWAYS: Record<string, Gateway> = { simulator, xendit: pending('xendit'), midtrans: pending('midtrans'), doku: pending('doku') };
+export const GATEWAYS: Record<string, Gateway> = { simulator, xendit, midtrans, doku: pending('doku') };
 export const gateway = (id: string): Gateway | undefined => GATEWAYS[id];

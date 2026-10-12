@@ -39,6 +39,7 @@ export async function verify(tenant: string, provider: string, h: Headers, raw: 
 
 /** Idempotent: a payment that is no longer pending is returned as it is (gateways retry). */
 export async function apply(tenant: string, provider: string, e: GatewayEvent) {
+  if (e.status === 'pending') return { ok: true, ignored: 'not final' };
   const { payment: p } = await paymentOrder(tenant, e.paymentId);
   if (!p) return { ok: true, ignored: 'unknown payment' };
   if (p.status !== 'pending') return { ok: true, status: p.status, duplicate: true };

@@ -6,7 +6,9 @@ import { createHmac } from 'node:crypto';
 import { CONNECTORS, connector } from '../integrations/registry.ts';
 import { simulator, simulatorSignature, gateway } from '../integrations/server/payments/index.ts';
 import { metaCloud, resend, msisdn, sender } from '../integrations/server/messaging/index.ts';
-import { signOutgoing, verifyOutgoing, hmac } from '../integrations/server/sign.ts';
+import { signOutgoing, verifyOutgoing, hmac, sha } from '../integrations/server/sign.ts';
+import { xendit } from '../integrations/server/payments/xendit.ts';
+import { midtrans } from '../integrations/server/payments/midtrans.ts';
 import { deliver, publicEndpoint } from '../integrations/server/webhooks/deliver.ts';
 import { subscribed } from '../integrations/server/webhooks/events.ts';
 import { normalizeOrder, parsePlatform } from '../integrations/server/delivery/index.ts';
@@ -38,10 +40,179 @@ test('simulator gateway: charge shapes per method, webhook verifies only with th
 });
 
 test('gateways without a driver fail clearly instead of pretending', async () => {
-  for (const id of ['xendit', 'midtrans', 'doku']) {
+  for (const id of ['doku']) {
     await assert.rejects(gateway(id)!.createCharge({ tenantId: 't', paymentId: 'p', orderNo: '#1', amount: 1, method: 'qris', expiresAt: 1 }, ctx()), (e: Error) => e instanceof NotConnected && /not connected yet/.test(e.message));
     assert.equal((await gateway(id)!.test(ctx())).ok, false);
   }
+});
+
+type Call = { url: string; method: string; headers: Record<string, string>; body: any };
+/** Stub fetch: records each request, answers from the queue (status, JSON body). */
+const stub = (...answers: [number, unknown][]) => {
+  const calls: Call[] = [];
+  const f = (async (url: string, init: RequestInit = {}) => {
+    calls.push({ url, method: init.method ?? 'GET', headers: init.headers as Record<string, string>, body: init.body ? JSON.parse(String(init.body)) : undefined });
+    const [status, body] = answers[Math.min(calls.length - 1, answers.length - 1)];
+    return Response.json(body, { status });
+  }) as unknown as typeof fetch;
+  return { f, calls };
+};
+const basic = (k: string) => 'Basic ' + Buffer.from(k + ':').toString('base64');
+const charge = { tenantId: 't1', paymentId: 'pay123', orderNo: '#12', amount: 45_000, expiresAt: Date.parse('2026-10-12T10:15:00Z') };
+
+test('Xendit: QRIS, VA and e-wallet request shapes; integer rupiah only; provider errors without secrets', async () => {
+  const sec = { secretKey: 'xnd_development_abc', callbackToken: 'cbt' };
+  let s = stub([200, { id: 'qr_1', qr_string: '00020101021226', status: 'ACTIVE' }]);
+  const q = await xendit.createCharge({ ...charge, method: 'qris' }, ctx(sec, { mode: 'sandbox' }, s.f));
+  assert.deepEqual(q, { providerRef: 'qr_1', qrString: '00020101021226', expiresAt: charge.expiresAt });
+  assert.equal(s.calls[0].url, 'https://api.xendit.co/qr_codes');
+  assert.equal(s.calls[0].method, 'POST');
+  assert.equal(s.calls[0].headers.authorization, basic('xnd_development_abc'));
+  assert.equal(s.calls[0].headers['api-version'], '2022-07-31');
+  assert.deepEqual(s.calls[0].body, { reference_id: 'pay123', type: 'DYNAMIC', currency: 'IDR', amount: 45_000, expires_at: '2026-10-12T10:15:00.000Z' });
+
+  s = stub([200, { id: 'va_1', account_number: '107669999123456' }]);
+  const v = await xendit.createCharge({ ...charge, method: 'va', customer: { name: 'Dewi A.' } }, ctx(sec, { vaBank: 'BNI' }, s.f));
+  assert.deepEqual(v, { providerRef: 'va_1', vaNumber: '107669999123456', expiresAt: charge.expiresAt });
+  assert.equal(s.calls[0].url, 'https://api.xendit.co/callback_virtual_accounts');
+  assert.deepEqual(s.calls[0].body, { external_id: 'pay123', bank_code: 'BNI', name: 'Dewi A', is_closed: true, is_single_use: true, expected_amount: 45_000, expiration_date: '2026-10-12T10:15:00.000Z' });
+  s = stub([200, { id: 'va_2', account_number: '1' }]);
+  await xendit.createCharge({ ...charge, method: 'va' }, ctx(sec, {}, s.f));
+  assert.equal(s.calls[0].body.bank_code, 'BCA', 'default bank');
+
+  s = stub([200, { id: 'ewc_1', status: 'PENDING', actions: { desktop_web_checkout_url: 'https://web', mobile_deeplink_checkout_url: 'shopeeid://pay' } }]);
+  const e = await xendit.createCharge({ ...charge, method: 'ewallet' }, ctx(sec, { ewallet: 'ID_SHOPEEPAY', redirectUrl: 'https://order.bornis.id/kopibiru' }, s.f));
+  assert.deepEqual(e, { providerRef: 'ewc_1', deeplink: 'shopeeid://pay', expiresAt: charge.expiresAt });
+  assert.equal(s.calls[0].url, 'https://api.xendit.co/ewallets/charges');
+  assert.deepEqual(s.calls[0].body, { reference_id: 'pay123', currency: 'IDR', amount: 45_000, checkout_method: 'ONE_TIME_PAYMENT', channel_code: 'ID_SHOPEEPAY', channel_properties: { success_redirect_url: 'https://order.bornis.id/kopibiru' } });
+  await assert.rejects(xendit.createCharge({ ...charge, method: 'ewallet' }, ctx(sec, {}, s.f)), /Missing setting: redirectUrl/);
+  s = stub([200, { id: 'ewc_2', actions: { desktop_web_checkout_url: 'https://web' } }]);
+  await xendit.createCharge({ ...charge, method: 'ewallet', customer: { phone: '0812 3456 7890' } }, ctx(sec, { ewallet: 'ID_OVO' }, s.f));
+  assert.deepEqual(s.calls[0].body.channel_properties, { mobile_number: '+6281234567890' });
+  await assert.rejects(xendit.createCharge({ ...charge, method: 'ewallet' }, ctx(sec, { ewallet: 'ID_OVO' }, s.f)), /phone/);
+
+  await assert.rejects(xendit.createCharge({ ...charge, amount: 45_000.5, method: 'qris' }, ctx(sec, {}, s.f)), /whole number of rupiah/);
+  s = stub([400, { error_code: 'API_VALIDATION_ERROR', message: 'amount must be at least 1500' }]);
+  await assert.rejects(xendit.createCharge({ ...charge, method: 'qris' }, ctx(sec, {}, s.f)), (err: Error) => /Xendit 400: amount must be at least 1500/.test(err.message) && !err.message.includes('xnd_'));
+});
+
+test('Xendit webhooks: x-callback-token verified; QR, VA and e-wallet statuses mapped', () => {
+  const c = ctx({ callbackToken: 'cbt' }), good = hdr({ 'x-callback-token': 'cbt' });
+  const qr = (status: string) => JSON.stringify({ event: 'qr.payment', data: { id: 'qrpy_1', qr_id: 'qr_1', reference_id: 'pay123', amount: 45_000, status } });
+  assert.deepEqual(xendit.parseWebhook(good, qr('SUCCEEDED'), c), { paymentId: 'pay123', status: 'settled', providerRef: 'qr_1', amount: 45_000 });
+  assert.equal(xendit.parseWebhook(good, qr('FAILED'), c)?.status, 'failed');
+  assert.equal(xendit.parseWebhook(good, qr('EXPIRED'), c)?.status, 'expired');
+  assert.equal(xendit.parseWebhook(hdr({ 'x-callback-token': 'nope' }), qr('SUCCEEDED'), c), null, 'wrong token');
+  assert.equal(xendit.parseWebhook(hdr({}), qr('SUCCEEDED'), c), null, 'no token');
+  assert.equal(xendit.parseWebhook(good, qr('SUCCEEDED'), ctx()), null, 'no token configured = nothing settles');
+
+  const va = JSON.stringify({ id: 'cb1', payment_id: 'vap_1', callback_virtual_account_id: 'va_1', external_id: 'pay123', bank_code: 'BCA', amount: 45_000 });
+  assert.deepEqual(xendit.parseWebhook(good, va, c), { paymentId: 'pay123', status: 'settled', providerRef: 'va_1', amount: 45_000 });
+  const vaCreated = JSON.stringify({ id: 'va_1', external_id: 'pay123', status: 'ACTIVE', expected_amount: 45_000 });
+  assert.equal(xendit.parseWebhook(good, vaCreated, c)?.status, 'pending', 'VA created/updated changes nothing');
+
+  const ew = (status: string) => JSON.stringify({ event: 'ewallet.capture', data: { id: 'ewc_1', reference_id: 'pay123', status, charge_amount: 45_000, capture_amount: 45_000 } });
+  assert.deepEqual(xendit.parseWebhook(good, ew('SUCCEEDED'), c), { paymentId: 'pay123', status: 'settled', providerRef: 'ewc_1', amount: 45_000 });
+  assert.equal(xendit.parseWebhook(good, ew('FAILED'), c)?.status, 'failed');
+  assert.equal(xendit.parseWebhook(good, ew('VOIDED'), c)?.status, 'failed');
+  assert.equal(xendit.parseWebhook(good, ew('PENDING'), c)?.status, 'pending');
+});
+
+test('Xendit refund per charge type, and test() against /balance', async () => {
+  const sec = { secretKey: 'xnd_production_abc' }, r = { paymentId: 'pay123', amount: 20_000, reason: 'Wrong order' };
+  let s = stub([200, { id: 'ewr_1', status: 'SUCCEEDED' }]);
+  assert.deepEqual(await xendit.refund({ ...r, providerRef: 'ewc_1' }, ctx(sec, {}, s.f)), { refundRef: 'ewr_1', status: 'refunded' });
+  assert.equal(s.calls[0].url, 'https://api.xendit.co/ewallets/charges/ewc_1/refunds');
+  assert.deepEqual(s.calls[0].body, { amount: 20_000, reason: 'REQUESTED_BY_CUSTOMER' });
+
+  s = stub([200, { data: [{ id: 'qrpy_9', status: 'SUCCEEDED' }] }], [200, { id: 'qrpyr_1', status: 'PENDING' }]);
+  assert.deepEqual(await xendit.refund({ ...r, providerRef: 'qr_1' }, ctx(sec, {}, s.f)), { refundRef: 'qrpyr_1', status: 'pending' });
+  assert.equal(s.calls[0].url, 'https://api.xendit.co/qr_codes/qr_1/payments');
+  assert.equal(s.calls[1].url, 'https://api.xendit.co/qr_codes/payments/qrpy_9/refunds');
+  assert.equal(s.calls[1].body.amount, 20_000);
+  assert.equal(s.calls[1].body.reason, 'Wrong order');
+  await assert.rejects(xendit.refund({ ...r, providerRef: 'va_1' }, ctx(sec, {}, s.f)), /bank transfer/);
+  await assert.rejects(xendit.refund({ ...r, amount: 0.5, providerRef: 'ewc_1' }, ctx(sec, {}, s.f)), /whole number/);
+
+  s = stub([200, { balance: 1_000_000 }]);
+  assert.deepEqual(await xendit.test(ctx(sec, { mode: 'live' }, s.f)), { ok: true, message: 'Xendit live key accepted.' });
+  assert.equal(s.calls[0].url, 'https://api.xendit.co/balance');
+  assert.equal(s.calls[0].headers.authorization, basic('xnd_production_abc'));
+  assert.equal((await xendit.test(ctx(sec, { mode: 'sandbox' }, s.f))).ok, false, 'live key in sandbox mode');
+  await assert.rejects(xendit.test(ctx(sec, { mode: 'live' }, stub([401, { error_code: 'INVALID_API_KEY', message: 'API key is invalid' }]).f)), /Xendit 401: API key is invalid/);
+});
+
+test('Midtrans Core API: sandbox/live base, QRIS, VA (permata), GoPay/ShopeePay; body status_code errors', async () => {
+  const sec = { serverKey: 'SB-Mid-server-x' };
+  let s = stub([200, { status_code: '201', transaction_id: 'trx1', qr_string: '000201', actions: [{ name: 'generate-qr-code', url: 'https://img' }] }]);
+  const q = await midtrans.createCharge({ ...charge, method: 'qris' }, ctx(sec, { mode: 'sandbox' }, s.f));
+  assert.deepEqual(q, { providerRef: 'trx1', qrString: '000201', deeplink: undefined, expiresAt: charge.expiresAt });
+  assert.equal(s.calls[0].url, 'https://api.sandbox.midtrans.com/v2/charge');
+  assert.equal(s.calls[0].headers.authorization, basic('SB-Mid-server-x'));
+  assert.equal(s.calls[0].body.payment_type, 'qris');
+  assert.deepEqual(s.calls[0].body.qris, { acquirer: 'gopay' });
+  assert.deepEqual(s.calls[0].body.transaction_details, { order_id: 'pay123', gross_amount: 45_000 });
+  assert.equal(s.calls[0].body.custom_expiry.unit, 'minute');
+  s = stub([200, { status_code: '201', transaction_id: 'trx1', actions: [{ name: 'generate-qr-code', url: 'https://img' }] }]);
+  assert.equal((await midtrans.createCharge({ ...charge, method: 'qris' }, ctx(sec, { mode: 'live' }, s.f))).deeplink, 'https://img', 'no qr_string: image link');
+  assert.equal(s.calls[0].url, 'https://api.midtrans.com/v2/charge');
+
+  s = stub([200, { status_code: '201', transaction_id: 'trx2', va_numbers: [{ bank: 'bca', va_number: '12345678901' }] }]);
+  assert.equal((await midtrans.createCharge({ ...charge, method: 'va' }, ctx(sec, {}, s.f))).vaNumber, '12345678901');
+  assert.deepEqual(s.calls[0].body.bank_transfer, { bank: 'bca' });
+  s = stub([200, { status_code: '201', transaction_id: 'trx3', permata_va_number: '8562000' }]);
+  assert.equal((await midtrans.createCharge({ ...charge, method: 'va' }, ctx(sec, { vaBank: 'permata' }, s.f))).vaNumber, '8562000');
+
+  s = stub([200, { status_code: '201', transaction_id: 'trx4', actions: [{ name: 'generate-qr-code', url: 'https://qr' }, { name: 'deeplink-redirect', url: 'gojek://pay' }] }]);
+  const g = await midtrans.createCharge({ ...charge, method: 'ewallet' }, ctx(sec, { redirectUrl: 'https://order.bornis.id/kopibiru' }, s.f));
+  assert.deepEqual(g, { providerRef: 'trx4', deeplink: 'gojek://pay', expiresAt: charge.expiresAt });
+  assert.equal(s.calls[0].body.payment_type, 'gopay');
+  assert.deepEqual(s.calls[0].body.gopay, { enable_callback: true, callback_url: 'https://order.bornis.id/kopibiru' });
+  s = stub([200, { status_code: '201', transaction_id: 'trx5', actions: [{ name: 'deeplink-redirect', url: 'shopeeid://pay' }] }]);
+  await midtrans.createCharge({ ...charge, method: 'ewallet' }, ctx(sec, { ewallet: 'shopeepay' }, s.f));
+  assert.equal(s.calls[0].body.payment_type, 'shopeepay');
+
+  await assert.rejects(midtrans.createCharge({ ...charge, amount: 1.5, method: 'qris' }, ctx(sec, {}, s.f)), /whole number of rupiah/);
+  s = stub([200, { status_code: '406', status_message: 'The request could not be completed due to a conflict with the current state of the target resource' }]);
+  await assert.rejects(midtrans.createCharge({ ...charge, method: 'qris' }, ctx(sec, {}, s.f)), (err: Error) => /^Midtrans 406: The request could not/.test(err.message) && !err.message.includes('Mid-server'));
+  s = stub([400, { status_code: '400', validation_messages: ['transaction_details.gross_amount is not equal to the sum of item_details'] }]);
+  await assert.rejects(midtrans.createCharge({ ...charge, method: 'qris' }, ctx(sec, {}, s.f)), /Midtrans 400: transaction_details/);
+});
+
+test('Midtrans notification: signature_key = SHA-512(order_id + status_code + gross_amount + server key); statuses mapped', () => {
+  const key = 'SB-Mid-server-x', c = ctx({ serverKey: key });
+  const note = (transaction_status: string, extra: Record<string, string> = {}, k = key) => {
+    const b = { order_id: 'pay123', status_code: '200', gross_amount: '45000.00', transaction_id: 'trx1', transaction_status, ...extra };
+    return JSON.stringify({ ...b, signature_key: sha(b.order_id + b.status_code + b.gross_amount + k, 'sha512') });
+  };
+  assert.deepEqual(midtrans.parseWebhook(hdr({}), note('settlement'), c), { paymentId: 'pay123', status: 'settled', providerRef: 'trx1', amount: 45_000 });
+  assert.equal(midtrans.parseWebhook(hdr({}), note('capture', { fraud_status: 'accept' }), c)?.status, 'settled');
+  assert.equal(midtrans.parseWebhook(hdr({}), note('capture', { fraud_status: 'challenge' }), c)?.status, 'pending');
+  for (const t of ['deny', 'cancel', 'failure']) assert.equal(midtrans.parseWebhook(hdr({}), note(t), c)?.status, 'failed', t);
+  assert.equal(midtrans.parseWebhook(hdr({}), note('expire'), c)?.status, 'expired');
+  assert.equal(midtrans.parseWebhook(hdr({}), note('pending'), c)?.status, 'pending');
+  assert.equal(midtrans.parseWebhook(hdr({}), note('settlement', {}, 'other-key'), c), null, 'signed with another key');
+  assert.equal(midtrans.parseWebhook(hdr({}), note('settlement').replace('45000.00', '4500.00'), c), null, 'amount tampered');
+  assert.equal(midtrans.parseWebhook(hdr({}), note('settlement'), ctx()), null, 'no server key = nothing settles');
+});
+
+test('Midtrans refund and test() (unknown order 404 = key accepted, 401 = rejected)', async () => {
+  const sec = { serverKey: 'Mid-server-x' };
+  let s = stub([200, { status_code: '200', refund_key: 'pay123-rk', refund_amount: 20_000, transaction_status: 'partial_refund' }]);
+  assert.deepEqual(await midtrans.refund({ paymentId: 'pay123', providerRef: 'trx1', amount: 20_000, reason: 'Wrong order' }, ctx(sec, { mode: 'live' }, s.f)), { refundRef: 'pay123-rk', status: 'refunded' });
+  assert.equal(s.calls[0].url, 'https://api.midtrans.com/v2/pay123/refund');
+  assert.equal(s.calls[0].body.amount, 20_000);
+  assert.equal(s.calls[0].body.reason, 'Wrong order');
+  assert.match(s.calls[0].body.refund_key, /^pay123-r/);
+  await assert.rejects(midtrans.refund({ paymentId: 'pay123', providerRef: 'trx1', amount: 20_000, reason: '' }, ctx(sec, {}, stub([200, { status_code: '412', status_message: 'Merchant cannot modify the status of the transaction' }]).f)), /Midtrans 412: Merchant cannot modify/);
+
+  s = stub([404, { status_code: '404', status_message: "Transaction doesn't exist." }]);
+  assert.deepEqual(await midtrans.test(ctx(sec, { mode: 'sandbox' }, s.f)), { ok: true, message: 'Midtrans sandbox server key accepted.' });
+  assert.match(s.calls[0].url, /^https:\/\/api\.sandbox\.midtrans\.com\/v2\/borniz-test-[a-z0-9]+\/status$/);
+  assert.equal(s.calls[0].method, 'GET');
+  const bad = await midtrans.test(ctx(sec, { mode: 'live' }, stub([401, { status_code: '401', status_message: 'Unknown Merchant server_key/id' }]).f));
+  assert.equal(bad.ok, false);
+  assert.match(bad.message, /rejected the server key/);
 });
 
 test('outgoing webhook HMAC: X-BorNiz-Signature = t=<unix>,v1=HMAC-SHA256("<t>.<body>")', async () => {
