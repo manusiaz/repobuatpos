@@ -42,7 +42,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .mono{font-family:var(--font-mono);font-size:13px;letter-spacing:0}
 .num{font-variant-numeric:tabular-nums;font-weight:700}
 .muted{color:var(--fg-2)}.faint{color:var(--fg-3)}
-.cap{font:700 11px/1.2 var(--font-body);letter-spacing:.14em;text-transform:uppercase;color:var(--fg-2)}
+.cap{font:700 12px/1.2 var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:var(--fg-2)}
 .row{display:flex;align-items:center;gap:var(--space-2)}.row.wrap{flex-wrap:wrap}.row.between{justify-content:space-between}
 .stack{display:flex;flex-direction:column;gap:var(--space-3)}.stack.lg{gap:var(--space-6)}.stack.sm{gap:var(--space-2)}
 .grow{flex:1;min-width:0}.none{flex:none}
@@ -95,6 +95,8 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 
 .seg{display:inline-flex;gap:2px;padding:3px;border-radius:var(--radius-sm);background:var(--bg-sunken);max-width:100%;overflow-x:auto}
 .seg button{height:34px;padding:0 12px;border:0;border-radius:9px;background:transparent;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--fg-2)}
+/* POS is a touch screen: no control under 44px (CLAUDE.md touch sizes) */
+.pos .seg button,.pos .btn-sm{min-height:44px}
 .seg button[aria-pressed=true]{background:var(--bg-surface);color:var(--fg-1);box-shadow:0 1px 3px rgba(20,18,16,.15)}
 .chip{height:34px;padding:0 14px;border-radius:var(--radius-pill);border:1px solid var(--border);background:var(--bg-surface);font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap;flex:none}
 .chip[aria-pressed=true]{background:var(--fg-1);color:var(--bg-surface);border-color:var(--fg-1)}

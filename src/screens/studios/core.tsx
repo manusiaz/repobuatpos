@@ -137,7 +137,8 @@ export function menuOf(db: DB, outletId: string) {
 export const thousands = (n: number) => Math.round(n / 1000);
 
 export function copy(text: string, what = 'Copied') {
-  try { void navigator.clipboard.writeText(text); toast(what); } catch { toast('Copy blocked by the browser. Select the text and copy it.'); }
+  const blocked = () => toast('Copy blocked by the browser. Select the text and copy it.');
+  try { navigator.clipboard.writeText(text).then(() => toast(what), blocked); } catch { blocked(); }
 }
 export function CopyRow({ label, value }: { label?: string; value: string }) {
   return <div className="row" style={{ gap: 6, minWidth: 0 }}>{label && <span className="faint" style={{ fontSize: 12, flex: 'none' }}>{label}</span>}
