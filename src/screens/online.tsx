@@ -22,6 +22,8 @@ import { bumpTimes, CHANNEL, dueText, empName, isOnline, lineMods, minsLeft, mms
 import { useOnlineAutomation } from './kitchen/onlineAuto.ts';
 
 type Tab = 'inbox' | 'shelf' | 'scheduled' | 'busy';
+/** Design 22: one board, Incoming → Preparing → Ready (rejected and missed stay in Incoming for 3 hours, faded). */
+const LANES: [string, string, (o: Order) => boolean][] = [['in', 'Incoming', o => ['open', 'held', 'voided'].includes(o.status)], ['prep', 'Preparing', o => o.status === 'sent' || o.status === 'preparing'], ['ready', 'Ready', o => o.status === 'ready']];
 const REASONS = ['Item sold out', 'Kitchen too busy', 'Store closing', 'Other'];
 const LIVE = ['open', 'held', 'sent', 'preparing', 'ready'];
 
@@ -41,9 +43,10 @@ export default function Screen() {
   const title = view === 'kanban' ? 'Delivery order kanban' : view === 'integrations' ? 'Ride-hailing integrations' : page.slug === 'ride-hailing-orders-inbox' ? 'Ride-hailing orders' : page.slug === 'online-and-qr-orders-inbox' ? 'Online & QR orders' : 'Online orders';
   return <div style={embedded ? undefined : { minHeight: '100dvh', background: 'var(--bg-canvas)' }}>
     {!embedded && <header className="row wrap" style={{ position: 'sticky', top: 0, zIndex: 20, padding: '10px var(--margin)', gap: 10, background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
-      <b style={{ fontSize: 18 }}>{title}</b><span className="grow" />
-      <nav className="row" style={{ overflowX: 'auto', maxWidth: '100%' }} aria-label="Online pages">{links.filter((p, i, a) => a.findIndex(x => x.title === p.title) === i).map(p =>
-        <Link key={p.path} href={p.path} className="btn btn-ghost btn-sm" aria-current={p.path === page.path ? 'page' : undefined} style={{ flex: 'none', fontWeight: p.path === page.path ? 700 : 500, background: p.path === page.path ? 'var(--role-soft)' : undefined }}>{p.title.replace(/ \(.*\)$/, '')}</Link>)}</nav>
+      <b style={{ fontSize: 18 }}>{title}</b>
+      {/* the page tabs scroll; the outlet picker and device chrome stay on the title row */}
+      <nav className="row no-sb" ref={n => { const a = n?.querySelector<HTMLElement>('[aria-current=page]'); if (n && a) n.scrollLeft = a.offsetLeft + a.offsetWidth - n.clientWidth + 8; }} style={{ flex: '1 1 0', minWidth: 0, overflowX: 'auto' }} aria-label="Online pages">{links.filter((p, i, a) => a.findIndex(x => x.title === p.title) === i).map((p, i) =>
+        <Link key={p.path} href={p.path} className="btn btn-ghost btn-sm" aria-current={p.path === page.path ? 'page' : undefined} style={{ flex: 'none', marginLeft: i === 0 ? 'auto' : undefined, fontWeight: p.path === page.path ? 700 : 500, background: p.path === page.path ? 'var(--role-soft)' : undefined }}>{p.title.replace(/ \(.*\)$/, '')}</Link>)}</nav>
       <OutletPicker /><DeviceChrome />
     </header>}
     <div className="stack lg" style={{ padding: embedded ? 0 : '20px var(--margin) 110px', maxWidth: 1360, margin: '0 auto' }}>
@@ -89,14 +92,15 @@ function Hub({ c, scope, title }: { c: Ctx; scope: 'platform' | 'all'; title: st
   const t0 = startOfDay(c.now);
   const mine = c.db.orders.filter(o => o.outletId === c.outletId && o.createdAt >= t0 && inScope(o, scope));
   const nNew = mine.filter(o => o.status === 'open' && o.lines.length).length, nCook = mine.filter(o => ['sent', 'preparing'].includes(o.status)).length;
-  const nShelf = mine.filter(o => o.status === 'ready' && isOnline(o)).length, nSched = mine.filter(o => o.status === 'held' && isScheduled(o)).length;
+  const nShelf = mine.filter(o => o.status === 'ready' && isOnline(o)).length, nSched = mine.filter(o => o.status === 'held' && isScheduled(o)).length, nDone = mine.filter(o => o.status === 'paid').length;
   return <>
-    <Head title={title} sub={scope === 'platform' ? 'GoFood, GrabFood and ShopeeFood orders arrive by themselves. Accept or reject; the kitchen cooks by ready-by time, and bags go on the platform’s shelf for the driver.'
+    <Head right={<Badge tone={c.db.device.online ? 'success' : 'danger'} dot>{c.db.device.online ? 'Live sync' : 'Offline'}</Badge>} title={title} sub={scope === 'platform' ? 'GoFood, GrabFood and ShopeeFood orders arrive by themselves. Accept or reject; the kitchen cooks by ready-by time, and bags go on the platform’s shelf for the driver.'
       : 'Platform, web store and QR table orders arrive by themselves. Nobody types them. Accept to send to the kitchen, or reject with a reason.'} />
     <Banners c={c} />
-    <div className="grid" style={{ ['--min' as string]: '150px' }}>
-      <Kpi label="Needs accept" value={nNew} tone={nNew ? 'warn' : undefined} delta={nNew ? 'Accept before the window closes' : undefined} /><Kpi label="Cooking" value={nCook} />
-      <Kpi label="On the shelf" value={nShelf} /><Kpi label="Scheduled · held" value={nSched} />
+    <div className="grid" style={{ ['--min' as string]: '160px' }}>
+      <Kpi label="Incoming" value={nNew + nSched} tone={nNew ? 'warn' : undefined} delta={nNew ? `${nNew} require action` : nSched ? `${nSched} scheduled` : 'Nothing to accept'} />
+      <Kpi label="In kitchen" value={nCook} delta="Sorted by ready-by" /><Kpi label="Ready" value={nShelf} delta="On the pickup shelf" />
+      <Kpi label="Completed" value={nDone} delta="Today" />
     </div>
     <div className="row wrap between"><Seg value={tab} onChange={setTab} label="View" options={[['inbox', `Inbox${nNew ? ' · ' + nNew : ''}`], ['shelf', 'Pickup shelf'], ['scheduled', 'Scheduled'], ['busy', 'Busy & pause']] as const} /><Demo c={c} /></div>
     {tab === 'inbox' ? <Inbox c={c} scope={scope} list={mine} /> : tab === 'shelf' ? <Shelf c={c} /> : tab === 'scheduled' ? <Scheduled c={c} /> : <Busy c={c} />}
@@ -104,23 +108,30 @@ function Hub({ c, scope, title }: { c: Ctx; scope: 'platform' | 'all'; title: st
 }
 
 function Inbox({ c, scope, list }: { c: Ctx; scope: 'platform' | 'all'; list: Order[] }) {
-  const [ch, setCh] = useState<Source | 'all'>('all');
+  const [ch, setCh] = useState<Source | 'all'>('all'), [tier, setTier] = useState<string>('all');
   const [rej, setRej] = useState<Order | null>(null);
   const chans: Source[] = scope === 'platform' ? ['gofood', 'grabfood', 'shopeefood'] : ['gofood', 'grabfood', 'shopeefood', 'web', 'qr'];
-  const shown = list.filter(o => (ch === 'all' || o.source === ch) && o.lines.length && (LIVE.includes(o.status) || (o.status === 'voided' && c.now - o.createdAt < 3 * 3600e3)))
+  const shown = list.filter(o => (ch === 'all' || o.source === ch) && (tier === 'all' || (tier === 'scheduled' ? isScheduled(o) : o.tier === tier)) && o.lines.length && (LIVE.includes(o.status) || (o.status === 'voided' && c.now - o.createdAt < 3 * 3600e3)))
     .sort((a, b) => Number(b.status === 'open') - Number(a.status === 'open') || (a.status === 'open' ? a.createdAt - b.createdAt : (a.readyBy ?? a.createdAt) - (b.readyBy ?? b.createdAt)));
   const canAccept = c.can('Accept online order') !== 'n', rejCode = c.can('Reject online order (reason)');
   return <>
     <div className="row" style={{ gap: 6, overflowX: 'auto' }}>{(['all', ...chans] as const).map(k => { const n = list.filter(o => (k === 'all' || o.source === k) && ['open', 'sent', 'preparing', 'ready', 'held'].includes(o.status)).length;
-      return <button key={k} type="button" className="chip row" aria-pressed={ch === k} onClick={() => setCh(k)} style={{ height: 40 }}>{k !== 'all' && <i style={{ width: 10, height: 10, borderRadius: 3, background: CHANNEL[k].color }} />}{k === 'all' ? 'All' : CHANNEL[k].name}<span className="faint">{n}</span></button>; })}</div>
+      return <button key={k} type="button" className="chip row" aria-pressed={ch === k} onClick={() => setCh(k)} style={{ height: 40, flex: 'none' }}>{k !== 'all' && <i style={{ width: 10, height: 10, borderRadius: 3, background: CHANNEL[k].color }} />}{k === 'all' ? 'All channels' : CHANNEL[k].name}<span className="faint">{n}</span></button>; })}
+      <select className="input" aria-label="Service tier" value={tier} onChange={e => setTier(e.target.value)} style={{ height: 40, width: 'auto', flex: 'none' }}>
+        <option value="all">All service tiers</option>{Object.entries(TIER).map(([k, t]) => <option key={k} value={k}>{t.l}</option>)}<option value="scheduled">Scheduled</option></select></div>
     {!shown.length ? <Empty icon="inbox" title="No online orders right now">New orders from the platforms appear here by themselves, with a chime on the register.</Empty>
-      : <div className="grid" style={{ ['--min' as string]: '300px' }}>{shown.map(o => {
+      : <div className="grid" style={{ ['--min' as string]: '300px', alignItems: 'start' }}>{LANES.map(([lk, ll, inLane]) => { const lane = shown.filter(inLane);
+        return <section key={lk} className="stack sm" aria-label={ll} style={{ padding: 10, borderRadius: 'var(--radius-lg)', background: 'var(--bg-sunken)' }}>
+          <div className="row between" style={{ padding: '2px 4px' }}><b>{ll}</b><Badge tone={lk === 'in' && lane.some(o => o.status === 'open') ? 'accent' : 'neutral'}>{lane.length}</Badge></div>
+          {!lane.length && <span className="faint" style={{ padding: 14, borderRadius: 12, border: '1px dashed var(--border)', textAlign: 'center', fontSize: 13 }}>Nothing here</span>}
+          {lane.map(o => {
         const left = ACCEPT_WINDOW_MS - (c.now - o.createdAt), sched = isScheduled(o);
-        const st = o.status === 'open' ? 'New · needs accept' : o.status === 'held' ? `Held · fires ${hhmm(fireAt(o))}` : o.status === 'ready' ? (isOnline(o) ? 'On the shelf' : 'Ready') : o.status === 'voided' ? (o.note?.startsWith('Missed') ? 'Missed' : 'Rejected') : 'Cooking';
+        const [st, tone]: [string, 'accent' | 'warning' | 'success' | 'danger' | 'info'] = o.status === 'open' ? [isPlatform(o.source) ? `Accept in ${mmss(left)}` : 'New order', 'accent'] : o.status === 'held' ? [`Fires ${hhmm(fireAt(o))}`, 'warning']
+          : o.status === 'ready' ? [isOnline(o) ? 'On the shelf' : 'Ready', 'success'] : o.status === 'voided' ? [o.note?.startsWith('Missed') ? 'Missed' : 'Rejected', 'danger'] : ['In kitchen', 'info'];
         return <article key={o.id} className="card flat" style={{ display: 'flex', flexDirection: 'column', borderColor: o.status === 'open' ? 'var(--accent)' : undefined, borderWidth: o.status === 'open' ? 2 : 1, opacity: o.status === 'voided' ? .7 : 1 }}>
           <div style={{ height: 6, background: CHANNEL[o.source].color }} />
           <div className="stack sm" style={{ padding: 14 }}>
-            <div className="row wrap"><ChPill s={o.source} /><b className="mono">{o.no}</b><TierBadge o={o} /><span className="grow" /><b style={{ fontSize: 12, color: o.status === 'open' ? 'var(--accent-fg)' : o.status === 'voided' ? 'var(--danger-fg)' : 'var(--success-fg)' }}>{st}</b></div>
+            <div className="row wrap"><ChPill s={o.source} /><b className="mono">{o.no}</b><TierBadge o={o} /><span className="grow" /><Badge tone={tone}>{st}</Badge></div>
             {items(o)}
             <div className="grid" style={{ ['--min' as string]: '120px', gap: 6 }}>
               <span className="sunken" style={{ padding: 8, fontSize: 12 }}>{o.source === 'qr' ? 'Table' : 'Ready by'}<br /><b style={{ fontSize: 16, color: dueColor(o, c.now) }}>{o.source === 'qr' ? o.table ?? '—' : o.readyBy ? `${hhmm(o.readyBy)} · ${dueText(o.readyBy, c.now)}` : '—'}</b></span>
@@ -136,7 +147,7 @@ function Inbox({ c, scope, list }: { c: Ctx; scope: 'platform' | 'all'; list: Or
             {o.status === 'voided' && <span className="faint" style={{ fontSize: 12 }}>{o.note}. Logged with the person; the platform notifies the guest.</span>}
             {o.cashierId && o.status !== 'open' && o.status !== 'voided' && <span className="faint" style={{ fontSize: 12 }}>Accepted by {empName(c.db, o.cashierId) ?? (o.cashierId === 'system' ? 'auto-accept' : o.cashierId)}</span>}
           </div>
-        </article>; })}</div>}
+        </article>; })}</section>; })}</div>}
     <p className="faint" style={{ fontSize: 12 }}>The inbox is read-and-respond only. Nobody can create, edit or re-price an online order in BorNiz. Cancellations and refunds go through the platform and come back as status updates.</p>
     <RejectSheet c={c} o={rej} code={rejCode} onClose={() => setRej(null)} />
   </>;

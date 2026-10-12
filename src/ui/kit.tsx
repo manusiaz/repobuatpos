@@ -67,7 +67,7 @@ export function Loading({ rows = 6 }: { rows?: number }) {
 export const Empty = ({ icon = 'inbox', title, children, action }: { icon?: string; title: string; children?: ReactNode; action?: ReactNode }) =>
   <div className="empty"><Icon name={icon} size={32} /><h3 style={{ color: 'var(--fg-1)' }}>{title}</h3>{children && <p style={{ maxWidth: 420 }}>{children}</p>}{action}</div>;
 /** A KPI tile opens the list it counts (src/system/drill.ts) unless `href` says otherwise (null = static). */
-const KPI_ICONS: [RegExp, string][] = [[/^open|late|wait|\bmin\b|prep|time/i, 'clock'], [/revenue|sales|spend|margin|target|aov|ticket/i, 'trending-up'], [/order|cover|transaction/i, 'chart-column'],
+const KPI_ICONS: [RegExp, string][] = [[/^open|late|wait|\bmin\b|prep|time/i, 'clock'], [/incoming|inbox|accept/i, 'inbox'], [/kitchen|cooking/i, 'chef-hat'], [/^ready|shelf/i, 'package-check'], [/complete|picked up/i, 'circle-check'], [/revenue|sales|spend|margin|target|aov|ticket/i, 'trending-up'], [/order|cover|transaction/i, 'chart-column'],
   [/void|refund|waste|variance|loss/i, 'receipt-text'], [/member|customer|guest|staff|team|shift|present/i, 'users'], [/point|bean|loyal|reward/i, 'coins'], [/approv|pending|review/i, 'shield-check'], [/cash|drawer|deposit|payout|balance/i, 'wallet'], [/stock|item|product|sku|par/i, 'package']];
 const kpiIcon = (label: string) => KPI_ICONS.find(([r]) => r.test(label))?.[1] ?? 'activity';
 export function Kpi({ label, value, delta, tone, href }: { label: string; value: ReactNode; delta?: ReactNode; tone?: 'up' | 'down' | 'warn'; href?: string | null }) {
