@@ -9,7 +9,8 @@ import { useDB } from '../data/store.ts';
 import { escalateDue, watchKitchen } from '../data/actions.ts';
 import { sweepAlerts } from '../data/alerts/index.ts';
 import { setMoneyStyle } from '../domain/money.ts';
-import { moneyStyle } from '../system/settings.ts';
+import { menuDomain, moneyFormat, roleTheme } from '../system/tools.ts';
+import { setOwnHost } from '../system/hosts.ts';
 import { useDispatcher } from '../data/actions/dispatch.ts';
 import { usePrintAgent } from '../devices/agent.ts';
 import { setSession, useSession } from '../session.ts';
@@ -33,6 +34,7 @@ const SURFACES: Record<Surface, ComponentType> = {
 const DARK: Partial<Record<Surface, true>> = { kds: true, display: true };
 const WARM = () => [import('../screens/pos.tsx'), import('../screens/pic.tsx'), import('../screens/online.tsx'), import('../screens/waiter.tsx'),
   import('../screens/kds.tsx'), import('../screens/display.tsx'), import('../screens/owner.tsx'), import('../screens/manager.tsx')];
+const GUEST: Partial<Record<Surface, true>> = { selforder: true, kiosk: true, display: true, landing: true, auth: true };
 
 export default function App({ path }: { path: string }) {
   const page = pageAt(path) as Page;
@@ -49,12 +51,14 @@ export default function App({ path }: { path: string }) {
   const go = useCallback((p: string) => router.push(p), [router]);
   const ctx = useMemo<AppCtx | null>(() => db && user ? { page, db, user, me: db.employees.find(e => e.id === user.id), outletId: outlet ?? user.outletId, setOutlet, go } : null, [page, db, user, outlet, go]);
   if (!ctx) return <div style={{ padding: 24 }}><Loading /></div>;
-  setMoneyStyle(moneyStyle(ctx.db));
+  setMoneyStyle(...moneyFormat(ctx.db, page.surface, ctx.outletId)); // Studios: price display rules, number format per outlet
+  setOwnHost(menuDomain(ctx.db)); // Studios: custom domain for QR, receipt and shared links
+  const rt = roleTheme(ctx.db, ctx.user.role); // Studios: theme per role (accent, density, dark)
   const Surface = SURFACES[page.surface];
   const allowed = canOpen(ctx.user.role, page);
   const body = allowed ? <Surface /> : <Denied />;
   return <Ctx.Provider value={ctx}>
-    <div data-theme={DARK[page.surface] ? 'dark' : undefined} data-role={ctx.user.role} style={{ minHeight: '100dvh', background: 'var(--bg-canvas)', color: 'var(--fg-1)' }}>
+    <div data-theme={DARK[page.surface] || (rt?.dark && !GUEST[page.surface]) ? 'dark' : undefined} data-role={ctx.user.role} style={{ minHeight: '100dvh', background: 'var(--bg-canvas)', color: 'var(--fg-1)', ...(GUEST[page.surface] ? {} : rt?.style) }}>
       {page.shell === 'backoffice' || page.shell === 'admin' ? <BackOfficeShell>{body}</BackOfficeShell> : page.shell === 'public' ? <PublicShell>{body}</PublicShell> : body}
       <Toaster />
     </div>

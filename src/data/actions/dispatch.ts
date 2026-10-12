@@ -4,17 +4,17 @@
 // event id, so several open registers never double-send. Demo mode (no Supabase) uses the simulator: queued → sent → delivered.
 import { gatewayWebhook } from '../actions.ts';
 import { useEffect } from 'react';
-import { commit, snapshot } from '../store.ts';
+import { commit, snapshot, uid } from '../store.ts';
 import { REMOTE, authHeaders } from '../remote.ts';
 import type { DB, Message } from '../schema.ts';
 import { reportIntegration } from './integrations.ts';
 import { subscribed, type OutEvent } from '../../integrations/server/webhooks/events.ts';
-import { emailFrom, quietNow, toolValue } from '../../system/tools.ts';
+import { emailFrom, hookWants, quietNow, studioHook, toolValue } from '../../system/tools.ts';
 import { linkTo } from '../../system/hosts.ts';
 
 export interface Outgoing { messageId: string; channel: Message['channel']; to: string; template: string; params: string[]; subject: string; text: string; tenantId: string; from?: string }
 export interface Result { ok: boolean; status?: string; simulated?: boolean; message?: string; permanent?: boolean }
-export interface Transport { message(x: Outgoing): Promise<Result>; webhook?(integrationId: string, e: OutEvent): Promise<Result> }
+export interface Transport { message(x: Outgoing): Promise<Result>; webhook?(integrationId: string, e: OutEvent): Promise<Result>; hook?(h: { url: string; secret: string }, e: OutEvent): Promise<Result> }
 /** `marketing` messages wait out the quiet hours (Studios › Opt-in & consent); transactional ones never wait. */
 export type Render = (db: DB, m: Message) => Pick<Outgoing, 'params' | 'subject' | 'text' | 'from'> & { marketing?: boolean };
 
@@ -36,10 +36,11 @@ async function post(path: string, payload: unknown): Promise<Result> {
     return r.ok ? { ...j, ok: j.ok !== false } : { ok: false, message: j.message ?? `HTTP ${r.status}`, permanent: [400, 401, 403, 404, 422, 501].includes(r.status) };
   } catch (e) { return { ok: false, message: (e as Error).message }; }
 }
-export const demoTransport: Transport = { message: async () => ({ ok: true, status: 'sent', simulated: true }) };
+export const demoTransport: Transport = { message: async () => ({ ok: true, status: 'sent', simulated: true }), hook: async () => ({ ok: true, simulated: true }) };
 export const remoteTransport: Transport = {
   message: x => post('/api/messages/send', x),
   webhook: (integrationId, e) => post('/api/webhooks/deliver', { integrationId, event: e }),
+  hook: (h, e) => post('/api/webhooks/deliver', { url: h.url, secret: h.secret, event: e, tenantId: snapshot().tenant.id }),
 };
 
 /** Events since `since`, with ids stable across devices (the server delivers each id once per connection). */
@@ -51,10 +52,17 @@ export function webhookEvents(db: DB, since: number): OutEvent[] {
     out.push({ id: 'payment.settled:' + p.id, event: 'payment.settled', at: p.at, data: { paymentId: p.id, orderId: p.orderId, outletId: p.outletId, method: p.method, amount: p.amount, tip: p.tip, ref: p.ref } });
   for (const a of db.approvals) if (a.decidedAt && a.decidedAt >= since && (a.status === 'approved' || a.status === 'rejected'))
     out.push({ id: 'approval.decided:' + a.id, event: 'approval.decided', at: a.decidedAt, data: { approvalId: a.id, type: a.type, title: a.title, status: a.status, amount: a.amount, outletId: a.outletId, requestedBy: a.requestedBy, decidedBy: a.decidedBy } });
-  for (const v of db.versions) if (v.status === 'published' && v.at >= since)
+  for (const v of db.versions) if (v.status === 'published' && v.at >= since) {
     out.push({ id: 'publish.done:' + v.id, event: 'publish.done', at: v.at, data: { versionId: v.id, kind: v.kind, by: v.by, note: v.note } });
-  for (const a of db.audit) if (a.action.startsWith('item.86') && a.at >= since)
-    out.push({ id: 'item.86:' + a.id, event: 'item.86', at: a.at, data: { subject: a.subject, outletId: a.outletId ?? null, by: a.actor } });
+    out.push({ id: 'theme.published:' + v.id, event: 'theme.published', at: v.at, data: { versionId: v.id, kind: v.kind, tool: (v.data as { tool?: string } | null)?.tool ?? null, by: v.by, note: v.note } });
+  }
+  for (const a of db.audit) if (a.at >= since) {
+    if (a.action.startsWith('item.86')) out.push({ id: 'item.86:' + a.id, event: 'item.86', at: a.at, data: { subject: a.subject, outletId: a.outletId ?? null, by: a.actor } });
+    if (/^(product|category|item\.86)/.test(a.action)) out.push({ id: 'menu.updated:' + a.id, event: 'menu.updated', at: a.at, data: { action: a.action, subject: a.subject, outletId: a.outletId ?? null, by: a.actor } });
+    if (a.action === 'price.changed') out.push({ id: 'price.changed:' + a.id, event: 'price.changed', at: a.at, data: { subject: a.subject, outletId: a.outletId ?? null, by: a.actor } });
+  }
+  for (const a of db.approvals) if (a.type === 'price' && a.status === 'approved' && a.decidedAt && a.decidedAt >= since)
+    out.push({ id: 'price.changed:' + a.id, event: 'price.changed', at: a.decidedAt, data: { productId: a.subjectId, title: a.title, price: (a.payload as { price?: number } | undefined)?.price ?? null, outletId: a.outletId, by: a.decidedBy } });
   return out.sort((a, b) => a.at - b.at);
 }
 
@@ -84,17 +92,33 @@ export async function tick({ now = Date.now(), transport = REMOTE ? remoteTransp
       else if (r.permanent || failed(m.id, now) >= MAX_TRIES) { tries.delete(m.id); setMessageStatus(m.id, 'failed'); }
     } finally { flight.delete(m.id); }
   }
+  const hook = studioHook(db); // Studios › Webhooks & API: the merchant's endpoint and the events they picked
+  const hooks = db.integrations.filter(x => x.connector === 'webhook-out' && x.enabled);
+  if (hook && transport.hook && !hooks.some(i => i.config.url === hook.url)) {
+    for (const e of webhookEvents(db, Math.max(now - DAY, hook.since))) {
+      const k = e.id + '|studio';
+      if (!hook.events.includes(e.event) || doneSet().has(k) || waiting(k, now)) continue;
+      const r = await transport.hook(hook, e);
+      const n = r.ok ? 0 : r.permanent ? MAX_TRIES : failed(k, now);
+      if (r.ok || n >= MAX_TRIES) { tries.delete(k); markDone(k); logDelivery(e, hook.url, r.ok ? (r.simulated ? 'simulated' : 'sent') : 'failed'); }
+    }
+  }
   if (!transport.webhook) return;
-  for (const i of db.integrations.filter(x => x.connector === 'webhook-out' && x.enabled)) {
+  for (const i of hooks) {
     for (const e of webhookEvents(db, Math.max(now - DAY, i.updatedAt))) {
       const k = e.id + '|' + i.id;
-      if (!subscribed(i.config, e.event) || doneSet().has(k) || waiting(k, now)) continue;
+      if (!hookWants(hook, i.config.url, e.event, () => subscribed(i.config, e.event)) || doneSet().has(k) || waiting(k, now)) continue;
       const r = await transport.webhook(i.id, e);
       if (r.ok) { tries.delete(k); markDone(k); if (i.status !== 'ok') reportIntegration(i.id, true); continue; }
       const n = r.permanent ? MAX_TRIES : failed(k, now);
       if (n >= MAX_TRIES) { tries.delete(k); markDone(k); reportIntegration(i.id, false, `${e.event} not delivered: ${r.message ?? 'no answer'}`); }
     }
   }
+}
+
+/** Studio webhook deliveries, newest first (Studios › Webhooks & API › Recent deliveries). */
+function logDelivery(e: OutEvent, url: string, status: string) {
+  commit('webhook.delivered', 'dispatcher', d => { const l = (d.records.webhook_delivery ??= []); l.unshift({ id: uid('wh'), a: e.event, b: url, c: status, d: e.id, e: '', at: Date.now() }); if (l.length > 200) l.length = 200; }, e.id);
 }
 
 /** Runs one pass while holding the per-browser lock; skips when another tab of this browser holds it. */

@@ -1,5 +1,6 @@
 'use client';
 import { badgesOf } from '../../system/studio.ts';
+import { priceRules } from '../../system/tools.ts';
 import { QR as QRCode } from '../../ui/qr.tsx';
 // Shared pieces for guest screens (customer display, QR menu, kiosk, customer links). Guest screens wear the
 // merchant brand from Menu Studio (db.theme → --bn-*), never BorNiz colors (Design Notes cd/so: "Read --bn-* variables").
@@ -67,13 +68,15 @@ export function useLang(first: Lang = 'en') {
 }
 
 // ── Menu (same rules as POS: outlet scope, hidden, 86, local price, flash price) ────────
-export interface MenuItem { p: Product; price: number; flash: number | null; sold: boolean; cat: string; badges: [string, string, string][] }
+/** `price` / `flash` are display prices (Studios › Price display rules); `strike` = show the original next to a sale price. */
+export interface MenuItem { p: Product; price: number; flash: number | null; sold: boolean; cat: string; badges: [string, string, string][]; strike: boolean }
 export function menuOf(db: DB, outletId: string): MenuItem[] {
-  const ok = sellable(db, outletId);
+  const ok = sellable(db, outletId), r = priceRules(db, outletId);
   return db.products.filter(p => p.status === 'live').flatMap(p => {
     const op = db.outletProducts.find(x => x.productId === p.id && x.outletId === outletId);
     if (!op || op.hidden) return [];
-    return [{ p, price: priceAt(db, p, outletId), flash: flashPrice(db.promos, p.id), sold: !ok(p.id), cat: p.categoryId, badges: badgesOf(db, p.id) }];
+    const flash = flashPrice(db.promos, p.id);
+    return [{ p, price: r.price(priceAt(db, p, outletId)), flash: flash == null ? null : r.price(flash), sold: !ok(p.id), cat: p.categoryId, badges: badgesOf(db, p.id), strike: r.strike }];
   });
 }
 export function useMenu(db: DB, outletId: string) {

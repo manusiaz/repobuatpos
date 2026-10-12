@@ -42,8 +42,11 @@ export function config(env: Record<string, string | undefined> = ENV): HostConfi
 export const hostOf = (sub: string, cfg: HostConfig) => cfg.hosts[sub] ?? (sub ? sub + '.' : '') + cfg.root;
 
 /** Internal page path (+ optional query) → the public URL people see, scan and share. */
-export function publicUrl(internal: string, cfg: HostConfig, tenant = cfg.tenant, origin = ''): string {
+export function publicUrl(internal: string, cfg: HostConfig, tenant = cfg.tenant, origin = '', own = ''): string {
   const [path, query = ''] = internal.split('?');
+  // The merchant's own domain (Studios › Custom domain) serves its QR menu, kiosk and customer links: no tenant segment.
+  if (own && ruleFor(path).tenant) return cfg.routing === 'path' ? `${cfg.protocol}://${own}${internal}`
+    : publicUrl(internal, cfg, tenant).replace(`${cfg.protocol}://${hostOf('order', cfg)}/${tenant}`, `${cfg.protocol}://${own}`);
   if (cfg.routing === 'path') return origin + internal;
   const h = ruleFor(path);
   let pub = path;
@@ -96,9 +99,12 @@ export function resolve(hostHeader: string, pathname: string, cfg: HostConfig, e
 /** Every page's public URL in the current mode (deploy checks, sitemap.xml, the page map). */
 export const allPublicUrls = (cfg: HostConfig) => PAGES.map(p => ({ path: p.path, url: publicUrl(p.path, cfg) }));
 
+let ownHost = '';
+/** The custom menu domain the merchant published (set by the app shell from src/system/tools.ts menuDomain). */
+export const setOwnHost = (h: string) => { ownHost = h.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, ''); };
 /** Public link for a page in this deployment (QR codes, receipts, WhatsApp, embeds). */
 export const linkTo = (internal: string, tenant?: string) =>
-  publicUrl(internal, config(), tenant, typeof location !== 'undefined' ? location.origin : '');
+  publicUrl(internal, config(), tenant, typeof location !== 'undefined' ? location.origin : '', ownHost);
 /** Where a merchant points their own domain (CNAME). */
 export const cnameTarget = () => { const c = config(); return c.routing === 'subdomain' ? hostOf('order', c) : (typeof location !== 'undefined' ? location.host : c.root); };
 /** Query values the proxy derived from the public path (tenant, table) plus the real query string. Client-only. */

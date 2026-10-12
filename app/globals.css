@@ -171,3 +171,6 @@ select.input{appearance:none;background-image:linear-gradient(45deg,transparent 
 @media (min-width:900px){.wt{grid-template-columns:minmax(0,1fr) 420px}.wt-side{display:flex;position:sticky;top:84px}}
 .wt-table{min-height:104px;border-radius:14px;border:1px solid var(--border);color:var(--fg-1);cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:6px;padding:12px;text-align:left;font:inherit}
 .wt-table[aria-pressed=true]{box-shadow:0 0 0 2px var(--accent)}
+/* Printed documents (letterhead): print-only blocks; staff chrome stays off the paper */
+.print-only{display:none}
+@media print{.print-only{display:block}.bo{display:block}.bo-side,.bo-top,.no-print{display:none!important}}

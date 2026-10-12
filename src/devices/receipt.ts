@@ -1,7 +1,8 @@
 // What BorNiz prints: the customer receipt, the kitchen ticket per station, the test page. Built from the order fields
 // (totals are never recomputed here), laid out once for 58 mm (32 cols) and 80 mm (48 cols).
 import type { DB, Order, OrderLine } from '../data/schema.ts';
-import { idr } from '../domain/money.ts';
+import { idr, withMoneyStyle } from '../domain/money.ts';
+import { guestMoney, guestStamp, legal, receiptFor, whiteLabel } from '../system/tools.ts';
 import { linkTo } from '../system/hosts.ts';
 import { menuDesign } from '../data/actions/studio.ts';
 import { ticketLayout } from '../system/tools.ts';
@@ -24,8 +25,12 @@ export const receiptUrl = (orderId: string) => linkTo('/order/customer-links/dig
 
 export interface ReceiptOpts { copy?: boolean; change?: number; footer?: string; url?: string; kick?: boolean; cut?: boolean }
 
-export function receiptDoc(db: DB, o: Order, paper: Paper, opts: ReceiptOpts = {}): Doc {
+/** The customer receipt in the outlet's guest number format (Studios › Number & currency format per outlet). */
+export const receiptDoc = (db: DB, o: Order, paper: Paper, opts: ReceiptOpts = {}): Doc => withMoneyStyle(guestMoney(db, o.outletId), () => receipt(db, o, paper, opts));
+
+function receipt(db: DB, o: Order, paper0: Paper, opts: ReceiptOpts): Doc {
   const out = db.outlets.find(x => x.id === o.outletId);
+  const tpl = receiptFor(db, o.outletId), lg = legal(db), paper = tpl?.paper ?? paper0; // Studios › Receipt template per outlet, Legal pages
   const cashier = db.employees.find(e => e.id === o.cashierId)?.name ?? '-';
   const cust = db.customers.find(c => c.id === o.customerId);
   const pays = db.payments.filter(p => p.orderId === o.id && p.status === 'settled' && p.ref !== 'ROUNDING');
@@ -35,12 +40,12 @@ export function receiptDoc(db: DB, o: Order, paper: Paper, opts: ReceiptOpts = {
   const ops: Op[] = [
     { t: 'text', s: db.tenant.name, align: 'center', bold: true, size: 'wide' },
     ...(biz?.legalName && biz.legalName !== db.tenant.name ? [{ t: 'text', s: biz.legalName, align: 'center' } as Op] : []),
-    ...(out ? [{ t: 'text', s: out.name, align: 'center' } as Op, { t: 'text', s: out.address || out.city, align: 'center' } as Op] : []),
+    ...(out ? [{ t: 'text', s: tpl?.h1 || out.name, align: 'center' } as Op, { t: 'text', s: tpl?.h2 || out.address || out.city, align: 'center' } as Op] : []),
     ...(out?.phone ? [{ t: 'text', s: out.phone, align: 'center' } as Op] : []),
     ...(out?.npwpd ? [{ t: 'text', s: 'NPWPD ' + out.npwpd, align: 'center' } as Op] : biz?.npwp ? [{ t: 'text', s: 'NPWP ' + biz.npwp, align: 'center' } as Op] : []),
     ...(opts.copy ? [{ t: 'text', s: '*** COPY ***', align: 'center', bold: true } as Op] : []),
     { t: 'rule' },
-    { t: 'lr', l: 'No ' + o.no, r: stamp(o.paidAt ?? o.createdAt) },
+    { t: 'lr', l: 'No ' + o.no, r: guestStamp(db, o.outletId, o.paidAt ?? o.createdAt) ?? stamp(o.paidAt ?? o.createdAt) },
     { t: 'lr', l: 'Cashier ' + cashier, r: where(o) + (o.type === 'dine' ? ` ${o.guests} pax` : '') },
     ...(o.source !== 'pos' ? [{ t: 'lr', l: 'Channel', r: SOURCE[o.source] ?? o.source } as Op] : []),
     ...(cust ? [{ t: 'lr', l: 'Member ' + cust.name, r: '' } as Op] : []),
@@ -67,11 +72,12 @@ export function receiptDoc(db: DB, o: Order, paper: Paper, opts: ReceiptOpts = {
   if (opts.change) ops.push({ t: 'lr', l: 'Change', r: amt(opts.change), bold: true });
   ops.push({ t: 'rule' });
   if (rc.qr !== 'none') ops.push({ t: 'qr', data: qrUrl }, { t: 'text', s: rc.qr === 'feedback' ? 'Scan to rate your visit' : rc.qr === 'member' && cust ? 'Scan for your member card' : 'Scan for your digital receipt', align: 'center' });
-  ops.push({ t: 'feed', n: 1 }, { t: 'text', s: opts.footer ?? (String(rc.f1 || '') || 'Terima kasih!'), align: 'center', bold: true });
+  ops.push({ t: 'feed', n: 1 }, { t: 'text', s: opts.footer ?? (tpl?.f1 || String(rc.f1 || '') || 'Terima kasih!'), align: 'center', bold: true });
   if (rc.f2) ops.push({ t: 'text', s: String(rc.f2), align: 'center' });
-  if (rc.wifiOn && rc.wifi) ops.push({ t: 'text', s: 'WiFi ' + String(rc.wifi), align: 'center' });
+  if (tpl?.wifi || (rc.wifiOn && rc.wifi)) ops.push({ t: 'text', s: 'WiFi ' + (tpl?.wifi || String(rc.wifi)), align: 'center' });
   ops.push(...couponOps(db, o)); // Customization Studio › Coupon on receipt
-  ops.push({ t: 'text', s: 'Powered by BorNiz', align: 'center' });
+  if (lg) { ops.push({ t: 'rule' }, { t: 'text', s: lg.co, align: 'center' }); if (lg.refund) ops.push({ t: 'text', s: 'Refund: ' + lg.refund, align: 'center' }); }
+  if (!whiteLabel(db)) ops.push({ t: 'text', s: 'Powered by BorNiz', align: 'center' });
   if (opts.copy) ops.push({ t: 'text', s: '*** COPY ***', align: 'center', bold: true });
   ops.push({ t: 'feed', n: 3 });
   if (opts.cut !== false) ops.push({ t: 'cut' });

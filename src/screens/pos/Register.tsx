@@ -9,6 +9,7 @@ import { findByCode, useWedgeScanner } from '../../devices/scanner.ts';
 import { playSfx } from '../../ui/sound.ts';
 import { flashPrice } from '../../domain/promo.ts';
 import { lineTotal } from '../../domain/order.ts';
+import { term } from '../../system/tools.ts';
 import { balance, tierOf } from '../../domain/loyalty.ts';
 import { idr } from '../../domain/money.ts';
 import { Badge, Icon, Seg, Sheet, Status, toast, hhmm } from '../../ui/kit.tsx';
@@ -114,7 +115,7 @@ export function Cart({ compact }: { compact?: boolean }) {
       <Seg label="Order type" value={cur?.type ?? 'dine'} options={[['dine', 'Dine-in'], ['take', 'Takeaway'], ['delivery', 'Delivery']] as const}
         onChange={v => patchOrder(ensureOrder(), { type: v, table: v === 'dine' ? cur?.table ?? null : null }, me.id)} />
       <div className="row wrap" style={{ gap: 6 }}>
-        {(cur?.type ?? 'dine') === 'dine' && <button className="btn btn-sm" onClick={() => go(P('table-picker'))}><Icon name="armchair" size={16} />{cur?.table ? 'Table ' + cur.table : 'Pick table'}</button>}
+        {(cur?.type ?? 'dine') === 'dine' && <button className="btn btn-sm" onClick={() => go(P('table-picker'))}><Icon name="armchair" size={16} />{cur?.table ? term(db, 'table') + ' ' + cur.table : 'Pick ' + term(db, 'table').toLowerCase()}</button>}
         {(cur?.type ?? 'dine') === 'dine' && <button className="btn btn-sm" onClick={() => go(P('guest-count-and-service-charge'))}><Icon name="users" size={16} />{cur?.guests ?? 1} pax</button>}
         <button className="btn btn-sm grow" onClick={() => go(P('customer-lookup-and-points'))} style={cust ? { background: 'var(--accent-soft)', borderColor: 'var(--accent)', justifyContent: 'flex-start' } : { justifyContent: 'flex-start' }}>
           <Icon name={cust ? 'user-check' : 'user-plus'} size={16} />

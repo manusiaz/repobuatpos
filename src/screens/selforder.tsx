@@ -2,6 +2,9 @@
 // Self-order (spec: BorNiz Self Order): QR menu on the guest's phone plus the customer links. Mobile-first single
 // column (max 520px, centered on desktop) in the merchant brand. Each registry page maps to one view below.
 import { themeNow } from '../system/studio.ts';
+import { abTheme, embeds, guestMoney } from '../system/tools.ts';
+import { setMoneyStyle } from '../domain/money.ts';
+import { GuestFooter } from './guest/published.tsx';
 import { useEffect, useRef, type ComponentType } from 'react';
 import { useApp } from '../app/context.tsx';
 import { sendToKitchen } from '../data/actions.ts';
@@ -32,12 +35,15 @@ export default function Screen() {
   const { page } = useApp();
   const g = useGuest();
   const View = VIEWS[page.slug] ?? Landing;
+  setMoneyStyle(...guestMoney(g.db, g.outletId)); // the scanned outlet's number format (Studios)
+  const embed = g.sp.get('embed') === '1' && !!embeds(g.db); // iframe widget on the merchant's own site (Studios › Embeds)
 
-  const theme = themeNow(g.db, g.db.theme, g.now);
-  return <div data-guest style={{ ...brandVars(theme), ...guestVars(g.db, theme), minHeight: '100dvh', background: 'color-mix(in srgb,var(--bn-ink) 9%,var(--bn-paper))' }}>
+  const theme = themeNow(g.db, abTheme(g.db, g.db.theme, g.ab), g.now);
+  return <div data-guest style={{ ...brandVars(theme), ...guestVars(g.db, theme), minHeight: '100dvh', background: embed ? 'var(--bn-paper)' : 'color-mix(in srgb,var(--bn-ink) 9%,var(--bn-paper))' }}>
     <GuestStyle db={g.db} /><GuestHead db={g.db} slug={page.slug} theme={theme} />
-    <main style={{ maxWidth: 520, margin: '0 auto', minHeight: '100dvh', background: 'var(--bn-paper)', position: 'relative', overflowX: 'hidden', zoom: guestZoom(g.db) }}>
+    <main style={{ maxWidth: embed ? 'none' : 520, margin: '0 auto', minHeight: '100dvh', background: 'var(--bn-paper)', position: 'relative', overflowX: 'hidden', zoom: guestZoom(g.db) }}>
       <View g={g} />
+      <GuestFooter db={g.db} outletId={g.outletId} slug={page.slug} />
     </main>
   </div>;
 }

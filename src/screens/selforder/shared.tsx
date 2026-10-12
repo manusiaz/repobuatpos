@@ -1,6 +1,6 @@
 'use client';
 import { guestLang } from '../../system/settings.ts';
-import { guestLanguages, itemName } from '../../system/tools.ts';
+import { abVariant, guestLanguages, itemName } from '../../system/tools.ts';
 import { productImage } from '../../ui/kit.tsx';
 // Self-order plumbing: table from the URL, the table's open bill (a real store order, source 'qr'), the remembered
 // member, language, and the small building blocks every QR-menu and customer-link view shares.
@@ -44,8 +44,12 @@ export function useGuest() {
   const recent = db.orders.filter(o => o.outletId === outletId && o.source === 'qr' && o.table === table && o.status !== 'voided' && Date.now() - o.createdAt < TWO_H).sort((a, b) => b.createdAt - a.createdAt);
   const cart = recent.find(unpaid) ?? null;               // the table's open bill
   const latest = recent.find(o => o.lines.some(l => l.fired)) ?? null; // the order the kitchen knows about
-  const ensureCart = () => cart?.id ?? newOrder(outletId, 'guest', 'qr', { table, type: 'dine', customerId: meId });
-  return { db, outletId, go, sp, ref, table, L, t: L.t, me, setMe, out, hrs, canOrder: hrs.open && !hrs.paused, online: db.device.online, recent, cart, latest, ensureCart, now };
+  // A/B test (Studios): one stable id per phone picks the theme version; the order remembers which one the guest saw.
+  const [guestId, setGuestId] = useLocal<string | null>('bn-guest-id', null);
+  useEffect(() => { if (!guestId) setGuestId(Math.random().toString(36).slice(2, 12)); }, [guestId, setGuestId]);
+  const ab = abVariant(db, guestId ?? '', now);
+  const ensureCart = () => cart?.id ?? newOrder(outletId, 'guest', 'qr', { table, type: 'dine', customerId: meId, ...(ab ? { ab } : {}) });
+  return { db, outletId, go, sp, ref, table, L, t: L.t, me, setMe, out, hrs, canOrder: hrs.open && !hrs.paused, online: db.device.online, recent, cart, latest, ensureCart, now, ab };
 }
 export type G = ReturnType<typeof useGuest>;
 
@@ -73,7 +77,7 @@ export function ItemRow({ i, onOpen, badge, t, count = 0, lang = 'en' }: { i: Me
     <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
       <b style={{ fontSize: 15 }}>{name}{i.badges.map(([k, l, ic]) => <Icon key={k} name={ic} size={14} aria-label={l} className="bn-ico" style={{ marginLeft: 4, verticalAlign: '-2px', color: 'var(--bn-icon, var(--bn-p))' }} />)}</b>
       <span style={{ fontSize: 13, color: MUTED, lineHeight: 1.35 }}>{itemDesc(db, i)}</span>
-      {i.sold ? <b style={{ fontSize: 14, color: MUTED }}>{t('Sold out')}</b> : <span><b style={{ fontSize: 14 }}>{idr(unit(i))}</b>{i.flash != null && <s style={{ fontSize: 12, color: MUTED, marginLeft: 6 }}>{idr(i.price).replace('IDR ', '')}</s>}</span>}
+      {i.sold ? <b style={{ fontSize: 14, color: MUTED }}>{t('Sold out')}</b> : <span><b style={{ fontSize: 14 }}>{idr(unit(i))}</b>{i.flash != null && i.strike && <s style={{ fontSize: 12, color: MUTED, marginLeft: 6 }}>{idr(i.price).replace('IDR ', '')}</s>}</span>}
     </span>
     <span aria-hidden style={{ width: 44, height: 44, flex: 'none', borderRadius: 14, background: i.sold ? 'var(--bg-sunken)' : count ? 'var(--bn-acc)' : 'var(--bn-p)', color: count ? 'var(--bn-ink)' : 'var(--ink-0)', display: 'grid', placeItems: 'center', fontWeight: 800 }}>
       {count || <Icon name={i.sold ? 'ban' : 'plus'} size={20} />}</span>

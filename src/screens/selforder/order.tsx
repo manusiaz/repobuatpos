@@ -111,7 +111,7 @@ export function Home({ g }: { g: G }) {
     {(flash.length > 0 || promos.length > 0) && <div className="row" style={{ gap: 10, overflowX: 'auto', padding: '2px 14px 6px', scrollbarWidth: 'none' }}>
       {flash.map(i => <button key={i.p.id} onClick={() => openItem(g, i.p.id)} style={{ flex: 'none', width: 250, padding: 14, borderRadius: 18, border: 0, background: 'var(--bn-ink)', color: 'var(--ink-0)', textAlign: 'left', cursor: 'pointer', display: 'flex', gap: 12, alignItems: 'center' }}>
         <span style={{ width: 52, height: 52, borderRadius: 12, background: productImage(i.p), flex: 'none' }} />
-        <span className="stack" style={{ gap: 2 }}><span style={{ fontSize: 11, fontWeight: 800, color: 'var(--bn-acc)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{t('Flash sale')}</span><b style={{ fontSize: 14 }}>{itemName(db, i.p, g.L.lang)}</b><span style={{ fontSize: 13 }}>{idr(i.flash!)} <s style={{ opacity: .7 }}>{idr(i.price).replace('IDR ', '')}</s></span></span></button>)}
+        <span className="stack" style={{ gap: 2 }}><span style={{ fontSize: 11, fontWeight: 800, color: 'var(--bn-acc)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{t('Flash sale')}</span><b style={{ fontSize: 14 }}>{itemName(db, i.p, g.L.lang)}</b><span style={{ fontSize: 13 }}>{idr(i.flash!)} {i.strike && <s style={{ opacity: .7 }}>{idr(i.price).replace('IDR ', '')}</s>}</span></span></button>)}
       {promos.map(p => <button key={p.id} onClick={() => g.go(so('claim-voucher'))} style={{ flex: 'none', width: 220, padding: 14, borderRadius: 18, border: 0, background: 'var(--bn-acc)', color: 'var(--bn-ink)', textAlign: 'left', cursor: 'pointer' }}>
         <b style={{ display: 'block', fontSize: 15 }}>{p.name}</b><span style={{ fontSize: 13 }}>Code <b className="mono">{p.code}</b>{p.minSpend ? ` · min. ${idr(p.minSpend)}` : ''}</span></button>)}
     </div>}
@@ -200,7 +200,7 @@ export function Item({ g }: { g: G }) {
       <div className="stack" style={{ gap: 6 }}>
         <h1 style={{ fontSize: 26, fontWeight: 800 }}>{itemName(g.db, it.p, g.L.lang)}</h1>
         {it.p.desc && <span style={{ fontSize: 14, color: MUTED }}>{it.p.desc}</span>}
-        <span>{it.sold ? <b style={{ color: 'var(--danger-fg)' }}>{t('Sold out')} today</b> : <><b style={{ fontSize: 18 }}>{idr(unit(it))}</b>{it.flash != null && <s style={{ marginLeft: 8, color: MUTED }}>{idr(it.price)}</s>}</>}</span>
+        <span>{it.sold ? <b style={{ color: 'var(--danger-fg)' }}>{t('Sold out')} today</b> : <><b style={{ fontSize: 18 }}>{idr(unit(it))}</b>{it.flash != null && it.strike && <s style={{ marginLeft: 8, color: MUTED }}>{idr(it.price)}</s>}</>}</span>
       </div>
       {groups.length > 0 && <div style={{ ...card }}><OptionPicker groups={groups} sel={sel} onChange={setSel} t={t} /></div>}
       {ask.notes && <div className="field"><label htmlFor="note">Note for the kitchen <span className="faint">(optional)</span></label>

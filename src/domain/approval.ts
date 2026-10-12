@@ -36,6 +36,19 @@ export function canDecide(req: { level: Level; requestedBy: string; countedBy?: 
   return RANK[by.level] >= RANK[req.level];
 }
 
+/** Change approvals set to "Owner + one admin" (Studios › Governance): studio publishes, price changes and local items
+ *  need two different people, one of them the owner. A manager may sign first; only the owner's signature (or a second
+ *  signature after the owner's) completes it. The requester never signs. */
+export const TWO_KEY: RequestType[] = ['publish', 'price', 'local_item'];
+export type Signer = { id: string; level: Level };
+export function twoKey(signers: Signer[], by: Signer, requestedBy: string): 'approve' | 'cosign' | string {
+  if (by.id === requestedBy) return 'You can’t decide your own request.';
+  if (signers.some(s => s.id === by.id)) return 'You already signed. It needs a second person.';
+  if (RANK[by.level] < RANK.manager) return 'Needs owner. Escalate instead.';
+  const all = [...signers, by];
+  return all.length >= 2 && all.some(s => s.level === 'owner') ? 'approve' : 'cosign';
+}
+
 /** Escalation: PIC 5 min → manager 30 min → owner. */
 export const ESCALATE_MS: Partial<Record<Level, number>> = { pic: 5 * 60e3, manager: 30 * 60e3 };
 export const nextLevel = (l: Level): Level | null => (l === 'pic' ? 'manager' : l === 'manager' ? 'owner' : null);

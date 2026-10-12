@@ -4,6 +4,7 @@
 import { DeviceChrome } from '../app/chrome.tsx';
 import { useMemo, useState } from 'react';
 import { useApp } from '../app/context.tsx';
+import { term } from '../system/tools.ts';
 import { Badge, Empty, Icon, Sheet, ago, hhmm, toast, useNow, type Tone } from '../ui/kit.tsx';
 import { idr } from '../domain/money.ts';
 import { perm } from '../system/perms.ts';
@@ -43,7 +44,7 @@ export default function Screen() {
   const unread = calls.filter(n => !n.read).length;
   const canOrder = perm(db, user.role, 'Take orders & charge', outletId) !== 'n';
   const slot = (Object.keys(SHIFTS) as (keyof typeof SHIFTS)[]).find(k => db.roster.find(r => r.outletId === outletId && r.day === (new Date(now).getDay() + 6) % 7)?.slots[k].crew.includes(by));
-  const title = tab === 'table' ? 'Table ' + sel : { tables: 'Tables · ' + outlet?.name, ready: 'Ready to serve', calls: 'Guest calls', me: 'My shift' }[tab];
+  const title = tab === 'table' ? term(db, 'table') + ' ' + sel : { tables: 'Tables · ' + outlet?.name, ready: 'Ready to serve', calls: 'Guest calls', me: 'My shift' }[tab];
   const TABS: [Tab, string, string, number][] = [['tables', 'Tables', 'armchair', 0], ['ready', 'Ready', 'bell', ready.length], ['calls', 'Calls', 'hand', unread], ['me', 'Me', 'user', 0]];
 
   // design v1.0: phone = one pane with tabs; tablet and up = tables left, the picked table right

@@ -8,6 +8,7 @@ import { canReach } from '../system/access.ts';
 import { Icon } from '../ui/kit.tsx';
 import { useApp } from './context.tsx';
 import { staffBrand } from '../data/actions/studio.ts';
+import { moduleLabel } from '../system/tools.ts';
 import { Bell, Help, Launcher, OutletPicker, UserSwitch } from './chrome.tsx';
 
 export function BackOfficeShell({ children }: { children: ReactNode }) {
@@ -34,7 +35,7 @@ export function BackOfficeShell({ children }: { children: ReactNode }) {
         const isOpen = open[mod] ?? pages.some(rp => rp.id === here?.id); // design v1.0: one icon row per module, the current one open
         return <div key={mod}>
           <button className="nav-m" onClick={() => setOpen(o => ({ ...o, [mod]: !isOpen }))} aria-expanded={isOpen} aria-current={!isOpen && pages.some(rp => rp.id === here?.id) ? 'true' : undefined}>
-            <Icon name={MOD_ICON[mod] ?? 'circle'} size={18} /><span className="grow">{mod}</span><Icon name={isOpen ? 'chevron-down' : 'chevron-right'} size={16} /></button>
+            <Icon name={MOD_ICON[mod] ?? 'circle'} size={18} /><span className="grow">{moduleLabel(db, mod)}</span><Icon name={isOpen ? 'chevron-down' : 'chevron-right'} size={16} /></button>
           {isOpen && pages.map(rp => <Link key={rp.id} href={rp.path} className="nav-i" aria-current={here?.id === rp.id ? 'page' : undefined} onClick={() => setSide(false)}>
             <span className="grow">{rp.title}</span>{rp.release !== 'MVP' && <ReleaseTag r={rp.release} />}</Link>)}
         </div>;
@@ -44,7 +45,7 @@ export function BackOfficeShell({ children }: { children: ReactNode }) {
     <div className="bo-main">
       <header className="bo-top">
         <button className="btn btn-ghost icon-btn only-mobile" onClick={() => setSide(true)} aria-label="Menu"><Icon name="menu" /></button>
-        <span className="faint grow hide-sm" style={{ fontSize: 13 }}>{here ? `${here.module} › ${here.title}` : page.group}{here && here.path !== page.path ? ` › ${page.title}` : ''}</span>
+        <span className="faint grow hide-sm" style={{ fontSize: 13 }}>{here ? `${moduleLabel(db, here.module)} › ${here.title}` : page.group}{here && here.path !== page.path ? ` › ${page.title}` : ''}</span>
         <span className="grow only-mobile" />
         {role !== 'admin' && <OutletPicker />}
         <Help /><Launcher /><Bell /><UserSwitch />

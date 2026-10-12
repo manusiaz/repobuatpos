@@ -1,7 +1,7 @@
 'use client';
 // Owner dashboard, layout A (spec/BorNiz Owner Dashboard.dc.html): KPIs, revenue trend vs last week, decisions, outlets live.
 // /owner = the dashboard with period filters; /owner/monitor/live-monitor = the same board pinned to today, refreshing live.
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useApp } from '../app/context.tsx';
 import { Badge, Empty, Icon, Kpi, Seg, ago, hhmm, useNow, Avatar, type Tone } from '../ui/kit.tsx';
@@ -13,6 +13,7 @@ import { byChannel, byMethod, DAY, delta, historyStart, lateOrders, openOrders, 
 import { amountOf, myQueue, outletsLive, typeLabel, useDecide, verbs, watchItems } from './insight/live.tsx';
 import { useQuery } from './insight/query.ts';
 import { TopRecommendations } from './insight/insights.tsx';
+import { widgetsFor } from '../system/tools.ts';
 
 const Q = { outlet: 'all', period: 'today', gran: 'hour' };
 const PERIODS = [['today', 'Today'], ['7d', '7 days'], ['30d', '30 days'], ['12m', '12 months']] as const;
@@ -35,6 +36,14 @@ export default function Screen() {
   const dRev = delta(cur.revenue, prev.revenue);
   const gm = cur.grossMargin, gmPrev = prev.grossMargin;
   const outlets = db.outlets.map(o => [o.id, o.name] as const);
+  const wg = widgetsFor(db, 'owner'), show = (k: string) => !wg || wg.on.includes(k); // Studios › Dashboard widgets per role
+  const cards: Record<string, ReactNode> = {
+    w_reco: <TopRecommendations key="w_reco" outlet={outlet} />,
+    w_live: <LiveTx key="w_live" db={db} outlet={outlet} now={now} />,
+    w_top: <TopProducts key="w_top" db={db} outlet={outlet} range={spec.range} label={per === 'today' ? 'today' : PERIODS.find(p => p[0] === per)?.[1].toLowerCase() ?? ''} />,
+    w_mix: <Mix key="w_mix" db={db} outlet={outlet} range={spec.range} />,
+    w_alert: <Alerts key="w_alert" db={db} outlet={outlet} now={now} />,
+  };
 
   return <div className="stack lg">
     <header className="row wrap between" style={{ gap: 12 }}>
@@ -50,16 +59,16 @@ export default function Screen() {
 
     {!live && <Setup db={db} by={user.id} />}
 
-    <section className="grid" style={{ ['--min' as string]: '190px' }} aria-label="Key numbers">
+    {show('w_rev') && <section className="grid" style={{ ['--min' as string]: '190px' }} aria-label="Key numbers">
       <Kpi label="Revenue" value={idrShort(cur.revenue)} delta={dRev == null ? 'No comparison yet' : `${pct(dRev)} vs ${spec.compareLabel.toLowerCase()}`} tone={dRev == null ? undefined : dRev >= 0 ? 'up' : 'down'} />
       <Kpi label="Orders" value={cur.orders.toLocaleString('en-US')} delta={`Avg ticket ${idrShort(cur.avgTicket)}`} />
       <Kpi label="Gross margin" value={gm == null ? '—' : Math.round(gm * 100) + '%'} delta={gm == null || gmPrev == null ? 'From product cost' : `${gm >= gmPrev ? '+' : '−'}${Math.abs(Math.round((gm - gmPrev) * 100))} pt`} tone={gm != null && gmPrev != null ? (gm >= gmPrev ? 'up' : 'down') : undefined} />
       <Kpi label="Open orders" value={open.length} delta={late.length ? `${late.length} over 12 min` : 'None over 12 min'} tone={late.length ? 'warn' : undefined} />
       <Kpi label="Voids & refunds" value={idrShort(cur.voids + cur.refunds)} delta={vr.pending.length ? `${vr.pending.length} need review` : `${cur.voidCount + cur.refundCount} this period`} tone={vr.pending.length ? 'down' : undefined} />
-    </section>
+    </section>}
 
     <section className="row wrap" style={{ alignItems: 'flex-start', gap: 'var(--gutter)' }}>
-      <div style={{ flex: '2 1 520px', minWidth: 0 }}><Trend db={db} outlet={outlet} per={per} gran={gran} spec={spec} now={now} live={live} setGran={g => setQ({ gran: g })} /></div>
+      {show('w_trend') && <div style={{ flex: '2 1 520px', minWidth: 0 }}><Trend db={db} outlet={outlet} per={per} gran={gran} spec={spec} now={now} live={live} setGran={g => setQ({ gran: g })} /></div>}
       <section className="card stack" aria-label="Needs your decision" style={{ flex: '1 1 300px', minWidth: 0 }}>
         <div className="row between"><h3>Needs your decision</h3><Badge tone={queue.length ? 'accent' : 'success'}>{queue.length} waiting</Badge></div>
         {queue.length + watch.length === 0 && <Empty icon="circle-check" title="Nothing needs you">Approvals over your managers’ limits land here.</Empty>}
@@ -80,12 +89,8 @@ export default function Screen() {
 
     <Outlets db={db} outlet={outlet} now={now} onPick={id => setQ({ outlet: id })} />
 
-    <section className="grid" style={{ ['--min' as string]: '280px', alignItems: 'start' }}>
-      <TopRecommendations outlet={outlet} />
-      <LiveTx db={db} outlet={outlet} now={now} />
-      <TopProducts db={db} outlet={outlet} range={spec.range} label={per === 'today' ? 'today' : PERIODS.find(p => p[0] === per)?.[1].toLowerCase() ?? ''} />
-      <Mix db={db} outlet={outlet} range={spec.range} />
-      <Alerts db={db} outlet={outlet} now={now} />
+    <section className="grid" style={{ ['--min' as string]: wg ? `max(260px, calc(100% / ${wg.cols} - var(--gutter)))` : '280px', alignItems: 'start' }}>
+      {(wg ? wg.on : Object.keys(cards)).map(k => cards[k]).filter(Boolean)}
     </section>
     {dec.sheet}
     <span className="sr" aria-live="polite">{live ? `Updated ${hhmm(now)}` : ''}</span>

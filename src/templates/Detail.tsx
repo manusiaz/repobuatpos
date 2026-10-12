@@ -10,6 +10,7 @@ import { balance, tierOf } from '../domain/loyalty.ts';
 import { level as stockLevel } from '../domain/stock.ts';
 import { priceAt } from '../data/actions.ts';
 import { PageHead } from './common.tsx';
+import { Letterhead } from './Letterhead.tsx';
 import { viewFor } from './views.ts';
 
 export default function Detail() {
@@ -29,7 +30,7 @@ export default function Detail() {
     <div className="grid" style={{ ['--min' as string]: '170px' }}>{view.cols.slice(1, 5).map(c => <div key={c.k} className="card tight stack" style={{ gap: 2 }}><span className="cap">{c.l}</span><b style={{ fontSize: 16 }}>{c.f === 'money' ? idr(Number(row[c.k])) : c.f === 'status' ? <Status s={String(row[c.k])} /> : c.f === 'time' ? dateShort(Number(row[c.k])) + ' ' + hhmm(Number(row[c.k])) : String(row[c.k] ?? '—')}</b></div>)}</div>
     <Seg value={tab} onChange={setTab} options={[['overview', 'Overview'], ['activity', `Activity · ${activity.length}`]] as const} />
     {tab === 'activity' ? <section className="card stack">{activity.length === 0 ? <p className="muted">No changes recorded for this record yet. Every change lands here from the audit log.</p> : activity.map(a => <div key={a.id} className="row between"><span><span className="mono">{a.action}</span> · {db.employees.find(e => e.id === a.actor)?.name ?? a.actor}</span><span className="faint">{ago(a.at)}</span></div>)}</section>
-      : <section className="card stack">{body(key)}</section>}
+      : <section className="card stack">{/^(po|receipt|order|payment|supplier)$/.test(key) ? <Letterhead db={db}>{body(key)}</Letterhead> : body(key)}</section>}
   </>;
 
   function body(k: string): ReactNode {

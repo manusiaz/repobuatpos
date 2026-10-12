@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useApp } from '../app/context.tsx';
+import { widgetsFor } from '../system/tools.ts';
 import { pagesOf } from '../system/registry.ts';
 import { LineChart, type Series } from '../ui/Chart.tsx';
 import { usePin } from '../ui/PinSheet.tsx';
@@ -96,25 +97,26 @@ function Today({ c }: { c: Ctx }) {
     <Badge tone={x.tone} dot>{x.n}</Badge><span className="grow"><b>{x.t}</b><br /><span className="muted" style={{ fontSize: 13 }}>{x.d}</span></span><Icon name="chevron-right" size={16} /></Link>);
   const d1 = delta(today.rev, last.rev), d2 = delta(today.n, last.n);
   const avg = today.n ? today.rev / today.n : 0, avgL = last.n ? last.rev / last.n : 0;
+  const wg = widgetsFor(db, 'manager'), show = (k: string) => !wg || wg.on.includes(k); // Studios › Dashboard widgets per role
   return <>
     {dz.sheet}
-    <div className="grid" style={{ ['--min' as string]: '180px' }}>
+    {show('w_rev') && <div className="grid" style={{ ['--min' as string]: '180px' }}>
       <Kpi label="Sales today" value={idrShort(today.rev)} delta={d1.text} tone={d1.tone} />
       <Kpi label="Orders" value={today.n} delta={d2.text} tone={d2.tone} />
       <Kpi label="Avg ticket" value={idrShort(avg)} delta={delta(avg, avgL).text} tone={delta(avg, avgL).tone} />
       <Kpi label="Open orders" value={live.length} delta={`${live.filter(o => now - o.createdAt > 10 * 60e3).length} over 10 min`} tone={live.some(o => now - o.createdAt > 10 * 60e3) ? 'warn' : undefined} />
       <Kpi label="Drawer cash" value={idrShort(drawer.reduce((a, s) => a + expectedCash(sessionCash(db, s.id)), 0))} delta={`${drawer.length} session${drawer.length === 1 ? '' : 's'} open`} />
       <Kpi label="Approvals" value={forMe.length + gated.length} delta={forMe.length + gated.length ? 'Waiting for you' : 'All clear'} tone={forMe.length + gated.length ? 'down' : 'up'} />
-    </div>
+    </div>}
     <div className="grid" style={{ ['--min' as string]: '360px' }}>
-      <section className="card stack">
+      {show('w_trend') && <section className="card stack">
         <div className="row between wrap"><h3>Sales by hour · today vs last week</h3><span className="row" style={{ fontSize: 12 }}><span className="row"><i style={{ width: 16, height: 3, background: 'var(--role)', borderRadius: 2 }} />Today</span><span className="row faint"><i style={{ width: 16, borderTop: '2px dashed var(--ink-300)' }} />{series[1].label}</span></span></div>
         {today.n === 0 && last.n === 0 ? <Empty icon="chart-line" title="No sales yet today" /> : <LineChart labels={labels} series={series} height={260} format={fmt} />}
-      </section>
-      <section className="card stack">
+      </section>}
+      {(show('w_alert') || show('w_stock')) && <section className="card stack">
         <h3>Needs you now</h3>
         {needs.length === 0 ? <p className="muted">Nothing needs you right now.</p> : needs}
-      </section>
+      </section>}
     </div>
     <section className="stack" id="needs">
       <div className="row between wrap"><h2>Approvals</h2><Badge tone="info">Approve or reject · each asks your PIN</Badge></div>

@@ -1,5 +1,5 @@
 // Outgoing webhook events (the list the Settings → Webhooks page shows). Pure: also used by the connector form.
-export const EVENTS = ['order.paid', 'payment.settled', 'item.86', 'approval.decided', 'publish.done'] as const;
+export const EVENTS = ['order.paid', 'payment.settled', 'item.86', 'approval.decided', 'publish.done', 'theme.published', 'menu.updated', 'price.changed'] as const;
 export type EventName = typeof EVENTS[number] | 'ping';
 export interface OutEvent { id: string; event: EventName; at: number; data: Record<string, unknown> }
 

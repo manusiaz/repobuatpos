@@ -5,7 +5,8 @@ import { channelPrice, feedbackBeans, referralOffer, studioValue } from '../syst
 import { commit, snapshot, uid } from './store.ts';
 import type { Approval, DB, Order, Product, Rec, Role } from './schema.ts';
 import { lineTotal, orderTotals, QRIS_TTL_MS, type Method, type Source } from '../domain/order.ts';
-import { canDecide, levelRequired, type Level, type RequestType, PIN_TRIES, PIN_LOCK_MS } from '../domain/approval.ts';
+import { canDecide, levelRequired, twoKey, TWO_KEY, type Level, type RequestType, type Signer, PIN_TRIES, PIN_LOCK_MS } from '../domain/approval.ts';
+import { approvalRule, approvalWa } from '../system/tools.ts';
 import { earn, reversal, tierOf, canRedeem } from '../domain/loyalty.ts';
 import { deductForSale, level as stockLevel, levels, portionsLeft, missingPhotos, opnameApprover, postOpname, type OpnameLine } from '../domain/stock.ts';
 import { flashPrice, resolve } from '../domain/promo.ts';
@@ -263,6 +264,8 @@ export function requestApproval(a: { type: RequestType; title: string; amount?: 
     if (lvl === 'cashier') { row.status = 'approved'; row.decidedBy = a.requestedBy; row.decidedAt = now(); applyDecision(d, row); }
     d.approvals.unshift(row);
     if (lvl !== 'cashier') notify(d, approvalAlert(a.type, a.amount ?? 0, a.payload), lvl === 'owner' ? 'high' : 'warn', [lvl === 'pic' ? 'pic' : lvl], a.outletId, `${a.title} · ${lvl.toUpperCase()} to decide`, lvl === 'owner' ? '/owner/monitor/notifications-and-activity-center' : lvl === 'manager' ? '/manager/operations/approvals' : '/pic/approvals/approval-queue');
+    // Studios › Change approvals: "Notify the owner on WhatsApp" for studio changes waiting for the owner
+    if (lvl === 'owner' && TWO_KEY.includes(a.type) && approvalWa(d)) d.employees.filter(e => e.role === 'owner' && e.active && e.phone).forEach(e => d.messages.unshift({ id: uid('ms'), channel: 'wa', template: 'approval_request', to: e.phone, status: 'queued', at: now(), customerId: null }));
   }, a.title, a.outletId);
   return { id, level: lvl };
 }
@@ -274,7 +277,18 @@ export function decide(approvalId: string, by: string, decision: 'approved' | 'r
   if (e.role !== 'owner' && !e.outlets.includes(a.outletId)) return 'This request belongs to another outlet.';
   const lvl: Level = e.role === 'owner' ? 'owner' : e.role === 'manager' ? 'manager' : e.role === 'pic' ? 'pic' : 'cashier';
   if (a.type === 'opname' && decision === 'approved') { const op = d0.opnames.find(x => x.id === a.subjectId); if (op && missingPhotos(op.lines.filter(l => typeof l.counted === 'number'), op.requirePhotoAll).length) return 'Photo proof missing on a line with a difference. Ask for it before signing.'; }
-  if (!canDecide({ level: a.level, requestedBy: a.requestedBy, countedBy: a.countedBy }, { id: by, level: lvl }))
+  // Studios › Change approvals "Owner + one admin": two people sign, one the owner (src/domain/approval.ts twoKey).
+  const two = decision === 'approved' && TWO_KEY.includes(a.type) && approvalRule(d0) === 'two' ? twoKey(((a.payload?.signers ?? []) as Signer[]), { id: by, level: lvl }, a.requestedBy) : null;
+  if (two && two !== 'approve' && two !== 'cosign') return two;
+  if (two === 'cosign') {
+    commit('approval.cosigned', by, d => {
+      const r = d.approvals.find(x => x.id === approvalId)!;
+      r.payload = { ...(r.payload ?? {}), signers: [...((r.payload?.signers ?? []) as Signer[]), { id: by, level: lvl }] };
+      notify(d, decidedAlert(r.type), 'info', ['owner', 'manager'], r.outletId, `${r.title} · signed by ${emp(d, by)?.name}, needs a second sign-off`);
+    }, a.title, a.outletId);
+    return null;
+  }
+  if (!two && !canDecide({ level: a.level, requestedBy: a.requestedBy, countedBy: a.countedBy }, { id: by, level: lvl }))
     return by === a.requestedBy || by === a.countedBy ? 'You can’t decide your own request.' : `Needs ${a.level}. Escalate instead.`;
   commit('approval.' + decision, by, d => {
     const r = d.approvals.find(x => x.id === approvalId)!;

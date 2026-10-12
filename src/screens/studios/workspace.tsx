@@ -9,6 +9,7 @@ import { level as stockLevel } from '../../domain/stock.ts';
 import { Badge, Empty, Icon, Kpi, Seg, Status, Toggle, ago, dateShort, toast } from '../../ui/kit.tsx';
 import { LineChart } from '../../ui/Chart.tsx';
 import { usePin } from '../../ui/PinSheet.tsx';
+import { approvalRule, variantOf, WIDGETS_DEFAULT } from '../../system/tools.ts';
 import { Caption, contrast, copy, CopyRow, F, outletName, pct, Phone, PLAN_LABEL, PLAN_RANK, planLocked, Stage, themePairs, type Ctx, type Plan, type PP, type Tool, type V } from './core.tsx';
 
 const DAY = 864e5;
@@ -16,8 +17,8 @@ const t0 = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTim
 const paid = (db: DB, outletId: string | null, from: number, to = Infinity) => db.orders.filter(o => o.status === 'paid' && (!outletId || o.outletId === outletId) && o.createdAt >= from && o.createdAt < to);
 
 // ── Dashboard widgets ────────────────────────────────────────────────────────────────────
-const WG: [string, string][] = [['w_rev', 'Revenue today'], ['w_live', 'Live orders'], ['w_trend', 'Revenue trend'], ['w_mix', 'Payment mix'], ['w_top', 'Top products'], ['w_stock', 'Low stock'], ['w_staff', 'Staff on shift'], ['w_alert', 'Alerts']];
-const ROLE_DEF: Record<string, string[]> = { owner: ['w_rev', 'w_live', 'w_trend', 'w_mix', 'w_top', 'w_stock', 'w_alert'], manager: ['w_rev', 'w_live', 'w_trend', 'w_stock', 'w_staff', 'w_alert'], pic: ['w_live', 'w_stock', 'w_staff', 'w_alert'], cashier: ['w_live', 'w_top'] };
+const WG: [string, string][] = [['w_rev', 'Revenue today'], ['w_reco', 'Recommendations'], ['w_live', 'Live orders'], ['w_trend', 'Revenue trend'], ['w_mix', 'Payment mix'], ['w_top', 'Top products'], ['w_stock', 'Low stock'], ['w_staff', 'Staff on shift'], ['w_alert', 'Alerts']];
+const ROLE_DEF = WIDGETS_DEFAULT;
 const listOf = (v: V) => (v['on:' + v.role] as string[] | undefined) ?? ROLE_DEF[v.role];
 function WidgetsPanel({ v, set }: PP) {
   const on = listOf(v), off = WG.map(w => w[0]).filter(k => !on.includes(k));
@@ -44,6 +45,7 @@ function widgetValue(k: string, x: Ctx, role: string) {
     case 'w_top': { const q: Record<string, number> = {}; today.forEach(o => o.lines.forEach(l => (q[l.name] = (q[l.name] ?? 0) + l.qty))); const top = Object.entries(q).sort((a, b) => b[1] - a[1])[0]; return top ? [top[0], `${top[1]} sold today`] : ['—', 'no sales yet']; }
     case 'w_stock': { const n = db.stockItems.filter(s => stockLevel(db.movements, x.outletId, s.id) < s.par).length; return [`${n} items`, 'below par at ' + outletName(db, x.outletId)]; }
     case 'w_staff': { const r = db.roster.find(y => y.outletId === x.outletId && y.day === (new Date().getDay() + 6) % 7); const h = new Date().getHours(), s = r?.slots[h < 12 ? 'pagi' : h < 17 ? 'siang' : 'malam']; return [`${s ? s.crew.length + 1 : 0} on shift`, s ? 'PIC ' + (db.employees.find(e => e.id === s.pic)?.name ?? '') : '']; }
+    case 'w_reco': return ['Top 3', 'reorder, margin and slow-hour actions'];
     case 'w_alert': { const n = db.notices.filter(y => !y.read).length; return [`${n} unread`, db.notices[0]?.text ?? '']; }
     default: return ['', ''];
   }
@@ -140,14 +142,17 @@ function Approvals({ x, mine }: PP & { mine?: boolean }) {
   const rows = x.db.approvals.filter(a => STUDIO_TYPES.includes(a.type) && (!mine || a.requestedBy === x.by || x.owner)).sort((a, b) => b.at - a.at);
   const waiting = rows.filter(a => a.status === 'waiting'), done = rows.filter(a => a.status !== 'waiting').slice(0, 12);
   const name = (id?: string) => x.db.employees.find(e => e.id === id)?.name ?? id ?? '';
-  const act = (a: Approval, d: 'approved' | 'rejected') => pin.ask({ title: a.title, verb: d === 'approved' ? 'Approve with your PIN' : 'Reject with your PIN', onOk: id => { const err = decide(a.id, id, d); toast(err ?? (d === 'approved' ? 'Approved and published' : 'Rejected')); } });
-  const canAct = (a: Approval) => x.owner && a.requestedBy !== x.by;
+  const act = (a: Approval, d: 'approved' | 'rejected') => pin.ask({ title: a.title, verb: d === 'approved' ? 'Approve with your PIN' : 'Reject with your PIN', onOk: id => { const err = decide(a.id, id, d); toast(err ?? (d === 'approved' ? (completes(a) ? 'Approved and published' : 'Signed · needs a second sign-off') : 'Rejected')); } });
+  const two = approvalRule(x.db) === 'two', signers = (a: Approval) => (a.payload?.signers ?? []) as { id: string; level: string }[];
+  const completes = (a: Approval) => !two || (signers(a).length > 0 && (x.owner || signers(a).some(s => s.level === 'owner')));
+  // "Owner + one admin": a manager may add the second signature; the owner always signs (src/domain/approval.ts twoKey)
+  const canAct = (a: Approval) => (x.owner || (two && x.user.role === 'manager')) && a.requestedBy !== x.by && !signers(a).some(s => s.id === x.by);
   return <div className="stack" style={{ width: '100%' }}>
     <div className="grid" style={{ ['--min' as string]: '150px' }}><Kpi label="Waiting for owner" value={waiting.length} tone={waiting.length ? 'warn' : undefined} /><Kpi label="Decided (all time)" value={rows.length - waiting.length} /></div>
     {waiting.length === 0 ? <Empty icon="badge-check" title="Nothing waiting">{mine ? 'When you press Send to owner, the request shows here with its status.' : 'Manager publishes and price changes appear here.'}</Empty> :
       waiting.map(a => <div key={a.id} className="card tight row wrap" style={{ gap: 10 }}>
-        <div className="grow stack" style={{ gap: 2, minWidth: 200 }}><b>{a.title}</b><span className="faint" style={{ fontSize: 13 }}>{name(a.requestedBy)} · {outletName(x.db, a.outletId)} · {ago(a.at)}{a.amount ? ' · ' + idr(a.amount) : ''}</span></div>
-        {canAct(a) ? <><button className="btn btn-danger btn-sm" onClick={() => act(a, 'rejected')}>Reject</button><button className="btn btn-success btn-sm" onClick={() => act(a, 'approved')}>Approve</button></> : <Status s="pending_owner" />}
+        <div className="grow stack" style={{ gap: 2, minWidth: 200 }}><b>{a.title}</b><span className="faint" style={{ fontSize: 13 }}>{name(a.requestedBy)} · {outletName(x.db, a.outletId)} · {ago(a.at)}{a.amount ? ' · ' + idr(a.amount) : ''}{two && signers(a).length > 0 ? ` · signed by ${signers(a).map(s => name(s.id)).join(', ')}, 1 of 2` : ''}</span></div>
+        {canAct(a) ? <>{x.owner && <button className="btn btn-danger btn-sm" onClick={() => act(a, 'rejected')}>Reject</button>}<button className="btn btn-success btn-sm" onClick={() => act(a, 'approved')}>{completes(a) ? 'Approve' : 'Sign'}</button></> : <Status s="pending_owner" />}
       </div>)}
     {done.length > 0 && <><span className="cap">Decided</span>{done.map(a => <div key={a.id} className="row" style={{ fontSize: 13 }}><span className="grow">{a.title}</span><span className="faint">{name(a.decidedBy)} · {a.decidedAt ? ago(a.decidedAt) : ''}</span><Status s={a.status} /></div>)}</>}
     {pin.sheet}
@@ -182,11 +187,10 @@ function Staging({ v, x }: PP) {
 
 // ── A/B testing ──────────────────────────────────────────────────────────────────────────
 const SELF = ['qr', 'kiosk', 'web'];
-const bucket = (id: string) => { let h = 0; for (const c of id) h = (h * 33 + c.charCodeAt(0)) % 9973; return h % 100; };
 function AB({ v, set, x }: PP) {
   const from = v.start || Date.now() - 14 * DAY;
   const os = paid(x.db, null, from).filter(o => SELF.includes(o.source));
-  const B = os.filter(o => bucket(o.id) < v.split), A = os.filter(o => bucket(o.id) >= v.split);
+  const B = os.filter(o => variantOf(o, v.split) === 'B'), A = os.filter(o => variantOf(o, v.split) === 'A');
   const m = (l: typeof os) => v.metric === 'aov' ? (l.length ? Math.round(l.reduce((a, o) => a + o.total, 0) / l.length) : 0) : v.metric === 'items' ? (l.length ? l.reduce((a, o) => a + o.lines.reduce((s, y) => s + y.qty, 0), 0) / l.length : 0) : l.reduce((a, o) => a + o.total, 0);
   const fmt = (n: number) => v.metric === 'items' ? n.toFixed(2) : idrShort(n);
   const [ma, mb] = [m(A), m(B)], max = Math.max(ma, mb, 1), day = v.start ? Math.ceil((Date.now() - v.start) / DAY) : 0;
@@ -197,7 +201,7 @@ function AB({ v, set, x }: PP) {
       <div className="row between"><b>{k as string} · {l as string}</b><span className="faint">{(list as typeof os).length} orders</span></div>
       <div style={{ height: 10, borderRadius: 5, background: 'var(--bg-sunken)' }}><div style={{ width: (val as number) / max * 100 + '%', height: '100%', borderRadius: 5, background: k === 'B' ? 'var(--role)' : 'var(--ink-400)' }} /></div>
       <span className="num">{fmt(val as number)} <span className="faint" style={{ fontWeight: 400, fontSize: 13 }}>{{ aov: 'avg order', items: 'items per order', rev: 'revenue' }[v.metric as 'aov']}</span></span></div>)}
-    <p className="faint" style={{ fontSize: 13 }}>Self-order orders (QR, kiosk, web) are split by a stable hash of the order, so each guest sees one version. {os.length < 100 ? 'Under 100 orders: too early to call a winner.' : mb > ma ? 'B is ahead.' : 'A is ahead.'}</p>
+    <p className="faint" style={{ fontSize: 13 }}>While the published test runs, each QR-menu guest keeps one version (B is the newest Menu Studio draft) and their orders count for it; other self-orders split by a stable hash. {os.length < 100 ? 'Under 100 orders: too early to call a winner.' : mb > ma ? 'B is ahead.' : 'A is ahead.'}</p>
   </div>;
 }
 

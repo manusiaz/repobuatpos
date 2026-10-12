@@ -1,14 +1,21 @@
 // Money is integer rupiah everywhere. Format only at render (Design Notes: Money).
 export type IDR = number;
 
-let style: 'idr' | 'rp' = 'idr';
-/** Set once per render from the owner's Language & currency page (src/system/settings.ts moneyStyle). */
-export const setMoneyStyle = (s: 'idr' | 'rp') => { style = s; };
-const group = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, style === 'rp' ? '.' : ',');
+let style: 'idr' | 'rp' = 'idr', sep: 'comma' | 'dot' | undefined, short = false;
+/** Set once per render from the owner's Language & currency page (src/system/settings.ts moneyStyle); guest surfaces
+ *  add the Studios number format (separator, "25k" short form) through src/system/tools.ts moneyFormat. */
+export const setMoneyStyle = (s: 'idr' | 'rp', sp?: 'comma' | 'dot', sh = false) => { style = s; sep = sp; short = sh; };
+/** Format with another style for one document (a receipt in the outlet's guest format), then restore. */
+export function withMoneyStyle<T>(f: [s: 'idr' | 'rp', sp?: 'comma' | 'dot', sh?: boolean], fn: () => T): T {
+  const prev: [typeof style, typeof sep, boolean] = [style, sep, short];
+  setMoneyStyle(...f);
+  try { return fn(); } finally { setMoneyStyle(...prev); }
+}
+const group = (n: number) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, (sep ?? (style === 'rp' ? 'dot' : 'comma')) === 'dot' ? '.' : ',');
 const cur = () => (style === 'rp' ? 'Rp' : 'IDR ');
 
-/** "IDR 25,000" or "Rp25.000" */
-export const idr = (n: IDR) => (n < 0 ? '−' : '') + cur() + group(Math.abs(n));
+/** "IDR 25,000" or "Rp25.000" (or "25k" for whole thousands when the short form is on) */
+export const idr = (n: IDR) => (n < 0 ? '−' : '') + (short && n && n % 1000 === 0 ? Math.abs(n) / 1000 + 'k' : cur() + group(Math.abs(n)));
 
 /** Short form for charts and KPIs: "IDR 2,4 jt", "IDR 23 rb". */
 export function idrShort(n: IDR): string {
