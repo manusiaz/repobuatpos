@@ -6,6 +6,8 @@ import { grantSession, setSession } from '../../session.ts';
 import { REMOTE } from '../../data/remote.ts';
 import { checkLoginPin, whenChecked } from '../../data/actions/auth.ts';
 import { idr } from '../../domain/money.ts';
+import type { ClockShot } from '../../domain/shift.ts';
+import { useSelfie } from '../../ui/Selfie.tsx';
 import { Avatar, Icon, Numpad, hhmm, toast, useNow } from '../../ui/kit.tsx';
 import { DenomCount, P, REG, picNow, rosterSlot, sumDenoms, usePos } from './shared.tsx';
 
@@ -70,14 +72,18 @@ export function OpenShift({ closedNotice }: { closedNotice?: boolean }) {
   const ho = readHandover(db.settings, outletId);
   const mine = ho && (!ho.to || ho.to === me.id) ? ho : null;
   const [counts, setCounts] = useState<Record<number, number>>({});
+  const selfie = useSelfie();
   const total = sumDenoms(counts), slot = rosterSlot(db, outletId, me.id), pic = picNow(db, outletId);
   const out = db.outlets.find(o => o.id === outletId)!;
   if (session) return <div className="pos-gate" style={{ background: 'var(--bg-canvas)', color: 'var(--fg-1)' }}>
     <div className="card stack" style={{ maxWidth: 480, margin: '0 auto', alignItems: 'flex-start' }}><Icon name="circle-check" size={32} style={{ color: 'var(--success)' }} />
       <h2>Your shift is open</h2><p className="muted">Session <span className="mono">{session.id}</span> since {hhmm(session.openedAt)} · opening cash {idr(session.openingFloat)}</p>
       <button className="btn btn-primary btn-pos" onClick={() => go(REG)}>Go to register</button></div></div>;
-  const start = () => {
-    const id = openSession(outletId, me.id, total);
+  const lastClock = db.clock.filter(c => c.employeeId === me.id && c.outletId === outletId).at(-1);
+  // opening the drawer clocks you in: the clock-in photo comes first (already clocked in: no photo needed)
+  const start = () => lastClock?.kind === 'in' ? open({}) : selfie.ask({ who: me.name, kind: 'in', label: 'Open shift', optional: true, onShot: open });
+  const open = (shot: ClockShot) => {
+    const id = openSession(outletId, me.id, total, shot);
     if (mine) {
       mine.bills.forEach(b => { if (db.orders.some(o => o.id === b)) patchOrder(b, { sessionId: id, cashierId: me.id }, me.id); });
       if (total !== mine.float) {
@@ -89,6 +95,7 @@ export function OpenShift({ closedNotice }: { closedNotice?: boolean }) {
     go(REG);
   };
   return <div className="pos-gate" style={{ background: 'var(--bg-canvas)', color: 'var(--fg-1)', alignItems: 'flex-start' }}>
+    {selfie.sheet}
     <div className="stack" style={{ maxWidth: 760, width: '100%', margin: '0 auto' }}>
       <div className="row between wrap"><span className="cap">Hi {me.name} · {out.name}{slot ? ` · ${slot.name} ${slot.from}–${slot.to}` : ''}{pic ? ` · PIC ${pic.name}` : ''}</span>
         <button className="btn btn-ghost btn-sm" onClick={() => go(P('lock-screen'))}><Icon name="lock" size={16} />Not you? Switch</button></div>

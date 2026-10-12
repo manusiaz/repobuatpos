@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ago, hhmm, toast, Toggle } from '../../ui/kit.tsx';
 import { LineChart } from '../../ui/Chart.tsx';
+import { ClockPhoto, useSelfie } from '../../ui/Selfie.tsx';
 import { clock, recall, setSetting, toggle86 } from '../../data/actions.ts';
 import { ask86, bumpStation, callRunner } from '../../data/actions/kds.ts';
 import { level } from '../../domain/stock.ts';
@@ -166,15 +167,18 @@ export function ClockCard({ db, outletId, by, now, big = true }: { db: Kctx['db'
   const mine = db.clock.filter(c => c.employeeId === by && c.at >= startOfDay(now));
   const last = mine[mine.length - 1];
   const inSince = last && last.kind !== 'out' ? mine.filter(c => c.kind === 'in').pop()?.at : null;
+  const selfie = useSelfie();
+  const punch = (kind: 'in' | 'out', msg: string) => selfie.ask({ who: empName(db, by) ?? by, kind, label: kind === 'in' && last?.kind === 'break' ? 'End break' : undefined, onShot: shot => toast(clock(by, outletId, kind, shot) ?? msg) });
   return <div className="stack" style={{ padding: 18, borderRadius: 20, background: 'var(--bg-raised)', border: '1px solid var(--border)' }}>
     <span style={{ fontSize: big ? fs(15) : 14, color: 'var(--fg-2)' }}>{empName(db, by) ?? by} · {last?.kind === 'break' ? 'On break since' : inSince ? 'Clocked in since' : 'Not clocked in'}</span>
     <b style={{ fontSize: big ? fs(32) : 28 }}>{last?.kind === 'break' ? hhmm(last.at) : inSince ? hhmm(inSince) : '—'}</b>
     <div className="row wrap">
-      {!inSince || last?.kind === 'break' ? <button type="button" className="btn btn-success" style={{ height: big ? 64 : 56, flex: 1, fontSize: 16 }} onClick={() => { clock(by, outletId, 'in'); toast('Clocked in'); }}>{last?.kind === 'break' ? 'End break' : 'Clock in'}</button>
+      {!inSince || last?.kind === 'break' ? <button type="button" className="btn btn-success" style={{ height: big ? 64 : 56, flex: 1, fontSize: 16 }} onClick={() => punch('in', 'Clocked in')}>{last?.kind === 'break' ? 'End break' : 'Clock in'}</button>
         : <><button type="button" className="btn" style={{ height: big ? 64 : 56, flex: 1, fontSize: 16 }} onClick={() => { clock(by, outletId, 'break'); toast('Break started'); }}>Start break</button>
-          <button type="button" className="btn btn-danger" style={{ height: big ? 64 : 56, flex: 1, fontSize: 16 }} onClick={() => { clock(by, outletId, 'out'); toast('Clocked out'); }}>Clock out</button></>}
+          <button type="button" className="btn btn-danger" style={{ height: big ? 64 : 56, flex: 1, fontSize: 16 }} onClick={() => punch('out', 'Clocked out')}>Clock out</button></>}
     </div>
-    {mine.length > 0 && <span style={{ fontSize: big ? fs(15) : 13, color: 'var(--fg-2)' }}>Today: {mine.map(c => `${c.kind} ${hhmm(c.at)}`).join(' · ')}</span>}
+    {mine.length > 0 && <div className="row wrap" style={{ fontSize: big ? fs(15) : 13, color: 'var(--fg-2)' }}>Today: {mine.map(c => <span key={c.id} className="row" style={{ gap: 6 }}><ClockPhoto c={c} />{c.kind} {hhmm(c.at)}</span>)}</div>}
+    {selfie.sheet}
   </div>;
 }
 

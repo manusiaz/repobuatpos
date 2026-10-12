@@ -5,14 +5,16 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useApp } from '../app/context.tsx';
 import { pagesOf } from '../system/registry.ts';
-import { Avatar, Badge, Empty, Field, Icon, Kpi, Status, hhmm, toast, useNow } from '../ui/kit.tsx';
+import { Avatar, Badge, Empty, Field, Icon, Kpi, Status, Toggle, hhmm, toast, useNow } from '../ui/kit.tsx';
 import { idr } from '../domain/money.ts';
 import { LIMITS } from '../domain/approval.ts';
 import { expectedCash } from '../domain/shift.ts';
-import { clock, sessionCash } from '../data/actions.ts';
+import { clock, sessionCash, setSetting } from '../data/actions.ts';
 import { alertNoShow, applySwap, assignPic, assignShift, publishRoster, requestSwap } from '../data/actions/shifts.ts';
 import type { DB, Employee } from '../data/schema.ts';
 import { ApprovalCard, useDecide } from './ops/approvals.tsx';
+import { ClockPhoto, useSelfie } from '../ui/Selfie.tsx';
+import { ATTENDANCE_PAGE, photoRequired } from '../system/settings.ts';
 import {
   DAY_NAMES, ROLE_LABEL, SLOTS, SLOT_TONE, attendance, clockState, dateKey, dayIdx, dayLabel, emp, nameOf, onSlot, picCandidates,
   rosterDay, slotEnd, slotHours, slotLabel, slotNow, slotOf, slotStart, slotTime, slotsOf, staffOf, startOfDay, weekStart, type Slot,
@@ -147,6 +149,8 @@ function Templates({ c }: { c: Ctx }) {
         {[['Drawer mode', 'One session per cashier'], ['Blind cash count', 'On'], ['Variance', `Any variance needs a note · PIC signs up to ${idr(LIMITS.picVariance)} · manager up to ${idr(LIMITS.manager)}`],
           ['Float left for next shift', 'IDR 500,000'], ['Late threshold', '10 minutes'], ['No-show alert', '15 minutes after start, to the manager'], ['Past midnight', 'Close shift belongs to the date it started'],
           ['Opening hours', `${c.outlet?.opens} – ${c.outlet?.closes}`]].map(([k, v]) => <div key={k} className="row between" style={{ fontSize: 14, gap: 16 }}><span className="muted">{k}</span><b style={{ textAlign: 'right' }}>{v}</b></div>)}
+        <div className="row between" style={{ fontSize: 14, gap: 16, minHeight: 44 }}><span className="stack" style={{ gap: 2 }}><span className="muted">Require photo at clock in / out</span><span className="faint" style={{ fontSize: 12 }}>{photoRequired(db) ? 'No photo, no clock-in. Stops buddy punching.' : 'Without a camera staff still clock in; the event is marked “no photo”.'}</span></span>
+          {c.canEdit ? <Toggle on={photoRequired(db)} label="Require photo at clock in / out" onChange={v => { setSetting(ATTENDANCE_PAGE + ':clock-photo', v, c.meId); toast(v ? 'Photo required at clock in / out' : 'Clocking without a photo allowed, marked for review'); }} /> : <b>{photoRequired(db) ? 'On' : 'Off'}</b>}</div>
         <span className="faint" style={{ fontSize: 12 }}>Shift times and rules are set per outlet by the owner. Shift colors are labels only.</span>
       </section>
     </div>
@@ -262,7 +266,9 @@ function Attendance({ c }: { c: Ctx }) {
   const dz = useDecide();
   const sd = rosterDay(db, outletId, today);
   const mine = me && me.outlets.includes(outletId) ? clockState(db, me.id, outletId) : null;
-  const doClock = (k: 'in' | 'out' | 'break', msg: string) => { clock(meId, outletId, k); toast(msg); };
+  const selfie = useSelfie();
+  const doClock = (k: 'in' | 'out' | 'break', msg: string) => k === 'break' ? (clock(meId, outletId, k), toast(msg))
+    : selfie.ask({ who: me?.name ?? '', kind: k, label: mine?.state === 'break' ? 'End break' : undefined, onShot: shot => toast(clock(meId, outletId, k, shot) ?? msg) });
   const rows = SLOTS.flatMap(s => onSlot(sd, s).map(id => ({ s, id, e: emp(db, id), a: attendance(db, id, outletId, s, now) })));
   const swaps = db.approvals.filter(a => a.outletId === outletId && a.type === 'leave' && (a.payload as { kind?: string } | undefined)?.kind === 'swap').slice(0, 12);
   const myShifts = useMemo(() => me ? DAY_NAMES.flatMap((_, d) => slotsOf(rosterDay(db, outletId, d), me.id).map(s => ({ d, s }))).filter(x => x.d >= today) : [], [db, outletId, me, today]);
@@ -270,7 +276,7 @@ function Attendance({ c }: { c: Ctx }) {
   const ask = () => { const [d, s] = sw.split('|'); const day = Number(d), slot = s as Slot;
     requestSwap({ outletId, day, slot, from: meId, to, title: `Swap · ${dayLabel(day, now)} ${slotLabel(slot)} · ${nameOf(db, meId)} → ${nameOf(db, to)}`, note: note.trim() || 'Swap request' }, meId); toast('Swap sent to the manager'); setSw(''); setTo(''); setNote(''); };
   return <>
-    {dz.sheet}
+    {dz.sheet}{selfie.sheet}
     <div className="grid" style={{ ['--min' as string]: '320px' }}>
       {me && <section className="card stack">
         <div className="row"><Avatar name={me.name} color={me.color} /><span className="grow"><b>{me.name}</b><br /><span className="muted" style={{ fontSize: 13 }}>{mine?.state === 'in' ? 'Clocked in since ' + hhmm(mine.at!) : mine?.state === 'break' ? 'On break since ' + hhmm(mine.at!) : mine?.state === 'out' ? 'Clocked out ' + hhmm(mine.at!) : 'Not clocked in today'}</span></span>
@@ -300,7 +306,7 @@ function Attendance({ c }: { c: Ctx }) {
         <tbody>{rows.map(({ s, id, e, a }) => { const started = now >= slotStart(s, now); return <tr key={s + id}>
           <td><div className="row"><Avatar name={e?.name ?? '?'} color={e?.color} size={28} /><b>{e?.name}</b>{sd?.slots[s].pic === id && <Badge tone="info">PIC</Badge>}</div></td>
           <td><SlotBadge s={s} /> <span className="faint" style={{ fontSize: 12 }}>{slotTime(s)}</span></td>
-          <td>{a.firstIn ? hhmm(a.firstIn) : '—'}</td>
+          <td>{a.firstIn ? <div className="row" style={{ gap: 8 }}>{a.events.filter(x => x.kind !== 'break').slice(-2).map(x => <ClockPhoto key={x.id} c={x} />)}<span>{hhmm(a.firstIn)}</span></div> : '—'}</td>
           <td>{a.flag === 'no_show' ? <Badge tone="danger" dot>No-show</Badge> : a.flag === 'late' ? <Badge tone="warning" dot>Late {a.lateMin} min</Badge> : a.firstIn ? <Badge tone="success" dot>{a.state === 'break' ? 'On break' : a.state === 'out' ? 'Done' : 'On time'}</Badge> : <Badge>{started ? 'Not in yet' : 'Starts ' + slotTime(s).split('–')[0]}</Badge>}</td>
           <td className="r num">{a.firstIn ? hm(workedMin(a.events, now)) : '—'}</td>
           {canEdit && <td>{a.flag === 'no_show' && <div className="row">

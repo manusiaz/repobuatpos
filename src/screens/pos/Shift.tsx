@@ -5,12 +5,14 @@ import { useState } from 'react';
 import { cashMove, clock, closeSession, patchOrder, sessionCash, setSetting } from '../../data/actions.ts';
 import { logDevice, sendReceipt } from '../../data/actions/pos.ts';
 import { snapshot } from '../../data/store.ts';
-import { closeCheck, expectedCash } from '../../domain/shift.ts';
+import { closeCheck, expectedCash, type ClockShot } from '../../domain/shift.ts';
 import { idr } from '../../domain/money.ts';
 import { Badge, Empty, Field, Icon, Kpi, Seg, Status, hhmm, toast, useNow } from '../../ui/kit.tsx';
 import type { DB, Order } from '../../data/schema.ts';
 import { AmountPad, DenomCount, P, Row, TabLinks, isOpenBill, label, rosterSlot, startOfDay, sumDenoms, usePos, useApproval, usePerm, warnStyle } from './shared.tsx';
 import { handoverKey } from './Gate.tsx';
+import { ClockPhoto, useSelfie } from '../../ui/Selfie.tsx';
+import { commissionOf } from '../insight/metrics.ts';
 
 const PAID: Order['status'][] = ['paid', 'part_refunded', 'refunded'];
 const MNAME: Record<string, string> = { cash: 'Cash', qris: 'QRIS', card: 'Card', ewallet: 'E-wallet', va: 'Virtual account', deposit: 'Deposit', kasbon: 'Kasbon' };
@@ -102,23 +104,26 @@ function CashMoves({ kind }: { kind: 'io' | 'drop' }) {
 function Clock() {
   const { db, me, outletId } = usePos();
   const now = useNow(30000);
+  const selfie = useSelfie();
   const today = db.clock.filter(c => c.employeeId === me.id && c.at >= startOfDay()).sort((a, b) => a.at - b.at);
   const last = today.at(-1), slot = rosterSlot(db, outletId, me.id);
   const state = !last || last.kind === 'out' ? 'out' : last.kind;
+  const punch = (kind: 'in' | 'out', msg: string) => selfie.ask({ who: me.name, kind, label: kind === 'in' && state === 'break' ? 'End break' : undefined, onShot: shot => toast(clock(me.id, outletId, kind, shot) ?? msg) });
   const firstIn = today.find(c => c.kind === 'in');
   return <div className="grid" style={{ ['--min' as string]: '320px', alignItems: 'start' }}>
     <div className="card stack">
       <span className="cap">{slot ? `Rostered ${slot.name} · ${slot.from}–${slot.to}` : 'Not on today’s roster'}</span>
       <h2>{state === 'in' ? `Clocked in since ${hhmm(last!.at)}` : state === 'break' ? `On break since ${hhmm(last!.at)}` : 'Clocked out'}</h2>
-      {firstIn && <span className="muted">Worked {Math.floor((now - firstIn.at) / 3600e3)}h {Math.floor((now - firstIn.at) / 60e3) % 60}m today{slot && firstIn && hhmm(firstIn.at) > slot.from ? ` · started after ${slot.from}` : ''}</span>}
+      {firstIn && <span className="muted">Worked {Math.floor(Math.max(0, now - firstIn.at) / 3600e3)}h {Math.floor(Math.max(0, now - firstIn.at) / 60e3) % 60}m today{slot && firstIn && hhmm(firstIn.at) > slot.from ? ` · started after ${slot.from}` : ''}</span>}
       <div className="row wrap">
-        {state !== 'in' && <button className="btn btn-primary btn-pos" onClick={() => { clock(me.id, outletId, 'in'); toast('Clocked in'); }}>{state === 'break' ? 'End break' : 'Clock in'}</button>}
+        {state !== 'in' && <button className="btn btn-primary btn-pos" onClick={() => punch('in', state === 'break' ? 'Back from break' : 'Clocked in')}><Icon name="camera" />{state === 'break' ? 'End break' : 'Clock in'}</button>}
         {state === 'in' && <button className="btn btn-pos" onClick={() => { clock(me.id, outletId, 'break'); toast('Break started'); }}>Start break</button>}
-        {state !== 'out' && <button className="btn btn-pos" onClick={() => { clock(me.id, outletId, 'out'); toast('Clocked out'); }}>Clock out</button>}
+        {state !== 'out' && <button className="btn btn-pos" onClick={() => punch('out', 'Clocked out')}><Icon name="camera" />Clock out</button>}
       </div>
-      <p className="faint" style={{ fontSize: 13 }}>Opening a shift clocks you in. Clocking out doesn’t close your drawer.</p>
+      <p className="faint" style={{ fontSize: 13 }}>Clock in and out take a quick photo. Opening a shift clocks you in. Clocking out doesn’t close your drawer.</p>
     </div>
-    <div className="card stack"><h3>Today</h3>{today.length === 0 ? <p className="muted">No clock events yet.</p> : today.map(c => <Row key={c.id} l={c.kind === 'in' ? 'In' : c.kind === 'out' ? 'Out' : 'Break'} v={hhmm(c.at)} />)}</div>
+    <div className="card stack"><h3>Today</h3>{today.length === 0 ? <p className="muted">No clock events yet.</p> : today.map(c => <div key={c.id} className="row" style={{ fontSize: 14 }}><ClockPhoto c={c} /><span className="grow">{c.kind === 'in' ? 'In' : c.kind === 'out' ? 'Out' : 'Break'}</span><b className="num">{hhmm(c.at)}</b></div>)}</div>
+    {selfie.sheet}
   </div>;
 }
 
@@ -128,8 +133,10 @@ function Mine() {
   const s = stats(db, mine, p => mine.some(o => o.id === p.orderId));
   const items: Record<string, number> = {}; s.paid.forEach(o => o.lines.forEach(l => { items[l.name] = (items[l.name] ?? 0) + l.qty; }));
   const ins = db.clock.filter(c => c.employeeId === me.id && c.at >= startOfDay());
+  const k = commissionOf(db, me, { from: startOfDay(), to: Date.now() + 1 });
   return <div className="stack">
-    <div className="grid" style={{ ['--min' as string]: '150px' }}><Kpi label="My sales today" value={idr(s.sales)} /><Kpi label="Orders" value={s.count} /><Kpi label="Avg ticket" value={s.count ? idr(s.avg) : '—'} /><Kpi label="Tips" value={idr(s.tips)} /></div>
+    <div className="grid" style={{ ['--min' as string]: '150px' }}><Kpi label="My sales today" value={idr(s.sales)} /><Kpi label="Orders" value={s.count} /><Kpi label="Avg ticket" value={s.count ? idr(s.avg) : '—'} /><Kpi label="Tips" value={idr(s.tips)} />
+      <Kpi label="My commission today" value={idr(k.total)} delta={k.rules.length ? `${idr(k.net)} net sales${k.items ? ` · ${k.items} bonus items` : ''}` : 'No commission rule for you'} /></div>
     <div className="grid" style={{ ['--min' as string]: '300px' }}>
       <div className="card stack"><h3>Top items</h3>{Object.keys(items).length === 0 ? <p className="muted">No sales yet today.</p> : Object.entries(items).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([n, q]) => <Row key={n} l={n} v={q + '×'} />)}</div>
       <div className="card stack"><h3>By method</h3><ByMethod by={s.by} /><Row l="Clock events today" v={String(ins.length)} /></div>
@@ -143,6 +150,7 @@ export function CloseShift({ onClosed }: { onClosed?: () => void }) {
   const can = usePerm(), flow = useApproval();
   const [counts, setCounts] = useState<Record<number, number>>({}), [phase, setPhase] = useState<'count' | 'review' | 'done'>('count'), [note, setNote] = useState('');
   const [closed, setClosed] = useState<string | null>(null);
+  const selfie = useSelfie();
   if (flow.node) return <div className="card" style={{ maxWidth: 560 }}>{flow.node}</div>;
   const sid = session?.id ?? closed;
   if (!sid) return <Empty icon="lock" title="No open shift">There’s no drawer session to close.</Empty>;
@@ -162,8 +170,10 @@ export function CloseShift({ onClosed }: { onClosed?: () => void }) {
   const nonCash = stats(db, db.orders.filter(o => o.sessionId === sid), p => p.sessionId === sid && p.method !== 'cash').by;
   const open = db.orders.filter(o => o.sessionId === sid && isOpenBill(o) && o.lines.length);
   const submit = () => {
-    const done = () => {
-      const r = closeSession(sid, counted, note, me.id); setClosed(sid); setPhase('done');
+    // closing your own drawer clocks you out, so it takes the clock-out photo first
+    const done = () => s0.cashierId === me.id ? selfie.ask({ who: me.name, kind: 'out', label: 'Close shift', optional: true, onShot: close }) : close({});
+    const close = (shot: ClockShot) => {
+      const r = closeSession(sid, counted, note, me.id, shot); setClosed(sid); setPhase('done');
       if (r.level) { const row = snapshot().approvals.find(x => x.type === 'variance' && x.subjectId === sid && x.status === 'waiting'); if (row) flow.resume(row.id, row.title, row.level); }
       else toast('Shift closed · balanced');
     };
@@ -171,6 +181,7 @@ export function CloseShift({ onClosed }: { onClosed?: () => void }) {
   };
   if (can('Close cash for the day') === 'n') return <Empty icon="shield-x" title="Closing cash is turned off for your role">Ask the PIC or manager to close this drawer.</Empty>;
   return <div className="stack">
+    {selfie.sheet}
     {open.length > 0 && <div className="banner b-warning"><Icon name="clipboard-list" /><span>{open.length} open bill{open.length > 1 ? 's' : ''} on this drawer. Hand them over or settle them before closing.</span></div>}
     {phase === 'count' ? <>
       <span className="cap">Count the drawer · blind</span>
@@ -253,7 +264,9 @@ export function ShiftChange() {
   const bills = db.orders.filter(o => o.outletId === outletId && isOpenBill(o) && o.lines.length && o.cashierId === me.id);
   const last = db.sessions.filter(s => s.cashierId === me.id && s.outletId === outletId).sort((a, b) => b.openedAt - a.openedAt)[0];
   const clockedIn = (() => { const c = db.clock.filter(x => x.employeeId === me.id && x.at >= startOfDay()).at(-1); return c && c.kind !== 'out'; })();
+  const selfie = useSelfie();
   return <div className="pos-page stack lg">
+    {selfie.sheet}
     <h1>Shift change</h1>
     <ol className="row wrap" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 6 }}>{STEPS.map(([slug, l], i) =>
       <li key={slug}><button className="chip row" aria-pressed={i === step} onClick={() => go(P(slug))} style={{ height: 44 }}><span className="num" style={{ width: 22, height: 22, borderRadius: 99, display: 'grid', placeItems: 'center', background: i < step ? 'var(--success)' : i === step ? 'var(--accent)' : 'var(--bg-sunken)', color: i <= step ? 'var(--ink-0)' : 'var(--fg-2)', fontSize: 13 }}>{i + 1}</span>{l}</button></li>)}</ol>
@@ -268,7 +281,7 @@ export function ShiftChange() {
     {step === 3 && <div className="stack">
       {last ? <><span className="cap">X report · session {last.id} · {hhmm(last.openedAt)}–{last.closedAt ? hhmm(last.closedAt) : 'now'}</span><XReport sessionId={last.id} /></> : <Empty icon="receipt" title="No drawer session yet" />}
       <div className="row wrap">
-        {clockedIn ? <button className="btn btn-primary btn-pos" onClick={() => { clock(me.id, outletId, 'out'); toast(`Thanks, ${me.name}. You’re clocked out.`); }}>Clock out</button> : <Badge tone="success" dot>Clocked out</Badge>}
+        {clockedIn ? <button className="btn btn-primary btn-pos" onClick={() => selfie.ask({ who: me.name, kind: 'out', onShot: shot => toast(clock(me.id, outletId, 'out', shot) ?? `Thanks, ${me.name}. You’re clocked out.`) })}><Icon name="camera" />Clock out</button> : <Badge tone="success" dot>Clocked out</Badge>}
         <button className="btn btn-pos" onClick={() => go(P('next-cashier-clock-in-and-float-confirm'))}>Next cashier in</button>
         <button className="btn btn-pos" onClick={() => go(P('lock-screen'))}><Icon name="lock" />Back to lock screen</button></div>
     </div>}

@@ -10,6 +10,7 @@ import { byChannel, byMethod, byOutlet, delta, pct, period, profitAndLoss, serie
 import { level as stockLevel } from '../domain/stock.ts';
 import { PageHead, downloadCSV } from './common.tsx';
 import List from './List.tsx';
+import { CommissionRules } from './Commission.tsx';
 import type { Col, Row } from './views.ts';
 
 const ANALYTIC = /(sales|revenue|report|summary|p&l|profit|cash flow|tax|margin|cogs|performance|comparison|insights|analytics|forecast|overview|engineering|valuation|channel|kpi|target|finance view|variance)/i;
@@ -29,6 +30,7 @@ function dimOf(n: string): Dim {
 
 export default function Report() {
   const { page } = useApp();
+  if (page.object === 'payroll' && /commission/i.test(page.name)) return <><List readOnly /><CommissionRules /></>;
   if (!isAnalytic(page.name)) return <List readOnly />;
   return <Analytic />;
 }

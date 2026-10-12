@@ -9,10 +9,10 @@ import { canDecide, levelRequired, type Level, type RequestType, PIN_TRIES, PIN_
 import { earn, reversal, tierOf, canRedeem } from '../domain/loyalty.ts';
 import { deductForSale, level as stockLevel, levels, portionsLeft, missingPhotos, opnameApprover, postOpname, type OpnameLine } from '../domain/stock.ts';
 import { flashPrice, resolve } from '../domain/promo.ts';
-import { closeCheck } from '../domain/shift.ts';
+import { closeCheck, type ClockShot } from '../domain/shift.ts';
 import { idr, roundCash } from '../domain/money.ts';
 import { approvalAlert, decidedAlert } from './alerts/names.ts';
-import { escalationOn, payOn, type PayId } from '../system/settings.ts';
+import { escalationOn, payOn, photoRequired, type PayId } from '../system/settings.ts';
 import alertsCatalog from '../system/alerts.json' with { type: 'json' };
 import { perm } from '../system/perms.ts';
 
@@ -315,6 +315,7 @@ function applyDecision(d: DB, r: Approval) {
     case 'waste': case 'adjust': { if (pl.stockItemId) d.movements.push({ outletId: r.outletId, stockItemId: pl.stockItemId, qty: pl.qty, type: r.type === 'waste' ? 'waste' : 'adjust', sourceId: r.id, by: r.decidedBy ?? '', at: now() }); break; }
     case 'supplier': { const s = pl.supplier; if (s) { const i = d.suppliers.findIndex(x => x.id === s.id); if (i >= 0) d.suppliers[i] = s; else d.suppliers.push(s); } break; }
     case 'promo': { const p = pl.promo; if (p) { const i = d.promos.findIndex(x => x.id === p.id); if (i >= 0) d.promos[i] = p; else d.promos.push(p); } break; }
+    case 'payroll': { if (Array.isArray(pl.commissionRules)) d.commissionRules = pl.commissionRules; break; }
     case 'perm': { if (pl.employee) { const e = pl.employee; const i = d.employees.findIndex(x => x.id === e.id); if (i >= 0) d.employees[i] = e; else d.employees.push(e); } if (pl.key) d.perms[pl.key] = pl.code; break; }
     case 'asset': case 'expense': case 'transfer': case 'leave': case 'timesheet': case 'budget': { if (pl.rec && pl.object) { const l = d.records[pl.object] ?? (d.records[pl.object] = []); const i = l.findIndex(x => x.id === pl.rec.id); const row = { ...pl.rec, c: 'Approved' }; if (i >= 0) l[i] = row; else l.unshift(row); } break; }
     case 'points': { if (pl.customerId && pl.points < 0 && d.ledger.filter(l => l.customerId === pl.customerId).reduce((a, l) => a + l.points, 0) + pl.points < 0) break; if (pl.customerId) d.ledger.push({ customerId: pl.customerId, points: pl.points, reason: 'Adjustment · ' + r.note, at: now() }); break; }
@@ -361,12 +362,14 @@ export function toggle86(outletId: string, productId: string, by: string) {
 }
 
 // ── Shifts & cash ───────────────────────────────────────────────────────────────────────
-export function openSession(outletId: string, cashierId: string, float: number) {
+/** Opening a drawer clocks the cashier in (with the selfie taken at the gate) unless they already are. */
+export function openSession(outletId: string, cashierId: string, float: number, shot: ClockShot = {}) {
   const id = uid('S-'); // unique across registers and devices
   commit('drawer.opened', cashierId, d => {
     d.sessions.forEach(s => { if (s.outletId === outletId && s.cashierId === cashierId && s.status === 'open') s.status = 'counting'; });
     d.sessions.unshift({ id, outletId, cashierId, openedAt: now(), openingFloat: float, closedAt: null, counted: null, variance: null, status: 'open', note: '' });
-    d.clock.push({ id: uid('ck'), employeeId: cashierId, outletId, kind: 'in', at: now() });
+    const last = d.clock.filter(c => c.employeeId === cashierId && c.outletId === outletId).at(-1);
+    if (last?.kind !== 'in' && (shot.photo || !photoRequired(d))) d.clock.push({ id: uid('ck'), employeeId: cashierId, outletId, kind: 'in', at: now(), ...withShot(shot) });
   }, id, outletId);
   return id;
 }
@@ -388,18 +391,24 @@ export function cashMove(sessionId: string, kind: 'in' | 'out' | 'drop', amount:
   if (needs) requestApproval({ type: 'cash_out', title: `Cash out ${idr(amount)} · ${reason}`, amount, requestedBy: by, outletId: s.outletId, subjectId: id });
   return id;
 }
-export function closeSession(sessionId: string, counted: number, note: string, by: string) {
+export function closeSession(sessionId: string, counted: number, note: string, by: string, shot: ClockShot = {}) {
   const d0 = snapshot(), s = d0.sessions.find(x => x.id === sessionId)!;
   const chk = closeCheck(sessionCash(d0, sessionId), counted, note);
   commit('drawer.counted', by, d => {
     const x = d.sessions.find(y => y.id === sessionId)!;
     Object.assign(x, { counted, variance: chk.variance, note, status: chk.level && chk.level !== 'pic' ? 'needs_approval' : 'closed', closedAt: chk.level && chk.level !== 'pic' ? null : now() });
-    if (by === x.cashierId) d.clock.push({ id: uid('ck'), employeeId: by, outletId: x.outletId, kind: 'out', at: now() }); // a PIC counting someone else's drawer stays clocked in
+    if (by === x.cashierId && (shot.photo || !photoRequired(d))) d.clock.push({ id: uid('ck'), employeeId: by, outletId: x.outletId, kind: 'out', at: now(), ...withShot(shot) }); // a PIC counting someone else's drawer stays clocked in
   }, sessionId, s.outletId);
   if (chk.level) requestApproval({ type: 'variance', title: `Drawer variance ${idr(chk.variance)} · ${sessionId}`, amount: Math.abs(chk.variance), requestedBy: by, outletId: s.outletId, subjectId: sessionId, note });
   return chk;
 }
-export function clock(employeeId: string, outletId: string, kind: 'in' | 'out' | 'break') { commit('clock.' + kind, employeeId, d => { d.clock.push({ id: uid('ck'), employeeId, outletId, kind, at: now() }); }); }
+const withShot = (s: ClockShot): ClockShot => (s.photo ? { photo: s.photo } : { noPhoto: s.noPhoto ?? 'No photo' });
+/** Clock in / out carries the selfie (or why there is none); with the photo rule on, no photo is refused. */
+export function clock(employeeId: string, outletId: string, kind: 'in' | 'out' | 'break', shot: ClockShot = {}): string | null {
+  if (kind !== 'break' && !shot.photo && photoRequired(snapshot())) return 'A photo is needed to clock ' + kind;
+  commit('clock.' + kind, employeeId, d => { d.clock.push({ id: uid('ck'), employeeId, outletId, kind, at: now(), ...(kind === 'break' ? {} : withShot(shot)) }); }, employeeId, outletId);
+  return null;
+}
 export function setRosterSlot(outletId: string, day: number, slot: 'pagi' | 'siang' | 'malam', patch: { pic?: string; crew?: string[] }, by: string) {
   commit('roster.updated', by, d => { const r = d.roster.find(x => x.outletId === outletId && x.day === day)!; Object.assign(r.slots[slot], patch); }, `${outletId} day ${day} ${slot}`, outletId);
 }

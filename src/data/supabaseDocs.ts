@@ -13,7 +13,7 @@ export interface PinSet { id: string; pin: string | null; approvalPin: string | 
 /** Time field per collection: ASC lists are appended (oldest first), DESC lists are prepended (newest first). */
 const ASC: Record<string, string> = { customers: 'joinedAt', orders: 'createdAt', payments: 'at', refunds: 'at', movements: 'at', ledger: 'at', clock: 'at', reservations: 'at' };
 const DESC: Record<string, string> = { approvals: 'at', sessions: 'openedAt', cashMoves: 'at', opnames: 'at', pos: 'at', reviews: 'at', messages: 'at', notices: 'at', versions: 'at' };
-export const ORDERED = ['outlets', 'employees', 'categories', 'modifierGroups', 'products', 'stockItems', 'suppliers', 'promos', 'devices', 'integrations'];
+export const ORDERED = ['outlets', 'employees', 'categories', 'modifierGroups', 'products', 'stockItems', 'suppliers', 'promos', 'devices', 'integrations', 'commissionRules'];
 const KEYED: Record<string, (x: Any) => string> = { outletProducts: x => x.productId + '|' + x.outletId, recipes: x => x.productId + '|' + x.stockItemId, roster: x => x.outletId + '|' + x.day };
 /** Append-only rows without an id: keyed by their content (identical rows get #1, #2 …). */
 const CONTENT: Record<string, string> = { movements: 'm', ledger: 'l' };

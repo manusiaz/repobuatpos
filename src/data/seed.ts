@@ -3,7 +3,7 @@ import type { DB, Order, OrderLine, Payment, Product } from './schema.ts';
 import { orderTotals } from '../domain/order.ts';
 import type { Method, Source } from '../domain/order.ts';
 
-export const DB_VERSION = 5;
+export const DB_VERSION = 6;
 export const DAY = 864e5;
 
 export function rng(seed: number) {
@@ -91,7 +91,13 @@ export function seed(now = Date.now()): DB {
     ],
     sessions: [{ id: 'S-1042', outletId: 'sen', cashierId: 'tono', openedAt: t0 + 14 * 3600e3, openingFloat: 500000, closedAt: null, counted: null, variance: null, status: 'open', note: '' }],
     cashMoves: [{ id: 'cm1', sessionId: 'S-1042', outletId: 'sen', kind: 'out', amount: 45000, reason: 'Ice cubes', by: 'tono', at: now - 40 * 60e3, status: 'done' }],
-    roster, clock: [], suppliers: [
+    roster, clock: [],
+    commissionRules: [
+      { id: 'cr-cashier', name: 'Cashiers · 1% of net sales', employeeId: null, role: 'cashier', salesBps: 100, perItem: 0, productIds: [], categoryIds: [] },
+      { id: 'cr-pastry', name: 'Pastry upsell · IDR 2,000 per pastry', employeeId: null, role: 'cashier', salesBps: 0, perItem: 2000, productIds: [], categoryIds: ['pastry'] },
+      { id: 'cr-pic', name: 'Shift leads · 0.5% of net sales', employeeId: null, role: 'pic', salesBps: 50, perItem: 0, productIds: [], categoryIds: [] },
+    ],
+    suppliers: [
       { id: 'sup1', name: 'PT Susu Segar Lembang', phone: '0812 1111 2222', terms: '14 days', category: 'Dairy' }, { id: 'sup2', name: 'Kopi Nusantara Roastery', phone: '0813 3333 4444', terms: '30 days', category: 'Coffee' },
       { id: 'sup3', name: 'Bakery Supply ID', phone: '0857 5555 6666', terms: 'COD', category: 'Bakery' }, { id: 'sup4', name: 'Gula Aren Banten Co-op', phone: '0819 7777 8888', terms: '7 days', category: 'Syrup' },
       { id: 'sup5', name: 'Cup & Pack Jakarta', phone: '0811 9999 0000', terms: '30 days', category: 'Packaging' },

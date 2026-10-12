@@ -32,7 +32,11 @@ export const moneyStyle = (db: DB) => (setting<string>(db, LANG_PAGE, 'fmt', 'id
 /** Language a guest sees first on the QR menu and kiosk (they can still switch). */
 export const guestLang = (db: DB) => (setting<string>(db, LANG_PAGE, 'lang', 'en') === 'id' ? 'id' : 'en') as 'en' | 'id';
 
-export const REFERRAL_PAGE = '/owner/customers/referral-program';
+export const ATTENDANCE_PAGE = '/manager/shifts/shift-templates';
+/** Selfie at clock in / out. On: no photo, no clock event. Off: a blocked camera or a skip still clocks, marked "no photo". */
+export const photoRequired = (db: DB) => Boolean(setting(db, ATTENDANCE_PAGE, 'clock-photo', true));
+
+export const REFERRAL_PAGE ='/owner/customers/referral-program';
 /** Invite-a-friend: both get beans when the friend joins from the member's link. */
 export const referral = (db: DB) => ({ on: Boolean(setting(db, REFERRAL_PAGE, 'ref-on', true)), referrer: Number(setting(db, REFERRAL_PAGE, 'ref-referrer', 100)), friend: Number(setting(db, REFERRAL_PAGE, 'ref-friend', 50)) });
 

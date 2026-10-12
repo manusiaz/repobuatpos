@@ -10,6 +10,7 @@ import { idr, idrShort } from '../domain/money.ts';
 import { LIMITS } from '../domain/approval.ts';
 import { level as stockLevel } from '../domain/stock.ts';
 import { clock, saveRecord } from '../data/actions.ts';
+import { ClockPhoto, useSelfie } from '../ui/Selfie.tsx';
 import type { Order } from '../data/schema.ts';
 import { usePic, picPath as P, type PicCtx } from './pic/ctx.ts';
 import { ApprovalQueue, ApprovalHistory, Escalate } from './pic/approvals.tsx';
@@ -212,13 +213,18 @@ function Sales({ c }: { c: PicCtx }) {
 function Team({ c }: { c: PicCtx }) {
   const { db, outletId, meId } = c;
   const crew = team(c);
-  const act = (id: string, kind: 'in' | 'out' | 'break', msg: string) => { clock(id, outletId, kind); toast(msg); };
+  const selfie = useSelfie();
+  // clock in / out takes a photo of the person on the PIC tablet; breaks don't
+  const act = (id: string, kind: 'in' | 'out' | 'break', msg: string) => kind === 'break' ? (clock(id, outletId, kind), toast(msg))
+    : selfie.ask({ who: nameOf(db, id), kind, onShot: shot => toast(clock(id, outletId, kind, shot) ?? msg) });
   if (!crew.length) return <Empty icon="users" title="Nobody on this shift yet">The roster for this shift is empty. Ask {c.mgr?.name ?? 'the manager'} to add people in Shifts.</Empty>;
   return <>
+    {selfie.sheet}
     <div className="grid" style={{ ['--min' as string]: '280px' }}>
       {crew.map(x => { const st = db.records.station?.find(r => r.id === `${outletId}|${c.date}|${x.id}`); return <div key={x.id} className="card tight stack sm">
         <div className="row"><Avatar name={x.e!.name} color={x.e!.color} /><span className="grow"><b>{x.e!.name}</b><br /><span className="muted" style={{ fontSize: 13 }}>{ROLE_LABEL[x.e!.role]}{x.id === c.picId ? ' · PIC' : ''}{st ? ' · ' + st.c : ''}{!x.rostered ? ' · not on this shift' : ''}</span></span>
           <Badge tone={STATE_TONE[x.state]}>{stateText(x)}</Badge></div>
+        {(() => { const ev = clockState(db, x.id, outletId).events.filter(e => e.kind !== 'break'); return ev.length > 0 && <div className="row wrap" style={{ gap: 8, fontSize: 13 }}>{ev.map(e => <span key={e.id} className="row muted" style={{ gap: 6 }}><ClockPhoto c={e} />{e.kind === 'in' ? 'In' : 'Out'} {hhmm(e.at)}</span>)}</div>; })()}
         <div className="row wrap">
           {(x.state === 'none' || x.state === 'out') && <button className="btn btn-sm" onClick={() => act(x.id, 'in', `${x.e!.name} clocked in`)}>Clock in</button>}
           {x.state === 'in' && <button className="btn btn-sm" onClick={() => act(x.id, 'break', `Break started for ${x.e!.name}`)}>Start break</button>}

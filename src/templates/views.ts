@@ -5,8 +5,9 @@ import type { Page } from '../system/registry.ts';
 import { level as stockLevel } from '../domain/stock.ts';
 import { balance, tierOf } from '../domain/loyalty.ts';
 import { priceAt } from '../data/actions.ts';
+import { commissionOf } from '../screens/insight/metrics.ts';
 
-export type ColKind = 'text' | 'money' | 'status' | 'time' | 'date' | 'mono' | 'num' | 'pct' | 'scope';
+export type ColKind = 'text' | 'money' | 'status' | 'time' | 'date' | 'mono' | 'num' | 'pct' | 'scope' | 'photo';
 export interface Col { k: string; l: string; f?: ColKind }
 export type Row = { id: string; [k: string]: unknown };
 export interface FieldDef { k: string; l: string; type?: 'text' | 'number' | 'money' | 'select' | 'textarea' | 'date'; options?: [string, string][]; req?: boolean; hint?: string }
@@ -120,10 +121,10 @@ export const VIEWS: Record<string, View> = {
     form: [{ k: 'name', l: 'Name', req: true }, { k: 'phone', l: 'WhatsApp number', req: true }, { k: 'role', l: 'Role', type: 'select', options: [['cashier', 'Cashier'], ['kitchen', 'Kitchen'], ['waiter', 'Waiter'], ['pic', 'Shift lead (PIC)'], ['manager', 'Manager (owner OK)']] }] },
   roster: { cols: [{ k: 'day', l: 'Day' }, { k: 'outlet', l: 'Outlet' }, { k: 'pagi', l: 'Morning PIC' }, { k: 'siang', l: 'Afternoon PIC' }, { k: 'malam', l: 'Close PIC' }],
     rows: c => c.db.roster.filter(r => inScope(c, r.outletId)).map(r => ({ id: r.outletId + r.day, day: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][r.day], outlet: outletName(c.db, r.outletId), pagi: empName(c.db, r.slots.pagi.pic), siang: empName(c.db, r.slots.siang.pic), malam: empName(c.db, r.slots.malam.pic) })) },
-  attendance: { cols: [{ k: 'who', l: 'Person' }, { k: 'outlet', l: 'Outlet' }, { k: 'kind', l: 'Event' }, { k: 'at', l: 'Time', f: 'time' }],
-    rows: c => c.db.clock.filter(k => inScope(c, k.outletId)).slice().reverse().map(k => ({ id: k.id, who: empName(c.db, k.employeeId), outlet: outletName(c.db, k.outletId), kind: k.kind === 'in' ? 'Clock in' : k.kind === 'out' ? 'Clock out' : 'Break', at: k.at })) },
-  payroll: { cols: [{ k: 'name', l: 'Person' }, { k: 'role', l: 'Role' }, { k: 'base', l: 'Base', f: 'money' }, { k: 'commission', l: 'Commission 1%', f: 'money' }, { k: 'total', l: 'Total', f: 'money' }],
-    rows: c => c.db.employees.filter(e => e.wage > 0).map(e => { const sales = c.db.orders.filter(o => o.cashierId === e.id && o.status === 'paid' && o.createdAt > Date.now() - 30 * DAY).reduce((a, o) => a + o.total, 0); const commission = Math.round(sales / 100); return { id: e.id, name: e.name, role: e.role, base: e.wage, commission, total: e.wage + commission }; }) },
+  attendance: { cols: [{ k: 'who', l: 'Person' }, { k: 'photo', l: 'Photo', f: 'photo' }, { k: 'outlet', l: 'Outlet' }, { k: 'kind', l: 'Event' }, { k: 'at', l: 'Time', f: 'time' }],
+    rows: c => c.db.clock.filter(k => inScope(c, k.outletId)).slice().reverse().map(k => ({ id: k.id, photo: k, who: empName(c.db, k.employeeId), outlet: outletName(c.db, k.outletId), kind: k.kind === 'in' ? 'Clock in' : k.kind === 'out' ? 'Clock out' : 'Break', at: k.at })) },
+  payroll: { cols: [{ k: 'name', l: 'Person' }, { k: 'role', l: 'Role' }, { k: 'base', l: 'Base', f: 'money' }, { k: 'net', l: 'Net sales · 30 days', f: 'money' }, { k: 'commission', l: 'Commission', f: 'money' }, { k: 'total', l: 'Total', f: 'money' }],
+    rows: c => { const to = Date.now(); return c.db.employees.filter(e => e.wage > 0).map(e => { const k = commissionOf(c.db, e, { from: to - 30 * DAY, to }); return { id: e.id, name: e.name, role: e.role, base: e.wage, net: k.net, commission: k.total, total: e.wage + k.total }; }); } },
   outlet: { cols: [{ k: 'name', l: 'Outlet' }, { k: 'city', l: 'City' }, { k: 'hours', l: 'Hours' }, { k: 'tax', l: 'Tax' }, { k: 'devices', l: 'Devices online' }, { k: 'status', l: 'Status', f: 'status' }],
     rows: c => c.db.outlets.map(o => ({ id: o.id, name: o.name, city: o.city, hours: o.opens + '–' + o.closes, tax: (o.taxBps / 100) + '%' + (o.serviceBps ? ' + ' + o.serviceBps / 100 + '% svc' : '') + (o.taxInclusive ? ' incl.' : ''), devices: c.db.devices.filter(d => d.outletId === o.id && d.status === 'online').length + '/' + c.db.devices.filter(d => d.outletId === o.id).length, status: o.online ? 'online' : 'offline' })) },
   device: { cols: [{ k: 'name', l: 'Device' }, { k: 'outlet', l: 'Outlet' }, { k: 'kind', l: 'Type' }, { k: 'status', l: 'Status', f: 'status' }, { k: 'seen', l: 'Last seen', f: 'time' }],

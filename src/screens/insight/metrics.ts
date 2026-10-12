@@ -2,6 +2,7 @@
 // (owner, owner mobile, manager, reports) computes the same numbers the same way.
 import type { Approval, DB, Order, Refund } from '../../data/schema.ts';
 import type { Method, Source } from '../../domain/order.ts';
+import { commission, type Commission, type SaleRow } from '../../domain/commission.ts';
 
 export const MIN = 60e3, HOUR = 3600e3, DAY = 864e5, WEEK = 7 * DAY;
 /** 'all' or an outlet id. */
@@ -153,4 +154,16 @@ export function voidsAndRefunds(db: DB, outlet: OutletScope, r: Range): { voids:
     refunds: db.refunds.filter(x => within(x.at, r) && (outlet === 'all' || orderOutlet.get(x.orderId) === outlet)),
     pending: db.approvals.filter(a => a.status === 'waiting' && (a.type === 'void' || a.type === 'refund') && inScope(a, outlet)),
   };
+}
+
+/** Commission for one person over a range: their paid orders (net of discounts, without PB1 and service) minus the
+ *  net share of refunds on them in the range, with the lines returned. Voided orders were never sold. */
+export function commissionOf(db: DB, who: { id: string; role: string }, r: Range): Commission {
+  const cat = new Map(db.products.map(p => [p.id, p.categoryId]));
+  const row = (o: Order, lines: Order['lines']): SaleRow => ({ net: o.subtotal - o.discount, lines: lines.map(l => ({ productId: l.productId, categoryId: cat.get(l.productId) ?? '', qty: l.qty })) });
+  const mine = new Map(db.orders.filter(o => o.cashierId === who.id).map(o => [o.id, o]));
+  const sales = soldOrders(db, 'all', r).filter(o => o.cashierId === who.id).map(o => row(o, o.lines));
+  const refunds = db.refunds.filter(x => within(x.at, r) && mine.has(x.orderId)).map(x => { const o = mine.get(x.orderId)!;
+    return { ...row(o, o.lines.filter(l => x.lineIds?.includes(l.id))), net: o.total > 0 ? Math.floor((x.amount * (o.subtotal - o.discount)) / o.total) : 0 }; });
+  return commission(db.commissionRules ?? [], who, sales, refunds);
 }

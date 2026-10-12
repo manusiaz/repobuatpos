@@ -6,6 +6,8 @@ import { useApp } from '../app/context.tsx';
 import { isGated } from '../system/access.ts';
 import { Badge, Icon, Status, hhmm, dateShort } from '../ui/kit.tsx';
 import { idr } from '../domain/money.ts';
+import { ClockPhoto } from '../ui/Selfie.tsx';
+import type { ClockEvent } from '../data/schema.ts';
 import type { Col, Row } from './views.ts';
 
 type ModeUI = [string, string, string, string];
@@ -57,6 +59,7 @@ export function cell(c: Col, v: unknown): ReactNode {
     case 'mono': return <span className="mono">{String(v)}</span>;
     case 'num': return <span className="num" style={{ fontWeight: 600 }}>{Number(v).toLocaleString('en-US')}</span>;
     case 'pct': return <span className="num" style={{ fontWeight: 600 }}>{Number(v)}%</span>;
+    case 'photo': return <ClockPhoto c={v as ClockEvent} />;
     case 'scope': return <Badge tone={String(v) === 'All outlets' ? 'accent' : 'info'}>{String(v)}</Badge>;
     default: return String(v);
   }
@@ -65,6 +68,6 @@ export const isRight = (c: Col) => c.f === 'money' || c.f === 'num' || c.f === '
 
 export function downloadCSV(name: string, cols: Col[], rows: Row[]) {
   const esc = (v: unknown) => { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-  const csv = [cols.map(c => esc(c.l)).join(','), ...rows.map(r => cols.map(c => esc(c.f === 'time' || c.f === 'date' ? new Date(Number(r[c.k])).toISOString() : r[c.k])).join(','))].join('\n');
+  const csv = [cols.map(c => esc(c.l)).join(','), ...rows.map(r => cols.map(c => esc(c.f === 'time' || c.f === 'date' ? new Date(Number(r[c.k])).toISOString() : c.f === 'photo' ? ((r[c.k] as ClockEvent).photo ? 'photo' : (r[c.k] as ClockEvent).noPhoto ?? '') : r[c.k])).join(','))].join('\n');
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = name.replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '.csv'; a.click();
 }

@@ -7,6 +7,7 @@ import type { LedgerRow } from '../domain/loyalty.ts';
 import type { Movement, OpnameLine } from '../domain/stock.ts';
 import type { Promo } from '../domain/promo.ts';
 import type { ProductStatus, Scope } from '../domain/menu.ts';
+import type { CommissionRule } from '../domain/commission.ts';
 
 export type Role = 'owner' | 'manager' | 'pic' | 'cashier' | 'kitchen' | 'waiter' | 'admin' | 'customer' | 'public';
 
@@ -35,7 +36,8 @@ export interface Approval { id: string; type: RequestType; title: string; subjec
 export interface Session { id: string; outletId: string; cashierId: string; openedAt: number; openingFloat: IDR; closedAt: number | null; counted: IDR | null; variance: IDR | null; status: 'open' | 'counting' | 'needs_approval' | 'closed'; note: string }
 export interface CashMove { id: string; sessionId: string; outletId: string; kind: 'in' | 'out' | 'drop'; amount: IDR; reason: string; by: string; at: number; status: 'done' | 'waiting' }
 export interface ShiftDay { outletId: string; day: number; slots: Record<'pagi' | 'siang' | 'malam', { pic: string; crew: string[] }> }
-export interface ClockEvent { id: string; employeeId: string; outletId: string; kind: 'in' | 'out' | 'break'; at: number }
+/** photo: selfie taken at clock in / out (small JPEG data URL). noPhoto: why there is none (camera blocked, skipped), shown in review. */
+export interface ClockEvent { id: string; employeeId: string; outletId: string; kind: 'in' | 'out' | 'break'; at: number; photo?: string; noPhoto?: string }
 export interface Supplier { id: string; name: string; phone: string; terms: string; category: string }
 export interface PurchaseOrder { id: string; no: string; supplierId: string; outletId: string; lines: { stockItemId: string; qty: number; price: IDR; received: number }[]; status: 'draft' | 'waiting' | 'sent' | 'partial' | 'received' | 'cancelled'; due: number; createdBy: string; at: number }
 export interface Opname { id: string; outletId: string; area: string; countedBy: string; approvedBy: string | null; status: 'counting' | 'submitted' | 'locked' | 'recount' | 'approved' | 'rejected' | 'posted'; lines: OpnameLine[]; at: number; requirePhotoAll: boolean }
@@ -62,7 +64,7 @@ export interface DB {
   outlets: Outlet[]; employees: Employee[]; categories: Category[]; modifierGroups: ModifierGroup[]; products: Product[]; outletProducts: OutletProduct[];
   stockItems: StockItem[]; recipes: Recipe[]; movements: Movement[]; customers: Customer[]; ledger: LedgerRow[];
   orders: Order[]; payments: Payment[]; refunds: Refund[]; approvals: Approval[]; sessions: Session[]; cashMoves: CashMove[];
-  roster: ShiftDay[]; clock: ClockEvent[]; suppliers: Supplier[]; pos: PurchaseOrder[]; opnames: Opname[]; promos: Promo[];
+  roster: ShiftDay[]; clock: ClockEvent[]; commissionRules: CommissionRule[]; suppliers: Supplier[]; pos: PurchaseOrder[]; opnames: Opname[]; promos: Promo[];
   reservations: Reservation[]; reviews: Review[]; messages: Message[]; devices: Device[]; integrations: Integration[]; audit: Audit[]; notices: Notice[];
   theme: Theme; staffBrand: { accent: string; logo: string; workspace: string; density: 'compact' | 'comfy' }; versions: Version[];
   perms: Record<string, string>; records: Record<string, Rec[]>; counters: Record<string, number>;
