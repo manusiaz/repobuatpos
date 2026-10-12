@@ -49,6 +49,12 @@ export function Sheet({ open, onClose, title, children, footer, side = 'right', 
 }
 let toastFn: (m: string) => void = () => {};
 export const toast = (m: string) => toastFn(m);
+/** Copy with honest feedback: the browser may block the clipboard (permissions, http, iframes). */
+export function copy(text: string, what = 'Copied') {
+  const blocked = () => toast('Copy blocked by the browser. Select the text and copy it.');
+  try { navigator.clipboard.writeText(text).then(() => toast(what), blocked); } catch { blocked(); }
+}
+
 export function Toaster() {
   const [m, setM] = useState<string | null>(null); const t = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => { toastFn = (x: string) => { setM(x); clearTimeout(t.current); t.current = setTimeout(() => setM(null), 2600); }; }, []);

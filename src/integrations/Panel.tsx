@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import type { Integration } from '../data/schema.ts';
 import { useApp } from '../app/context.tsx';
-import { Badge, Empty, Field, Icon, Sheet, Toggle, toast } from '../ui/kit.tsx';
+import { Badge, copy, Empty, Field, Icon, Sheet, Toggle, toast } from '../ui/kit.tsx';
 import { removeIntegration, reportIntegration, saveIntegration } from '../data/actions/integrations.ts';
 import { connectorsOf } from './registry.ts';
 import { putSecrets } from './secrets.ts';
@@ -82,7 +82,7 @@ function ConnectSheet({ c, i, outletId, deviceId, onClose }: { c: Connector; i: 
           : <input className="input" type={f.type === 'number' ? 'number' : f.type === 'url' ? 'url' : 'text'} value={String(cfg[f.key] ?? '')} placeholder={f.placeholder} onChange={e => setCfg({ ...cfg, [f.key]: f.type === 'number' ? Number(e.target.value) : e.target.value })} />}
       </Field>)}
       {hook && <Field label="Webhook URL" hint={`Paste this in the ${c.name} dashboard so it can tell us when a payment or order changes.`}>
-        <div className="row"><input className="input grow mono" readOnly value={hook} /><button className="btn" onClick={() => { navigator.clipboard?.writeText(hook); toast('Copied'); }}><Icon name="copy" size={16} /></button></div></Field>}
+        <div className="row"><input className="input grow mono" readOnly value={hook} /><button className="btn" onClick={() => copy(hook)}><Icon name="copy" size={16} /></button></div></Field>}
       <div className="row between"><span>Active</span><Toggle on={enabled} onChange={setEnabled} label="Active" /></div>
       {c.docs && <a className="muted" href={c.docs} target="_blank" rel="noreferrer" style={{ fontSize: 13 }}>{c.name} developer docs</a>}
       {err && <div role="alert" className="banner b-danger"><Icon name="circle-alert" />{err}</div>}

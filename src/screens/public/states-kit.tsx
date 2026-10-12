@@ -15,7 +15,7 @@ import { levelRequired, type Level, type RequestType } from '../../domain/approv
 import { level as stockLevel } from '../../domain/stock.ts';
 import { idr } from '../../domain/money.ts';
 import { usePin } from '../../ui/PinSheet.tsx';
-import { Avatar, Badge, Icon, Numpad, Skeleton, Status, ago, hhmm, toast, useNow, type Tone } from '../../ui/kit.tsx';
+import { Avatar, Badge, copy, Icon, Numpad, Skeleton, Status, ago, hhmm, toast, useNow, type Tone } from '../../ui/kit.tsx';
 import { FEATURE_PLAN, PLANS, includes, planOf } from './plans.ts';
 export { ProductImporter, SAMPLE_CSV } from './importer.tsx';
 
@@ -108,7 +108,7 @@ export function ServerErrorState({ onRetry }: { onRetry?: () => void }) {
   const [id] = useState(() => 'req_' + Math.random().toString(36).slice(2, 10));
   return <StatePanel full kind="Error" icon="server-crash" kicker="500" title="Something broke on our side"
     actions={<><button className="btn btn-primary" onClick={() => (onRetry ? onRetry() : location.reload())}>Try again</button><Link className="btn" href="/system-status">System status</Link></>}
-    meta={<span className="row" style={{ justifyContent: 'center' }}>Request ID <span className="mono">{id}</span><button className="btn btn-ghost btn-sm" onClick={() => { navigator.clipboard?.writeText(id); toast('Request ID copied'); }}>Copy</button></span>}>
+    meta={<span className="row" style={{ justifyContent: 'center' }}>Request ID <span className="mono">{id}</span><button className="btn btn-ghost btn-sm" onClick={() => copy(id, 'Request ID copied')}>Copy</button></span>}>
     We’ve been notified. Nothing you entered was lost. If it keeps happening, send support the request ID below.
   </StatePanel>;
 }

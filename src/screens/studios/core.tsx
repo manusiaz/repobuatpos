@@ -6,7 +6,8 @@ import type { SessionUser } from '../../session.ts';
 import { priceAt } from '../../data/actions.ts';
 import { idr } from '../../domain/money.ts';
 import { earn, tierOf } from '../../domain/loyalty.ts';
-import { Icon, Seg, Toggle, toast } from '../../ui/kit.tsx';
+import { copy, Icon, Seg, Toggle, toast } from '../../ui/kit.tsx';
+export { copy };
 
 export type Plan = 'free' | 'basic' | 'pro' | 'enterprise';
 export const PLAN_RANK: Record<Plan, number> = { free: 0, basic: 1, pro: 2, enterprise: 3 };
@@ -136,10 +137,6 @@ export function menuOf(db: DB, outletId: string) {
 }
 export const thousands = (n: number) => Math.round(n / 1000);
 
-export function copy(text: string, what = 'Copied') {
-  const blocked = () => toast('Copy blocked by the browser. Select the text and copy it.');
-  try { navigator.clipboard.writeText(text).then(() => toast(what), blocked); } catch { blocked(); }
-}
 export function CopyRow({ label, value }: { label?: string; value: string }) {
   return <div className="row" style={{ gap: 6, minWidth: 0 }}>{label && <span className="faint" style={{ fontSize: 12, flex: 'none' }}>{label}</span>}
     <code className="mono grow" style={{ background: 'var(--bg-sunken)', padding: '8px 10px', borderRadius: 8, overflowWrap: 'anywhere', fontSize: 12 }}>{value}</code>
