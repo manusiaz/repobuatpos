@@ -67,10 +67,18 @@ export function pairDevice(deviceId: string, code: string): string | null {
 export type Check = string | null | Promise<string | null>;
 /** Approval PIN: on Supabase the server checks it (and opens a 2-minute window for this approver's decisions); locally verifyPin. */
 export function checkApprovalPin(employeeId: string, pin: string): Check { return REMOTE ? serverPin('bn_check_approval_pin', employeeId, pin) : verifyPin(employeeId, pin); }
-/** Staff login PIN on a shared device (the device stays signed in with the owner / manager account). */
+/** Staff login PIN on a register. On Supabase it opens a server session for that person; their writes carry its token. */
 export function checkLoginPin(employeeId: string, pin: string): Check {
-  if (REMOTE) return serverPin('bn_check_login_pin', employeeId, pin);
+  if (REMOTE) return staffSignIn(employeeId, pin);
   return snapshot().employees.find(e => e.id === employeeId)?.pin === pin ? null : 'Wrong PIN.';
+}
+async function staffSignIn(employeeId: string, pin: string) {
+  const t = remoteInfo().tenant;
+  if (!t) return 'This device is not signed in to a business. Log in first.';
+  const { staffLogin } = await import('../supabase.ts');
+  const r = await staffLogin(t.id, employeeId, pin);
+  if (r.token) { (await import('../staff.ts')).setStaffToken(employeeId, r.token); return null; }
+  return r.error ? humanError(r.error).text : 'Sign-in failed. Try again.';
 }
 async function serverPin(fn: string, employeeId: string, pin: string) {
   const t = remoteInfo().tenant;

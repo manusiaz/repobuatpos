@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import type { Surface } from './system/registry.ts';
 import type { Role } from './data/schema.ts';
 import { REMOTE } from './data/remote.ts';
+import { clearStaffTokens } from './data/staff.ts';
 import { remoteInfo, remoteSnapshot, remoteSubscribe } from './data/supabaseStore.ts';
 
 export interface SessionUser { id: string; role: Role; outletId: string }
@@ -29,7 +30,7 @@ function remoteDefault(surface: Surface): SessionUser | null {
   if (surface === 'admin' && admin && mode !== 'member') return { id: 'admin', role: 'admin', outletId: '' }; // BorNiz staff account (no business of its own)
   const d = remoteSnapshot(), out = d.device.outletId || d.outlets[0]?.id || '';
   if (mode === 'member' && member) {
-    let shared = false; try { shared = localStorage.getItem(SHARED) === '1'; } catch { /* blocked */ }
+    let shared = member.role === 'device'; try { shared ||= localStorage.getItem(SHARED) === '1'; } catch { /* blocked */ }
     if (shared && !PUBLIC.includes(surface)) return null;
     const e = d.employees.find(x => x.id === member.employeeId);
     return { id: member.employeeId, role: member.role === 'owner' || member.role === 'manager' ? member.role : e?.role ?? 'cashier', outletId: e?.outlets.includes(out) ? out : e?.outlets[0] ?? out };
@@ -45,6 +46,7 @@ export function getSession(surface: Surface, pathRole?: string): SessionUser {
 /** Remote mode: the next setSession for this employee was proven (account password or their PIN on the server). */
 export function grantSession(employeeId: string, shared: boolean) {
   granted.set(employeeId, Date.now() + 120e3);
+  if (!shared) clearStaffTokens(); // an account sign-in acts as that account, never under a staff session left in this tab
   try { if (shared) localStorage.setItem(SHARED, '1'); else localStorage.removeItem(SHARED); } catch { /* blocked */ }
 }
 export function setSession(u: SessionUser | null) {
@@ -53,7 +55,7 @@ export function setSession(u: SessionUser | null) {
     location.assign('/account/cashier-pin-login');
     return;
   }
-  if (u) sessionStorage.setItem(KEY, JSON.stringify(u)); else sessionStorage.removeItem(KEY);
+  if (u) sessionStorage.setItem(KEY, JSON.stringify(u)); else { sessionStorage.removeItem(KEY); if (REMOTE) endStaffSessions(); }
   subs.forEach(f => f());
 }
 export function useSession(surface: Surface, pathRole?: string): SessionUser | null {
@@ -75,4 +77,10 @@ export function useSession(surface: Surface, pathRole?: string): SessionUser | n
     return () => { subs.delete(f); off(); };
   }, [surface, pathRole]);
   return u;
+}
+
+/** Signing out of a register ends the staff sessions this tab opened on the server. */
+function endStaffSessions() {
+  const tokens = clearStaffTokens();
+  if (tokens.length) import('./data/supabase.ts').then(({ sb }) => Promise.all(tokens.map(t => sb().rpc('bn_staff_logout', { p_token: t })))).catch(() => {});
 }

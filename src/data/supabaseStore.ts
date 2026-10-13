@@ -11,11 +11,12 @@ import type { Audit, DB } from './schema.ts';
 import { seed } from './seed.ts';
 import { applyDocs, diff, emptyDB, fromDocs, guestOps, humanError, opsToDocs, pinChanges, wire, SYNTHETIC, type Doc, type Hint, type Op, type PinSet } from './supabaseDocs.ts';
 import type { Membership } from './supabase.ts';
+import { staffToken } from './staff.ts';
 
 type Any = Record<string, any>;
 export type Mode = 'boot' | 'anon' | 'member' | 'guest';
 export interface CommitOpts { expect?: { coll: string; id: string; data: Record<string, unknown> }[]; quiet?: boolean }
-interface Pending { opId: string; action: string; actor: string; subject: string; outletId?: string; ops: Op[]; at: number; pins?: PinSet[]; quiet?: boolean; local?: boolean }
+interface Pending { opId: string; action: string; actor: string; subject: string; outletId?: string; ops: Op[]; at: number; pins?: PinSet[]; quiet?: boolean; local?: boolean; staff?: string | null }
 
 const WINDOW_MS = (Number(process.env.NEXT_PUBLIC_BORNIZ_WINDOW_DAYS) || 35) * 864e5;
 const NAMES = ['order', 'po'];
@@ -94,7 +95,7 @@ export function remoteCommit(action: string, actor: string, mutate: (d: DB) => v
   const all = diff(cur, next), ops = mode === 'guest' ? guestOps(all) : all;
   for (const e of opts.expect ?? []) { const o = ops.find(x => x.coll === e.coll && x.id === e.id); if (o) o.expect = e.data; }
   const pins = mode === 'member' ? pinChanges(cur, next) : [];
-  if (ops.length || pins.length) queue.push({ opId: rid('op'), action, actor, subject, outletId, ops, at: Date.now(), pins, quiet: opts.quiet });
+  if (ops.length || pins.length) queue.push({ opId: rid('op'), action, actor, subject, outletId, ops, at: Date.now(), pins, quiet: opts.quiet, staff: staffToken(actor) });
   if (mode === 'guest' && all.length > ops.length) queue.push({ opId: rid('lo'), action, actor, subject, ops: all.filter(o => !ops.includes(o)), at: Date.now(), local: true });
   if (mode === 'guest') for (const o of ops) if (o.coll === 'orders' && !tracked.includes(o.id)) { tracked.push(o.id); ls.set(key('orders'), tracked); }
   saveQueue();
@@ -112,11 +113,12 @@ async function flush() {
   flushing = true;
   try {
     const { sb } = await lib();
+    // a shared register nobody is signed in to (kiosk, customer display) writes what a guest may write
     for (let p = queue.find(x => !x.local); p && tenant; p = queue.find(x => !x.local)) {
       const sent = seq;
       const { error } = mode === 'guest'
         ? await sb().rpc('bn_guest_write', { p_tenant: tenant.id, p_ops: wire(p.ops) })
-        : await sb().rpc('bn_write', { p_tenant: tenant.id, p_ops: wire(p.ops), p_action: p.action, p_actor: p.actor, p_subject: p.subject || null, p_outlet: p.outletId ?? null, p_op: p.opId });
+        : await sb().rpc('bn_write', { p_tenant: tenant.id, p_ops: wire(member?.role === 'device' && !p.staff ? guestOps(p.ops) : p.ops), p_action: p.action, p_actor: p.actor, p_subject: p.subject || null, p_outlet: p.outletId ?? null, p_op: p.opId, p_staff: p.staff ?? null });
       if (error && retryable(error)) { setTimeout(flush, backoff); backoff = Math.min(backoff * 2, 60e3); break; }
       backoff = 2000;
       const done = p;

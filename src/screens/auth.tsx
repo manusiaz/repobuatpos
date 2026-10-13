@@ -10,6 +10,7 @@ import { accountSignIn, accountSignOut, accountSignUp, accountUser, checkLoginPi
 import { DEMO_HERE, REMOTE, setDemo } from '../data/remote.ts';
 import { remoteInfo, remoteSnapshot } from '../data/supabaseStore.ts';
 import type { Employee, Role } from '../data/schema.ts';
+import { humanError } from '../data/supabaseDocs.ts';
 import { bps, idr } from '../domain/money.ts';
 import { Avatar, Badge, Field, Icon, Numpad, Seg, Status, dateShort, toast, useNow } from '../ui/kit.tsx';
 import { PLANS, PPN_BPS, TRIAL_DAYS, billed, perMonth, planOf, type PlanId } from './public/plans.ts';
@@ -535,10 +536,15 @@ function AccountLogin() {
   const [email, setEmail] = useState(''), [pw, setPw] = useState(''), [err, setErr] = useState(''), [busy, setBusy] = useState(false), [unconfirmed, setUnconfirmed] = useState(false), [show, setShow] = useState(false);
   if (acct === undefined) return <Head h="Welcome back" sub="Checking your sign-in…" />;
   const m = remoteInfo().member;
+  if (acct && m?.role === 'device') return <div className="stack">
+    <Head h={`Shared register · ${m.name}`} sub="Staff sign in here with their PIN. This tablet holds no owner or manager sign-in." />
+    <Link className="btn btn-primary btn-lg" href={A + 'cashier-pin-login'}>Staff PIN login</Link>
+    <button className="btn btn-ghost" onClick={signOutAndReload}><Icon name="log-out" size={18} />Remove this register</button>
+  </div>;
   if (acct && m) return <div className="stack">
     <Head h={`Signed in to ${m.name}`} sub={<>As <b>{acct.email}</b>. This browser stays signed in for the register, kitchen and back office.</>} />
     <button className="btn btn-primary btn-lg" onClick={() => enterBusiness(go)}>Open the {m.role === 'manager' ? 'manager' : 'owner'} dashboard</button>
-    <Link className="btn btn-lg" href={A + 'cashier-pin-login'}>Use as a shared register (staff PIN)</Link>
+    <SharedRegister tenant={m.tenantId} />
     <button className="btn btn-ghost" onClick={signOutAndReload}><Icon name="log-out" size={18} />Sign out</button>
   </div>;
   if (acct && remoteInfo().admin) return <div className="stack">
@@ -571,6 +577,24 @@ function AccountLogin() {
     <button type="button" className="btn btn-lg" onClick={() => setDemo(true)}><Icon name="play" size={18} />Try the demo, no account needed</button>
     <Links><Link href={A + 'forgot-password'}>Forgot password?</Link><Link href={A + 'register'}>Create an account</Link><Link href={A + 'cashier-pin-login'}>Staff PIN login</Link></Links>
   </form>;
+}
+
+/** Turns this tablet into a shared register: it signs out of the owner / manager account and keeps only a register sign-in. */
+function SharedRegister({ tenant }: { tenant: string }) {
+  const [busy, setBusy] = useState(false), [err, setErr] = useState('');
+  const go = async () => {
+    setBusy(true); setErr('');
+    const { makeSharedRegister } = await import('../data/supabase.ts');
+    const e = await makeSharedRegister(tenant);
+    if (e) { setErr(humanError(e).text); setBusy(false); return; }
+    try { localStorage.setItem('borniz-shared-device', '1'); } catch { /* blocked */ }
+    location.assign(A + 'cashier-pin-login');
+  };
+  return <>
+    <button className="btn btn-lg" disabled={busy} onClick={go}><Icon name="tablet-smartphone" size={18} />{busy ? 'Setting up…' : 'Make this a shared register (staff PIN)'}</button>
+    <span className="faint" style={{ fontSize: 13 }}>Your owner sign-in leaves this tablet. Each person signs in with their own PIN, and what they can do follows their role.</span>
+    {err && <Note tone="danger"><Icon name="circle-alert" /><span>{err}</span></Note>}
+  </>;
 }
 
 function AccountRegister() {

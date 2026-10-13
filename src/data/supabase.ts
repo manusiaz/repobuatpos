@@ -50,4 +50,18 @@ export async function isPlatformAdmin() { const { data } = await sb().rpc('bn_is
 export interface PlatformTenant { id: string; slug: string; name: string; plan: string; cell: string | null; createdAt: number; owner: string | null; city: string | null; outlets: number; orders30: number; lastActive: number | null }
 export async function adminTenants(): Promise<PlatformTenant[]> { const { data, error } = await sb().rpc('bn_admin_tenants'); if (error) throw error; return (data ?? []) as PlatformTenant[]; }
 export async function adminSetPlan(tenant: string, plan: string) { const { error } = await sb().rpc('bn_admin_set_plan', { p_tenant: tenant, p_plan: plan }); if (error) throw error; }
+/** Shared register: owner / manager get a one-time code, the tablet re-signs in anonymously and joins with it (no owner rights). */
+export async function makeSharedRegister(tenant: string): Promise<string | null> {
+  const c = await sb().rpc('bn_device_code', { p_tenant: tenant });
+  if (c.error) return c.error.message;
+  await sb().auth.signOut();
+  const a = await sb().auth.signInAnonymously();
+  if (a.error) return /anonymous/i.test(a.error.message) ? 'Turn on anonymous sign-ins in Supabase › Authentication › Sign In / Providers, then try again. Sign in again as the owner first.' : a.error.message;
+  const j = await sb().rpc('bn_device_join', { p_code: c.data });
+  return j.error ? j.error.message : null;
+}
+export async function staffLogin(tenant: string, employee: string, pin: string): Promise<{ error?: string; token?: string }> {
+  const { data, error } = await sb().rpc('bn_staff_login', { p_tenant: tenant, p_employee: employee, p_pin: pin });
+  return error ? { error: error.message } : (data as { error?: string; token?: string });
+}
 export function pickTenant(id: string) { try { localStorage.setItem(PICK, id); } catch { /* blocked */ } }

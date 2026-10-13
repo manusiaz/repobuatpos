@@ -113,6 +113,8 @@ declare
   who text := public.bn_member_role(tid);
   hi int; src text; s private.staff_secrets;
 begin
+  -- an upsert fires BEFORE INSERT first even when the row exists; the BEFORE UPDATE pass that follows does the checking
+  if tg_op = 'INSERT' and exists (select 1 from public.docs where tenant_id = new.tenant_id and coll = new.coll and id = new.id) then return new; end if;
   if c = 'approvals' and tg_op = 'UPDATE' then
     if o->>'status' not in ('waiting','recount') and (n - 'payload') is distinct from (o - 'payload') then
       raise exception 'BN048 A decided request is final';

@@ -71,9 +71,9 @@ select public.bn_write((select id from t), '[{"op":"put","coll":"employees","id"
 select pg_temp.expect($$ select public.bn_set_pins((select id from t), 'budi', null, '000000') $$, 'BN013');
 select public.bn_set_pins((select id from t), 'rina', '4321', null);
 -- forged approval: a self-approved cashier request re-labelled as owner-approved
-select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"a1","data":{"id":"a1","type":"void","level":"cashier","status":"approved","requestedBy":"rina","decidedBy":"rina","amount":5000}}]', 'x', 'rina');
-select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"a1","data":{"id":"a1","type":"void","level":"owner","status":"approved","requestedBy":"rina","decidedBy":"budi","amount":5000000}}]', 'x', 'rina') $$, 'BN048');
-select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"a1","data":{"id":"a1","type":"void","level":"cashier","status":"approved","requestedBy":"rina","decidedBy":"rina","amount":5000,"payload":{"applied":true}}}]', 'x', 'rina');
+select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"a1","data":{"id":"a1","type":"discount","pct":5,"level":"cashier","status":"approved","requestedBy":"rina","decidedBy":"rina","amount":5000}}]', 'x', 'rina');
+select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"a1","data":{"id":"a1","type":"discount","pct":5,"level":"owner","status":"approved","requestedBy":"rina","decidedBy":"budi","amount":5000000}}]', 'x', 'rina') $$, 'BN048');
+select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"a1","data":{"id":"a1","type":"discount","pct":5,"level":"cashier","status":"approved","requestedBy":"rina","decidedBy":"rina","amount":5000,"payload":{"applied":true}}}]', 'x', 'rina');
 -- the approval PIN proof belongs to the account that typed it, and is used once
 select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"a2","data":{"id":"a2","type":"refund","level":"manager","status":"waiting","requestedBy":"rina","amount":90000}},
   {"op":"put","coll":"approvals","id":"a3","data":{"id":"a3","type":"refund","level":"manager","status":"waiting","requestedBy":"rina","amount":90000}}]', 'x', 'rina');
