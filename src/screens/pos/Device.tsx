@@ -11,6 +11,7 @@ import { Badge, Empty, Field, Icon, Seg, Status, Toggle, ago, hhmm, toast, useNo
 import type { Device, Integration } from '../../data/schema.ts';
 import { IntegrationsPanel } from '../../integrations/Panel.tsx';
 import { HardwareList, PrintQueue, ReadScale } from '../../devices/ui.tsx';
+import { ConnectDevice } from '../../devices/Connect.tsx';
 import { ownerOf, receiptPrinter, stationPrinter, thisDevice } from '../../devices/routing.ts';
 import { edcDriver } from '../../devices/edc.ts';
 import { findByCode, useWedgeScanner } from '../../devices/scanner.ts';
@@ -21,6 +22,7 @@ export function DeviceView() {
   const tab = route.t ?? 'printer';
   return <div className="pos-page stack lg">
     <h1>Device</h1>
+    <ConnectDevice />
     <TabLinks active={tab} tabs={[['printer', 'Printer & drawer', 'printer-and-drawer-connection'], ['display', 'Customer display', 'customer-display-pairing'], ['edc', 'EDC', 'edc-pairing'],
       ['scanner', 'Scanner & scale', 'barcode-scanner-and-scale-test'], ['settings', 'Register settings', 'register-settings'], ['sync', 'Sync & offline', 'sync-status-and-retry']]} />
     {tab === 'printer' ? <Printer /> : tab === 'display' ? <Display /> : tab === 'edc' ? <Edc /> : tab === 'scanner' ? <Scanner /> : tab === 'settings' ? <Settings /> : <Sync />}

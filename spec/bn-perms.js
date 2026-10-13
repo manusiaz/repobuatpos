@@ -5,7 +5,7 @@
   var outlet = (src.match(/outlet=([a-z]+)/) || [])[1] || 'sen';
   var COL = { owner: 0, manager: 1, pic: 2, cashier: 3, kitchen: 4, waiter: 5, admin: 6 }[role];
   var DEF = {
-    'Take orders & charge': 'yyyyoyn', 'Apply discount': 'yyoannn', 'Void item': 'yyoannn', 'Refund': 'yooannn', 'Open drawer without sale': 'yyyannn',
+    'Take orders & charge': 'yyyyoyn', 'Apply discount': 'yyoannn', 'Void item': 'yyoannn', 'Refund': 'yooannn', 'Open drawer without sale': 'yyyannn', 'Connect devices & printers': 'yyynnnn',
     'See & bump tickets': 'yyynyyn', 'Mark item sold out': 'yyyayyn',
     'Accept online order': 'yyyynnn', 'Reject online order (reason)': 'yyyannn', 'Busy mode / pause channel': 'yyyannn', 'Fire scheduled order early': 'yyoannn', 'Hand bag over without pickup code': 'yyyannn',
     'Count stock (opname)': 'yyynnnn', 'Approve opname variance': 'yaonnnn', 'Close cash for the day': 'yyoonnn'

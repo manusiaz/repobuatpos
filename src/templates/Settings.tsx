@@ -14,6 +14,7 @@ import { LIMITS } from '../domain/approval.ts';
 import { idr } from '../domain/money.ts';
 import { PageHead } from './common.tsx';
 import { IntegrationsPanel } from '../integrations/Panel.tsx';
+import { ConnectDevice } from '../devices/Connect.tsx';
 import { BusinessProfile, LabelPrinting, OutletDetail, Outlets, ProfileSecurity, ReceiptDesigner, Referral, Users } from './settingsPages.tsx';
 import { CANON } from '../system/settings.ts';
 import { CHANNELS, channelState, setChannel } from '../data/actions/online.ts';
@@ -84,7 +85,7 @@ export default function Settings() {
       {T('expo', 'Expo / pass screen sees the whole order', 'Runner checks every station before serving')}{T('print-ticket', 'Print kitchen ticket as backup', 'When the KDS is offline', false)}</div> },
       { t: 'Kitchen & receipt printers', body: <IntegrationsPanel kinds={['printer']} /> }];
     if (/notification/.test(n)) return (alerts.groups as [string, string, [string, string, unknown, string, string][]][]).map(([g, , list]) => ({ t: g.charAt(0) + g.slice(1).toLowerCase(), body: <>{list.map(a => T('al-' + a[0], a[0], a[1] + ' · ' + a[3], true, /fraud|audit|pin locked|cash variance/i.test(a[0] + g)))}</> }));
-    if (/devices|kiosk management/.test(n)) return [{ t: 'Printers', body: <IntegrationsPanel kinds={['printer']} /> }, { t: 'Card terminals (EDC)', body: <IntegrationsPanel kinds={['edc']} /> },
+    if (/devices|kiosk management/.test(n)) return [{ t: 'Connect a device', body: <ConnectDevice /> }, { t: 'Printers', body: <IntegrationsPanel kinds={['printer']} /> }, { t: 'Card terminals (EDC)', body: <IntegrationsPanel kinds={['edc']} /> },
       { t: 'Cash drawers', body: <IntegrationsPanel kinds={['drawer']} /> }, { t: 'Scanners & scales', body: <IntegrationsPanel kinds={['scanner', 'scale']} /> }, { t: 'Customer displays', body: <IntegrationsPanel kinds={['display']} /> }, { t: 'Paired devices', body: <div className="stack">{db.devices.map(d => <div key={d.id} className="row between"><span className="row"><Icon name={d.kind === 'printer' ? 'printer' : d.kind === 'kds' ? 'chef-hat' : d.kind === 'display' ? 'monitor' : d.kind === 'edc' ? 'credit-card' : 'tablet'} size={18} />{d.name} · {db.outlets.find(o => o.id === d.outletId)?.name}</span><Badge tone={d.status === 'online' ? 'success' : 'danger'} dot>{d.status}</Badge></div>)}
       <PairCode /></div> }];
     if (/api key|webhook/.test(n)) return [{ t: 'API keys', body: <ApiKeys /> }, { t: 'Webhook endpoints', body: <IntegrationsPanel kinds={['webhook']} /> }];
