@@ -331,3 +331,12 @@ test('every connector is a complete container: ids the screens use, fields, docs
   const t = await testConnection('meta-cloud', 't', ctx({}, {}));
   assert.deepEqual(t, { ok: false, message: 'Phone number ID is missing.' });
 });
+
+test('webhook endpoints: IPv6 / mapped literals and names resolving to private addresses are refused', async () => {
+  const { resolvesPublic } = await import('../integrations/server/webhooks/deliver.ts');
+  for (const u of ['https://[::ffff:127.0.0.1]/', 'https://[::]/', 'https://[::ffff:a9fe:a9fe]/', 'https://[fd00::1]/']) assert.ok(!publicEndpoint(u), u);
+  const at = (ip: string) => async () => [{ address: ip, family: ip.includes(':') ? 6 : 4 }];
+  assert.equal(await resolvesPublic('https://localtest.me/x', at('127.0.0.1')), false);
+  assert.equal(await resolvesPublic('https://meta.example/x', at('169.254.169.254')), false);
+  assert.equal(await resolvesPublic('https://hooks.example/x', at('93.184.216.34')), true);
+});

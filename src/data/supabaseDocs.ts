@@ -201,6 +201,10 @@ export function guestOps(ops: Op[]): Op[] {
 export const wire = (ops: Op[]) => ops.map(({ fresh: _f, ...o }) => o);
 
 const MESSAGES: Record<string, string> = {
+  '033': 'Quantity must be a whole number from 1 to 99.', '034': 'That option is no longer on the menu. Refresh the menu.', '035': 'That promo is no longer active.',
+  '036': 'The total changed (tax or service). Refresh and try again.', '038': 'Tips must be a positive amount.', '039': 'Sign up with your name and contact only.',
+  '047': 'Only waiter calls and order notices can be sent from the menu.', '048': 'This request was already decided and can’t be changed.', '049': 'Order numbers are reserved 1 to 1000 at a time.',
+  '052': 'Only the owner adds or changes owners and managers; a manager changes other staff.', '064': 'This attendance machine is already connected to a business.',
   '050': 'This business moved to its own server. Reconnecting…',   '001': 'Sales records are never deleted. Make a correction instead.', '002': 'Stock and beans history can’t be edited.', '003': 'Not enough beans.',
   '004': 'QRIS, VA and e-wallet payments are confirmed by the payment gateway, not on this device.', '006': 'This request was already decided on another device.',
   '007': 'Nobody approves their own request.', '008': 'Approval PIN expired. Enter it again.', '011': 'This device is not signed in to this business. Log in again.',

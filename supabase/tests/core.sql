@@ -22,7 +22,8 @@ select public.bn_write((select id from t), '[
   {"op":"put","coll":"employees","id":"maya","data":{"id":"maya","name":"Maya","role":"pic"}},
   {"op":"put","coll":"employees","id":"tono","data":{"id":"tono","name":"Tono","role":"cashier"}},
   {"op":"put","coll":"outlets","id":"sen","data":{"id":"sen","name":"Senayan","serviceBps":500,"taxBps":1000}},
-  {"op":"put","coll":"products","id":"p1","data":{"id":"p1","name":"Es Kopi Susu Aren","basePrice":25000,"status":"live"}},
+  {"op":"put","coll":"modifierGroups","id":"size","data":{"id":"size","name":"Size","options":[{"id":"l","name":"Large","price":5000}]}},
+  {"op":"put","coll":"products","id":"p1","data":{"id":"p1","name":"Es Kopi Susu Aren","basePrice":25000,"status":"live","modifierGroupIds":["size"]}},
   {"op":"put","coll":"outletProducts","id":"p1|sen","data":{"productId":"p1","outletId":"sen","localPrice":null}}
 ]'::jsonb, 'setup', 'budi');
 do $$ begin assert (select data ? 'pin' or data ? 'approvalPin' from public.docs where coll = 'employees' and id = 'budi') = false, 'PINs must never be stored in documents'; end $$;
@@ -65,7 +66,7 @@ do $$ begin assert (public.bn_gateway_update('test-secret', (select id from t), 
   assert (public.bn_gateway_update('test-secret', (select id from t), 'pay1', 'failed', 'simulator'))->>'status' = 'settled', 'retries must not change a settled payment'; end $$;
 
 -- Guests: catalog by slug, orders re-priced on the server
-do $$ begin assert jsonb_array_length(public.bn_public_snapshot('kopibiru')->'docs') = 3; end $$;
+do $$ begin assert jsonb_array_length(public.bn_public_snapshot('kopibiru')->'docs') = 4; end $$; -- outlet, modifier group, product, tenant meta
 select pg_temp.expect($$ select public.bn_guest_write((select id from t), '[{"op":"put","coll":"orders","id":"g1","data":{"id":"g1","source":"qr","status":"open","outletId":"sen","discountPct":0,"subtotal":1000,"total":1000,"lines":[{"productId":"p1","name":"Es Kopi","qty":1,"unitPrice":1000,"mods":[]}]}}]') $$, 'BN023');
 select public.bn_guest_write((select id from t), '[{"op":"put","coll":"orders","id":"g1","data":{"id":"g1","source":"qr","status":"open","outletId":"sen","discountPct":0,"subtotal":30000,"total":34650,"lines":[{"productId":"p1","name":"Es Kopi","qty":1,"unitPrice":25000,"mods":[{"name":"Large","price":5000}]}]}}]');
 select pg_temp.expect($$ select public.bn_guest_write((select id from t), '[{"op":"put","coll":"payments","id":"gp","data":{"id":"gp","orderId":"g1","method":"qris","amount":100,"status":"pending"}}]') $$, 'BN028');
