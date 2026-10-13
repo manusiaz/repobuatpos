@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useApp } from '../../app/context.tsx';
 import { priceAt } from '../../data/actions.ts';
+import { seed } from '../../data/seed.ts';
 import { orderTotals } from '../../domain/order.ts';
 import { idr, idrShort } from '../../domain/money.ts';
 import { Badge, Icon, Kpi, Status, Seg, toast } from '../../ui/kit.tsx';
@@ -46,7 +47,9 @@ export function Home() {
 
 /** Hero product mock built from the real menu, real outlet tax and the real totals function. Tapping adds to the cart. */
 function RegisterMock() {
-  const { db } = useApp();
+  const app = useApp();
+  // a visitor on Supabase has no business yet: the marketing mock shows the Kopi Biru demo instead of nothing
+  const db = useMemo(() => (app.db.outlets.length ? app.db : seed()), [app.db]);
   const outlet = db.outlets[0];
   const items = db.products.filter(p => p.status === 'live' && p.scope === 'global').slice(0, 6);
   const [cart, setCart] = useState<Record<string, number>>(() => items.length > 2 ? { [items[0].id]: 2, [items[3]?.id ?? items[1].id]: 1 } : {});

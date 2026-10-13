@@ -82,7 +82,11 @@ const Note = ({ tone = 'neutral', children }: { tone?: 'neutral' | 'success' | '
   <div className={'banner' + (tone === 'neutral' ? '' : ' b-' + tone)} style={tone === 'neutral' ? { background: 'var(--bg-sunken)', color: 'var(--fg-2)' } : undefined} role={tone === 'danger' ? 'alert' : undefined}>{children}</div>;
 const Links = ({ children }: { children: ReactNode }) => <div className="row between wrap" style={{ fontSize: 14, fontWeight: 600 }}>{children}</div>;
 
+// Setup and device steps work on a business: without one yet (signed out, or a new account), sign in or create it first.
+const NEEDS_BUSINESS = ['onboarding-business-profile', 'onboarding-outlet-and-tax', 'onboarding-import-products', 'onboarding-invite-team', 'choose-plan', 'checkout-and-payment', 'plan-activated', 'choose-outlet', 'choose-register', 'cashier-pin-login'];
 function View({ slug }: { slug: string }) {
+  const { db } = useApp();
+  if (NEEDS_BUSINESS.includes(slug) && (!db.outlets.length || !db.employees.length)) return REMOTE ? <AccountLogin /> : <Login />;
   switch (slug) {
     case 'login': case 'account': return REMOTE ? <AccountLogin /> : <Login />;
     case 'register': return REMOTE ? <AccountRegister /> : <Register />;

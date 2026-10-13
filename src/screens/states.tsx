@@ -1,9 +1,10 @@
 'use client';
 // System states (spec/BorNiz States Gallery). Every state is a real, reusable component from ./public/states-kit.tsx;
 // this screen shows each one on its own URL with live data.
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useApp } from '../app/context.tsx';
+import { Ctx, useApp } from '../app/context.tsx';
+import { seed } from '../data/seed.ts';
 import { pagesOf } from '../system/registry.ts';
 import { level as stockLevel } from '../domain/stock.ts';
 import { Icon, Seg } from '../ui/kit.tsx';
@@ -15,6 +16,12 @@ import {
 const RULES = [['Say what happened', 'in plain words, no error codes as the headline.'], ['Say what to do', 'one clear action, as a verb.'], ['Keep work safe', 'never clear a cart, form or draft on error.'], ['Same place', 'show the state where the content would be.'], ['Color = meaning', 'amber blocked/offline, red error, green success, ink empty.'], ['No blame', '“Card declined”, not “You entered a wrong card”.']];
 
 export default function Screen() {
+  const app = useApp();
+  // the gallery shows each state with demo data; a visitor on Supabase has no business of their own yet
+  const demo = useMemo(() => (app.db.outlets.length ? null : seed()), [app.db]);
+  return demo ? <Ctx.Provider value={{ ...app, db: demo, me: demo.employees.find(e => e.role === 'owner'), outletId: demo.outlets[0].id }}><Gallery /></Ctx.Provider> : <Gallery />;
+}
+function Gallery() {
   const { page } = useApp();
   const pages = pagesOf('states');
   const full = ['404-not-found', '500-server-error', 'maintenance', 'session-expired', 'access-denied'].includes(page.slug);
