@@ -9,6 +9,7 @@ import { homeOf } from '../system/pagemap.ts';
 import { Icon, Sheet, ago, Avatar, Badge } from '../ui/kit.tsx';
 import { markRead } from '../data/actions.ts';
 import { setSession } from '../session.ts';
+import { DEMO_HERE, setDemo } from '../data/remote.ts';
 import { industryHides } from '../system/tools.ts';
 import { useApp } from './context.tsx';
 
@@ -65,6 +66,7 @@ export function UserSwitch({ compact }: { compact?: boolean }) {
             onClick={() => { setSession({ id: e.id, role: e.role, outletId: e.outlets.includes(outletId) ? outletId : e.outlets[0] }); setOpen(false); }}>
             <Avatar name={e.name} color={e.color} size={32} /><span className="grow">{e.name}</span><Badge>{e.role}</Badge></button>)}
         <button className="btn btn-ghost" onClick={() => { setSession(null); setOpen(false); }}>Sign out (back to default for this app)</button>
+        {DEMO_HERE && <button className="btn" onClick={() => setDemo(false)}><Icon name="log-out" size={18} />Leave the demo, log in to my business</button>}
       </div>
     </Sheet>
   </>;

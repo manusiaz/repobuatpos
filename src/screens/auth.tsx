@@ -7,7 +7,7 @@ import { useApp } from '../app/context.tsx';
 import { grantSession, setSession } from '../session.ts';
 import { setDeviceOutlet, setSetting } from '../data/actions.ts';
 import { accountSignIn, accountSignOut, accountSignUp, accountUser, checkLoginPin, createBusiness, inviteEmployee, newPassword, resendConfirmation, sendPasswordReset, setPlan, whenChecked } from '../data/actions/auth.ts';
-import { REMOTE } from '../data/remote.ts';
+import { DEMO_HERE, REMOTE, setDemo } from '../data/remote.ts';
 import { remoteInfo, remoteSnapshot } from '../data/supabaseStore.ts';
 import type { Employee, Role } from '../data/schema.ts';
 import { bps, idr } from '../domain/money.ts';
@@ -142,6 +142,7 @@ function Login() {
     {err && <Note tone="danger"><Icon name="circle-alert" /><span>{err}</span></Note>}
     <button className="btn btn-primary btn-lg">Log in</button>
     <button type="button" className="btn btn-lg" onClick={viaWa}><Icon name="message-circle" />Log in with a WhatsApp code</button>
+    {DEMO_HERE && <button type="button" className="btn btn-ghost" onClick={() => setDemo(false)}><Icon name="log-out" size={18} />Leave the demo, log in to my business</button>}
     <Note><Icon name="info" /><span>Demo accounts: <button type="button" className="btn btn-ghost btn-sm" onClick={() => setId('budi@kopibiru.id')}>budi@kopibiru.id</button> owner · <button type="button" className="btn btn-ghost btn-sm" onClick={() => setId('andi@kopibiru.id')}>andi@kopibiru.id</button> manager · any password of 8+ characters.</span></Note>
     <Links><Link href={A + 'forgot-password'}>Forgot password?</Link><Link href={A + 'register'}>Create an account</Link><Link href={A + 'cashier-pin-login'}>Staff PIN login</Link></Links>
   </form>;
@@ -567,13 +568,10 @@ function AccountLogin() {
     </Field>
     {err && <Note tone="danger"><Icon name="circle-alert" /><span>{err}</span></Note>}
     <button className="btn btn-primary btn-lg" disabled={busy}>{busy ? 'Logging in…' : 'Log in'}</button>
-    {DEMO_URL && <a className="btn btn-lg" href={DEMO_URL}><Icon name="play" size={18} />Try the demo, no account needed</a>}
+    <button type="button" className="btn btn-lg" onClick={() => setDemo(true)}><Icon name="play" size={18} />Try the demo, no account needed</button>
     <Links><Link href={A + 'forgot-password'}>Forgot password?</Link><Link href={A + 'register'}>Create an account</Link><Link href={A + 'cashier-pin-login'}>Staff PIN login</Link></Links>
   </form>;
 }
-
-/** A second deployment of this app without Supabase: every role with demo data, nothing saved to a server. */
-const DEMO_URL = process.env.NEXT_PUBLIC_BORNIZ_DEMO_URL;
 
 function AccountRegister() {
   const { go } = useApp();
