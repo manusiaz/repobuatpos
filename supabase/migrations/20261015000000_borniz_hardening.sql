@@ -200,3 +200,23 @@ begin
 end $$;
 
 revoke execute on function private.docs_rules(), private.guest_total(uuid, text, numeric) from public, anon, authenticated;
+
+-- ── M2: every write goes through bn_write / the server RPCs, so it is guarded and audited once ───────────────
+-- (direct INSERT / UPDATE / DELETE on docs skipped the audit row; a direct audit insert could forge actor, user or time)
+drop policy if exists docs_insert on public.docs;
+drop policy if exists docs_update on public.docs;
+drop policy if exists docs_delete on public.docs;
+drop policy if exists audit_insert on public.audit_log;
+revoke insert, update, delete on public.docs from authenticated;
+revoke insert, update, delete on public.audit_log from authenticated;
+
+-- ── low: only the current server secret; delivery-app orders (predictable ids, customer name and phone) are not public ──
+create or replace function private.server_secret_ok(p_secret text) returns boolean
+language sql stable security definer set search_path = private as $$
+  select p_secret is not null and p_secret <> '' and exists (select 1 from private.secrets where name = 'server' and value = p_secret) $$;
+
+create or replace function public.bn_guest_order(p_tenant uuid, p_order_id text) returns jsonb
+language sql stable security definer set search_path = public, private as $$
+  select case when coalesce(private.doc(p_tenant, 'orders', p_order_id)->>'source', '') in ('gofood','grabfood','shopeefood') then null
+    else jsonb_build_object('order', private.doc(p_tenant, 'orders', p_order_id),
+      'payments', coalesce((select jsonb_agg(data) from public.docs where tenant_id = p_tenant and coll = 'payments' and data->>'orderId' = p_order_id), '[]')) end $$;

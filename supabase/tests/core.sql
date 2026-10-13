@@ -4,7 +4,7 @@
 \set ON_ERROR_STOP 1
 begin;
 insert into auth.users values ('00000000-0000-0000-0000-00000000000a'), ('00000000-0000-0000-0000-00000000000b');
-insert into private.secrets values ('payment_webhook', 'test-secret');
+insert into private.secrets values ('server', 'test-secret');
 create function pg_temp.as_user(u text) returns void language sql as $$ select set_config('request.jwt.claim.sub', u, true) $$;
 create function pg_temp.expect(sql text, code text) returns void language plpgsql as $$
 begin execute sql; raise exception 'expected % but it passed: %', code, sql;
@@ -56,8 +56,7 @@ select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"del
 select public.bn_write((select id from t), '[{"op":"put","coll":"movements","id":"sale:o1:milk","data":{"qty":-0.3}},{"op":"put","coll":"ledger","id":"c1:welcome","data":{"customerId":"c1","points":50}}]', 'order.paid', 'tono');
 select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"movements","id":"sale:o1:milk","data":{"qty":-9}}]', 'x', 'tono') $$, 'BN002');
 select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"ledger","id":"c1:redeem","data":{"customerId":"c1","points":-80}}]', 'x', 'tono') $$, 'BN003');
-update public.audit_log set action = 'x'; -- RLS: no row is updatable by app users
-do $$ begin assert not exists (select 1 from public.audit_log where action = 'x'), 'audit rows changed'; end $$;
+select pg_temp.expect($$ update public.audit_log set action = 'x' $$, 'permission denied'); -- app users never write the audit log directly
 
 -- Gateway webhook (shared secret), idempotent
 reset role; set local role anon;

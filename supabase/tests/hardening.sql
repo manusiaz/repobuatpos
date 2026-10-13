@@ -94,8 +94,13 @@ select public.bn_write((select id from t), '[{"op":"put","coll":"integrations","
 select pg_temp.as_user('00000000-0000-0000-0000-0000000000f3');
 create temp table t2 as select public.bn_bootstrap('Kopi Lain', 'kopilain', 'owner2') as id;
 select pg_temp.expect($$ select public.bn_write((select id from t2), '[{"op":"put","coll":"integrations","id":"zk9","data":{"id":"zk9","connector":"attendance-zkteco","outletId":"x","enabled":true,"config":{"serial":"SN-ONE"}}}]', 'x', 'owner2') $$, 'BN064');
+-- no direct writes around bn_write (no audit row) and no forged audit rows
+select pg_temp.expect($$ update public.docs set data = data || '{"basePrice":1}' where coll = 'products' $$, 'permission denied');
+select pg_temp.expect($$ insert into public.audit_log (tenant_id, actor, action) select id, 'budi', 'approval.decided' from t $$, 'permission denied');
 reset role;
 do $$ begin
+  assert public.bn_guest_order((select id from t), 'gf1') is null, 'delivery-app orders are not readable by id';
+  assert not private.server_secret_ok('test-secret') or exists (select 1 from private.secrets where name = 'server' and value = 'test-secret'), 'only the server secret';
   assert (select approval_fails from private.staff_secrets where employee_id = 'budi') = 0, 'pins intact';
   assert (select data->>'status' from public.docs where coll = 'approvals' and id = 'a2') = 'approved', 'the honest decision went through';
 end $$;
