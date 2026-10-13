@@ -1,19 +1,21 @@
--- Fingerprint / face attendance machines (ZKTeco "ADMS" cloud push, /iclock/*). The machine only knows its serial number,
--- so the serial names the business: exactly one enabled 'attendance-zkteco' connection may claim it. Machine user IDs map
+-- Fingerprint / face attendance machines: ZKTeco "ADMS" cloud push (/iclock/*) and the Fingerspot.io webhook
+-- (/api/attendance/fingerspot). The machine is named by its serial (ZKTeco SN or Fingerspot Cloud ID): exactly one enabled
+-- attendance connection may claim it. A connection with a "key" (Fingerspot: in the webhook URL) only accepts that key. Machine user IDs map
 -- to employees through the connection's config ("user.<id>": employeeId). Each scan becomes one clock record (append-only,
 -- id from serial + user + time so a re-sent batch is a no-op). Empty p_rows = handshake: only marks the machine as seen.
-create or replace function public.bn_machine_clock(p_secret text, p_sn text, p_rows jsonb) returns jsonb
+create or replace function public.bn_machine_clock(p_secret text, p_sn text, p_rows jsonb, p_key text default null) returns jsonb
 language plpgsql security definer set search_path = public, private as $$
 declare tid uuid; integ jsonb; n int; r jsonb; emp text; outlet text; at bigint; k text; lastk text; st int; cid text;
   saved int := 0; unknown text[] := '{}'; tz text;
 begin
   if not private.server_secret_ok(p_secret) then raise exception 'BN016 Bad server secret'; end if;
-  select count(*) into n from public.docs where coll = 'integrations' and data->>'connector' = 'attendance-zkteco'
+  select count(*) into n from public.docs where coll = 'integrations' and data->>'connector' in ('attendance-zkteco', 'attendance-fingerspot')
     and coalesce((data->>'enabled')::boolean, false) and data->'config'->>'serial' = p_sn;
   if n = 0 then raise exception 'BN060 Unknown machine %: add it in Devices › Connect a device', p_sn; end if;
   if n > 1 then raise exception 'BN061 Serial % is claimed by more than one connection', p_sn; end if;
-  select tenant_id, data into tid, integ from public.docs where coll = 'integrations' and data->>'connector' = 'attendance-zkteco'
+  select tenant_id, data into tid, integ from public.docs where coll = 'integrations' and data->>'connector' in ('attendance-zkteco', 'attendance-fingerspot')
     and coalesce((data->>'enabled')::boolean, false) and data->'config'->>'serial' = p_sn;
+  if coalesce(integ->'config'->>'key', '') <> '' and p_key is distinct from integ->'config'->>'key' then raise exception 'BN063 Wrong key for machine %', p_sn; end if;
   outlet := integ->>'outletId';
   if outlet is null then raise exception 'BN062 The machine connection has no outlet'; end if;
   tz := coalesce(nullif(integ->'config'->>'tz', ''), '+07:00');
@@ -49,5 +51,5 @@ begin
   return jsonb_build_object('saved', saved, 'unknown', to_jsonb(unknown));
 end $$;
 
-revoke execute on function public.bn_machine_clock(text, text, jsonb) from public;
-grant execute on function public.bn_machine_clock(text, text, jsonb) to anon, authenticated;
+revoke execute on function public.bn_machine_clock(text, text, jsonb, text) from public;
+grant execute on function public.bn_machine_clock(text, text, jsonb, text) to anon, authenticated;

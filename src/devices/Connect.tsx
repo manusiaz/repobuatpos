@@ -16,7 +16,7 @@ import { REMOTE } from '../data/remote.ts';
 import { pairBluetooth, pairSerial, pairUsb, support } from './transports.ts';
 import { STATIONS, thisDevice } from './routing.ts';
 import { BANKS } from './edc.ts';
-import { AT_REGISTER, drawerReady, GEAR, machineUsers, SCREEN, setupFor, VIA_LABEL, VIAS, type Gear, type Via } from './connect.ts';
+import { AT_REGISTER, type Brand, drawerReady, GEAR, machineUsers, SCREEN, setupFor, VIA_LABEL, VIAS, type Gear, type Via } from './connect.ts';
 import './testers.ts';
 
 const PAIR = { usb: pairUsb, bluetooth: pairBluetooth, serial: pairSerial };
@@ -26,6 +26,7 @@ export function ConnectDevice() {
   const { db, user, me, outletId } = useApp();
   const [gear, setGear] = useState<Gear | null>(null), [via, setVia] = useState<Via | null>(null);
   const [paper, setPaper] = useState<'80' | '58'>('80'), [station, setStation] = useState('kitchen'), [host, setHost] = useState(''), [bank, setBank] = useState('BCA');
+  const [brand, setBrand] = useState<Brand>('zkteco'), [key] = useState(() => crypto.randomUUID().replace(/-/g, ''));
   const [serial, setSerial] = useState(''), [tz, setTz] = useState('+07:00'), [users, setUsers] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false), [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const code = perm(db, user.role, 'Connect devices & printers', outletId);
@@ -33,11 +34,14 @@ export function ConnectDevice() {
   const dev = thisDevice(db), by = me?.id ?? user.id, can = support();
   const mine = db.integrations.filter(i => i.deviceId === dev).map(i => i.connector);
   const usable = (v: Via) => v === 'usb' ? can.usb : v === 'bluetooth' ? can.bluetooth : v === 'serial' ? can.serial : true;
-  const machine = db.integrations.find(i => i.connector === 'attendance-zkteco' && i.outletId === outletId);
+  const machineOf = (b: Brand) => db.integrations.find(i => i.connector === 'attendance-' + b && i.outletId === outletId);
+  const machine = machineOf(brand), hookKey = String(machine?.config.key ?? key);
+  const hook = typeof location !== 'undefined' ? `${location.origin}/api/attendance/fingerspot?key=${hookKey}` : '';
+  const loadMachine = (b: Brand) => { const c = machineOf(b)?.config ?? {}; setBrand(b); setSerial(String(c.serial ?? '')); setTz(String(c.tz ?? '+07:00')); setUsers(machineUsers(c)); };
   const staff = db.employees.filter(e => e.active && e.outlets.includes(outletId));
   const pick = (g: Gear) => {
     setGear(g); setResult(null); const vs = VIAS[g]; setVia(vs.length === 1 ? vs[0] : vs.find(usable) ?? null);
-    if (g === 'attendance') { const c = machine?.config ?? {}; setSerial(String(c.serial ?? '')); setTz(String(c.tz ?? '+07:00')); setUsers(machineUsers(c)); }
+    if (g === 'attendance') loadMachine(machineOf('fingerspot') && !machineOf('zkteco') ? 'fingerspot' : 'zkteco');
   };
   const blocked = gear === 'drawer' && !drawerReady(mine) ? 'Connect the receipt printer first: the drawer cable plugs into it.' : !dev && gear && AT_REGISTER.includes(gear) ? 'Pair this tablet or PC to a register first (Choose register).' : '';
   const screen = gear && SCREEN[gear] ? linkTo(SCREEN[gear]!) : '';
@@ -46,7 +50,7 @@ export function ConnectDevice() {
     if (!gear || !via || (!dev && gear !== 'attendance')) return;
     setBusy(true); setResult(null);
     try {
-      const s = setupFor(gear, via, { paper, station, host, bank, serial, tz, users });
+      const s = setupFor(gear, via, { paper, station, host, bank, serial, tz, users, brand, key: hookKey });
       const id = gear === 'attendance'
         ? saveIntegration({ id: machine?.id, connector: s.connector, outletId, deviceId: null, name: machine?.name ?? s.name, enabled: true, config: s.config }, [], by)
         : saveIntegration({ connector: s.connector, outletId, deviceId: dev, name: s.name, enabled: true, config: s.config }, [], by);
@@ -93,19 +97,28 @@ export function ConnectDevice() {
 
     {gear === 'attendance' && <>
       <span className="cap">2 · The machine</span>
+      <Seg label="Machine" value={brand} onChange={loadMachine} options={[['zkteco', 'ZKTeco / ADMS cloud'], ['fingerspot', 'Fingerspot.io']]} />
       <div className="grid" style={{ ['--min' as string]: '200px', gap: 8 }}>
-        <Field label="Serial number (SN)" hint="Sticker under the machine, or Menu › System info"><input className="input mono" aria-label="Serial number (SN)" value={serial} onChange={e => setSerial(e.target.value.toUpperCase())} placeholder="CKJF203960123" autoCapitalize="characters" /></Field>
+        <Field label={brand === 'fingerspot' ? 'Cloud ID' : 'Serial number (SN)'} hint={brand === 'fingerspot' ? 'Fingerspot.io portal › your device' : 'Sticker under the machine, or Menu › System info'}><input className="input mono" aria-label={brand === 'fingerspot' ? 'Cloud ID' : 'Serial number (SN)'} value={serial} onChange={e => setSerial(e.target.value.toUpperCase())} placeholder={brand === 'fingerspot' ? 'C2611851572E0C2D' : 'CKJF203960123'} autoCapitalize="characters" /></Field>
         <Field label="Machine time zone"><select className="input" value={tz} onChange={e => setTz(e.target.value)}><option value="+07:00">WIB (UTC+7)</option><option value="+08:00">WITA (UTC+8)</option><option value="+09:00">WIT (UTC+9)</option></select></Field>
       </div>
       <span className="cap">3 · Who is who on the machine</span>
       <span className="faint" style={{ fontSize: 13 }}>Type the user ID each person was enrolled with on the machine (Menu › User Mgt). Leave empty for staff not on it.</span>
       <div className="stack sm">{staff.map(e => <label key={e.id} className="row" style={{ gap: 8 }}><span className="grow" style={{ fontSize: 14 }}>{e.name} <span className="faint">· {e.role}</span></span>
         <input className="input mono" style={{ width: 110 }} inputMode="numeric" aria-label={`Machine user ID for ${e.name}`} value={users[e.id] ?? ''} onChange={ev => setUsers({ ...users, [e.id]: ev.target.value.replace(/\D/g, '') })} placeholder="ID" /></label>)}</div>
-      <span className="cap">4 · On the machine</span>
+      <span className="cap">4 · {brand === 'fingerspot' ? 'In the Fingerspot.io portal' : 'On the machine'}</span>
       <div className="sunken stack sm" style={{ fontSize: 14 }}>
-        <span>Menu › COMM. › Cloud Server Setting (ADMS):</span>
-        <span>Server address <b className="mono">{typeof location !== 'undefined' ? location.hostname : ''}</b> · Port <b className="mono">443</b> · Domain name ON · HTTPS ON</span>
-        <span className="faint" style={{ fontSize: 13 }}>Needs a machine whose Cloud Server menu has HTTPS (most ZKTeco models since 2019). Each scan then clocks the person in or out at this outlet, marked “Verified on {machine?.name ?? 'Attendance machine'}”.</span>
+        {brand === 'fingerspot' ? <>
+          <span>Device › Webhook URL: paste this link and save.</span>
+          <span className="mono" style={{ fontSize: 13, wordBreak: 'break-all' }}>{hook}</span>
+          <button type="button" className="btn" style={{ alignSelf: 'flex-start' }} onClick={() => copy(hook, 'Webhook link copied')}><Icon name="copy" size={18} />Copy link</button>
+          <span className="faint" style={{ fontSize: 13 }}>The link holds this machine’s private key: share it only with the Fingerspot portal. Your Fingerspot.io plan must include the developer webhook.</span>
+        </> : <>
+          <span>Menu › COMM. › Cloud Server Setting (ADMS):</span>
+          <span>Server address <b className="mono">{typeof location !== 'undefined' ? location.hostname : ''}</b> · Port <b className="mono">443</b> · Domain name ON · HTTPS ON</span>
+          <span className="faint" style={{ fontSize: 13 }}>Needs a machine whose Cloud Server menu has HTTPS (most ZKTeco models since 2019).</span>
+        </>}
+        <span className="faint" style={{ fontSize: 13 }}>Each scan then clocks the person in or out at this outlet, marked “Verified on {machine?.name ?? (brand === 'fingerspot' ? 'Fingerspot machine' : 'Attendance machine')}”.</span>
         {!REMOTE && <span className="faint" style={{ fontSize: 13 }}>Demo mode: settings are saved, but a machine can only reach BorNiz once the app runs on Supabase.</span>}
       </div>
       <button className="btn btn-primary btn-lg" disabled={busy || !serial.trim()} onClick={connect}><Icon name="plug" />{busy ? 'Saving…' : machine ? 'Save and check the machine' : 'Connect and check the machine'}</button>

@@ -44,6 +44,9 @@ test('label printer keeps its own station; the attendance machine needs its seri
   const a = setupFor('attendance', 'none', { serial: ' ckjf2039 ', users: { rina: '3', tono: '', budi: '12' } });
   assert.deepEqual(a.config, { serial: 'CKJF2039', tz: '+07:00', 'user.3': 'rina', 'user.12': 'budi' });
   assert.deepEqual(machineUsers(a.config), { rina: '3', budi: '12' });
+  const f = setupFor('attendance', 'none', { brand: 'fingerspot', serial: 'c2611851572e0c2d', key: 'k1', users: { rina: '622' } });
+  assert.equal(f.connector, 'attendance-fingerspot'); assert.deepEqual(f.config, { serial: 'C2611851572E0C2D', tz: '+07:00', key: 'k1', 'user.622': 'rina' });
+  assert.throws(() => setupFor('attendance', 'none', { brand: 'fingerspot', serial: 'C2611851572E0C2D' }), /key/);
   assert.throws(() => userConfig({ a: '5', b: '5' }), /used twice/);
   assert.throws(() => userConfig({ a: 'x1' }), /must be a number/);
 });

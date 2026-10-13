@@ -19,9 +19,9 @@ for (const id of ['printer-usb', 'printer-bluetooth', 'printer-serial', 'printer
   registerTester(id, i => t(async () => { await printDoc(i, testDoc(`${i.name}${i.config.paired ? ' · ' + pairedName(i.config.paired) : ''}`, paperOf(i))); return 'Test page sent. Check the paper: 48 or 32 columns, QR and barcode.'; }));
 
 // The attendance machine calls us, not the other way round: "connected" = it reached the server in the last 10 minutes.
-registerTester('attendance-zkteco', async (i: Integration) => i.lastOk && Date.now() - i.lastOk < 10 * 60e3
+for (const id of ['attendance-zkteco', 'attendance-fingerspot']) registerTester(id, async (i: Integration) => i.lastOk && Date.now() - i.lastOk < 10 * 60e3
   ? { ok: true, message: `${i.name} reached BorNiz ${Math.max(1, Math.round((Date.now() - i.lastOk) / 60e3))} min ago${i.lastError ? '. ' + i.lastError : ''}` }
-  : { ok: false, message: REMOTE ? 'Saved. Waiting for the machine: set its Cloud Server as shown, wait a minute, then test again.' : 'Saved. In demo mode no machine can reach BorNiz; it starts pushing once the app runs on Supabase.' });
+  : { ok: false, message: REMOTE ? 'Saved. Waiting for the machine: set it up as shown, scan a finger, then test again.' : 'Saved. In demo mode no machine can reach BorNiz; it starts pushing once the app runs on Supabase.' });
 
 registerTester('drawer-kick', (i: Integration) => t(async () => {
   const db = snapshot(), p = receiptPrinter(db, i.outletId ?? db.device.outletId, ownerOf(db, i));

@@ -35,7 +35,8 @@ export const VIAS: Record<Gear, Via[]> = {
 };
 const PRINTER: Record<Exclude<Via, 'none'>, string> = { usb: 'printer-usb', bluetooth: 'printer-bluetooth', serial: 'printer-serial', lan: 'printer-lan', browser: 'printer-browser' };
 
-export interface Opts { paper?: '58' | '80'; station?: string; host?: string; bank?: string; serial?: string; tz?: string; users?: Record<string, string> }
+export interface Opts { paper?: '58' | '80'; station?: string; host?: string; bank?: string; serial?: string; tz?: string; users?: Record<string, string>; brand?: Brand; key?: string }
+export type Brand = 'zkteco' | 'fingerspot';
 export function setupFor(gear: Gear, via: Via, o: Opts = {}): Setup {
   const pairOf = (v: Via) => (v === 'usb' || v === 'bluetooth' || v === 'serial' ? v : null);
   if (gear === 'receipt' || gear === 'kitchen' || gear === 'label') {
@@ -48,8 +49,10 @@ export function setupFor(gear: Gear, via: Via, o: Opts = {}): Setup {
   }
   if (gear === 'attendance') {
     const serial = o.serial?.trim().toUpperCase() ?? '';
-    if (!/^[A-Z0-9-]{4,40}$/.test(serial)) throw new Error('Type the machine’s serial number (SN): on the sticker or in Menu › System info');
-    return { connector: 'attendance-zkteco', name: 'Attendance machine', config: { serial, tz: o.tz || '+07:00', ...userConfig(o.users ?? {}) }, pair: null };
+    const fs = o.brand === 'fingerspot';
+    if (!/^[A-Z0-9-]{4,40}$/.test(serial)) throw new Error(fs ? 'Type the machine’s Cloud ID from the Fingerspot.io portal' : 'Type the machine’s serial number (SN): on the sticker or in Menu › System info');
+    if (fs && !o.key) throw new Error('The webhook key is missing');
+    return { connector: fs ? 'attendance-fingerspot' : 'attendance-zkteco', name: fs ? 'Fingerspot machine' : 'Attendance machine', config: { serial, tz: o.tz || '+07:00', ...(fs ? { key: o.key! } : {}), ...userConfig(o.users ?? {}) }, pair: null };
   }
   if (SCREEN[gear]) throw new Error('Screens open BorNiz on their own device');
   if (gear === 'drawer') return { connector: 'drawer-kick', name: 'Cash drawer', config: { openOn: 'cash', pin: '0' }, pair: null };

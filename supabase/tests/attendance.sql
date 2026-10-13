@@ -13,8 +13,13 @@ create temp table t as select public.bn_bootstrap('Kopi Absen', 'kopiabsen', 'bu
 grant select on t to anon;
 select public.bn_write((select id from t), '[{"op":"put","coll":"integrations","id":"zk1","data":{"id":"zk1","connector":"attendance-zkteco","kind":"attendance","outletId":"sen","name":"Attendance machine","enabled":true,
   "config":{"serial":"CKJF2039","tz":"+07:00","user.3":"rina","user.12":"tono"}}}]'::jsonb, 'x', 'budi');
+select public.bn_write((select id from t), '[{"op":"put","coll":"integrations","id":"fs1","data":{"id":"fs1","connector":"attendance-fingerspot","kind":"attendance","outletId":"sen","name":"Fingerspot machine","enabled":true,
+  "config":{"serial":"C2611851572E0C2D","key":"k-secret","user.622":"rina"}}}]'::jsonb, 'x', 'budi');
 reset role;
 set local role anon;
+select pg_temp.expect($$ select public.bn_machine_clock('server-secret-attendance', 'C2611851572E0C2D', '[{"pin":"622","time":"2026-10-14 08:00:00","status":"0"}]') $$, 'BN063');
+select pg_temp.expect($$ select public.bn_machine_clock('server-secret-attendance', 'C2611851572E0C2D', '[{"pin":"622","time":"2026-10-14 08:00:00","status":"0"}]', 'wrong') $$, 'BN063');
+do $$ begin assert (public.bn_machine_clock('server-secret-attendance', 'C2611851572E0C2D', '[{"pin":"622","time":"2026-10-14 08:00","status":"0"}]', 'k-secret')->>'saved')::int = 1, 'Fingerspot scan with the right key is saved'; end $$;
 select pg_temp.expect($$ select public.bn_machine_clock('wrong', 'CKJF2039', '[]') $$, 'BN016');
 select pg_temp.expect($$ select public.bn_machine_clock('server-secret-attendance', 'NOPE123', '[]') $$, 'BN060');
 reset role;
@@ -26,7 +31,7 @@ do $$ declare s text := 'server-secret-attendance'; r jsonb; begin
   r := public.bn_machine_clock(s, 'CKJF2039', '[{"pin":"3","time":"2026-10-13 07:58:02","status":"0"}]');
   assert (r->>'saved')::int = 0, 're-sent scan is a no-op';
   reset role;
-  assert (select string_agg(data->>'kind', ',' order by t) from public.docs where coll = 'clock' and data->>'employeeId' = 'rina') = 'in,out', 'status 0 alternates in → out';
+  assert (select string_agg(data->>'kind', ',' order by t) from public.docs where coll = 'clock' and data->>'employeeId' = 'rina') = 'in,out,in', 'status 0 alternates in → out; a new day starts with in';
   assert (select string_agg(data->>'kind', ',' order by t) from public.docs where coll = 'clock' and data->>'employeeId' = 'tono') = 'in,break', 'status 2 is a break';
   assert (select (data->>'at')::bigint from public.docs where coll = 'clock' and data->>'employeeId' = 'rina' order by t limit 1)
     = (extract(epoch from timestamptz '2026-10-13 07:58:02+07') * 1000)::bigint, 'machine time is read in the outlet time zone';

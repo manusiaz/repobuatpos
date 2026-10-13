@@ -62,6 +62,11 @@ export const CONNECTORS: Connector[] = [
     fields: [{ key: 'serial', label: 'Serial number (SN)', required: true, placeholder: 'CKJF203960123', help: 'On the sticker under the machine, or Menu › System info › Device info.' },
       { key: 'tz', label: 'Machine time zone', type: 'select', options: [['+07:00', 'WIB (UTC+7)'], ['+08:00', 'WITA (UTC+8)'], ['+09:00', 'WIT (UTC+9)']] }] },
 
+  { id: 'attendance-fingerspot', kind: 'attendance', name: 'Attendance machine · Fingerspot.io', scope: 'outlet', runtime: 'server', ready: true,
+    blurb: 'Fingerspot machines on the Fingerspot.io cloud. Fingerspot sends every scan to BorNiz by webhook; each scan becomes a clock-in or clock-out for the linked staff member.',
+    fields: [{ key: 'serial', label: 'Cloud ID', required: true, placeholder: 'C2611851572E0C2D', help: 'In the Fingerspot.io portal, on the device.' },
+      { key: 'tz', label: 'Machine time zone', type: 'select', options: [['+07:00', 'WIB (UTC+7)'], ['+08:00', 'WITA (UTC+8)'], ['+09:00', 'WIT (UTC+9)']] }] },
+
   { id: 'scale-serial', kind: 'scale', name: 'Scale · serial', scope: 'device', runtime: 'browser', ready: true,
     blurb: 'CAS, Digi, Ohaus and other scales with RS-232 or USB-serial output. Weighed items read the stable weight with one tap.',
     fields: [{ key: 'baud', label: 'Baud rate', type: 'select', options: BAUD, required: true }, { key: 'unit', label: 'Scale sends', type: 'select', options: [['kg', 'Kilograms'], ['g', 'Grams']] },
