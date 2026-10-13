@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { drawerReady, setupFor, VIAS } from '../devices/connect.ts';
+import { drawerReady, machineUsers, SCREEN, setupFor, userConfig, VIAS } from '../devices/connect.ts';
+import { parseAttlog } from '../devices/zk.ts';
 import { CONNECTORS } from '../integrations/connectors/devices.ts';
 import { seed } from './seed.ts';
 import { perm } from '../system/perms.ts';
@@ -9,7 +10,8 @@ const ids = new Set(CONNECTORS.map(c => c.id));
 
 test('every pick maps to a real, ready connector with its required settings', () => {
   for (const [gear, vias] of Object.entries(VIAS)) for (const via of vias) {
-    const s = setupFor(gear as never, via, { host: '192.168.1.87' });
+    if (SCREEN[gear as never]) { assert.throws(() => setupFor(gear as never, via)); continue; }
+    const s = setupFor(gear as never, via, { host: '192.168.1.87', serial: 'ckjf2039' });
     const c = CONNECTORS.find(x => x.id === s.connector);
     assert.ok(ids.has(s.connector) && c?.ready, `${gear}/${via} → ${s.connector}`);
     for (const f of c!.fields ?? []) if (f.required) assert.ok(s.config[f.key] !== undefined && s.config[f.key] !== '', `${s.connector} needs ${f.key}`);
@@ -34,4 +36,19 @@ test('owner, manager and PIC connect devices; cashier, kitchen and waiter do not
   const db = seed();
   const may = (r: string) => perm(db, r as never, 'Connect devices & printers', 'sen');
   assert.deepEqual(['owner', 'manager', 'pic', 'cashier', 'kitchen', 'waiter'].map(may), ['y', 'y', 'y', 'n', 'n', 'n']);
+});
+
+test('label printer keeps its own station; the attendance machine needs its serial and unique numeric user IDs', () => {
+  assert.equal(setupFor('label', 'usb').config.station, 'label');
+  assert.throws(() => setupFor('attendance', 'none'), /serial number/);
+  const a = setupFor('attendance', 'none', { serial: ' ckjf2039 ', users: { rina: '3', tono: '', budi: '12' } });
+  assert.deepEqual(a.config, { serial: 'CKJF2039', tz: '+07:00', 'user.3': 'rina', 'user.12': 'budi' });
+  assert.deepEqual(machineUsers(a.config), { rina: '3', budi: '12' });
+  assert.throws(() => userConfig({ a: '5', b: '5' }), /used twice/);
+  assert.throws(() => userConfig({ a: 'x1' }), /must be a number/);
+});
+
+test('ATTLOG lines from the machine parse; junk lines are skipped', () => {
+  assert.deepEqual(parseAttlog('3\t2026-10-13 07:58:02\t0\t1\t0\t0\r\n12\t2026-10-13 17:01:40\t1\t15\n\nOPLOG 4\tx\n'),
+    [{ pin: '3', time: '2026-10-13 07:58:02', status: '0', verify: '1' }, { pin: '12', time: '2026-10-13 17:01:40', status: '1', verify: '15' }]);
 });

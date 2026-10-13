@@ -57,6 +57,11 @@ export const CONNECTORS: Connector[] = [
   { id: 'scanner-hid', kind: 'scanner', name: 'Barcode scanner · HID POS mode', scope: 'device', runtime: 'browser', ready: false,
     blurb: 'Scanners switched to HID POS (usage page 0x8C) through WebHID, so scans never type into a field. Report parsing still needs testing per model; keyboard mode works today.', fields: [] },
 
+  { id: 'attendance-zkteco', kind: 'attendance', name: 'Attendance machine · fingerprint / face', scope: 'outlet', runtime: 'server', ready: true,
+    blurb: 'ZKTeco and other machines with ADMS cloud push (Solution, Magic, Revo …). Each scan becomes a clock-in or clock-out for the staff member linked to that machine user ID.',
+    fields: [{ key: 'serial', label: 'Serial number (SN)', required: true, placeholder: 'CKJF203960123', help: 'On the sticker under the machine, or Menu › System info › Device info.' },
+      { key: 'tz', label: 'Machine time zone', type: 'select', options: [['+07:00', 'WIB (UTC+7)'], ['+08:00', 'WITA (UTC+8)'], ['+09:00', 'WIT (UTC+9)']] }] },
+
   { id: 'scale-serial', kind: 'scale', name: 'Scale · serial', scope: 'device', runtime: 'browser', ready: true,
     blurb: 'CAS, Digi, Ohaus and other scales with RS-232 or USB-serial output. Weighed items read the stable weight with one tap.',
     fields: [{ key: 'baud', label: 'Baud rate', type: 'select', options: BAUD, required: true }, { key: 'unit', label: 'Scale sends', type: 'select', options: [['kg', 'Kilograms'], ['g', 'Grams']] },

@@ -2,7 +2,7 @@
 // ready = works end to end today; ready:false = the container is in place (settings, secrets, contract, webhook URL)
 // and only the provider's driver/API calls remain to be written.
 export type Kind = 'payment' | 'edc' | 'printer' | 'drawer' | 'scanner' | 'scale' | 'display'
-  | 'whatsapp' | 'email' | 'sms' | 'delivery' | 'accounting' | 'webhook' | 'bank' | 'courier';
+  | 'whatsapp' | 'email' | 'sms' | 'delivery' | 'accounting' | 'webhook' | 'bank' | 'courier' | 'attendance';
 
 export interface Field {
   key: string; label: string;
@@ -25,5 +25,5 @@ export interface Connector {
 export const KIND_LABEL: Record<Kind, string> = {
   payment: 'Payment gateway', edc: 'Card terminal (EDC)', printer: 'Printer', drawer: 'Cash drawer', scanner: 'Barcode scanner', scale: 'Scale',
   display: 'Customer display', whatsapp: 'WhatsApp', email: 'Email', sms: 'SMS', delivery: 'Delivery app', accounting: 'Accounting',
-  webhook: 'Webhooks & API', bank: 'Bank & payouts', courier: 'Courier',
+  webhook: 'Webhooks & API', bank: 'Bank & payouts', courier: 'Courier', attendance: 'Attendance machine',
 };
