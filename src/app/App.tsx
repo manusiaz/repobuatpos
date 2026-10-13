@@ -1,6 +1,7 @@
 'use client';
 // Single entry for every route. Resolves the registry page → session → access → shell → surface (screen or template).
 import { useCallback, useEffect, useMemo, useState, type ComponentType } from 'react';
+import { REMOTE } from '../data/remote.ts';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { pageAt, type Page, type Surface } from '../system/registry.ts';
@@ -72,7 +73,7 @@ function Denied() {
     <p>Signed in as <b>{c.me?.name ?? c.user.role}</b> ({c.user.role}). {c.page.name} is for {c.page.surface === 'admin' ? 'BorNiz staff' : 'another role'}.</p>
     <div className="row wrap" style={{ justifyContent: 'center' }}>
       {c.db.employees.filter(e => canOpen(e.role, c.page)).slice(0, 4).map(e => <button key={e.id} className="btn" onClick={() => setSession({ id: e.id, role: e.role, outletId: e.outlets[0] })}>Sign in as {e.name} · {e.role}</button>)}
-      {c.page.surface === 'admin' && <button className="btn" onClick={() => setSession({ id: 'admin', role: 'admin', outletId: 'sen' })}>Sign in as BorNiz admin</button>}
+      {c.page.surface === 'admin' && !REMOTE && <button className="btn" onClick={() => setSession({ id: 'admin', role: 'admin', outletId: 'sen' })}>Sign in as BorNiz admin</button>}
     </div>
   </div>}</Ctx.Consumer>;
 }

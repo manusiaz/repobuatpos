@@ -58,6 +58,7 @@ Cloud POS for Indonesian F&B / retail / UMKM. Every surface (marketing, owner, m
 - Tokens only (CSS vars in `app/globals.css`, source `spec/tokens/`); no new colors, no emoji, Lucide icons via `<Icon name="kebab-name" />`. Design system v1.0 (owner PNG set, Oct 2026): brand orange `#FF6A00`, slate neutrals, Satoshi (UI, headings, numbers; loaded from Fontshare), JetBrains Mono (IDs only). Orange text uses `--accent-fg` (ember-700) for contrast. Owner, manager and PIC share the orange; super admin keeps its dark shell. Guest screens (QR menu, kiosk, customer display) wear the merchant brand from Menu Studio.
 - Touch: 44 staff · 56 POS · 72 pay button · 64 KDS/kiosk. Text ≥ 13px staff, ≥ 15px kitchen, inputs 16px.
 - Demo sign-ins: cashier PIN `1234`, approval PIN `246810`. Users: budi (owner), andi (manager), maya/sari/lia (PIC), rina/tono/wulan (cashier), dimas/hadi (kitchen), joko/putri (waiter), admin.
+- BorNiz staff (super admin) on Supabase: a separate account with no business, listed in `private.platform_admins`. Nobody can list themselves; add one in the SQL editor after they sign up: `insert into private.platform_admins (user_id) select id from auth.users where email = '<email>';`
 
 ## Changing things
 Add a page in the design system sitemap → `npm run spec` → it routes automatically. Then `npm run graph`, `npm test`, `npm run links` (every in-app href must be a registry path), `npx tsc --noEmit`, `npx next build` (statically generates every page).

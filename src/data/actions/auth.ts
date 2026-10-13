@@ -88,7 +88,7 @@ export async function accountSignIn(email: string, password: string): Promise<{ 
   const { sb, membership, cellOf, goHome, home } = await import('../supabase.ts');
   if (home()) { await sb().auth.signOut().catch(() => {}); goHome(null); } // every sign-in starts at the platform registry
   let { data, error } = await sb().auth.signInWithPassword({ email: email.trim(), password });
-  if (error) return /confirm/i.test(error.message) ? { error: 'Confirm your email first: open the link we sent you.', unconfirmed: true } : { error: /invalid/i.test(error.message) ? 'Wrong email or password.' : error.message };
+  if (error) return /confirm/i.test(error.message) ? { error: 'Confirm your email first: open the link we sent you.', unconfirmed: true } : { error: /invalid/i.test(error.message) ? 'Wrong email or password. No account yet? Tap Create an account below.' : error.message };
   // the business lives in its own database: sign in there too (accounts moved with it, same password)
   const m = await membership(), cell = m && await cellOf({ tenant: m.tenantId });
   if (cell) {

@@ -28,6 +28,7 @@ const ls = {
   set(k: string, v: unknown) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* full or blocked: keep working in memory */ } },
 };
 
+let admin = false;
 let mode: Mode = 'boot', started = false, userId: string | null = null, enteredFor: string | null | undefined, loading = false;
 let tenant: { id: string; slug: string } | null = null, member: Membership | null = null;
 let shape: DB | null = null, base: DB | null = null, db: DB | null = null, hint: Hint = {};
@@ -191,7 +192,7 @@ async function loadMember(): Promise<DB> {
     const d = fromDocs(shapeDB(), docs, hint) as unknown as Any, o = (op.data ?? {}) as { stock?: Any[]; beans?: Any[] };
     d.movements = [...(o.stock ?? []).map(s => ({ outletId: s.outletId, stockItemId: s.stockItemId, qty: Number(s.qty), type: 'adjust', sourceId: SYNTHETIC + 'opening', by: 'system', at: since - 1 })), ...d.movements];
     d.ledger = [...(o.beans ?? []).map(b => ({ customerId: b.customerId, points: Number(b.points), reason: 'Opening balance', orderId: SYNTHETIC + 'opening', at: since - 1 })), ...d.ledger];
-    d.tenant = { ...d.tenant, id: tenant!.slug, name: d.tenant.name || member?.name || '' };
+    d.tenant = { ...d.tenant, id: tenant!.slug, name: d.tenant.name || member?.name || '', plan: member?.plan ?? 'free' }; // plan is set by BorNiz (tenants.plan)
     const local = audit.filter(a => a.id.startsWith('au'));
     audit = [...local, ...(au.data ?? []).map(r => ({ id: 'a' + r.id, actor: r.actor, action: r.action, subject: r.subject ?? '', at: Date.parse(r.at), outletId: r.outlet_id ?? undefined }))].slice(0, 800);
     return d as unknown as DB;
@@ -280,6 +281,7 @@ async function enter() {
   try {
     const { goHome } = await lib();
     goHome(undefined, true); // staff use this browser's home; a guest page resolves its own below
+    admin = userId ? await (await lib()).isPlatformAdmin().catch(() => false) : false;
     const m = userId ? await memberOf() : null;
     if (m) return await enterMember(m);
     if (await guestSlug().then(s => s ? enterGuest(s) : false)) return;
@@ -289,7 +291,7 @@ async function enter() {
 async function enterFor() { const u = userId; await enter(); enteredFor = u; }
 function stop() {
   channel?.unsubscribe(); channel = null; timers.forEach(clearInterval); timers = [];
-  lastRemote.clear(); hint = {}; audit = []; tracked = []; inbox = []; base = db = null; tenant = null; member = null; mode = 'boot'; enteredFor = undefined;
+  admin = false; lastRemote.clear(); hint = {}; audit = []; tracked = []; inbox = []; base = db = null; tenant = null; member = null; mode = 'boot'; enteredFor = undefined;
 }
 /** Signed in or out, or switched business: reload everything for the new account. */
 let chain: Promise<void> = Promise.resolve();
@@ -316,4 +318,4 @@ export async function remoteReady(user: string | null) {
   for (let i = 0; i < 600 && !(enteredFor === user && mode !== 'boot'); i++) await new Promise(r => setTimeout(r, 100));
   return remoteInfo();
 }
-export const remoteInfo = () => ({ mode, tenant, member, pending: queue.filter(p => !p.local).length });
+export const remoteInfo = () => ({ mode, tenant, member, admin, pending: queue.filter(p => !p.local).length });

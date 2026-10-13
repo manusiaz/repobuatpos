@@ -5,6 +5,8 @@
 import { commit, snapshot, uid } from '../store.ts';
 import type { DB, Rec } from '../schema.ts';
 import { requestApproval } from '../actions.ts';
+import { REMOTE } from '../remote.ts';
+import { toast } from '../../ui/kit.tsx';
 
 const DAY = 864e5, ADMIN = 'admin';
 const month = (t: number, back: number) => { const d = new Date(t); return new Date(d.getFullYear(), d.getMonth() - back, 1).getTime(); };
@@ -19,6 +21,7 @@ export const PPN_BPS = 1100;
 export function ensurePlatform() {
   const d0 = snapshot();
   if (d0.records.tenant) return;
+  if (REMOTE) return void loadPlatform();
   const now = Date.now(), owner = d0.employees.find(e => e.role === 'owner');
   const T = (id: string, a: string, b: string, c: number, dd: string, monthsAgo: number, m: TenantMeta): Rec => ({ id, a, b, c: String(c), d: dd, e: JSON.stringify(m), at: month(now, monthsAgo) + 9 * DAY });
   const tenants: Rec[] = [
@@ -57,8 +60,26 @@ export function ensurePlatform() {
   commit('platform.seeded', 'system', d => { Object.assign(d.records, { tenant: tenants, invoice: invoices, ticket: tickets, flag: flags, release: releases, domain: domains }); });
 }
 
+/** Supabase: the real businesses from the platform registry (BorNiz staff only). Billing, tickets, flags, releases and
+ *  domains have no server tables yet, so they start empty instead of showing demo rows. Kept on this browser only. */
+let loading = false;
+async function loadPlatform() {
+  if (loading) return; loading = true;
+  try {
+    const { adminTenants } = await import('../supabase.ts');
+    const rows = (await adminTenants()).map((t): Rec => ({ id: t.id, a: t.name, b: t.plan, c: String(t.outlets), d: 'active',
+      e: JSON.stringify({ owner: t.owner ?? '', email: t.owner ?? '', city: t.city ?? '', source: t.slug } satisfies TenantMeta), at: t.createdAt }));
+    commit('platform.loaded', ADMIN, d => { Object.assign(d.records, { tenant: rows, invoice: [], ticket: [], flag: [], release: [], domain: [] }); });
+  } catch (e) { toast((e as Error).message); }
+  finally { loading = false; }
+}
+
 /** Plan change. For the real tenant it changes the tenant's plan everywhere in the product. */
 export function setTenantPlan(tenantId: string, plan: DB['tenant']['plan'], by = ADMIN) {
+  if (REMOTE) return void import('../supabase.ts').then(s => s.adminSetPlan(tenantId, plan)).then(() => setLocalPlan(tenantId, plan, by)).catch(e => toast('Plan not saved: ' + (e as Error).message));
+  setLocalPlan(tenantId, plan, by);
+}
+function setLocalPlan(tenantId: string, plan: DB['tenant']['plan'], by: string) {
   commit('tenant.plan_changed', by, d => {
     const t = d.records.tenant?.find(x => x.id === tenantId); if (t) t.b = plan;
     if (d.tenant.id === tenantId) d.tenant.plan = plan;

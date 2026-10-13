@@ -32,17 +32,22 @@ export function goHome(h: Home | null | undefined, forVisit = false) {
 }
 export async function accessToken() { return (await sb().auth.getSession()).data.session?.access_token ?? null; }
 
-export interface Membership { tenantId: string; slug: string; name: string; employeeId: string; role: 'owner' | 'manager' | 'device' | 'admin' }
+export interface Membership { tenantId: string; slug: string; name: string; plan?: 'free' | 'basic' | 'pro' | 'enterprise'; employeeId: string; role: 'owner' | 'manager' | 'device' | 'admin' }
 const PICK = 'borniz-tenant';
 /** The signed-in account's business (the last one picked on this browser when it belongs to several). */
 export async function membership(): Promise<Membership | null> {
   const { data: u, error: ue } = await sb().auth.getUser();
   if (!u.user) { if (isAuthRetryableFetchError(ue)) throw ue; return null; } // no internet is not "signed out"
-  const { data, error } = await sb().from('members').select('tenant_id, employee_id, role, tenants(slug, name)').eq('user_id', u.user.id);
+  const { data, error } = await sb().from('members').select('tenant_id, employee_id, role, tenants(slug, name, plan)').eq('user_id', u.user.id);
   if (error) throw error;
-  const rows = (data ?? []).map(r => { const t = (Array.isArray(r.tenants) ? r.tenants[0] : r.tenants) as { slug: string; name: string } | null;
-    return { tenantId: r.tenant_id as string, slug: t?.slug ?? '', name: t?.name ?? '', employeeId: r.employee_id as string, role: r.role as Membership['role'] }; });
+  const rows = (data ?? []).map(r => { const t = (Array.isArray(r.tenants) ? r.tenants[0] : r.tenants) as { slug: string; name: string; plan: Membership['plan'] } | null;
+    return { tenantId: r.tenant_id as string, slug: t?.slug ?? '', name: t?.name ?? '', plan: t?.plan ?? 'free', employeeId: r.employee_id as string, role: r.role as Membership['role'] }; });
   let pick = ''; try { pick = localStorage.getItem(PICK) ?? ''; } catch { /* blocked */ }
   return rows.find(r => r.tenantId === pick) ?? rows[0] ?? null;
 }
+/** BorNiz staff (private.platform_admins): the super admin console. Platform database only. */
+export async function isPlatformAdmin() { const { data } = await sb().rpc('bn_is_platform_admin'); return data === true; }
+export interface PlatformTenant { id: string; slug: string; name: string; plan: string; cell: string | null; createdAt: number; owner: string | null; city: string | null; outlets: number; orders30: number; lastActive: number | null }
+export async function adminTenants(): Promise<PlatformTenant[]> { const { data, error } = await sb().rpc('bn_admin_tenants'); if (error) throw error; return (data ?? []) as PlatformTenant[]; }
+export async function adminSetPlan(tenant: string, plan: string) { const { error } = await sb().rpc('bn_admin_set_plan', { p_tenant: tenant, p_plan: plan }); if (error) throw error; }
 export function pickTenant(id: string) { try { localStorage.setItem(PICK, id); } catch { /* blocked */ } }

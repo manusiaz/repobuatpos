@@ -24,8 +24,9 @@ const granted = new Map<string, number>();
 const GUEST: SessionUser = { id: 'guest', role: 'customer', outletId: 'sen' };
 
 function remoteDefault(surface: Surface): SessionUser | null {
-  const { mode, member } = remoteInfo();
+  const { mode, member, admin } = remoteInfo();
   if (mode === 'boot') return null;
+  if (surface === 'admin' && admin && mode !== 'member') return { id: 'admin', role: 'admin', outletId: '' }; // BorNiz staff account (no business of its own)
   const d = remoteSnapshot(), out = d.device.outletId || d.outlets[0]?.id || '';
   if (mode === 'member' && member) {
     let shared = false; try { shared = localStorage.getItem(SHARED) === '1'; } catch { /* blocked */ }

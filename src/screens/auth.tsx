@@ -136,7 +136,7 @@ function Login() {
     <Head h="Welcome back" sub="Log in to manage your outlets." />
     <Field label="Email or phone"><input className={'input' + (err ? ' bad' : '')} autoComplete="username" value={id} onChange={e => { setId(e.target.value); setErr(null); }} placeholder="budi@kopibiru.id" autoFocus /></Field>
     <Field label="Password">
-      <div className="row"><input className="input grow" type={show ? 'text' : 'password'} autoComplete="current-password" value={pw} onChange={e => { setPw(e.target.value); setErr(null); }} />
+      <div className="pw"><input className="input" type={show ? 'text' : 'password'} autoComplete="current-password" value={pw} onChange={e => { setPw(e.target.value); setErr(null); }} />
         <button type="button" className="btn btn-ghost icon-btn" onClick={() => setShow(s => !s)} aria-label={show ? 'Hide password' : 'Show password'}><Icon name={show ? 'eye-off' : 'eye'} /></button></div>
     </Field>
     {err && <Note tone="danger"><Icon name="circle-alert" /><span>{err}</span></Note>}
@@ -540,6 +540,11 @@ function AccountLogin() {
     <Link className="btn btn-lg" href={A + 'cashier-pin-login'}>Use as a shared register (staff PIN)</Link>
     <button className="btn btn-ghost" onClick={signOutAndReload}><Icon name="log-out" size={18} />Sign out</button>
   </div>;
+  if (acct && remoteInfo().admin) return <div className="stack">
+    <Head h="BorNiz staff" sub={<>Signed in as <b>{acct.email}</b>.</>} />
+    <button className="btn btn-primary btn-lg" onClick={() => go('/admin')}>Open BorNiz admin</button>
+    <button className="btn btn-ghost" onClick={signOutAndReload}><Icon name="log-out" size={18} />Sign out</button>
+  </div>;
   if (acct) return <CreateBusiness name={acct.name} phone={acct.phone} />;
   if (unconfirmed) return <ConfirmEmail email={email} />;
   const submit = async (ev: FormEvent) => {
@@ -551,20 +556,24 @@ function AccountLogin() {
     setBusy(false);
     if (r.unconfirmed) return setUnconfirmed(true);
     if (r.error) return setErr(r.error);
-    if (!enterBusiness(go)) go(A + 'register');
+    if (!enterBusiness(go)) go(remoteInfo().admin ? '/admin' : A + 'register');
   };
   return <form className="stack" onSubmit={submit} noValidate>
     <Head h="Welcome back" sub="Log in to manage your outlets." />
     <Field label="Email"><input className={'input' + (err ? ' bad' : '')} type="email" autoComplete="username" value={email} onChange={e => { setEmail(e.target.value); setErr(''); }} placeholder="you@business.id" autoFocus /></Field>
     <Field label="Password">
-      <div className="row"><input className="input grow" type={show ? 'text' : 'password'} autoComplete="current-password" value={pw} onChange={e => { setPw(e.target.value); setErr(''); }} />
+      <div className="pw"><input className="input" type={show ? 'text' : 'password'} autoComplete="current-password" value={pw} onChange={e => { setPw(e.target.value); setErr(''); }} />
         <button type="button" className="btn btn-ghost icon-btn" onClick={() => setShow(s => !s)} aria-label={show ? 'Hide password' : 'Show password'}><Icon name={show ? 'eye-off' : 'eye'} /></button></div>
     </Field>
     {err && <Note tone="danger"><Icon name="circle-alert" /><span>{err}</span></Note>}
     <button className="btn btn-primary btn-lg" disabled={busy}>{busy ? 'Logging in…' : 'Log in'}</button>
+    {DEMO_URL && <a className="btn btn-lg" href={DEMO_URL}><Icon name="play" size={18} />Try the demo, no account needed</a>}
     <Links><Link href={A + 'forgot-password'}>Forgot password?</Link><Link href={A + 'register'}>Create an account</Link><Link href={A + 'cashier-pin-login'}>Staff PIN login</Link></Links>
   </form>;
 }
+
+/** A second deployment of this app without Supabase: every role with demo data, nothing saved to a server. */
+const DEMO_URL = process.env.NEXT_PUBLIC_BORNIZ_DEMO_URL;
 
 function AccountRegister() {
   const { go } = useApp();
