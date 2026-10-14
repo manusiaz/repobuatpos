@@ -5,13 +5,13 @@ import { printTickets } from '../../devices/hardware.ts';
 import { productImage } from '../../ui/kit.tsx';
 // Every sheet that edits the current order. One sheet at a time; approvals replace the sheet body in place.
 import { useState, type ReactNode } from 'react';
-import { addCustomer, addLine, applyVoucher, holdOrder, patchOrder, priceAt, redeem, sendToKitchen } from '../../data/actions.ts';
+import { addCustomer, addLine, applyVoucher, holdOrder, moveTable, patchOrder, priceAt, redeem, sendToKitchen } from '../../data/actions.ts';
 import { addOpenLine, enqueue, freeOneUnit, logDevice, mergeBills, patchLine, splitToNewBill } from '../../data/actions/pos.ts';
 import { flashPrice, usable } from '../../domain/promo.ts';
 import { lineTotal } from '../../domain/order.ts';
 import { balance, tierOf } from '../../domain/loyalty.ts';
 import { idr } from '../../domain/money.ts';
-import { areasOf, tablesOf } from '../../domain/tables.ts';
+import { areasOf, holdsTable, tablesOf } from '../../domain/tables.ts';
 import { FloorGrid, tableShape } from '../../ui/Floor.tsx';
 import { Badge, Empty, Field, Icon, Seg, Sheet, Status, Toggle, ago, hhmm, toast } from '../../ui/kit.tsx';
 import type { Customer, OrderLine } from '../../data/schema.ts';
@@ -33,7 +33,7 @@ export function OrderSheet({ kind }: { kind: string }) {
   const flow = useApproval();
   const close = () => go(REG);
   const [t, sub] = TITLES[kind] ?? ['Order'];
-  const needsOrder = !['options', 'table', 'customer', 'scan', 'weighed', 'openitem', 'type', 'balance'].includes(kind);
+  const needsOrder = !['options', 'table', 'customer', 'scan', 'weighed', 'openitem', 'type', 'balance', 'move'].includes(kind);
   const Body = BODIES[kind];
   return <Sheet open onClose={close} title={flow.open ? 'Approval needed' : t} sub={flow.open ? undefined : sub}>
     {flow.node ?? (needsOrder && !cur?.lines.length ? <NoOrder /> : Body ? <Body close={close} flow={flow} /> : null)}
@@ -89,12 +89,14 @@ function Options({ close }: BodyProps) {
 export function tableState(db: ReturnType<typeof usePos>['db'], outletId: string) {
   const out = db.outlets.find(o => o.id === outletId)!;
   const bills = db.orders.filter(o => o.outletId === outletId && o.type === 'dine' && o.table && isOpenBill(o));
+  // paid first (QR, kiosk) and still in the kitchen: the table is taken until the food is out
+  const cooking = db.orders.filter(o => o.outletId === outletId && holdsTable(o) && !isOpenBill(o));
   const now = Date.now();
   return tablesOf(out).map(ft => {
     const t = ft.name;
     const on = bills.filter(o => o.table === t);
     const res = db.reservations.find(r => r.outletId === outletId && r.table === t && r.status === 'booked' && r.at > now - 15 * 60e3 && r.at - now < 6 * 3600e3);
-    return { t, ft, bills: on, res, amount: on.reduce((a, o) => a + o.total, 0), since: on.length ? Math.min(...on.map(o => o.createdAt)) : 0 };
+    return { t, ft, bills: on, cooking: cooking.filter(o => o.table === t), res, amount: on.reduce((a, o) => a + o.total, 0), since: on.length ? Math.min(...on.map(o => o.createdAt)) : 0 };
   });
 }
 function Table({ close }: BodyProps) {
@@ -113,10 +115,10 @@ function Table({ close }: BodyProps) {
     {areas.length > 1 && <Seg label="Area" value={area} onChange={setArea} options={areas.map(a => [a, `${a} · ${tables.filter(x => x.ft.area === a && !x.bills.length).length} free`] as const)} />}
     {!tables.length ? <Empty icon="armchair" title="No tables at this outlet">The owner or manager draws them in Tables & floor plan.</Empty> :
     <FloorGrid tables={inArea.map(x => x.ft)} rows={Math.max(1, ...inArea.map(x => x.ft.y + 1))} size={96} table={ft => { const x = inArea.find(y => y.t === ft.name)!;
-      const mine = x.bills.some(o => o.id === cur?.id), occ = x.bills.length > 0;
+      const mine = x.bills.some(o => o.id === cur?.id), occ = x.bills.length > 0 || x.cooking.length > 0;
       return <button key={x.t} onClick={() => pick(x)} className="btn" style={{ ...tableShape(ft), height: '100%', flexDirection: 'column', gap: 2, padding: 4, background: mine ? 'var(--accent)' : occ ? 'var(--accent-soft)' : x.res ? 'var(--info-soft)' : undefined, color: mine ? 'var(--ink-0)' : undefined, borderColor: mine ? 'var(--accent)' : undefined }}>
         <b className="num" style={{ fontSize: 17 }}>{x.t}</b>
-        <span style={{ fontSize: 13, fontWeight: 500, opacity: .85 }}>{mine ? 'This order' : occ ? `${idr(x.amount).replace('IDR ', '')} · ${Math.round((Date.now() - x.since) / 60e3)}m` : x.res ? `Reserved ${hhmm(x.res.at)}` : `${ft.seats} seats`}</span></button>;
+        <span style={{ fontSize: 13, fontWeight: 500, opacity: .85 }}>{mine ? 'This order' : occ && !x.bills.length ? 'Paid · cooking' : occ ? `${idr(x.amount).replace('IDR ', '')} · ${Math.round((Date.now() - x.since) / 60e3)}m` : x.res ? `Reserved ${hhmm(x.res.at)}` : `${ft.seats} seats`}</span></button>;
     }} />}
     <p className="faint" style={{ fontSize: 13 }}>Tap an occupied table to open its bill. Merge and move live in the order’s More menu.</p>
   </div>;
@@ -314,11 +316,26 @@ function Merge({ close }: BodyProps) {
   return <div className="stack sm">{others.map(o => <button key={o.id} className="row card tight" style={{ cursor: 'pointer' }} onClick={() => { mergeBills(cur!.id, o.id, me.id); toast(`${o.no} merged into ${cur!.no}`); close(); }}>
     <b className="num" style={{ minWidth: 56 }}>{label(o)}</b><span className="grow" style={{ textAlign: 'left' }}>{o.no} · {itemsOf(o)} items · {ago(o.createdAt)}</span><b className="num">{idr(o.total)}</b></button>)}</div>;
 }
+/** Move table: everything live at a table (open bills and paid orders still cooking) goes to a free table. The kitchen
+ *  gets a slip with the new table for food still being made; the KDS, waiter app and the guest's phone follow on their own. */
 function Move({ close }: BodyProps) {
   const { db, cur, outletId, me } = usePos();
-  const free = tableState(db, outletId).filter(x => !x.bills.length);
-  return <div className="stack"><p className="muted">Now at {cur!.table ?? 'no table'}. Pick a free table.</p>
-    <div className="grid" style={{ ['--min' as string]: '96px', gap: 8 }}>{free.map(x => <button key={x.t} className="btn btn-pos" style={{ background: x.res ? 'var(--info-soft)' : undefined }} onClick={() => { patchOrder(cur!.id, { table: x.t, type: 'dine' }, me.id); toast(`Moved to ${x.t}`); close(); }}>{x.t}</button>)}</div></div>;
+  const tables = tableState(db, outletId), busy = tables.filter(x => x.bills.length || x.cooking.length);
+  const [from, setFrom] = useState<string | null>(cur?.table ?? null);
+  const src = busy.find(x => x.t === from);
+  if (!src) return busy.length ? <div className="stack"><p className="muted">Which table is moving?</p>
+    <div className="grid" style={{ ['--min' as string]: '96px', gap: 8 }}>{busy.map(x => <button key={x.t} className="btn btn-pos" style={{ background: 'var(--accent-soft)' }} onClick={() => setFrom(x.t)}>{x.t}</button>)}</div></div>
+    : <Empty icon="armchair" title="No table to move">Tables with an open bill or food on the way show here.</Empty>;
+  const orders = [...src.bills, ...src.cooking], free = tables.filter(x => !x.bills.length && !x.cooking.length);
+  const moveTo = (t: string) => {
+    const slips = orders.map(o => [o, o.lines.filter(l => l.fired && l.kds !== 'done').map(l => l.id)] as const).filter(([, ids]) => ids.length);
+    orders.forEach(o => moveTable(o.id, t, me.id)); close();
+    if (!slips.length) return toast(`Moved to ${t}`);
+    Promise.all(slips.map(([o, ids]) => printTickets(db, { ...o, table: t, type: 'dine' }, me.id, true, ids, `Moved from ${src.t}`)))
+      .then(r => toast(`Moved to ${t} · ${r.every(x => x.ok) ? 'kitchen slip printed' : 'the kitchen screen shows the new table'}`));
+  };
+  return <div className="stack"><p className="muted">Moving {src.t}: {orders.map(o => o.no).join(', ')}{src.cooking.length ? ' (food on the way)' : ''}. Pick a free table. <button type="button" className="btn btn-ghost btn-sm" onClick={() => setFrom(null)}>Another table</button></p>
+    <div className="grid" style={{ ['--min' as string]: '96px', gap: 8 }}>{free.map(x => <button key={x.t} className="btn btn-pos" style={{ background: x.res ? 'var(--info-soft)' : undefined }} onClick={() => moveTo(x.t)}>{x.t}</button>)}</div></div>;
 }
 function Split({ close }: BodyProps) {
   const { cur, me, setCur, go } = usePos();

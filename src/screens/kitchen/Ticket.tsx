@@ -55,7 +55,7 @@ export function Ticket({ o, st, now, cfg, meta, recalled, action, onItem, onOpen
           {online ? CHANNEL[o.source].short : <Icon name={o.type === 'take' ? 'shopping-bag' : o.type === 'delivery' ? 'bike' : 'utensils'} size={20} />}</span>
         <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
           <b style={{ fontSize: fs(20), lineHeight: 1.1, whiteSpace: 'nowrap' }}>{o.no}</b>
-          <span style={{ fontSize: fs(14), fontWeight: 600, opacity: .85, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{[o.table, meta].filter(Boolean).join(' · ')}</span>
+          <span style={{ fontSize: fs(14), fontWeight: 600, opacity: .85, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{[o.table && o.movedFrom ? `${o.table} (from ${o.movedFrom})` : o.table, meta].filter(Boolean).join(' · ')}</span>
         </span>
       </span>
       <span style={{ flex: 'none', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>

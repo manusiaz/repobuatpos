@@ -5,7 +5,7 @@
 > Graph halaman otomatis (617 halaman, generator `npm run graph`) ada di `KNOWLEDGE_GRAPH.json` dan viewer `/graph`;
 > file ini mencatat node kode + data yang dipetakan per task.
 
-Last verified: 3ac4f55 — 2026-10-14
+Last verified: df54c13+wip (pindah meja / void) — 2026-10-14
 
 ## Stack
 
@@ -51,6 +51,19 @@ npx tsc --noEmit && npm test && npm run -s links && npm run -s check:system && n
 | page:/order (QR menu) | page | src/screens/selforder/shared.tsx | Menu tamu; membaca meja dari QR |
 | table:outlets | table | src/data/schema.ts | Outlet; `floor?: FloorTable[]` + `tables` |
 | policy:staff_rules | policy | supabase/migrations/20261016000000_borniz_staff_sessions.sql | Kasir/dapur/waiter tidak boleh menulis `outlets` (termasuk denah) |
+| fn:notify | fn | src/data/actions.ts | Satu mesin alert: penerima dari katalog alert, fallback per pemanggil |
+| page:/pos/selling/register-order | page | src/screens/pos/Register.tsx | Register POS; hapus/void baris |
+| fn:holdsTable | fn | src/domain/tables.ts | Satu-satunya aturan "meja terisi": bill terbuka, atau makanan masih di dapur (bayar duluan QR/kiosk) |
+| fn:moveTable | fn | src/data/actions.ts | Pindah meja: `movedFrom`, audit `order.table_moved`, alert 'Table moved' ke dapur + waiter bila makanan belum keluar |
+| fn:voidItem | fn | src/data/actions.ts | Void item/bill (langsung atau lewat approval `voidIn`); alert 'Item voided' ke dapur + waiter bila sudah di-fire dan belum selesai |
+| fn:printTickets | fn | src/devices/hardware.ts | Tiket dapur per station; `banner` untuk slip perubahan (MOVED FROM / VOID) |
+| fn:voidSlip | fn | src/screens/pos/shared.tsx | Cetak slip VOID untuk item yang sudah di dapur |
+| page:/pos/selling/move-table | page | src/screens/pos/OrderSheets.tsx | Pindah meja: pilih meja asal (semua pesanan hidup di meja itu) → meja kosong |
+| page:/kds | page | src/screens/kds.tsx | KDS: banner 'Item voided' / 'Table moved' + "Got it"; tiket menampilkan "T-09 (from T-03)" |
+| page:/order status | page | src/screens/selforder/order.tsx | Status pesanan tamu; banner "Table moved" lewat Notices |
+| table:orders | table | src/data/schema.ts | Order; `movedFrom?` = meja sebelum dipindah staf |
+| table:notices | table | src/data/schema.ts | Alert engine (`notify`); dibaca KDS, waiter, bell |
+| test:changes | test | src/data/changes.test.ts | moveTable / voidItem / banner slip |
 | test:tables | test | src/domain/tables.test.ts | Aturan denah, sel bebas, parser QR |
 | test:floor | test | src/data/floor.test.ts | saveFloor: denah dipakai semua layar, meja bertagihan dilindungi |
 
@@ -60,26 +73,45 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 
 | From | Edge | To | Bukti |
 |---|---|---|---|
-| page:/owner/outlets/tables-and-floor-plan | calls | fn:saveFloor | src/screens/floor.tsx:39 |
-| page:/owner/outlets/tables-and-floor-plan | reads | fn:tablesOf | src/screens/floor.tsx:20 |
-| page:/owner/outlets/tables-and-floor-plan | renders | comp:FloorGrid | src/screens/floor.tsx:58 |
+| page:/owner/outlets/tables-and-floor-plan | calls | fn:saveFloor | src/screens/floor.tsx:38 |
+| page:/owner/outlets/tables-and-floor-plan | reads | fn:tablesOf | src/screens/floor.tsx:19 |
+| page:/owner/outlets/tables-and-floor-plan | renders | comp:FloorGrid | src/screens/floor.tsx:57 |
 | page:/owner/outlets/tables-and-floor-plan | routes-to | page:/owner/outlets/table-qr-generator | src/screens/floor.tsx (Link "Print table QR codes") |
-| fn:saveFloor | writes | table:outlets | src/data/actions/business.ts:29 |
-| fn:saveFloor | reads | fn:tableNames | src/data/actions/business.ts:27 |
+| fn:saveFloor | writes | table:outlets | src/data/actions/business.ts:28 |
+| fn:saveFloor | reads | fn:tableNames | src/data/actions/business.ts:26 |
 | fn:tableNames | reads | fn:tablesOf | src/domain/tables.ts:15 |
 | fn:tablesOf | reads | table:outlets | src/domain/tables.ts (floor / tables) |
-| page:/pos/selling/table-picker | reads | fn:tablesOf | src/screens/pos/OrderSheets.tsx:93 |
-| page:/pos/selling/table-picker | renders | comp:FloorGrid | src/screens/pos/OrderSheets.tsx:115 |
-| page:/waiter | reads | fn:tablesOf | src/screens/waiter.tsx:62 |
+| page:/pos/selling/table-picker | reads | fn:tablesOf | src/screens/pos/OrderSheets.tsx:95 |
+| page:/pos/selling/table-picker | renders | comp:FloorGrid | src/screens/pos/OrderSheets.tsx:117 |
+| page:/waiter | reads | fn:tablesOf | src/screens/waiter.tsx:64 |
 | page:/pic (stations) | reads | fn:tablesOf | src/screens/pic.tsx:246 |
 | page:/manager | reads | fn:tableNames | src/screens/manager.tsx:208 |
 | page:/manager create booking | reads | fn:tableNames | src/screens/manager/create.tsx:73 |
 | fn:bookTable | reads | fn:tablesOf | src/data/actions/selforder.ts:45 |
 | page:/owner/outlets/table-qr-generator | reads | fn:tableNames | src/screens/menu.tsx:328 |
-| page:/order (QR menu) | calls | fn:tableParam | src/screens/selforder/shared.tsx:37 |
+| page:/order (QR menu) | calls | fn:tableParam | src/screens/selforder/shared.tsx:41 |
 | page:/owner/outlets/outlets | routes-to | page:/owner/outlets/tables-and-floor-plan | src/templates/settingsPages.tsx:181 |
 | table:outlets | guarded-by | policy:staff_rules | supabase/migrations/20261016000000_borniz_staff_sessions.sql (BN054 list) |
 | page:/owner/outlets/tables-and-floor-plan | renders | comp:Field | src/screens/floor.tsx (Name / Seats / Area) |
+| page:/pos/selling/table-picker | reads | fn:holdsTable | src/screens/pos/OrderSheets.tsx:95 |
+| page:/waiter | reads | fn:holdsTable | src/screens/waiter.tsx:42 |
+| page:/manager | reads | fn:holdsTable | src/screens/manager.tsx:209 |
+| page:/owner/outlets/tables-and-floor-plan | reads | fn:holdsTable | src/screens/floor.tsx:29 |
+| fn:saveFloor | reads | fn:holdsTable | src/data/actions/business.ts:24 |
+| page:/pos/selling/move-table | calls | fn:moveTable | src/screens/pos/OrderSheets.tsx:332 |
+| page:/pos/selling/move-table | calls | fn:printTickets | src/screens/pos/OrderSheets.tsx:334 |
+| fn:moveTable | writes | table:orders | src/data/actions.ts:52 (findOrder → d.orders; movedFrom di :102) |
+| fn:moveTable | calls | fn:notify | src/data/actions.ts:103 (notify 'Table moved') |
+| fn:notify | writes | table:notices | src/data/actions.ts:39 |
+| fn:voidItem | calls | fn:notify | src/data/actions.ts:110 (notify 'Item voided') |
+| page:/pos/selling/register-order | calls | fn:voidItem | src/screens/pos/Register.tsx:107 |
+| page:/pos/selling/register-order | calls | fn:voidSlip | src/screens/pos/Register.tsx:107 |
+| fn:voidSlip | calls | fn:printTickets | src/screens/pos/shared.tsx:186 |
+| page:/kds | reads | table:notices | src/screens/kds.tsx:72 |
+| page:/kds | reads | table:orders | src/screens/kitchen/model.ts:22 (activeTickets; tiket menampilkan movedFrom) |
+| page:/order status | reads | table:orders | src/screens/selforder/shared.tsx:42 (pesanan milik HP ini; movedFrom → ikut pindah) |
+| test:changes | tests | fn:moveTable | src/data/changes.test.ts |
+| test:changes | tests | fn:voidItem | src/data/changes.test.ts |
 | test:tables | tests | fn:tablesOf | src/domain/tables.test.ts |
 | test:floor | tests | fn:saveFloor | src/data/floor.test.ts |
 
@@ -100,6 +132,18 @@ graph LR
   book["fn:bookTable"] -->|reads| tablesOf
   menu["page:/order"] -->|calls| param["fn:tableParam"]
   outlets -->|guarded-by| rules["policy:staff_rules"]
+  hold["fn:holdsTable"]
+  pos -->|reads| hold
+  waiter -->|reads| hold
+  save -->|reads| hold
+  move["page:/pos/selling/move-table"] -->|calls| mt["fn:moveTable"]
+  mt -->|writes| orders["table:orders"]
+  mt -->|calls| nf["fn:notify"]
+  vi["fn:voidItem"] -->|calls| nf
+  nf -->|writes| notices
+  kds["page:/kds"] -->|reads| notices["table:notices"]
+  kds -->|reads| orders
+  guest["page:/order status"] -->|reads| orders
 ```
 
 ## Temuan
@@ -109,6 +153,10 @@ graph LR
 | 2026-10-14 | page:/owner/outlets/tables-and-floor-plan | Halaman bernama "floor plan" hanya berisi daftar reservasi | fixed (editor denah) |
 | 2026-10-14 | comp:Field | Label tidak terhubung ke input di seluruh aplikasi (a11y, tap label) | fixed |
 | 2026-10-14 | src/screens/brand.tsx | Preview KDS menampilkan "T-T-05" (`'T-' + o.table`) | fixed |
+| 2026-10-14 | fn:holdsTable | 8 definisi "pesanan aktif" berbeda; pesanan QR lunas (QRIS) yang masih dimasak tampil "meja kosong" di POS/waiter/manager/denah → kasir duduk-kan tamu baru di meja yang sama, owner bisa hapus mejanya | fixed (satu aturan) |
+| 2026-10-14 | page:/pos/selling/move-table | Move hanya bisa pindah bill terbuka (`cur`); pesanan lunas yang masih dimasak tidak bisa dipindah | fixed (pindah per meja) |
+| 2026-10-14 | fn:moveTable | Pindah meja = `patchOrder` diam: tiket cetak tetap meja lama, dapur/waiter tidak diberi tahu, HP tamu kehilangan pesanannya | fixed |
+| 2026-10-14 | fn:voidItem | Void item yang sudah di dapur hilang diam-diam dari KDS; tiket kertas tetap → dimasak juga | fixed (alert + slip VOID) |
 | 2026-10-14 | page:/owner/outlets/table-qr-generator | Default "To table" 12 tetap → meja 13+ tidak pernah dapat QR | fixed (0 = semua) |
 
 ## Keputusan
@@ -116,4 +164,6 @@ graph LR
 | Tanggal | Keputusan | Alasan | Node terdampak |
 |---|---|---|---|
 | 2026-10-14 | Kunci meja = namanya | `orders.table` / `reservations.table` / tiket sudah menyimpan nama; rename meja bertagihan ditolak | fn:saveFloor, semua konsumen |
+| 2026-10-14 | "Pindah meja" memindah semua pesanan hidup di meja itu | Satu meja bisa punya pesanan QR lunas + ronde POS baru; tamu pindah bersama semuanya | page:/pos/selling/move-table |
+| 2026-10-14 | HP tamu ikut pindah hanya bila staf yang memindah (`movedFrom`); tamu yang pindah sendiri dapat tombol "minta staf pindahkan" | QR lama di URL tidak boleh menarik pesanan kembali; scan meja lain = niat tamu | page:/order status |
 | 2026-10-14 | Denah kosong = T-01…T-n dari `tables` | Data lama tetap jalan tanpa migrasi | fn:tablesOf |

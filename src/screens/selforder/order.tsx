@@ -398,6 +398,7 @@ export function Status({ g }: { g: G }) {
       {(step === 3 || toolValue(db, 'wait').prog === 'steps') && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6, marginTop: 4 }}>{['Received', 'Preparing', 'Almost', 'Ready'].map((x, i) => <div key={x} className="stack" style={{ gap: 6, opacity: i <= step ? 1 : .6 }}>
         <span style={{ height: 6, borderRadius: 9, background: i <= step ? 'var(--bn-acc)' : 'color-mix(in srgb,var(--ink-0) 25%,transparent)', transition: 'background 300ms' }} /><span style={{ fontSize: 12, fontWeight: 600 }}>{t(x)}</span></div>)}</div>}
     </div>
+    <Notices g={g} />
     <div className="stack" style={{ padding: 14, gap: 12 }}>
       {step === 3 ? <ReadyCard g={g} o={latest} /> : <WaitPanel g={g} o={latest} step={step} />}
       <ReadyWatch g={g} o={latest} ready={step === 3} />

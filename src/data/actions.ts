@@ -96,6 +96,23 @@ export function setQty(orderId: string, lineId: string, qty: number, by: string)
 export function patchOrder(orderId: string, patch: Partial<Order>, by: string) {
   commit('order.updated', by, d => { const o = findOrder(d, orderId); Object.assign(o, patch); recalc(d, o); }, orderId);
 }
+/** Staff moves a bill to another table: tickets still in the kitchen get a 'Table moved' alert, the guest's phone follows it. */
+export function moveTable(orderId: string, to: string, by: string) {
+  commit('order.table_moved', by, d => { const o = findOrder(d, orderId), from = o.table; if (from === to) return;
+    Object.assign(o, { table: to, type: 'dine', movedFrom: from });
+    if (o.lines.some(l => l.fired && l.kds !== 'done')) notify(d, 'Table moved', 'info', ['kitchen', 'waiter'], o.outletId, `${o.no} · ${from ?? 'no table'} → ${to}`);
+    recalc(d, o); }, orderId);
+}
+/** Void a line (or the whole bill when lineId is null). Food already in the kitchen and not served raises 'Item voided' so nobody cooks it. */
+function voidIn(d: DB, o: Order, lineId: string | null, why: string) {
+  const stop = o.lines.filter(l => (!lineId || l.id === lineId) && l.fired && l.kds !== 'done');
+  if (lineId) o.lines = o.lines.filter(l => l.id !== lineId); else Object.assign(o, { status: 'voided', ...(why ? { note: 'Voided: ' + why } : {}) });
+  if (stop.length) notify(d, 'Item voided', 'high', ['kitchen', 'waiter'], o.outletId, `${o.no} · ${o.table ?? (o.type === 'dine' ? 'dine-in' : o.type === 'take' ? 'takeaway' : 'delivery')} · stop ${stop.map(l => `${l.qty}× ${l.name}`).join(', ')}`);
+  recalc(d, o);
+}
+export function voidItem(orderId: string, lineId: string | null, by: string, why = '') {
+  commit(lineId ? 'order.item_voided' : 'order.voided', by, d => voidIn(d, findOrder(d, orderId), lineId, why), orderId);
+}
 export function clearOrder(orderId: string, by: string) {
   commit('order.cleared', by, d => { const o = findOrder(d, orderId); o.lines = o.lines.filter(l => l.fired); o.customerId = null; o.discountPct = 0; o.promoIds = []; recalc(d, o); }, orderId);
 }
@@ -317,7 +334,7 @@ function applyDecision(d: DB, r: Approval) {
   if (pl.outletPatch) Object.assign(d.outlets.find(o => o.id === pl.outletPatch.id) ?? {}, pl.outletPatch.patch);
   switch (r.type) {
     case 'discount': { const o = d.orders.find(x => x.id === r.subjectId); if (o) { o.discountPct = r.pct; recalc(d, o); } break; }
-    case 'void': { const o = d.orders.find(x => x.id === r.subjectId); if (o) { if (pl.lineId) o.lines = o.lines.filter(l => l.id !== pl.lineId); else o.status = 'voided'; recalc(d, o); } break; }
+    case 'void': { const o = d.orders.find(x => x.id === r.subjectId); if (o) voidIn(d, o, (pl.lineId as string) ?? null, r.note); break; }
     case 'refund': {
       const o = d.orders.find(x => x.id === r.subjectId); if (!o) break;
       // Paid back over the payments it was paid with, never more than each one took (real money first, cash rounding last).

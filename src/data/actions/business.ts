@@ -2,8 +2,7 @@
 // Business identity, outlets and invite-a-friend. Writes only through commit().
 import { commit, snapshot, uid } from '../store.ts';
 import type { BusinessProfile, Outlet } from '../schema.ts';
-import { checkFloor, tableNames, type FloorTable } from '../../domain/tables.ts';
-import { CLOSED } from '../actions.ts';
+import { checkFloor, holdsTable, tableNames, type FloorTable } from '../../domain/tables.ts';
 import { referral } from '../../system/settings.ts';
 import { referrerOf } from '../../system/studio.ts';
 
@@ -22,7 +21,7 @@ export function saveFloor(outletId: string, floor: FloorTable[], by: string): st
   const bad = checkFloor(plan);
   if (bad) return bad;
   const keep = new Set(plan.map(t => t.name)), now = Date.now();
-  const busy = [...d0.orders.filter(o => o.outletId === outletId && o.table && !CLOSED.includes(o.status)).map(o => o.table!),
+  const busy = [...d0.orders.filter(o => o.outletId === outletId && holdsTable(o)).map(o => o.table!),
     ...d0.reservations.filter(r => r.outletId === outletId && ['booked', 'seated'].includes(r.status) && r.at > now - 3 * 3600e3).map(r => r.table)];
   const gone = tableNames(out).filter(n => !keep.has(n) && busy.includes(n));
   if (gone.length) return `${gone.join(', ')} ${gone.length > 1 ? 'have' : 'has'} an open bill or booking. Close it or move it first.`;

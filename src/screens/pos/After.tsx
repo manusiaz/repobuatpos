@@ -3,7 +3,7 @@ import { productImage } from '../../ui/kit.tsx';
 // After the sale and counter tools: open bills, shift transaction history (detail, reprint, e-receipt, void / refund,
 // exchange) and tools (price check, stock check, sold-out, reservations & walk-ins, manager PIN override).
 import { useState } from 'react';
-import { addLine, newOrder, patchOrder, priceAt, reopen, toggle86 } from '../../data/actions.ts';
+import { addLine, newOrder, patchOrder, priceAt, reopen, toggle86, voidItem } from '../../data/actions.ts';
 import { addWalkIn, logDevice, sendReceipt, setReservation } from '../../data/actions/pos.ts';
 import { lineTotal } from '../../domain/order.ts';
 import { flashPrice } from '../../domain/promo.ts';
@@ -11,7 +11,7 @@ import { level as stockLevel } from '../../domain/stock.ts';
 import { idr } from '../../domain/money.ts';
 import { Badge, Empty, Field, Icon, Kpi, Seg, Sheet, Status, Toggle, ago, hhmm, toast } from '../../ui/kit.tsx';
 import type { Order, OrderLine } from '../../data/schema.ts';
-import { P, Paper, Row, TabLinks, isOpenBill, itemsOf, label, paidOf, startOfDay, usePos, useApproval, usePerm, warnStyle } from './shared.tsx';
+import { P, Paper, Row, TabLinks, isOpenBill, itemsOf, label, paidOf, startOfDay, usePos, useApproval, usePerm, voidSlip, warnStyle } from './shared.tsx';
 import { CustomerList } from './OrderSheets.tsx';
 import { paperOf, receiptPrinter, thisDevice } from '../../devices/routing.ts';
 import { openDrawer, printReceipt } from '../../devices/hardware.ts';
@@ -142,8 +142,8 @@ function Refund({ o, flow }: { o: Order; flow: Flow }) {
       {mode !== 'full' && o.lines.map(l => <label key={l.id} className="row card tight" style={{ cursor: 'pointer' }}><input type="radio" name="vl" style={{ width: 22, height: 22 }} checked={sel[0] === l.id} onChange={() => setSel([l.id])} /><span className="grow">{l.qty}× {l.name}</span><b className="num">{idr(lt(l))}</b></label>)}
       <Field label="Reason"><input className="input" value={why} onChange={e => setWhy(e.target.value)} placeholder="Wrong order, guest left…" /></Field>
       <button className="btn btn-danger btn-pos" style={warnStyle(can('Void item'))} disabled={!why.trim() || (mode !== 'full' && !line)} onClick={() => flow.run(mode === 'full'
-        ? { action: 'Void item', type: 'void', amount: o.total, subjectId: o.id, note: why, title: `Void bill ${o.no} · ${idr(o.total)}`, direct: () => patchOrder(o.id, { status: 'voided', note: 'Voided: ' + why }, me.id), done: () => toast('Bill voided') }
-        : { action: 'Void item', type: 'void', amount: lt(line!), subjectId: o.id, note: why, payload: { lineId: line!.id }, title: `Void ${line!.qty}× ${line!.name} · ${o.no}`, direct: () => patchOrder(o.id, { lines: o.lines.filter(l => l.id !== line!.id) }, me.id), done: () => toast('Item voided') })}>
+        ? { action: 'Void item', type: 'void', amount: o.total, subjectId: o.id, note: why, title: `Void bill ${o.no} · ${idr(o.total)}`, direct: () => voidItem(o.id, null, me.id, why), done: () => voidSlip(db, o, o.lines.map(l => l.id), me.id, 'Bill voided') }
+        : { action: 'Void item', type: 'void', amount: lt(line!), subjectId: o.id, note: why, payload: { lineId: line!.id }, title: `Void ${line!.qty}× ${line!.name} · ${o.no}`, direct: () => voidItem(o.id, line!.id, me.id), done: () => voidSlip(db, o, [line!.id], me.id) })}>
         Request void · {idr(mode === 'full' ? o.total : line ? lt(line) : 0)}</button>
     </div>;
   }

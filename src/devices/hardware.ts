@@ -30,20 +30,21 @@ export function printReceipt(db: DB, o: Order, deviceId: string | null, by: stri
     .then(r => { if (r.ok) logDevice('print.receipt', o.no, by, o.outletId); return r; });
 }
 
-/** Kitchen tickets for an order: fired lines (or all lines on a reprint) grouped by station printer. */
-export async function printTickets(db: DB, o: Order, by: string, reprint = false, lineIds?: string[]): Promise<Result> {
+/** Kitchen tickets for an order: fired lines (or all lines on a reprint) grouped by station printer. A banner marks a
+ *  change slip (table moved, item voided). */
+export async function printTickets(db: DB, o: Order, by: string, reprint = false, lineIds?: string[], banner?: string): Promise<Result> {
   const lines = o.lines.filter(l => (lineIds ? lineIds.includes(l.id) : reprint || l.fired));
   const st = [...new Set(lines.map(l => l.station))];
   const res: Result[] = [];
   for (const s of st) {
     const p = stationPrinter(db, o.outletId, s);
     if (!p) { res.push({ ok: false, message: `No ${s} printer · the ticket shows on the KDS` }); continue; }
-    res.push(await run(p, () => printDoc(p, kitchenDoc(db, o, s, lines.filter(l => l.station === s), paperOf(p), { reprint })), `${s} ticket printed`));
+    res.push(await run(p, () => printDoc(p, kitchenDoc(db, o, s, lines.filter(l => l.station === s), paperOf(p), { reprint, banner })), `${s} ticket printed`));
   }
   // Customization Studio › Kitchen ticket: an expo copy of every line at the pass; › Cup sticker: one label per drink.
   const pass = ticketLayout(db).expo && st.length && receiptPrinter(db, o.outletId, null);
-  if (pass) res.push(await run(pass, () => printDoc(pass, kitchenDoc(db, o, 'expo', lines, paperOf(pass), { reprint, expo: true })), 'Expo copy printed'));
-  const label = printersAt(db, o.outletId).find(i => stationOf(i) === 'label'), cups = label && !reprint && cupDoc(db, o, lines);
+  if (pass) res.push(await run(pass, () => printDoc(pass, kitchenDoc(db, o, 'expo', lines, paperOf(pass), { reprint, expo: true, banner })), 'Expo copy printed'));
+  const label = printersAt(db, o.outletId).find(i => stationOf(i) === 'label'), cups = label && !reprint && !banner && cupDoc(db, o, lines);
   if (label && cups) res.push(await run(label, () => printDoc(label, cups), 'Cup stickers printed'));
   if (res.some(r => r.ok)) logDevice(reprint ? 'print.kitchen_reprint' : 'print.kitchen_ticket', o.no, by, o.outletId);
   return { ok: res.length > 0 && res.every(r => r.ok), message: res.map(r => r.message).join(' · ') || 'Nothing to print' };

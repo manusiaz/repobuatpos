@@ -30,6 +30,7 @@ export interface Order {
   subtotal: IDR; discount: IDR; service: IDR; tax: IDR; total: IDR; createdAt: number; paidAt: number | null; cashierId: string | null;
   tier?: 'rush' | 'standard' | 'saver'; readyBy?: number; readyAt?: number; idemKey: string; note?: string; rating?: number;
   /** Studios A/B test: the theme version the guest saw when ordering */ ab?: 'A' | 'B';
+  /** table the bill was on before staff moved it (the guest's phone and the kitchen follow it) */ movedFrom?: string | null;
 }
 export interface Payment { id: string; orderId: string; outletId: string; method: Method; amount: IDR; tip: IDR; status: PaymentStatus; ref: string; at: number; expiresAt: number | null; sessionId: string | null; /** set by the payment gateway */ provider?: string; qr?: string; va?: string; deeplink?: string }
 export interface Refund { id: string; orderId: string; paymentId: string; amount: IDR; reason: string; approvalId: string | null; at: number; toStock: boolean; /** drawer the cash went out of (cash refunds) */ sessionId?: string | null; /** lines returned to stock by this refund */ lineIds?: string[] }

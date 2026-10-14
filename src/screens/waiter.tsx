@@ -14,7 +14,7 @@ import type { DB, Order, Product } from '../data/schema.ts';
 import { SHIFTS } from '../domain/shift.ts';
 import { bumpTimes, isHistory, isOnline, lineMods } from './kitchen/model.ts';
 import { ClockCard } from './kitchen/kdsPages.tsx';
-import { areasOf, tablesOf, type FloorTable } from '../domain/tables.ts';
+import { areasOf, holdsTable, tablesOf, type FloorTable } from '../domain/tables.ts';
 
 type Tab = 'tables' | 'table' | 'ready' | 'calls' | 'me';
 const OPEN = ['open', 'held', 'sent', 'preparing', 'ready', 'served', 'paying'];
@@ -38,6 +38,8 @@ export default function Screen() {
   const outlet = db.outlets.find(o => o.id === outletId);
   const t0 = new Date(now).setHours(0, 0, 0, 0);
   const open = useMemo(() => db.orders.filter(o => o.outletId === outletId && !isHistory(o) && o.table && OPEN.includes(o.status) && o.createdAt >= t0 - 864e5), [db.orders, outletId, t0]);
+  // a paid QR / kiosk order still cooking keeps its table taken; new items still go on the open bill only
+  const seated = useMemo(() => [...open, ...db.orders.filter(o => o.outletId === outletId && !isHistory(o) && !open.includes(o) && holdsTable(o))], [db.orders, open, outletId]);
   const billed = useMemo(() => new Set(db.audit.filter(a => a.action === 'order.bill_requested').map(a => a.subject)), [db.audit]);
   const ready = db.orders.filter(o => o.outletId === outletId && o.status === 'ready' && !isOnline(o) && !isHistory(o)).sort((a, b) => a.createdAt - b.createdAt);
   const calls = db.notices.filter(n => n.to.includes('waiter') && n.outletId === outletId && n.at >= t0);
@@ -59,7 +61,7 @@ export default function Screen() {
     {!db.device.online && <div className="banner" role="alert" style={{ margin: '10px 14px 0', background: 'var(--danger-soft)', color: 'var(--danger-fg)' }}><Icon name="wifi-off" /><span>Offline. New orders are kept on this phone and sent to the kitchen when the connection is back.</span></div>}
     <main className="stack" style={{ flex: 1, padding: '12px 14px 160px' }}>
       {tab === 'tables' && <div className="wt">
-        <div className="stack"><Tables tables={tablesOf(outlet)} {...{ db, open, billed, now, ready: ready.length, outletId, sel }} onReady={() => setTab('ready')} onPick={pick} /></div>
+        <div className="stack"><Tables tables={tablesOf(outlet)} open={seated} {...{ db, billed, now, ready: ready.length, outletId, sel }} onReady={() => setTab('ready')} onPick={pick} /></div>
         <aside className="wt-side card stack" aria-label={sel ? 'Table ' + sel : 'Table detail'}>{sel ? <TableView table={sel} o={open.find(o => o.table === sel)} {...{ db, by, outletId, billed, canOrder }} />
           : <Empty icon="armchair" title="Pick a table">Its order, kitchen status and bill show here.</Empty>}</aside>
       </div>}

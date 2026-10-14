@@ -9,10 +9,11 @@ import { useSearchParams } from 'next/navigation';
 import { routeQuery } from '../../system/hosts.ts';
 import { useApp } from '../../app/context.tsx';
 import { pagesOf } from '../../system/registry.ts';
-import { Icon, useNow } from '../../ui/kit.tsx';
+import { Icon, toast, useNow } from '../../ui/kit.tsx';
 import { idr } from '../../domain/money.ts';
 import { earn, tierOf } from '../../domain/loyalty.ts';
 import { newOrder } from '../../data/actions.ts';
+import { guestCall } from '../../data/actions/selforder.ts';
 import type { DB, Order } from '../../data/schema.ts';
 import { groupsOf, hours, LINE, MUTED, SURFACE, unit, unpaid, useLang, useLocal, type MenuItem } from '../guest/kit.tsx';
 import { tableParam } from '../../domain/tables.ts';
@@ -34,7 +35,14 @@ export function useGuest() {
   const qref = sp.get('ref');
   useEffect(() => { if (qref && qref !== ref) setRef(qref); }, [qref, ref, setRef]);
   const qt = sp.get('t') ?? routeQuery().t ?? null; // order.bornis.id/<tenant>/t/07 carries the table in the path
-  const table = qt ? tableParam(qt) : saved;
+  // The bills this phone ordered on. Staff moved one (POS › Move table): the phone follows it to the new table.
+  // The guest moved themselves (scanned another table): their bill stays put and they can ask staff to move it.
+  const [mine, setMine] = useLocal<string[]>('bn-qr-orders', []);
+  const here = qt ? tableParam(qt) : saved;
+  const away = db.orders.filter(o => mine.includes(o.id) && o.outletId === outletId && o.table !== here && o.status !== 'voided' && Date.now() - o.createdAt < TWO_H);
+  const moved = away.find(o => o.movedFrom) ?? null; // paid first (QRIS) or not, the phone still wants "ready" from the new table
+  const elsewhere = moved ? null : away.find(o => unpaid(o) || o.lines.some(l => l.fired && l.kds !== 'done')) ?? null;
+  const table = moved?.table ?? here;
   useEffect(() => { if (qt && table !== saved) setSaved(table); }, [qt, table, saved, setSaved]);
   const L = useLang(guestLanguages(db, guestLang(db)).first);
   const [meId, setMe] = useLocal<string | null>('bn-guest-customer', null);
@@ -49,8 +57,9 @@ export function useGuest() {
   const [guestId, setGuestId] = useLocal<string | null>('bn-guest-id', null);
   useEffect(() => { if (!guestId) setGuestId(Math.random().toString(36).slice(2, 12)); }, [guestId, setGuestId]);
   const ab = abVariant(db, guestId ?? '', now);
-  const ensureCart = () => cart?.id ?? newOrder(outletId, 'guest', 'qr', { table, type: 'dine', customerId: meId, ...(ab ? { ab } : {}) });
-  return { db, outletId, go, sp, ref, table, L, t: L.t, me, setMe, out, hrs, canOrder: hrs.open && !hrs.paused, online: db.device.online, recent, cart, latest, ensureCart, now, ab };
+  const ensureCart = () => { const id = cart?.id ?? newOrder(outletId, 'guest', 'qr', { table, type: 'dine', customerId: meId, ...(ab ? { ab } : {}) });
+    if (!mine.includes(id)) setMine([...mine.slice(-9), id]); return id; };
+  return { db, outletId, go, sp, ref, table, L, t: L.t, me, setMe, out, hrs, canOrder: hrs.open && !hrs.paused, online: db.device.online, recent, cart, latest, ensureCart, now, ab, moved, elsewhere };
 }
 export type G = ReturnType<typeof useGuest>;
 
@@ -118,6 +127,10 @@ export function Notices({ g }: { g: G }) {
   if (g.hrs.paused) n.push(['pause-circle', 'Ordering is paused right now', 'Ask the staff, or browse the menu.']);
   else if (!g.hrs.open) n.push(['moon', `Closed · ${g.hrs.text}`, <a key="b" href={so('online-booking')} onClick={e => { e.preventDefault(); g.go(so('online-booking')); }}>Book a table</a>]);
   if (!g.online) n.push(['wifi-off', 'You’re offline', 'Your cart is kept. QRIS needs internet.']);
+  if (g.moved) n.push(['move', g.t('Table moved'), `${g.moved.no} · ${g.t('Your order is now at table')} ${tableNo(g.table)}. ${g.t('Everything carries on as usual.')}`]);
+  const away = g.elsewhere;
+  if (away) n.push(['armchair', `${away.no} · ${g.t('Your order is at table')} ${tableNo(away.table ?? '')}`, <button key="m" type="button" className="btn btn-sm" style={{ alignSelf: 'flex-start' }}
+    onClick={() => { guestCall(g.outletId, g.table, `Move order ${away.no} from ${away.table} to here`); toast(g.t('Staff will move your order here')); }}>{g.t('Ask staff to move it here')}</button>]);
   return <>{n.map(([ic, h, s]) => <div key={h} role="status" className="banner" style={{ margin: '12px 14px 0', background: 'var(--warning-soft)', color: 'var(--warning-fg)' }}>
     <Icon name={ic} /><div className="stack" style={{ gap: 2 }}><b>{h}</b><span>{s}</span></div></div>)}</>;
 }

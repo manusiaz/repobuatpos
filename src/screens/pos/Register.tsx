@@ -3,7 +3,7 @@ import { productImage } from '../../ui/kit.tsx';
 // Register (layout A): search + category chips + product grid, cart on the right with the 72px Charge.
 // Below 1024px (layout B) the cart becomes a bottom order bar that opens the cart as a sheet.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { addLine, clearOrder, patchOrder, priceAt, sendToKitchen, setQty } from '../../data/actions.ts';
+import { addLine, clearOrder, patchOrder, priceAt, sendToKitchen, setQty, voidItem } from '../../data/actions.ts';
 import { enqueue } from '../../data/actions/pos.ts';
 import { findByCode, useWedgeScanner } from '../../devices/scanner.ts';
 import { playSfx } from '../../ui/sound.ts';
@@ -14,7 +14,7 @@ import { balance, tierOf } from '../../domain/loyalty.ts';
 import { idr } from '../../domain/money.ts';
 import { Badge, Icon, Seg, Sheet, Status, toast, hhmm } from '../../ui/kit.tsx';
 import type { Order, OrderLine } from '../../data/schema.ts';
-import { P, paidOf, picNow, uiGet, uiSet, usePos, useApproval, usePerm, waitingFor, warnStyle, itemsOf } from './shared.tsx';
+import { P, paidOf, picNow, uiGet, uiSet, usePos, useApproval, usePerm, waitingFor, warnStyle, itemsOf, voidSlip } from './shared.tsx';
 
 export function Register() {
   const { db, outletId, cur, me, session, ensureOrder, go, route } = usePos();
@@ -104,7 +104,7 @@ export function Cart({ compact }: { compact?: boolean }) {
     if (!l.fired) return setQty(o.id, l.id, 0, me.id);
     const amount = lineTotal({ unitPrice: l.unitPrice, flashPrice: l.flashPrice, modifiers: l.mods.map(m => m.price), qty: l.qty, discountPct: l.discountPct });
     flow.run({ action: 'Void item', type: 'void', amount, subjectId: o.id, payload: { lineId: l.id }, title: `Void ${l.qty}× ${l.name} · ${o.no}`, note: 'Already sent to kitchen',
-      direct: () => patchOrder(o.id, { lines: o.lines.filter(x => x.id !== l.id) }, me.id), done: () => toast('Item voided') });
+      direct: () => voidItem(o.id, l.id, me.id), done: () => voidSlip(db, o, [l.id], me.id) });
   };
   const fire = () => { if (!cur || !unfired) return; sendToKitchen(cur.id, me.id); enqueue('order.sent'); toast(`Sent ${unfired} item${unfired > 1 ? 's' : ''} to Kitchen & Bar`); };
 

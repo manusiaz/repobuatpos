@@ -16,7 +16,7 @@ import { pickupLanes } from '../domain/order.ts';
 import { activeTickets, allDay, CHANNEL, empName, isOnline, linesAt, openLinesAt, prepStats, STATIONS, TIER, type Station } from './kitchen/model.ts';
 import { chime, fs, KBtn, Ticket, useStableOrder, useTouchHold, useWakeLock, type KdsCfg } from './kitchen/Ticket.tsx';
 import { KdsPage } from './kitchen/kdsPages.tsx';
-import { simulatePlatformOrder } from '../data/actions.ts';
+import { markRead, simulatePlatformOrder } from '../data/actions.ts';
 
 export type View = 'tickets' | 'station' | 'lanes' | 'rush' | 'expo' | 'allday' | 'done' | 'recall' | '86' | 'detail' | 'runner' | 'clock' | 'recipes' | 'targets' | 'perf' | 'settings';
 const VIEW: Record<string, View> = {
@@ -36,6 +36,8 @@ export interface Kctx {
   now: number; st: Station | 'all'; setSt: (s: Station | 'all') => void; cfg: KdsCfg; layout: 'A' | 'B' | 'C'; sound: boolean;
   go: (p: string) => void; can: (action: string) => PermCode; tickets: Order[]; meta: (o: Order) => string; open: (id: string) => void; recalled: Set<string>;
 }
+
+const CHANGE = ['Item voided', 'Table moved'];
 
 export default function Screen() {
   const { page, db, user, me, outletId, go } = useApp();
@@ -65,6 +67,11 @@ export default function Screen() {
     if (seen.current) { const fresh = tickets.filter(t => !seen.current!.has(t.id)); if (fresh.length) { if (sound) chime(db); toast(`New ticket · ${fresh.map(t => t.table ?? t.no).join(', ')}`); } }
     seen.current = ids;
   }, [tickets, sound]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // A void or a table move after the food was fired: a banner until the kitchen taps "Got it" (POS › Void item / Move table).
+  const changes = db.notices.filter(n => CHANGE.includes(n.alert) && n.outletId === outletId && !n.read && now - n.at < 4 * 3600e3);
+  const heard = useRef<number | null>(null);
+  useEffect(() => { if (heard.current !== null && changes.length > heard.current && sound) chime(db); heard.current = changes.length; }, [changes.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Scheduled online orders fire and approved sold-out requests (permission 'a') apply even when only the KDS is open.
   useOnlineAutomation(db, outletId, now);
@@ -97,6 +104,9 @@ export default function Screen() {
     </header>
     {!db.device.online && <div role="alert" style={{ padding: '12px 16px', background: 'var(--danger)', color: '#fff', fontWeight: 700, fontSize: fs(16) }}>
       Disconnected. Showing the last tickets this screen received. Bumps are kept here and sync when the connection is back; ask the cashier for new orders.</div>}
+    {changes.map(n => <div key={n.id} role="alert" className="row" style={{ padding: '8px 16px', gap: 12, background: n.alert === 'Item voided' ? 'var(--danger)' : 'var(--info)', color: '#fff', fontWeight: 700, fontSize: fs(17) }}>
+      <Icon name={n.alert === 'Item voided' ? 'ban' : 'move'} /><span className="grow">{n.alert} · {n.text}</span>
+      <button type="button" className="btn" style={{ height: 48, fontSize: fs(15) }} onClick={() => markRead(n.id, by)}>Got it</button></div>)}
     <main style={{ flex: 1, minHeight: 0, padding: '12px 12px 96px' }}>
       {view === 'tickets' ? <Tickets k={k} /> : view === 'lanes' ? <Lanes k={k} split forced /> : view === 'rush' ? <Rush k={k} /> : <KdsPage view={view} k={k} />}
     </main>

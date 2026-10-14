@@ -20,7 +20,7 @@ import { ApprovalCard, OpnameProof, useDecide, whyBlocked } from './ops/approval
 import { allowed } from './ops/perm.ts';
 import { ROLE_LABEL, attendance, clockState, dateKey, emp, isLive, isPaid, nameOf, onSlot, rosterDay, slotLabel, slotNow, slotOf, slotTime, startOfDay, longDate } from './ops/shift.ts';
 import { KIND_SLUG, NewSheet } from './manager/create.tsx';
-import { tableNames } from '../domain/tables.ts';
+import { holdsTable, tableNames } from '../domain/tables.ts';
 
 const PAGES = pagesOf('manager');
 const P = (slug: string) => PAGES.find(p => p.slug === slug)?.path ?? '/manager';
@@ -206,7 +206,7 @@ function Live({ c }: { c: Ctx }) {
   const slot = slotNow(now), sd = rosterDay(db, here);
   const crew = onSlot(sd, slot);
   const tables = tableNames(outlet);
-  const used = new Set(live.map(o => o.table).filter(Boolean));
+  const used = new Set(db.orders.filter(o => o.outletId === here && holdsTable(o)).map(o => o.table));
   const booked = new Set(db.reservations.filter(r => r.outletId === here && r.status === 'booked' && r.at >= t0 && r.at < t0 + DAY).map(r => r.table));
   const online = live.filter(o => ['gofood', 'grabfood', 'shopeefood', 'web'].includes(o.source) && o.status === 'open');
   const sold = db.outletProducts.filter(x => x.outletId === here && x.is86).map(x => db.products.find(p => p.id === x.productId)?.name);

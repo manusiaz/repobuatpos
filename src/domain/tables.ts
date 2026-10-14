@@ -3,6 +3,12 @@
 export type TableShape = 'square' | 'round' | 'long';
 export interface FloorTable { name: string; area: string; seats: number; shape: TableShape; x: number; y: number }
 
+/** The one rule for "this table is taken": the bill is open, or food is still in the kitchen (paid first: QR, kiosk).
+ *  POS table picker, Move table, waiter app, manager board and the floor plan editor all use it. */
+const OPEN_BILL = ['open', 'held', 'sent', 'preparing', 'ready', 'served', 'paying'], DEAD = ['voided', 'refunded', 'part_refunded'];
+export const holdsTable = (o: { table: string | null; status: string; lines: { fired: boolean; kds: string }[] }) =>
+  !!o.table && (OPEN_BILL.includes(o.status) || !DEAD.includes(o.status) && o.lines.some(l => l.fired && l.kds !== 'done'));
+
 export const COLS = 8, ROWS = 12; // grid cells per area
 export const autoName = (i: number) => 'T-' + String(i).padStart(2, '0');
 

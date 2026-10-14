@@ -50,6 +50,8 @@ export function useLocal<T>(key: string, init: T): [T, (v: T) => void] {
 /** 'en' / 'id' have UI copy; other languages the owner adds (Studios › Languages) translate menu item names. */
 export type Lang = string;
 const ID: Record<string, string> = {
+  'Table moved': 'Meja dipindah', 'Your order is now at table': 'Pesananmu sekarang di meja', 'Everything carries on as usual.': 'Semua tetap jalan seperti biasa.',
+  'Your order is at table': 'Pesananmu ada di meja', 'Ask staff to move it here': 'Minta staf pindahkan ke sini', 'Staff will move your order here': 'Staf akan memindahkan pesananmu ke sini',
   'Search the menu': 'Cari menu', 'View cart': 'Lihat keranjang', All: 'Semua', Coffee: 'Kopi', 'Non-coffee': 'Non-kopi', Pastry: 'Pastry', Rice: 'Nasi', Others: 'Lainnya',
   'Sold out': 'Habis', Add: 'Tambah', 'Your order': 'Pesananmu', Checkout: 'Lanjut bayar', 'Start order': 'Mulai pesan', 'Open until': 'Buka sampai', Rewards: 'Hadiah',
   Bestsellers: 'Terlaris', 'Flash sale': 'Flash sale', 'See all': 'Lihat semua', Required: 'Wajib', Optional: 'Opsional', 'Call waiter': 'Panggil pelayan', 'Order more': 'Pesan lagi',

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { areasOf, checkFloor, freeCell, nextName, tableParam, tablesOf, type FloorTable } from './tables.ts';
+import { areasOf, checkFloor, freeCell, holdsTable, nextName, tableParam, tablesOf, type FloorTable } from './tables.ts';
 
 const T = (name: string, x: number, y: number, area = 'Indoor', seats = 4): FloorTable => ({ name, area, seats, shape: 'square', x, y });
 
@@ -33,4 +33,12 @@ test('QR table links: numbers become T-NN, names pass through', () => {
   assert.equal(tableParam('t-7'), 'T-07');
   assert.equal(tableParam('VIP%201'), 'VIP 1');
   assert.equal(tableParam('Bar 3'), 'Bar 3');
+});
+
+test('a table is taken while the bill is open or food is still in the kitchen, even when paid first', () => {
+  const o = (status: string, kds = 'new', table: string | null = 'T-03') => ({ table, status, lines: [{ fired: true, kds }] });
+  assert.ok(holdsTable(o('open')) && holdsTable(o('held')) && holdsTable(o('paying')));
+  assert.ok(holdsTable(o('paid')), 'QR paid by QRIS, still cooking');
+  assert.ok(!holdsTable(o('paid', 'done')), 'paid and out of the kitchen: free');
+  assert.ok(!holdsTable(o('voided')) && !holdsTable(o('refunded')) && !holdsTable(o('open', 'new', null)));
 });

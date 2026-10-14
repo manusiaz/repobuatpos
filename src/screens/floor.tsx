@@ -7,8 +7,7 @@ import Link from 'next/link';
 import { useApp } from '../app/context.tsx';
 import { PageHead } from '../templates/common.tsx';
 import { saveFloor } from '../data/actions/business.ts';
-import { CLOSED } from '../data/actions.ts';
-import { areasOf, checkFloor, freeCell, nextName, ROWS, tablesOf, type FloorTable, type TableShape } from '../domain/tables.ts';
+import { areasOf, checkFloor, freeCell, holdsTable, nextName, ROWS, tablesOf, type FloorTable, type TableShape } from '../domain/tables.ts';
 import { FloorGrid, tableShape } from '../ui/Floor.tsx';
 import { Empty, Field, Icon, Seg, toast } from '../ui/kit.tsx';
 
@@ -27,7 +26,7 @@ export default function FloorPlan() {
   const here = area && areas.includes(area) ? area : areas[0];
   const inArea = ts.filter(t => t.area === here);
   const rows = Math.min(ROWS, Math.max(6, ...inArea.map(t => t.y + 2)));
-  const busy = new Set(db.orders.filter(o => o.outletId === out.id && o.table && !CLOSED.includes(o.status)).map(o => o.table!));
+  const busy = new Set(db.orders.filter(o => o.outletId === out.id && holdsTable(o)).map(o => o.table!));
   const cur = ts.find(t => t.name === sel) ?? null;
 
   const change = (next: FloorTable[]) => { setPlan(next); setErr(checkFloor(next) ?? ''); };

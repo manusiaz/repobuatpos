@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { snapshot } from './store.ts';
-import { newOrder, patchOrder } from './actions.ts';
+import { addLine, newOrder, patchOrder, sendToKitchen } from './actions.ts';
 import { saveFloor } from './actions/business.ts';
 import { tableNames, tablesOf, type FloorTable } from '../domain/tables.ts';
 
@@ -26,4 +26,11 @@ test('a table with an open bill cannot be removed or renamed; a broken plan is r
   // moving it is fine
   assert.equal(saveFloor('sen', tablesOf(out()).map(t => t.name === 'VIP 1' ? { ...t, x: 3, y: 2 } : t), 'budi'), null);
   assert.equal(tablesOf(out()).find(t => t.name === 'VIP 1')!.x, 3);
+});
+
+test('a paid QR order still cooking keeps its table: the plan cannot drop it', () => {
+  const id = newOrder('sen', 'guest', 'qr', { table: 'Bar 1', type: 'dine' });
+  addLine(id, 'p1', [], 1, '', 'guest'); sendToKitchen(id, 'guest');
+  patchOrder(id, { status: 'paid', paidAt: Date.now() }, 'guest');
+  assert.match(saveFloor('sen', tablesOf(out()).filter(t => t.name !== 'Bar 1'), 'budi')!, /Bar 1 has an open bill/);
 });

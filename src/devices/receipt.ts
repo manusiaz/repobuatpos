@@ -85,7 +85,7 @@ function receipt(db: DB, o: Order, paper0: Paper, opts: ReceiptOpts): Doc {
   return { paper, ops };
 }
 
-export interface TicketOpts { reprint?: boolean; cut?: boolean; expo?: boolean }
+export interface TicketOpts { reprint?: boolean; cut?: boolean; expo?: boolean; /** printed big and inverted under the station: 'MOVED FROM T-05', 'VOID - DO NOT MAKE' */ banner?: string }
 
 /** Kitchen ticket for one station: only the lines given (the fired lines routed there), big table/order number.
  *  Item size, table size, inverted notes and auto-cut follow Customization Studio › Kitchen ticket. */
@@ -95,6 +95,7 @@ export function kitchenDoc(db: DB, o: Order, station: string, lines: OrderLine[]
   const at = Math.max(0, ...lines.map(l => l.firedAt ?? 0)) || o.createdAt;
   const ops: Op[] = [
     { t: 'text', s: (opts.expo ? 'EXPO COPY' : station.toUpperCase()) + (opts.reprint ? ' - REPRINT' : ''), align: 'center', bold: true, invert: true },
+    ...(opts.banner ? [{ t: 'text', s: opts.banner.toUpperCase(), align: 'center', bold: true, invert: true, size: 'wide' } as Op] : []),
     { t: 'text', s: (o.type === 'dine' ? o.table ?? 'DINE-IN' : o.type === 'take' ? 'TAKEAWAY' : 'DELIVERY').toUpperCase(), align: 'center', bold: true, size: k.table },
     { t: 'text', s: o.no, align: 'center', bold: true, size: 'wide' },
     { t: 'lr', l: `${SOURCE[o.source] ?? o.source}${o.type === 'dine' ? ` - ${o.guests} pax` : ''}`, r: clock(at) },
