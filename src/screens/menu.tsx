@@ -23,6 +23,7 @@ import { DisplayPreview, KioskPreview, MemberCardPreview, ReceiptPreview, TableC
 import { PROMO_TYPES, PagesPanel, PosPrices, PromosEverywhere, SitePreview, type SiteApi } from './studio/pages.tsx';
 import { EXTRAS } from './studio/extras.tsx';
 import { OverridesPanel, ProductsPanel } from './studio/catalog.tsx';
+import { tableNames } from '../domain/tables.ts';
 
 // slug → [tool key, label, icon, group, panel subtitle]
 const T: Record<string, [string, string, string, string, string]> = {
@@ -201,12 +202,12 @@ function Studio() {
     display: () => <Fields g={d.dc} set={setIn('dc')} fs={[f.seg('idle', 'Idle screen', 'slides:Photo slideshow|promo:Promo banners|video:Video loop|brand:Brand color'), f.seg('cart', 'Cart layout', 'right:Total on right|bottom:Total at bottom'), f.seg('bg', 'Background', 'dark:Dark|brand:Brand|light:Light'),
       f.text('idleHead', 'Idle headline'), f.text('welcome', 'Idle subtext'), f.tog('points', 'Show member points', 'When a member is attached'), f.tog('promo', 'Announcement under the cart', 'From Copy & labels'), f.tog('qris', 'Show QRIS on the display', 'Customer scans here')]} />,
     kiosk: () => <Fields g={d.ki} set={setIn('ki')} fs={[f.seg('bg', 'Attract background', 'brand:Brand color|photo:Cover photo|split:Photo + color'), f.seg('step', 'First step', 'ask:Ask dine-in / takeaway|skip:Takeaway only'), f.text('head', 'Headline'), f.text('cta', 'Start button'), f.range('timeout', 'Reset after', 20, 180, 10, ' s idle'), f.tog('lang', 'Language switch', 'On the attract screen')]} />,
-    qr: () => <><Fields g={d.qr} set={setIn('qr')} fs={qrFields(db.outlets.find(o => o.id === outletId)!.tables)} />
+    qr: () => <><Fields g={d.qr} set={setIn('qr')} fs={qrFields(tableNames(db.outlets.find(o => o.id === outletId)).length)} />
       <button className="btn btn-primary" onClick={() => print()}><Icon name="printer" size={16} />Print or save PDF</button></>,
-    qrgen: () => <><Block title="Outlet"><div className="row wrap">{db.outlets.map(o => <button key={o.id} className="chip" aria-pressed={o.id === outletId} onClick={() => setOutlet(o.id)}>{o.name} · {o.tables}</button>)}</div></Block>
-      <Fields g={d.qr} set={setIn('qr')} fs={[f.num('from', 'From table'), f.num('to', 'To table', `${db.outlets.find(o => o.id === outletId)!.tables} tables at this outlet`), f.seg('layout', 'Format', 'tent:Table tent|sticker:Round sticker|poster:A5 poster'), f.seg('color', 'Color', 'brand:Brand|light:Light|dark:Dark')]} />
+    qrgen: () => <><Block title="Outlet"><div className="row wrap">{db.outlets.map(o => <button key={o.id} className="chip" aria-pressed={o.id === outletId} onClick={() => setOutlet(o.id)}>{o.name} · {tableNames(o).length}</button>)}</div></Block>
+      <Fields g={d.qr} set={setIn('qr')} fs={[f.num('from', 'From table'), f.num('to', 'To table', `${tableNames(db.outlets.find(o => o.id === outletId)).length} tables, in floor plan order · 0 = all`), f.seg('layout', 'Format', 'tent:Table tent|sticker:Round sticker|poster:A5 poster'), f.seg('color', 'Color', 'brand:Brand|light:Light|dark:Dark')]} />
       <p className="faint" style={{ fontSize: 12 }}>Each code opens /order with its table and outlet set. Reprint only if you renumber tables.</p>
-      <button className="btn btn-primary" onClick={() => print()}><Icon name="printer" size={16} />Print {tableRange(d, db.outlets.find(o => o.id === outletId)!.tables).length} codes</button></>,
+      <button className="btn btn-primary" onClick={() => print()}><Icon name="printer" size={16} />Print {tableRange(d, db.outlets.find(o => o.id === outletId)).length} codes</button></>,
     member: () => <Fields g={d.mc} set={setIn('mc')} fs={[f.seg('style', 'Card style', 'brand:Brand gradient|dark:Dark|photo:Cover photo'), f.text('prog', 'Program name'), f.text('pts', 'Points name'), f.text('t0', 'Tier 1 name'), f.text('t1', 'Tier 2 name'), f.text('t2', 'Tier 3 name'),
       f.tog('barcode', 'Show member code', 'Scannable at the POS'), f.tog('progress', 'Show tier progress'), f.note('Tier thresholds and earn rate are set in Loyalty and stay the same here.')]} />,
     publish: () => publishPanel(),
@@ -294,8 +295,8 @@ function Studio() {
   else if (key === 'receipt') preview = { body: <ReceiptPreview ctx={ctx} /> };
   else if (key === 'display') preview = { bar: <Seg value={dcView} onChange={setDcView} label="Display state" options={[['idle', 'Idle'], ['cart', 'Live cart']]} />, body: <DeviceView device="desktop" height={675} label="Customer display preview"><DisplayPreview ctx={ctx} view={dcView} /></DeviceView> };
   else if (key === 'kiosk') preview = { body: <DeviceView device="tablet" label="Kiosk preview"><KioskPreview ctx={ctx} /></DeviceView> };
-  else if (key === 'qr' || key === 'qrgen') { const tables = tableRange(d, outlet.tables), list = key === 'qr' ? tables.slice(0, 3) : tables;
-    preview = { bar: <span style={{ fontSize: 13 }}>{outlet.name} · tables {tables[0] ?? '—'}–{tables[tables.length - 1] ?? '—'}</span>, body: tables.length ? <div className="row wrap" style={{ justifyContent: 'center', gap: 16 }}>{list.map(n => <TableCard key={n} d={shown} n={n} outletId={outletId} wifi={String(d.rc.wifi)} />)}</div> : <Empty icon="qr-code" title="No tables in range">This outlet has {outlet.tables} tables. Set From and To within that.</Empty> }; }
+  else if (key === 'qr' || key === 'qrgen') { const tables = tableRange(d, outlet), list = key === 'qr' ? tables.slice(0, 3) : tables;
+    preview = { bar: <span style={{ fontSize: 13 }}>{outlet.name} · tables {tables[0] ?? '—'}–{tables[tables.length - 1] ?? '—'}</span>, body: tables.length ? <div className="row wrap" style={{ justifyContent: 'center', gap: 16 }}>{list.map(t => <TableCard key={t} d={shown} table={t} outletId={outletId} wifi={String(d.rc.wifi)} />)}</div> : <Empty icon="qr-code" title="No tables in range">This outlet has {tableNames(outlet).length} tables. Set From and To within that.</Empty> }; }
   else if (key === 'member') preview = { body: <MemberCardPreview ctx={ctx} /> };
   else if (extra) preview = extra.device === 'print' ? { body: <div style={{ overflow: 'auto', maxWidth: '100%' }}>{extra.preview(x, ctx)}</div> }
     : { bar: <DeviceSeg value={extra.device === 'desktop' ? 'desktop' : device} onChange={setDevice} only={extra.device === 'desktop' ? ['desktop'] : undefined} />, body: <DeviceView device={extra.device === 'desktop' ? 'desktop' : device} height={extra.device === 'desktop' ? 675 : undefined}>{extra.preview(x, ctx)}</DeviceView> };
@@ -322,5 +323,6 @@ function Studio() {
 }
 
 const qrFields = (tables: number): F[] => [f.seg('layout', 'Format', 'tent:Table tent|sticker:Round sticker|poster:A5 poster'), f.seg('color', 'Color', 'brand:Brand|light:Light|dark:Dark'), f.text('head', 'Headline'), f.text('sub', 'Instructions'),
-  f.num('from', 'From table'), f.num('to', 'To table', `${tables} tables at this outlet`), f.tog('logo', 'Show logo'), f.tog('wifi', 'Show Wi-Fi', 'From Receipt'), f.tog('qris', 'Show “QRIS accepted”')];
-const tableRange = (d: MenuDesign, max: number) => { const a = Math.max(1, Number(d.qr.from) || 1), b = Math.min(max, Number(d.qr.to) || max), out: number[] = []; for (let i = a; i <= b; i++) out.push(i); return out; };
+  f.num('from', 'From table'), f.num('to', 'To table', `${tables} tables, in floor plan order · 0 = all`), f.tog('logo', 'Show logo'), f.tog('wifi', 'Show Wi-Fi', 'From Receipt'), f.tog('qris', 'Show “QRIS accepted”')];
+/** Tables From…To (1-based, in floor plan order) for the QR codes. */
+const tableRange = (d: MenuDesign, o: Parameters<typeof tableNames>[0]) => { const all = tableNames(o), max = all.length, a = Math.max(1, Number(d.qr.from) || 1), b = Math.min(max, Number(d.qr.to) || max), out: string[] = []; for (let i = a; i <= b; i++) out.push(all[i - 1]); return out; };

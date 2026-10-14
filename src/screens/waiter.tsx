@@ -14,10 +14,10 @@ import type { DB, Order, Product } from '../data/schema.ts';
 import { SHIFTS } from '../domain/shift.ts';
 import { bumpTimes, isHistory, isOnline, lineMods } from './kitchen/model.ts';
 import { ClockCard } from './kitchen/kdsPages.tsx';
+import { areasOf, tablesOf, type FloorTable } from '../domain/tables.ts';
 
 type Tab = 'tables' | 'table' | 'ready' | 'calls' | 'me';
 const OPEN = ['open', 'held', 'sent', 'preparing', 'ready', 'served', 'paying'];
-const tableName = (i: number) => 'T-' + String(i).padStart(2, '0');
 
 function tableState(db: DB, o: Order | undefined, billed: Set<string>, now: number, resv?: DB['reservations'][0]): { s: string; tone: Tone } {
   if (!o) return resv?.status === 'seated' ? { s: 'Seated', tone: 'info' } : resv ? { s: 'Reserved ' + hhmm(resv.at), tone: 'neutral' } : { s: 'Available', tone: 'success' };
@@ -59,7 +59,7 @@ export default function Screen() {
     {!db.device.online && <div className="banner" role="alert" style={{ margin: '10px 14px 0', background: 'var(--danger-soft)', color: 'var(--danger-fg)' }}><Icon name="wifi-off" /><span>Offline. New orders are kept on this phone and sent to the kitchen when the connection is back.</span></div>}
     <main className="stack" style={{ flex: 1, padding: '12px 14px 160px' }}>
       {tab === 'tables' && <div className="wt">
-        <div className="stack"><Tables tables={outlet?.tables ?? 0} {...{ db, open, billed, now, ready: ready.length, outletId, sel }} onReady={() => setTab('ready')} onPick={pick} /></div>
+        <div className="stack"><Tables tables={tablesOf(outlet)} {...{ db, open, billed, now, ready: ready.length, outletId, sel }} onReady={() => setTab('ready')} onPick={pick} /></div>
         <aside className="wt-side card stack" aria-label={sel ? 'Table ' + sel : 'Table detail'}>{sel ? <TableView table={sel} o={open.find(o => o.table === sel)} {...{ db, by, outletId, billed, canOrder }} />
           : <Empty icon="armchair" title="Pick a table">Its order, kitchen status and bill show here.</Empty>}</aside>
       </div>}
@@ -88,23 +88,24 @@ export default function Screen() {
 }
 
 type Filter = 'all' | 'free' | 'busy' | 'needs';
-function Tables({ db, open, billed, now, tables, ready, outletId, sel, onReady, onPick }: { db: DB; open: Order[]; billed: Set<string>; now: number; tables: number; ready: number; outletId: string; sel: string | null; onReady: () => void; onPick: (t: string) => void }) {
+function Tables({ db, open, billed, now, tables, ready, outletId, sel, onReady, onPick }: { db: DB; open: Order[]; billed: Set<string>; now: number; tables: FloorTable[]; ready: number; outletId: string; sel: string | null; onReady: () => void; onPick: (t: string) => void }) {
   const [f, setF] = useState<Filter>('all');
   const resv = db.reservations.filter(r => r.outletId === outletId && (r.status === 'seated' || (r.status === 'booked' && r.at > now - 30 * 60e3 && r.at < now + 3 * 3600e3)));
-  if (!tables) return <Empty icon="armchair" title="No tables at this outlet">Tables are set in the outlet settings.</Empty>;
+  if (!tables.length) return <Empty icon="armchair" title="No tables at this outlet">The owner or manager draws them in Tables & floor plan.</Empty>;
+  const many = areasOf(tables).length > 1;
   return <>
     {ready > 0 && <div className="row between" style={{ padding: '12px 14px', borderRadius: 16, background: 'var(--success)', color: '#fff' }}><span style={{ fontSize: 14 }}><b>{ready} {ready === 1 ? 'order' : 'orders'} ready</b> at the pass</span><button type="button" className="btn btn-sm" style={{ background: '#fff', color: 'var(--success-fg)', borderColor: 'transparent' }} onClick={onReady}>Pick up</button></div>}
     {(() => {
-      const all = Array.from({ length: tables }, (_, i) => { const t = tableName(i + 1), o = open.find(x => x.table === t); return { t, o, st: tableState(db, o, billed, now, resv.find(r => r.table === t)) }; });
+      const all = tables.map(ft => { const t = ft.name, o = open.find(x => x.table === t); return { t, ft, o, st: tableState(db, o, billed, now, resv.find(r => r.table === t)) }; });
       const of = (k: Filter) => all.filter(x => k === 'all' || (k === 'free' ? !x.o : k === 'busy' ? !!x.o : ['danger', 'success', 'violet'].includes(x.st.tone) && !!x.o));
       return <>
         <div className="seg" role="group" aria-label="Filter tables" style={{ alignSelf: 'flex-start', overflowX: 'auto', maxWidth: '100%' }}>{([['all', 'All'], ['free', 'Available'], ['busy', 'Occupied'], ['needs', 'Needs you']] as const).map(([k, l]) =>
           <button key={k} type="button" aria-pressed={f === k} onClick={() => setF(k)}>{l} · {of(k).length}</button>)}</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 10 }}>{of(f).map(({ t, o, st }) => {
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 10 }}>{of(f).map(({ t, ft, o, st }) => {
           const col = `var(--${st.tone === 'neutral' ? 'border' : st.tone})`;
           return <button key={t} type="button" onClick={() => onPick(t)} aria-pressed={sel === t} className="wt-table" style={{ borderLeft: `4px solid ${o || st.tone !== 'success' ? col : 'var(--border)'}`, background: o ? 'var(--bg-surface)' : 'var(--bg-sunken)' }}>
             <span className="row between"><b style={{ fontSize: 18 }}>{t}</b>{o && <span className="muted" style={{ fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>{String(Math.floor((now - o.createdAt) / 3600e3)).padStart(2, '0')}:{String(Math.floor((now - o.createdAt) / 60e3) % 60).padStart(2, '0')}</span>}</span>
-            <span className="muted row" style={{ fontSize: 12, gap: 4 }}><Icon name="users" size={14} />{o ? o.guests + ' pax' : '—'}</span>
+            <span className="muted row" style={{ fontSize: 12, gap: 4 }}><Icon name="users" size={14} />{o ? o.guests + ' pax' : ft.seats + ' seats'}{many ? ' · ' + ft.area : ''}</span>
             <Badge tone={st.tone}>{st.s}</Badge></button>; })}</div>
       </>;
     })()}

@@ -13,7 +13,7 @@ export type Role = 'owner' | 'manager' | 'pic' | 'cashier' | 'kitchen' | 'waiter
 
 /** Business identity printed on receipts and invoices (Business profile page). */
 export interface BusinessProfile { legalName: string; npwp: string; address: string; phone: string; email: string; brands: string[] }
-export interface Outlet { id: string; name: string; city: string; serviceBps: number; taxBps: number; taxInclusive: boolean; opens: string; closes: string; tables: number; online: boolean; address?: string; phone?: string; /** regional tax id printed for PB1 */ npwpd?: string }
+export interface Outlet { id: string; name: string; city: string; serviceBps: number; taxBps: number; taxInclusive: boolean; opens: string; closes: string; tables: number; /** floor plan (Tables & floor plan); empty = T-01…T-n from `tables` */ floor?: import('../domain/tables.ts').FloorTable[]; online: boolean; address?: string; phone?: string; /** regional tax id printed for PB1 */ npwpd?: string }
 export interface Employee { id: string; name: string; role: Role; outlets: string[]; pin: string; approvalPin: string; phone: string; color: string; active: boolean; wage: IDR }
 export interface Category { id: string; name: string; station: 'bar' | 'kitchen' | 'pastry' }
 export interface ModifierGroup { id: string; name: string; required: boolean; max: number; options: { id: string; name: string; price: IDR }[] }

@@ -11,6 +11,8 @@ import { flashPrice, usable } from '../../domain/promo.ts';
 import { lineTotal } from '../../domain/order.ts';
 import { balance, tierOf } from '../../domain/loyalty.ts';
 import { idr } from '../../domain/money.ts';
+import { areasOf, tablesOf } from '../../domain/tables.ts';
+import { FloorGrid, tableShape } from '../../ui/Floor.tsx';
 import { Badge, Empty, Field, Icon, Seg, Sheet, Status, Toggle, ago, hhmm, toast } from '../../ui/kit.tsx';
 import type { Customer, OrderLine } from '../../data/schema.ts';
 import { AmountPad, ONLINE_INBOX, P, Paper, REG, RIDE_INBOX, Stepper, TabLinks, isOpenBill, itemsOf, label, usePerm, usePos, useApproval, warnStyle } from './shared.tsx';
@@ -88,16 +90,18 @@ export function tableState(db: ReturnType<typeof usePos>['db'], outletId: string
   const out = db.outlets.find(o => o.id === outletId)!;
   const bills = db.orders.filter(o => o.outletId === outletId && o.type === 'dine' && o.table && isOpenBill(o));
   const now = Date.now();
-  return Array.from({ length: out.tables }, (_, i) => {
-    const t = 'T-' + String(i + 1).padStart(2, '0');
+  return tablesOf(out).map(ft => {
+    const t = ft.name;
     const on = bills.filter(o => o.table === t);
     const res = db.reservations.find(r => r.outletId === outletId && r.table === t && r.status === 'booked' && r.at > now - 15 * 60e3 && r.at - now < 6 * 3600e3);
-    return { t, bills: on, res, amount: on.reduce((a, o) => a + o.total, 0), since: on.length ? Math.min(...on.map(o => o.createdAt)) : 0 };
+    return { t, ft, bills: on, res, amount: on.reduce((a, o) => a + o.total, 0), since: on.length ? Math.min(...on.map(o => o.createdAt)) : 0 };
   });
 }
 function Table({ close }: BodyProps) {
   const { db, outletId, cur, me, ensureOrder, setCur } = usePos();
-  const tables = tableState(db, outletId);
+  const tables = tableState(db, outletId), areas = areasOf(tables.map(x => x.ft));
+  const [area, setArea] = useState(() => tables.find(x => x.t === cur?.table)?.ft.area ?? areas[0]);
+  const inArea = tables.filter(x => x.ft.area === area);
   const pick = (x: ReturnType<typeof tableState>[number]) => {
     const other = x.bills.find(o => o.id !== cur?.id);
     if (other && !x.bills.some(o => o.id === cur?.id)) { setCur(other.id); toast(`Opened bill ${other.no} · ${x.t}`); return close(); }
@@ -106,12 +110,14 @@ function Table({ close }: BodyProps) {
   return <div className="stack">
     <div className="row wrap" style={{ gap: 12, fontSize: 13 }}>{[['var(--bg-surface)', 'Free'], ['var(--accent-soft)', 'Occupied'], ['var(--info-soft)', 'Reserved'], ['var(--accent)', 'This order']].map(([c, l]) =>
       <span key={l} className="row" style={{ gap: 6 }}><i style={{ width: 14, height: 14, borderRadius: 4, background: c, border: '1px solid var(--border)' }} />{l}</span>)}</div>
-    <div className="grid" style={{ ['--min' as string]: '104px', gap: 8 }}>{tables.map(x => {
+    {areas.length > 1 && <Seg label="Area" value={area} onChange={setArea} options={areas.map(a => [a, `${a} · ${tables.filter(x => x.ft.area === a && !x.bills.length).length} free`] as const)} />}
+    {!tables.length ? <Empty icon="armchair" title="No tables at this outlet">The owner or manager draws them in Tables & floor plan.</Empty> :
+    <FloorGrid tables={inArea.map(x => x.ft)} rows={Math.max(1, ...inArea.map(x => x.ft.y + 1))} size={96} table={ft => { const x = inArea.find(y => y.t === ft.name)!;
       const mine = x.bills.some(o => o.id === cur?.id), occ = x.bills.length > 0;
-      return <button key={x.t} onClick={() => pick(x)} className="btn" style={{ height: 76, flexDirection: 'column', gap: 2, background: mine ? 'var(--accent)' : occ ? 'var(--accent-soft)' : x.res ? 'var(--info-soft)' : undefined, color: mine ? 'var(--ink-0)' : undefined, borderColor: mine ? 'var(--accent)' : undefined }}>
+      return <button key={x.t} onClick={() => pick(x)} className="btn" style={{ ...tableShape(ft), height: '100%', flexDirection: 'column', gap: 2, padding: 4, background: mine ? 'var(--accent)' : occ ? 'var(--accent-soft)' : x.res ? 'var(--info-soft)' : undefined, color: mine ? 'var(--ink-0)' : undefined, borderColor: mine ? 'var(--accent)' : undefined }}>
         <b className="num" style={{ fontSize: 17 }}>{x.t}</b>
-        <span style={{ fontSize: 13, fontWeight: 500, opacity: .85 }}>{mine ? 'This order' : occ ? `${idr(x.amount).replace('IDR ', '')} · ${Math.round((Date.now() - x.since) / 60e3)}m` : x.res ? `Reserved ${hhmm(x.res.at)}` : 'Free'}</span></button>;
-    })}</div>
+        <span style={{ fontSize: 13, fontWeight: 500, opacity: .85 }}>{mine ? 'This order' : occ ? `${idr(x.amount).replace('IDR ', '')} · ${Math.round((Date.now() - x.since) / 60e3)}m` : x.res ? `Reserved ${hhmm(x.res.at)}` : `${ft.seats} seats`}</span></button>;
+    }} />}
     <p className="faint" style={{ fontSize: 13 }}>Tap an occupied table to open its bill. Merge and move live in the order’s More menu.</p>
   </div>;
 }

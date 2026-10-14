@@ -51,7 +51,8 @@ export function defaultDesign(theme: Theme): MenuDesign {
     rc: { paper: '80', qr: 'feedback', ch: 'wa', h1: 'Jl. Asia Afrika 8, Senayan, Jakarta', f1: 'Terima kasih sudah mampir!', f2: 'Kritik & saran: 0812-3456-7890', wifi: 'KOPIBIRU-GUEST · senayan8', thanks: 'Thanks for visiting!', logo: true, points: true, social: true, wifiOn: true },
     dc: { idle: 'slides', cart: 'right', bg: 'dark', idleHead: 'Payday week: 20% off all coffee', welcome: 'Your order will appear here.', points: true, promo: true, qris: true },
     ki: { bg: 'split', step: 'ask', head: 'Order here, skip the line', cta: 'Tap to start', timeout: 60, lang: true },
-    qr: { layout: 'tent', color: 'brand', head: 'Scan to order', sub: 'No app needed. Pay with QRIS or at the cashier.', from: 1, to: 12, wifi: true, logo: true, qris: true },
+    qr: { layout: 'tent', color: 'brand', head: 'Scan to order', sub: 'No app needed. Pay with QRIS or at the cashier.', from: 1, to: 0, // to 0 = every table on the floor plan
+    wifi: true, logo: true, qris: true },
     mc: { style: 'brand', prog: 'Biru Rewards', pts: 'beans', t0: 'Silver', t1: 'Gold', t2: 'Platinum', barcode: true, progress: true },
     pub: { when: 'now', at: '', from: '', to: '', season: 'Ramadan', ov_sen: false, ov_kem: true, ov_bsd: false },
     opts: { prices: true, desc: true, sold: true, lang: true, powered: true, tex: false },

@@ -16,7 +16,8 @@ const WHITE = 'var(--ink-0)', INK = 'var(--ink-950)';
 // Print card fills must be real colours for the contrast maths; these equal --ink-0 / --ink-950.
 const PAPER_HEX = '#FFFFFF', INK_HEX = '#141210';
 /** Table link encoded in every table QR (scan landing detects the table and outlet). */
-export const tableUrl = (outletId: string, n: number) => linkTo(`/order?t=${String(n).padStart(2, '0')}&o=${outletId}`);
+/** The QR on a table: opens the menu with that table and outlet set (selforder/shared.tsx reads ?t= with tableParam). */
+export const tableUrl = (outletId: string, table: string) => linkTo(`/order?t=${encodeURIComponent(table)}&o=${outletId}`);
 const lastOrder = (db: DB, outletId: string, open = false): Order | undefined =>
   db.orders.filter(o => o.outletId === outletId && o.lines.length && (open ? ['open', 'sent', 'paying'].includes(o.status) : o.status === 'paid')).sort((a, b) => b.createdAt - a.createdAt)[0];
 const initials = (n: string) => n.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
@@ -25,7 +26,7 @@ export function ReceiptPreview({ ctx }: { ctx: GuestCtx }) {
   const { d, db, outletId } = ctx, rc = d.rc, o = lastOrder(db, outletId), outlet = db.outlets.find(x => x.id === outletId)!;
   const w = rc.paper === '58' ? 236 : 316, fs = rc.paper === '58' ? 11 : 12;
   const pts = o ? Math.floor(o.subtotal / 1000) : 0;
-  const url = rc.qr === 'feedback' ? linkTo(`/order/customer-links/feedback-and-rating?o=${o?.id ?? ''}`) : rc.qr === 'member' ? linkTo('/order/customer-links/member-card-and-points') : tableUrl(outletId, 1);
+  const url = rc.qr === 'feedback' ? linkTo(`/order/customer-links/feedback-and-rating?o=${o?.id ?? ''}`) : rc.qr === 'member' ? linkTo('/order/customer-links/member-card-and-points') : tableUrl(outletId, 'T-01');
   const Row = ({ l, r, b }: { l: ReactNode; r: ReactNode; b?: boolean }) => <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontWeight: b ? 700 : 400 }}><span>{l}</span><span>{r}</span></div>;
   return <div className="row wrap" style={{ alignItems: 'flex-start', justifyContent: 'center', gap: 20 }}>
     <div className="mono" style={{ width: w, background: WHITE, color: INK, padding: '16px 14px', fontSize: fs, lineHeight: 1.5, boxShadow: 'var(--shadow-e2)', display: 'flex', flexDirection: 'column', gap: 6 }} aria-label={`${rc.paper} mm thermal receipt`}>
@@ -109,7 +110,7 @@ export function KioskPreview({ ctx }: { ctx: GuestCtx }) {
   </Guest>;
 }
 
-export function TableCard({ d, n, outletId, wifi }: { d: MenuDesign; n: number; outletId: string; wifi?: string }) {
+export function TableCard({ d, table, outletId, wifi }: { d: MenuDesign; table: string; outletId: string; wifi?: string }) {
   const q = d.qr, sticker = q.layout === 'sticker';
   const bg = q.color === 'brand' ? d.p : q.color === 'dark' ? INK_HEX : PAPER_HEX;
   const fg = onColor(bg);
@@ -117,8 +118,8 @@ export function TableCard({ d, n, outletId, wifi }: { d: MenuDesign; n: number; 
   return <Guest d={d} style={{ ...s, minHeight: s.minHeight }}>
     {q.logo && !sticker && <span style={{ width: 44, height: 44, borderRadius: 12, background: d.media.logo ? `${WHITE} url(${d.media.logo}) center/70% no-repeat` : 'var(--bn-acc)', color: 'var(--bn-on-acc)', display: 'grid', placeItems: 'center', fontWeight: 800 }}>{!d.media.logo && initials(d.name)}</span>}
     <b style={{ ...gh(d), fontSize: sticker ? 20 : 26, color: fg }}>{String(q.head)}</b>
-    <span style={{ padding: 8, background: WHITE, borderRadius: 12 }}><QR value={tableUrl(outletId, n)} size={sticker ? 120 : 160} fg={INK} bg={WHITE} label={`Table ${n} QR`} /></span>
-    <b style={{ fontSize: 18, color: fg }}>Table {String(n).padStart(2, '0')}</b>
+    <span style={{ padding: 8, background: WHITE, borderRadius: 12 }}><QR value={tableUrl(outletId, table)} size={sticker ? 120 : 160} fg={INK} bg={WHITE} label={`${table} QR`} /></span>
+    <b style={{ fontSize: 18, color: fg }}>{/^T-\d+$/.test(table) ? 'Table ' + table.slice(2) : table}</b>
     {!sticker && <span style={{ fontSize: 13, color: fg, opacity: .85 }}>{String(q.sub)}</span>}
     {q.qris && <span style={{ fontSize: 11, fontWeight: 700, color: fg }}>QRIS accepted</span>}
     {q.wifi && wifi && !sticker && <span style={{ fontSize: 11, color: fg, opacity: .8 }}>Wi-Fi {wifi}</span>}

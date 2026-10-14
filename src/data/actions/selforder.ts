@@ -8,6 +8,7 @@ import { awardReferral } from './business.ts';
 import { giftCardOf, referralOffer } from '../../system/studio.ts';
 import { allocate, splitEqual } from '../../domain/split.ts';
 import { lineTotal } from '../../domain/order.ts';
+import { tablesOf } from '../../domain/tables.ts';
 
 const now = () => Date.now();
 const notice = notify; // one alert engine (actions.ts)
@@ -40,7 +41,9 @@ export function bookTable(r: { outletId: string; name: string; phone: string; at
   commit('reservation.created', 'guest', d => {
     const out = d.outlets.find(o => o.id === r.outletId)!;
     const busy = new Set(d.reservations.filter(x => x.outletId === r.outletId && x.status === 'booked' && Math.abs(x.at - r.at) < 2 * 3600e3).map(x => x.table));
-    const table = Array.from({ length: out.tables }, (_, i) => 'T-' + String(i + 1).padStart(2, '0')).find(t => !busy.has(t)) ?? 'T-01';
+    // the smallest free table that seats the party, else any free table
+    const ts = tablesOf(out), free = ts.filter(t => !busy.has(t.name));
+    const table = (free.filter(t => t.seats >= r.guests).sort((a, b) => a.seats - b.seats)[0] ?? free[0] ?? ts[0])?.name ?? 'T-01';
     d.reservations.push({ id, outletId: r.outletId, name: r.name, phone: r.phone, at: r.at, guests: r.guests, table, status: 'booked', deposit: 0 });
     notice(d, 'New reservation', r.guests > 20 ? 'warn' : 'info', ['manager', 'pic'], r.outletId, `${r.name} · ${r.guests} guests · ${new Date(r.at).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}${r.note ? ' · ' + r.note : ''}`);
   }, r.name, r.outletId);

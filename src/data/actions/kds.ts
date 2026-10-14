@@ -8,6 +8,7 @@ import { addLine, newOrder, requestApproval, sendToKitchen, toggle86 } from '../
 const findOrder = (d: DB, id: string) => d.orders.find(o => o.id === id);
 /** One alert engine: recipients from the alert catalog (actions.ts notify). */
 import { notify as notice, orderReady } from '../actions.ts';
+import { tableNames } from '../../domain/tables.ts';
 export { notice };
 
 /** After any line change: all fired lines done → ready (+ notice); started → preparing; recalled → back to preparing. */
@@ -56,7 +57,7 @@ export function demoTicket(d0: DB, outletId: string) {
   const r = Math.random, outlet = d0.outlets.find(o => o.id === outletId);
   const avail = d0.outletProducts.filter(x => x.outletId === outletId && !x.is86 && !x.hidden).map(x => d0.products.find(p => p.id === x.productId)!).filter(p => p?.status === 'live');
   if (!avail.length) return null;
-  const table = 'T-' + String(1 + Math.floor(r() * (outlet?.tables ?? 12))).padStart(2, '0');
+  const names = tableNames(outlet), table = names.length ? names[Math.floor(r() * names.length)] : 'T-01';
   const id = newOrder(outletId, 'guest', 'qr', { table, type: 'dine', guests: 1 + Math.floor(r() * 4) });
   avail.sort(() => r() - .5).slice(0, 1 + Math.floor(r() * 3)).forEach((p, i) => {
     const groups = p.modifierGroupIds.map(g => d0.modifierGroups.find(m => m.id === g)!).filter(g => g?.required);

@@ -3,6 +3,7 @@
 // Each edits the real record the rest of the system reads (receipt printer, sign-in, QR menu, every outlet screen).
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { useApp } from '../app/context.tsx';
 import { Avatar, Badge, Empty, Field, Icon, Sheet, Toggle, toast } from '../ui/kit.tsx';
 import { usePin } from '../ui/PinSheet.tsx';
@@ -177,7 +178,7 @@ function OutletForm({ o, done }: { o: Outlet | null; done?: () => void }) {
     <div className="row wrap">{T('name', 'Name')}{T('city', 'City')}</div>
     {T('address', 'Address', { placeholder: 'Printed on receipts' })}
     <div className="row wrap">{T('phone', 'Phone', { inputMode: 'tel' })}{T('npwpd', 'NPWPD', { placeholder: 'Regional tax id for PB1' })}</div>
-    <div className="row wrap">{T('opens', 'Opens', { type: 'time' })}{T('closes', 'Closes', { type: 'time' })}{N('tables', 'Tables')}</div>
+    <div className="row wrap">{T('opens', 'Opens', { type: 'time' })}{T('closes', 'Closes', { type: 'time' })}{f.floor?.length ? <Field label="Tables" hint="From the floor plan"><Link className="btn" href="/owner/outlets/tables-and-floor-plan">{f.floor.length} tables · edit plan</Link></Field> : N('tables', 'Tables')}</div>
     <div className="row wrap">{N('serviceBps', 'Service charge %', 100)}{N('taxBps', 'PB1 %', 100)}</div>
     <label className="row between"><span>Prices include PB1</span><Toggle on={f.taxInclusive} onChange={v => setF({ ...f, taxInclusive: v })} label="Prices include PB1" /></label>
     <label className="row between"><span>Open for online and QR orders</span><Toggle on={f.online} onChange={v => setF({ ...f, online: v })} label="Online orders" /></label>

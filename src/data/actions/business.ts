@@ -2,6 +2,8 @@
 // Business identity, outlets and invite-a-friend. Writes only through commit().
 import { commit, snapshot, uid } from '../store.ts';
 import type { BusinessProfile, Outlet } from '../schema.ts';
+import { checkFloor, tableNames, type FloorTable } from '../../domain/tables.ts';
+import { CLOSED } from '../actions.ts';
 import { referral } from '../../system/settings.ts';
 import { referrerOf } from '../../system/studio.ts';
 
@@ -12,6 +14,21 @@ export function saveBusiness(name: string, profile: BusinessProfile, by: string)
 }
 
 /** A new outlet sells the whole global menu at base price until the owner says otherwise. */
+/** Tables & floor plan. A table that has an open bill or a booking still coming can't be renamed or removed. */
+export function saveFloor(outletId: string, floor: FloorTable[], by: string): string | null {
+  const d0 = snapshot(), out = d0.outlets.find(o => o.id === outletId);
+  if (!out) return 'Outlet not found.';
+  const plan = floor.map(t => ({ ...t, name: t.name.trim(), area: t.area.trim() }));
+  const bad = checkFloor(plan);
+  if (bad) return bad;
+  const keep = new Set(plan.map(t => t.name)), now = Date.now();
+  const busy = [...d0.orders.filter(o => o.outletId === outletId && o.table && !CLOSED.includes(o.status)).map(o => o.table!),
+    ...d0.reservations.filter(r => r.outletId === outletId && ['booked', 'seated'].includes(r.status) && r.at > now - 3 * 3600e3).map(r => r.table)];
+  const gone = tableNames(out).filter(n => !keep.has(n) && busy.includes(n));
+  if (gone.length) return `${gone.join(', ')} ${gone.length > 1 ? 'have' : 'has'} an open bill or booking. Close it or move it first.`;
+  commit('outlet.floor_saved', by, d => { const o = d.outlets.find(x => x.id === outletId)!; o.floor = plan; o.tables = plan.length; }, `${out.name} · ${plan.length} tables`, outletId);
+  return null;
+}
 export function addOutlet(o: Omit<Outlet, 'id'>, by: string): string {
   const id = uid('ol');
   commit('outlet.created', by, d => {

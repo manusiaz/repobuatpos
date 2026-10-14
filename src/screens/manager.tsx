@@ -20,6 +20,7 @@ import { ApprovalCard, OpnameProof, useDecide, whyBlocked } from './ops/approval
 import { allowed } from './ops/perm.ts';
 import { ROLE_LABEL, attendance, clockState, dateKey, emp, isLive, isPaid, nameOf, onSlot, rosterDay, slotLabel, slotNow, slotOf, slotTime, startOfDay, longDate } from './ops/shift.ts';
 import { KIND_SLUG, NewSheet } from './manager/create.tsx';
+import { tableNames } from '../domain/tables.ts';
 
 const PAGES = pagesOf('manager');
 const P = (slug: string) => PAGES.find(p => p.slug === slug)?.path ?? '/manager';
@@ -204,7 +205,7 @@ function Live({ c }: { c: Ctx }) {
   const live = db.orders.filter(o => o.outletId === here && isLive(o.status) && o.createdAt >= t0).sort((a, b) => a.createdAt - b.createdAt);
   const slot = slotNow(now), sd = rosterDay(db, here);
   const crew = onSlot(sd, slot);
-  const tables = Array.from({ length: outlet.tables }, (_, i) => `T-${String(i + 1).padStart(2, '0')}`);
+  const tables = tableNames(outlet);
   const used = new Set(live.map(o => o.table).filter(Boolean));
   const booked = new Set(db.reservations.filter(r => r.outletId === here && r.status === 'booked' && r.at >= t0 && r.at < t0 + DAY).map(r => r.table));
   const online = live.filter(o => ['gofood', 'grabfood', 'shopeefood', 'web'].includes(o.source) && o.status === 'open');

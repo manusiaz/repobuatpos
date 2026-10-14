@@ -17,6 +17,7 @@ import { ApprovalQueue, ApprovalHistory, Escalate } from './pic/approvals.tsx';
 import { CashMoves, DrawerCounts, Handover, PassPic } from './pic/cash.tsx';
 import { SoldOut, StockRequest, StockCount, Incidents } from './pic/floor.tsx';
 import { ROLE_LABEL, clockState, isLive, isPaid, nameOf, onSlot, slotLabel, slotTime, startOfDay, emp } from './ops/shift.ts';
+import { areasOf, tableNames, tablesOf } from '../domain/tables.ts';
 
 const PAGES = pagesOf('pic');
 const GROUPS = [...new Set(PAGES.map(p => p.group))];
@@ -241,7 +242,9 @@ const STATIONS = ['Register 1', 'Register 2', 'Bar', 'Kitchen', 'Pastry', 'Floor
 function Stations({ c }: { c: PicCtx }) {
   const { db, outletId, date, slot, meId, outlet } = c;
   const crew = team(c);
-  const n = outlet?.tables ?? 0, sections = ['—', ...Array.from({ length: Math.ceil(n / 4) }, (_, i) => `T-${String(i * 4 + 1).padStart(2, '0')} – T-${String(Math.min(n, i * 4 + 4)).padStart(2, '0')}`)];
+  // sections follow the floor plan's areas; one area → blocks of four tables
+  const ts = tableNames(outlet), areas = areasOf(tablesOf(outlet));
+  const sections = ['—', ...(areas.length > 1 ? areas : Array.from({ length: Math.ceil(ts.length / 4) }, (_, i) => `${ts[i * 4]} – ${ts[Math.min(ts.length, i * 4 + 4) - 1]}`))];
   const save = (id: string, patch: { c?: string; d?: string }) => {
     const cur = db.records.station?.find(r => r.id === `${outletId}|${date}|${id}`);
     saveRecord('station', { id: `${outletId}|${date}|${id}`, a: outletId, b: id, c: patch.c ?? cur?.c ?? STATIONS[0], d: patch.d ?? cur?.d ?? '—', e: slot, at: Date.now() }, meId);

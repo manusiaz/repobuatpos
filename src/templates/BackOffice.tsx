@@ -11,9 +11,10 @@ import Settings from './Settings.tsx';
 import Flow from './Flow.tsx';
 import { MessageTemplate, DeviceScreen } from './Template.tsx';
 import { Insights, Forecast, INSIGHTS, FORECAST_PAGE } from '../screens/insight/insights.tsx';
+import FloorPlan from '../screens/floor.tsx';
 
 /** Pages that carry their own logic instead of the generic template. */
-const SCREENS: Record<string, ComponentType> = { [INSIGHTS]: Insights, [FORECAST_PAGE]: Forecast };
+const SCREENS: Record<string, ComponentType> = { [INSIGHTS]: Insights, [FORECAST_PAGE]: Forecast, '/owner/outlets/tables-and-floor-plan': FloorPlan };
 
 export default function BackOffice() {
   const { page } = useApp();

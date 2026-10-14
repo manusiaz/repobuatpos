@@ -15,6 +15,7 @@ import { earn, tierOf } from '../../domain/loyalty.ts';
 import { newOrder } from '../../data/actions.ts';
 import type { DB, Order } from '../../data/schema.ts';
 import { groupsOf, hours, LINE, MUTED, SURFACE, unit, unpaid, useLang, useLocal, type MenuItem } from '../guest/kit.tsx';
+import { tableParam } from '../../domain/tables.ts';
 
 const PATHS: Record<string, string> = Object.fromEntries(pagesOf('selforder').map(p => [p.slug, p.path]));
 export const so = (slug: string, q?: Record<string, string>) => (PATHS[slug] ?? PATHS.order ?? '/') + (q ? '?' + new URLSearchParams(q) : '');
@@ -33,7 +34,7 @@ export function useGuest() {
   const qref = sp.get('ref');
   useEffect(() => { if (qref && qref !== ref) setRef(qref); }, [qref, ref, setRef]);
   const qt = sp.get('t') ?? routeQuery().t ?? null; // order.bornis.id/<tenant>/t/07 carries the table in the path
-  const table = qt ? 'T-' + qt.replace(/^T-?/i, '').padStart(2, '0') : saved;
+  const table = qt ? tableParam(qt) : saved;
   useEffect(() => { if (qt && table !== saved) setSaved(table); }, [qt, table, saved, setSaved]);
   const L = useLang(guestLanguages(db, guestLang(db)).first);
   const [meId, setMe] = useLocal<string | null>('bn-guest-customer', null);

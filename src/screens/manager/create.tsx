@@ -9,6 +9,7 @@ import { uid } from '../../data/store.ts';
 import { LIMITS } from '../../domain/approval.ts';
 import { idr } from '../../domain/money.ts';
 import { Field, Icon, Seg, Sheet, Toggle, toast } from '../../ui/kit.tsx';
+import { tableNames } from '../../domain/tables.ts';
 
 export type Kind = 'purchase' | 'repair' | 'product' | 'stock' | 'booking';
 export const KIND_SLUG: Record<string, Kind> = { 'purchase-request': 'purchase', 'renovation-repair-request': 'repair', 'new-menu-item': 'product', 'stock-adjustment-and-waste-entry': 'stock', 'new-reservation': 'booking' };
@@ -69,7 +70,7 @@ export function NewSheet({ open, kind, scope }: { open: boolean; kind: Kind | nu
   };
 
   const ownerGated = kind === 'product' || ((kind === 'purchase' || kind === 'repair') && num(v('cost')) > LIMITS.manager);
-  const tables = Array.from({ length: db.outlets.find(o => o.id === outlet)?.tables ?? 0 }, (_, i) => `T-${String(i + 1).padStart(2, '0')}`);
+  const tables = tableNames(db.outlets.find(o => o.id === outlet));
   return <Sheet open={open} onClose={close} title={K ? K[1] : 'What do you want to add?'} sub={K ? K[2] : 'Requests that need the owner go to Waiting for owner.'}
     footer={K ? <><button className="btn" onClick={() => go(pathOf('plus-new-action-sheet'))}>Back</button><button className="btn btn-primary" onClick={submit}>{ownerGated && user.role !== 'owner' ? 'Send to owner' : kind === 'booking' ? 'Book table' : 'Send for approval'}</button></> : undefined}>
     {!K ? <div className="stack sm">{KINDS.map(([k, l, d, ic, owner]) => <button key={k} className="card tight row" style={{ cursor: 'pointer', textAlign: 'left', minHeight: 64 }} onClick={() => go(pathOf(SLUG_OF[k]))}>

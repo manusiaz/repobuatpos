@@ -1,6 +1,6 @@
 'use client';
 // Base components (spec: BorNiz Components). Everything else is composed from these + the CSS in app/globals.css.
-import { useContext, useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
+import { cloneElement, isValidElement, useContext, useEffect, useId, useRef, useState, type ReactElement, type ReactNode, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { Ctx } from '../app/context.tsx';
 import { drillTo } from '../system/drill.ts';
@@ -33,7 +33,10 @@ export function Seg<T extends string>({ value, options, onChange, label }: { val
   return <div className="seg" role="group" aria-label={label}>{options.map(o => { const [k, l] = Array.isArray(o) ? o : [o, o]; return <button key={k} type="button" aria-pressed={value === k} onClick={() => onChange(k as T)}>{l}</button>; })}</div>;
 }
 export function Field({ label, hint, error, children, optional }: { label: string; hint?: string; error?: string; children: ReactNode; optional?: boolean }) {
-  return <div className="field"><label className="row between"><span>{label}{optional && <span className="faint"> (optional)</span>}</span>{hint && <span className="hint">{hint}</span>}</label>{children}{error && <span className="err">{error}</span>}</div>;
+  // the label names its control (screen readers, tap on the label): a single input / select / textarea child gets the id
+  const auto = useId(), el = isValidElement(children) && ['input', 'select', 'textarea'].includes(children.type as string) ? children as ReactElement<{ id?: string }> : null;
+  const id = el?.props.id ?? auto;
+  return <div className="field"><label className="row between" htmlFor={el ? id : undefined}><span>{label}{optional && <span className="faint"> (optional)</span>}</span>{hint && <span className="hint">{hint}</span>}</label>{el ? cloneElement(el, { id }) : children}{error && <span className="err">{error}</span>}</div>;
 }
 export function Sheet({ open, onClose, title, children, footer, side = 'right', sub }: { open: boolean; onClose: () => void; title: ReactNode; sub?: ReactNode; children: ReactNode; footer?: ReactNode; side?: 'right' | 'bottom' | 'center' }) {
   useEffect(() => { if (!open) return; const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose(); addEventListener('keydown', k); return () => removeEventListener('keydown', k); }, [open, onClose]);
