@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { config, publicUrl, resolve, allPublicUrls } from './hosts.ts';
+import { tableParam } from '../domain/tables.ts';
 import { PAGES } from './registry.ts';
 
 const sub = config({ NEXT_PUBLIC_BORNIZ_ROUTING: 'subdomain', NEXT_PUBLIC_BORNIZ_ROOT_DOMAIN: 'bornis.id', NEXT_PUBLIC_BORNIZ_CUSTOM_DOMAINS: '{"menu.kopibiru.id":"kopibiru"}' });
@@ -61,5 +62,13 @@ test('host map: every surface on its own hostname (free vercel.app aliases now, 
     const u = new URL(url), r = resolve(u.host, u.pathname, m);
     const got = r.type === 'rewrite' ? r.path : r.type === 'next' ? u.pathname : 'REDIRECT ' + r.url;
     assert.equal(got.replace(/\/$/, '') || '/', p, `${url} → ${got}`);
+  }
+});
+
+test('a table QR keeps the whole table name: spaces, slash, hash and percent survive the trip', () => {
+  for (const name of ['T-07', 'Garden 1', 'Bar/1', 'VIP #2', 'Meja 100%']) {
+    const u = new URL(publicUrl(`/order?t=${encodeURIComponent(name)}&o=sen`, sub));
+    const r = resolve(u.host, u.pathname, sub) as unknown as { query: { t: string } };
+    assert.equal(tableParam(r.query.t), name, u.href);
   }
 });

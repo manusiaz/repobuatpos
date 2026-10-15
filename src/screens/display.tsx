@@ -1,4 +1,5 @@
 'use client';
+import { tableNo } from '../domain/tables.ts';
 import { menuDesign } from '../data/actions/studio.ts';
 import { EXTRAS } from './studio/extras.tsx';
 import { studioValue } from '../system/studio.ts';
@@ -181,7 +182,7 @@ function CartBody({ db, o, to, outletId }: { db: DB; o: Order; to: (v: View) => 
     <div style={{ padding: '4cqw', display: 'flex', flexDirection: 'column', gap: '1.2cqw', minHeight: 0 }}>
       <span style={{ display: 'flex', alignItems: 'center', gap: '1.2cqw', fontSize: '1.6cqw', fontWeight: 600, color: MUTED }}>
         <span style={{ width: '3.6cqw', height: '3.6cqw', borderRadius: '1cqw', background: 'var(--bn-p)', color: 'var(--ink-0)', display: 'grid', placeItems: 'center', fontSize: '1.3cqw', fontWeight: 800, fontFamily: 'var(--bn-font)' }}>{db.tenant.name.split(' ').map(w => w[0]).join('').slice(0, 2)}</span>
-        {[db.tenant.name, o.table ? 'Table ' + o.table.replace(/^T-?/, '') : o.type === 'take' ? 'Takeaway' : 'Dine-in', cashier && 'Served by ' + cashier.name].filter(Boolean).join(' · ')}</span>
+        {[db.tenant.name, o.table ? 'Table ' + tableNo(o.table) : o.type === 'take' ? 'Takeaway' : 'Dine-in', cashier && 'Served by ' + cashier.name].filter(Boolean).join(' · ')}</span>
       {hidden > 0 && <span style={{ fontSize: '1.5cqw', color: MUTED }}>+ {hidden} earlier item{hidden > 1 ? 's' : ''}</span>}
       {shown.map(l => <div key={l.id} className="cd-in" style={{ display: 'flex', justifyContent: 'space-between', gap: '2cqw', padding: '1.1cqw 0', borderBottom: `1px solid ${LINE}`, fontSize: '2.2cqw' }}>
         <span style={{ minWidth: 0 }}><b>{l.qty}×</b> {l.name}{(l.mods.length > 0 || l.note) && <span style={{ display: 'block', fontSize: '1.4cqw', color: MUTED }}>{modsText(l.mods, l.note)}</span>}</span>

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { areasOf, checkFloor, freeCell, holdsTable, nextName, tableParam, tablesOf, type FloorTable } from './tables.ts';
+import { areasOf, checkFloor, findTable, freeCell, holdsTable, nextName, tableNo, tableParam, tablesOf, type FloorTable } from './tables.ts';
 
 const T = (name: string, x: number, y: number, area = 'Indoor', seats = 4): FloorTable => ({ name, area, seats, shape: 'square', x, y });
 
@@ -41,4 +41,14 @@ test('a table is taken while the bill is open or food is still in the kitchen, e
   assert.ok(holdsTable(o('paid')), 'QR paid by QRIS, still cooking');
   assert.ok(!holdsTable(o('paid', 'done')), 'paid and out of the kitchen: free');
   assert.ok(!holdsTable(o('voided')) && !holdsTable(o('refunded')) && !holdsTable(o('open', 'new', null)));
+});
+
+test('guests read table names as written; old QR codes find a renamed table; unknown tables are refused', () => {
+  assert.equal(tableNo('T-07'), '07');
+  assert.equal(tableNo('Teras 1'), 'Teras 1', 'a name starting with T keeps its T');
+  assert.equal(tableParam('Meja 100%'), 'Meja 100%', 'already-decoded names never throw');
+  const out = { tables: 0, floor: [T('Teras 1', 0, 0, 'Indoor'), T('T-02', 1, 0)].map((t, i) => i ? t : { ...t, was: ['T-07'] }) };
+  assert.equal(findTable(out, '07'), 'Teras 1', 'the QR printed before the rename');
+  assert.equal(findTable(out, 'teras 1'), 'Teras 1');
+  assert.equal(findTable(out, 'T-99'), null);
 });

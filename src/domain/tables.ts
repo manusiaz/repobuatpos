@@ -1,7 +1,7 @@
 // lg-tables: one floor plan per outlet. The POS table picker, waiter app, QR codes, reservations, PIC sections and the
 // manager board all read tablesOf(outlet). A table's name is its key (orders, reservations and tickets store the name).
 export type TableShape = 'square' | 'round' | 'long';
-export interface FloorTable { name: string; area: string; seats: number; shape: TableShape; x: number; y: number }
+export interface FloorTable { name: string; area: string; seats: number; shape: TableShape; x: number; y: number; /** earlier names: QR codes printed before a rename keep opening this table */ was?: string[] }
 
 /** The one rule for "this table is taken": the bill is open, or food is still in the kitchen (paid first: QR, kiosk).
  *  POS table picker, Move table, waiter app, manager board and the floor plan editor all use it. */
@@ -48,4 +48,11 @@ export function checkFloor(ts: FloorTable[]): string | null {
 }
 
 /** A table from a QR link or URL: "07" and "T-7" are T-07; any other value is a table name. */
-export const tableParam = (q: string) => { const v = decodeURIComponent(q).trim(); return /^(t-?)?\d{1,3}$/i.test(v) ? autoName(Number(v.replace(/\D/g, ''))) : v; };
+export const tableParam = (q: string) => { let v = q; try { v = decodeURIComponent(q); } catch { /* already decoded ("100%") */ } v = v.trim(); return /^(t-?)?\d{1,3}$/i.test(v) ? autoName(Number(v.replace(/\D/g, ''))) : v; };
+/** The table a QR link opens on this outlet's plan (renamed tables answer to their old names), or null when it is not on the plan. */
+export function findTable(o: Parameters<typeof tablesOf>[0], q: string): string | null {
+  const v = tableParam(q), low = v.toLowerCase(), ts = tablesOf(o);
+  return (ts.find(t => t.name.toLowerCase() === low) ?? ts.find(t => t.was?.some(w => w.toLowerCase() === low)))?.name ?? null;
+}
+/** How a guest reads a table: "T-07" → "07", every other name as written. */
+export const tableNo = (t: string) => t.replace(/^T-(?=\d+$)/, '');

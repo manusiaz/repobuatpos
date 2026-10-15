@@ -258,7 +258,7 @@ export function Cart({ g }: { g: G }) {
     <div style={{ position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: 0, width: 'min(520px,100vw)', padding: '12px 14px calc(14px + env(safe-area-inset-bottom))', background: 'var(--bn-paper)', borderTop: `1px solid ${LINE}`, zIndex: 20 }}>
       <button className="btn btn-primary btn-block" style={{ height: 58, fontSize: 16, borderRadius: 16 }} disabled={!g.canOrder || !lines.length && settledOf(db, cart) >= cart.total}
         onClick={() => { if (note !== (cart.note ?? '')) patchOrder(cart.id, { note }, 'guest'); g.go(billSplit(db, cart.id).shares.length ? so('checkout-and-payment', { split: '1' }) : so(cart.status === 'paying' ? 'qris-payment' : 'checkout-and-payment')); }}>
-        {!g.canOrder ? (g.hrs.paused ? 'Ordering paused' : 'Closed · ' + g.hrs.text) : lines.length ? `${t('Checkout')} · ${idr(cart.total)}` : `Pay the bill · ${idr(cart.total - settledOf(db, cart))}`}</button>
+        {!g.canOrder ? (!g.onPlan ? 'Table not on the floor plan' : g.hrs.paused ? 'Ordering paused' : 'Closed · ' + g.hrs.text) : lines.length ? `${t('Checkout')} · ${idr(cart.total)}` : `Pay the bill · ${idr(cart.total - settledOf(db, cart))}`}</button>
     </div>
   </div>;
 }

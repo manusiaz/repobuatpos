@@ -50,6 +50,7 @@ export function useLocal<T>(key: string, init: T): [T, (v: T) => void] {
 /** 'en' / 'id' have UI copy; other languages the owner adds (Studios › Languages) translate menu item names. */
 export type Lang = string;
 const ID: Record<string, string> = {
+  Table: 'Meja', 'is not on this outlet’s floor plan': 'tidak ada di denah outlet ini', 'Ask a staff member for the right table QR code.': 'Minta QR meja yang benar ke staf.',
   'Table moved': 'Meja dipindah', 'Your order is now at table': 'Pesananmu sekarang di meja', 'Everything carries on as usual.': 'Semua tetap jalan seperti biasa.',
   'Your order is at table': 'Pesananmu ada di meja', 'Ask staff to move it here': 'Minta staf pindahkan ke sini', 'Staff will move your order here': 'Staf akan memindahkan pesananmu ke sini',
   'Search the menu': 'Cari menu', 'View cart': 'Lihat keranjang', All: 'Semua', Coffee: 'Kopi', 'Non-coffee': 'Non-kopi', Pastry: 'Pastry', Rice: 'Nasi', Others: 'Lainnya',

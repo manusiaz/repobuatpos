@@ -16,7 +16,8 @@ import { newOrder } from '../../data/actions.ts';
 import { guestCall } from '../../data/actions/selforder.ts';
 import type { DB, Order } from '../../data/schema.ts';
 import { groupsOf, hours, LINE, MUTED, SURFACE, unit, unpaid, useLang, useLocal, type MenuItem } from '../guest/kit.tsx';
-import { tableParam } from '../../domain/tables.ts';
+import { findTable, tableNo, tableParam } from '../../domain/tables.ts';
+export { tableNo };
 
 const PATHS: Record<string, string> = Object.fromEntries(pagesOf('selforder').map(p => [p.slug, p.path]));
 export const so = (slug: string, q?: Record<string, string>) => (PATHS[slug] ?? PATHS.order ?? '/') + (q ? '?' + new URLSearchParams(q) : '');
@@ -38,7 +39,8 @@ export function useGuest() {
   // The bills this phone ordered on. Staff moved one (POS › Move table): the phone follows it to the new table.
   // The guest moved themselves (scanned another table): their bill stays put and they can ask staff to move it.
   const [mine, setMine] = useLocal<string[]>('bn-qr-orders', []);
-  const here = qt ? tableParam(qt) : saved;
+  const asked = qt ? tableParam(qt) : saved, onPlan = findTable(db.outlets.find(o => o.id === outletId), asked);
+  const here = onPlan ?? asked; // a QR printed before the table was renamed opens the renamed table
   const away = db.orders.filter(o => mine.includes(o.id) && o.outletId === outletId && o.table !== here && o.status !== 'voided' && Date.now() - o.createdAt < TWO_H);
   const moved = away.find(o => o.movedFrom) ?? null; // paid first (QRIS) or not, the phone still wants "ready" from the new table
   const elsewhere = moved ? null : away.find(o => unpaid(o) || o.lines.some(l => l.fired && l.kds !== 'done')) ?? null;
@@ -59,12 +61,11 @@ export function useGuest() {
   const ab = abVariant(db, guestId ?? '', now);
   const ensureCart = () => { const id = cart?.id ?? newOrder(outletId, 'guest', 'qr', { table, type: 'dine', customerId: meId, ...(ab ? { ab } : {}) });
     if (!mine.includes(id)) setMine([...mine.slice(-9), id]); return id; };
-  return { db, outletId, go, sp, ref, table, L, t: L.t, me, setMe, out, hrs, canOrder: hrs.open && !hrs.paused, online: db.device.online, recent, cart, latest, ensureCart, now, ab, moved, elsewhere };
+  return { db, outletId, go, sp, ref, table, L, t: L.t, me, setMe, out, hrs, canOrder: hrs.open && !hrs.paused && !!onPlan, onPlan, online: db.device.online, recent, cart, latest, ensureCart, now, ab, moved, elsewhere };
 }
 export type G = ReturnType<typeof useGuest>;
 
 export const back = (go: (p: string) => void, fallback: string) => { if (typeof window !== 'undefined' && window.history.length > 1) window.history.back(); else go(fallback); };
-export const tableNo = (t: string) => t.replace(/^T-?/, '');
 export const newLines = (o: Order | null) => o ? o.lines.filter(l => !l.fired) : [];
 export const settledOf = (db: DB, o: Order) => db.payments.filter(p => p.orderId === o.id && p.status === 'settled').reduce((a, p) => a + p.amount, 0);
 export const itemDesc = (db: DB, i: MenuItem) => i.p.desc || (groupsOf(db, i.p).length ? 'Choose ' + groupsOf(db, i.p).map(g => g.name.toLowerCase()).join(', ') : db.categories.find(c => c.id === i.cat)?.name ?? '');
@@ -126,6 +127,7 @@ export function Notices({ g }: { g: G }) {
   const n: [string, string, ReactNode][] = [];
   if (g.hrs.paused) n.push(['pause-circle', 'Ordering is paused right now', 'Ask the staff, or browse the menu.']);
   else if (!g.hrs.open) n.push(['moon', `Closed · ${g.hrs.text}`, <a key="b" href={so('online-booking')} onClick={e => { e.preventDefault(); g.go(so('online-booking')); }}>Book a table</a>]);
+  if (!g.onPlan) n.push(['circle-alert', `${g.t('Table')} ${tableNo(g.table)} ${g.t('is not on this outlet’s floor plan')}`, g.t('Ask a staff member for the right table QR code.')]);
   if (!g.online) n.push(['wifi-off', 'You’re offline', 'Your cart is kept. QRIS needs internet.']);
   if (g.moved) n.push(['move', g.t('Table moved'), `${g.moved.no} · ${g.t('Your order is now at table')} ${tableNo(g.table)}. ${g.t('Everything carries on as usual.')}`]);
   const away = g.elsewhere;

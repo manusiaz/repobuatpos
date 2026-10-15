@@ -52,7 +52,7 @@ export function publicUrl(internal: string, cfg: HostConfig, tenant = cfg.tenant
   let pub = path;
   if (h.tenant) {
     const q = new URLSearchParams(query), t = q.get('t');
-    pub = '/' + tenant + (path === '/order' && t ? '/t/' + t : path.replace(/^\/order/, ''));
+    pub = '/' + tenant + (path === '/order' && t ? '/t/' + encodeURIComponent(t) : path.replace(/^\/order/, ''));
     if (path === '/order' && t) q.delete('t');
     const rest = q.toString();
     return `${cfg.protocol}://${hostOf('order', cfg)}${pub}${rest ? '?' + rest : ''}`;
