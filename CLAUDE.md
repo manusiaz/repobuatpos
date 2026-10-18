@@ -17,8 +17,10 @@ Cloud POS for Indonesian F&B / retail / UMKM. Every surface (marketing, owner, m
   | `pos.bornis.id` | POS, PIC, online orders and waiter |
   | `kds.bornis.id` | kitchen display |
   | `display.bornis.id` | customer display |
-  | `order.bornis.id/<tenant>` | QR menu, kiosk and customer links |
+  | `<tenant>.bornis.id` | QR menu, kiosk and customer links of that business (`kopibiru.bornis.id/t/07`) |
   | `admin.bornis.id` | super admin |
+
+  - **Owner decision (Oct 2026):** a business lives at `<slug>.bornis.id`, not `bornis.id/<slug>` or `order.bornis.id/<slug>` (spec Sitemap still says `order.`). Old `order.bornis.id/<slug>/…` links redirect. Slugs can never be a platform host (`RESERVED` in `hosts.ts` = `tenants_slug_not_reserved` in the database). DNS + TLS: `bornis.id` and `*.bornis.id`.
 
   The spec also names:
   - `go.` for the device pairing code
@@ -29,7 +31,7 @@ Cloud POS for Indonesian F&B / retail / UMKM. Every surface (marketing, owner, m
 - **Code per host** (one app, shared code stays shared — never copy a module per subdomain):
   - `app.` → `src/screens/{owner,ownerMobile,manager,studios,menu,floor,brand,roles,shifts,loyalty,auth}.tsx`, `manager/`, `studio/`, `studios/`, `src/templates/` (back office)
   - `pos.` → `src/screens/{pos,pic,online,waiter}.tsx`, `pos/`, `pic/`
-  - `kds.` → `kds.tsx`, `kitchen/` · `display.` → `display.tsx` · `order.` → `selforder.tsx`, `selforder/`, `kiosk.tsx` · `admin.` → `admin.tsx`, `admin/` · `bornis.id` → `landing.tsx`, `public/`
+  - `kds.` → `kds.tsx`, `kitchen/` · `display.` → `display.tsx` · `<tenant>.` → `selforder.tsx`, `selforder/`, `kiosk.tsx` · `admin.` → `admin.tsx`, `admin/` · `bornis.id` → `landing.tsx`, `public/`
   - Shared by several hosts: `insight/` (sales math: app, admin, pos shift), `ops/` (pos PIC, app manager), `guest/` (order, display), `src/domain`, `src/data`, `src/ui`, `src/system`.
 - **Self-hosting with git pull:** `deploy/` — `update.sh` (pull, install, build, restart), `borniz.service` (one process), `nginx.conf` (every host → that process; `/iclock` stays on plain HTTP for attendance machines).
 - **Root domain** is `NEXT_PUBLIC_BORNIZ_ROOT_DOMAIN`. The spec spells it `bornis.id`; the owner wrote `borniz.id`. Confirm the spelling before buying.

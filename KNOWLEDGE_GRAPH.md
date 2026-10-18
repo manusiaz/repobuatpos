@@ -5,7 +5,7 @@
 > Graph halaman otomatis (617 halaman, generator `npm run graph`) ada di `KNOWLEDGE_GRAPH.json` dan viewer `/graph`;
 > file ini mencatat node kode + data yang dipetakan per task.
 
-Last verified: 82a35e2 — 2026-10-18
+Last verified: 8b86bf0 — 2026-10-18
 
 ## Stack
 
@@ -57,6 +57,8 @@ npx tsc --noEmit && npm test && npm run -s links && npm run -s check:system && n
 | fn:tableNo | fn | src/domain/tables.ts | Label meja untuk tamu: "T-07" → "07", nama lain apa adanya |
 | fn:publicUrl | fn | src/system/hosts.ts | URL publik (QR, struk, WA); nama meja di-encode di path `/t/` |
 | page:/display | page | src/screens/display.tsx | Customer display |
+| fn:isTenantSlug | fn | src/system/hosts.ts | Nama bisnis yang sah untuk <slug>.bornis.id (bukan host platform, RESERVED) |
+| policy:tenants_slug_not_reserved | policy | supabase/migrations/20261018000000_borniz_tenant_hosts.sql | DB menolak slug yang sama dengan host platform |
 | config:deploy | config | deploy/ | Self-host lewat git pull: satu proses Next untuk semua host, nginx meneruskan Host |
 | config:proxy | config | proxy.ts | Host → halaman (rewrite/redirect) memakai src/system/hosts.ts |
 | fn:holdsTable | fn | src/domain/tables.ts | Satu-satunya aturan "meja terisi": bill terbuka, atau makanan masih di dapur (bayar duluan QR/kiosk) |
@@ -119,8 +121,10 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | page:/order status | reads | table:orders | src/screens/selforder/shared.tsx:44 (pesanan milik HP ini; movedFrom → ikut pindah) |
 | fn:findTable | reads | fn:tablesOf | src/domain/tables.ts:54 |
 | page:/display | calls | fn:tableNo | src/screens/display.tsx:185 |
-| page:/owner/outlets/table-qr-generator | calls | fn:publicUrl | src/system/hosts.ts:107 (linkTo → publicUrl, dipanggil tableUrl) |
+| page:/owner/outlets/table-qr-generator | calls | fn:publicUrl | src/system/hosts.ts:121 (linkTo → publicUrl, dipanggil tableUrl) |
 | test:tables | tests | fn:findTable | src/domain/tables.test.ts |
+| fn:publicUrl | reads | fn:isTenantSlug | src/system/hosts.ts:81 (resolve: label host → tenant) |
+| policy:tenants_slug_not_reserved | documents | fn:isTenantSlug | supabase/migrations/20261018000000_borniz_tenant_hosts.sql (daftar sama dengan RESERVED, isTenantSlug di hosts.ts) |
 | config:deploy | routes-to | config:proxy | deploy/nginx.conf:28 (proxy_set_header Host; hosts.ts routes by it) |
 | test:changes | tests | fn:moveTable | src/data/changes.test.ts |
 | test:changes | tests | fn:voidItem | src/data/changes.test.ts |
@@ -186,6 +190,7 @@ graph LR
 | 2026-10-14 | Kunci meja = namanya | `orders.table` / `reservations.table` / tiket sudah menyimpan nama; rename meja bertagihan ditolak | fn:saveFloor, semua konsumen |
 | 2026-10-14 | "Pindah meja" memindah semua pesanan hidup di meja itu | Satu meja bisa punya pesanan QR lunas + ronde POS baru; tamu pindah bersama semuanya | page:/pos/selling/move-table |
 | 2026-10-14 | HP tamu ikut pindah hanya bila staf yang memindah (`movedFrom`); tamu yang pindah sendiri dapat tombol "minta staf pindahkan" | QR lama di URL tidak boleh menarik pesanan kembali; scan meja lain = niat tamu | page:/order status |
+| 2026-10-18 | Bisnis di `<slug>.bornis.id` (bukan `order.bornis.id/<slug>`); link lama di-redirect; slug platform ditolak di app + DB | Keputusan owner; spec Sitemap masih `order.` | fn:publicUrl, fn:isTenantSlug, config:deploy |
 | 2026-10-18 | Satu folder repo + satu proses untuk semua subdomain; tidak ada folder/app per subdomain | Kode dipakai lintas host (insight/, ops/, guest/); salinan per subdomain = data & logika bercabang (keputusan owner "one system") | config:deploy |
 | 2026-10-15 | Rename meja menyimpan nama lama di `was` | QR yang sudah tertempel tetap jalan sampai dicetak ulang | fn:findTable, page:/owner/outlets/tables-and-floor-plan |
 | 2026-10-14 | Denah kosong = T-01…T-n dari `tables` | Data lama tetap jalan tanpa migrasi | fn:tablesOf |

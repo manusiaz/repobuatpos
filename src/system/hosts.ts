@@ -1,8 +1,9 @@
 // Domains, subdomains and subfolders. One deployment serves every host in the sitemap (spec bn-sitemap.js "host"):
 //   bornis.id            marketing            app.bornis.id      account (/login …) + /owner + /manager back office
 //   pos.bornis.id        register, PIC, online orders, waiter    kds.bornis.id   kitchen     display.bornis.id   customer display
-//   order.bornis.id/<tenant>/…  QR menu, kiosk, customer links (/<tenant>/t/07 binds table 07)   admin.bornis.id   super admin
-//   a merchant's own domain (Menu Studio → advanced) = their order.bornis.id/<tenant>
+//   <tenant>.bornis.id/…  QR menu, kiosk, customer links (/t/07 binds table 07)   admin.bornis.id   super admin
+//   (owner decision Oct 2026: kopibiru.bornis.id, not bornis.id/kopibiru; old order.bornis.id/<tenant>/… links redirect there)
+//   a merchant's own domain (Menu Studio → advanced) = their <tenant>.bornis.id
 // Mode "path" (default, any single domain or preview URL) keeps the internal paths as the public paths (subfolders).
 // A host map (NEXT_PUBLIC_BORNIZ_HOSTS) gives any surface its own hostname, e.g. pos → pos-soft-ajie-pos.vercel.app
 // before a domain is bought, or a host on a separate server later; unmapped surfaces use <sub>.<root>.
@@ -23,6 +24,9 @@ export const HOSTS: HostRule[] = [
   { sub: 'admin', serves: ['/admin'], strip: '/admin' },
   { sub: '', serves: ['/'] }, // marketing: everything else
 ];
+/** Names a business can never take as its <slug>.bornis.id: the platform's own hosts and spec names. */
+export const RESERVED = new Set(['www', 'app', 'pos', 'kds', 'display', 'order', 'admin', 'go', 'status', 'preview', 'menu', 'mail', 'api', 'cdn', 'static', 'help', 'docs', 'blog']);
+export const isTenantSlug = (s: string) => /^[a-z0-9][a-z0-9-]{1,40}$/.test(s) && !RESERVED.has(s);
 const under = (p: string, prefix: string) => prefix === '/' || p === prefix || p.startsWith(prefix + '/');
 export const ruleFor = (internal: string) => HOSTS.find(h => h.serves.some(s => s !== '/' && under(internal, s))) ?? HOSTS[HOSTS.length - 1];
 
@@ -44,18 +48,20 @@ export const hostOf = (sub: string, cfg: HostConfig) => cfg.hosts[sub] ?? (sub ?
 /** Internal page path (+ optional query) → the public URL people see, scan and share. */
 export function publicUrl(internal: string, cfg: HostConfig, tenant = cfg.tenant, origin = '', own = ''): string {
   const [path, query = ''] = internal.split('?');
-  // The merchant's own domain (Studios › Custom domain) serves its QR menu, kiosk and customer links: no tenant segment.
-  if (own && ruleFor(path).tenant) return cfg.routing === 'path' ? `${cfg.protocol}://${own}${internal}`
-    : publicUrl(internal, cfg, tenant).replace(`${cfg.protocol}://${hostOf('order', cfg)}/${tenant}`, `${cfg.protocol}://${own}`);
-  if (cfg.routing === 'path') return origin + internal;
   const h = ruleFor(path);
+  if (own && h.tenant && cfg.routing === 'path') return `${cfg.protocol}://${own}${internal}`;
+  if (cfg.routing === 'path') return origin + internal;
   let pub = path;
   if (h.tenant) {
+    // The business's own host: its custom domain, else <tenant>.<root>; a host map (free vercel.app aliases cannot
+    // have subdomains) keeps <order host>/<tenant>/….
     const q = new URLSearchParams(query), t = q.get('t');
-    pub = '/' + tenant + (path === '/order' && t ? '/t/' + encodeURIComponent(t) : path.replace(/^\/order/, ''));
+    pub = (path === '/order' && t ? '/t/' + encodeURIComponent(t) : path.replace(/^\/order/, '')) || '/';
     if (path === '/order' && t) q.delete('t');
-    const rest = q.toString();
-    return `${cfg.protocol}://${hostOf('order', cfg)}${pub}${rest ? '?' + rest : ''}`;
+    const rest = q.toString() ? '?' + q.toString() : '';
+    if (own) return `${cfg.protocol}://${own}${pub === '/' ? '' : pub}${rest}`;
+    if (cfg.hosts.order) return `${cfg.protocol}://${cfg.hosts.order}/${tenant}${pub === '/' ? '' : pub}${rest}`;
+    return `${cfg.protocol}://${tenant}.${cfg.root}${pub === '/' ? '' : pub}${rest}`;
   }
   if (h.strip && under(path, h.strip)) pub = path.slice(h.strip.length) || '/';
   return `${cfg.protocol}://${hostOf(h.sub, cfg)}${pub}${query ? '?' + query : ''}`;
@@ -69,17 +75,25 @@ export function resolve(hostHeader: string, pathname: string, cfg: HostConfig, e
   const host = hostHeader.toLowerCase().split(':')[0];
   const path = pathname.replace(/\/+$/, '') || '/';
   if (host === 'www.' + cfg.root) return { type: 'redirect', url: `${cfg.protocol}://${hostOf('', cfg)}${path}` };
-  const custom = cfg.customDomains[host];
   const mapped = Object.entries(cfg.hosts).find(([, h]) => h === host)?.[0];
-  const sub = custom ? 'order' : mapped ?? (host === cfg.root ? '' : host.endsWith('.' + cfg.root) ? host.slice(0, -cfg.root.length - 1) : null);
+  const label = host.endsWith('.' + cfg.root) ? host.slice(0, -cfg.root.length - 1) : null;
+  // The business that owns this host: its custom domain, or <tenant>.<root> (any label that is not a platform host).
+  const custom = cfg.customDomains[host] ?? (!mapped && label && isTenantSlug(label) ? label : undefined);
+  const sub = custom ? 'order' : mapped ?? (host === cfg.root ? '' : label);
   if (sub === null) return { type: 'next' }; // preview URLs, localhost: subfolder mode
   const rule = HOSTS.find(h => h.sub === sub);
   if (!rule) return { type: 'next' };
+  // order.<root>/<tenant>/… (QR codes printed before Oct 2026) → <tenant>.<root>/…
+  if (rule.tenant && !custom && !cfg.hosts.order) {
+    const [, first = '', ...rest] = path.split('/');
+    if (!isTenantSlug(first)) return { type: 'redirect', url: `${cfg.protocol}://${hostOf('', cfg)}/` };
+    return { type: 'redirect', url: `${cfg.protocol}://${first}.${cfg.root}${rest.length ? '/' + rest.join('/') : ''}` };
+  }
 
   // An internal path (every in-app link is one): serve it here, or send it to the host that owns it.
   if (path !== '/' && exists(path)) {
     const owner = ruleFor(path);
-    if (owner === rule) return { type: 'next' };
+    if (owner === rule) return custom ? { type: 'rewrite', path, query: { tenant: custom } } : { type: 'next' };
     return { type: 'redirect', url: publicUrl(path, cfg, custom ?? cfg.tenant) };
   }
   if (rule.tenant) {
@@ -106,7 +120,7 @@ export const setOwnHost = (h: string) => { ownHost = h.trim().toLowerCase().repl
 export const linkTo = (internal: string, tenant?: string) =>
   publicUrl(internal, config(), tenant, typeof location !== 'undefined' ? location.origin : '', ownHost);
 /** Where a merchant points their own domain (CNAME). */
-export const cnameTarget = () => { const c = config(); return c.routing === 'subdomain' ? hostOf('order', c) : (typeof location !== 'undefined' ? location.host : c.root); };
+export const cnameTarget = () => { const c = config(); return c.routing === 'subdomain' ? hostOf('menu', c) : (typeof location !== 'undefined' ? location.host : c.root); };
 /** Query values the proxy derived from the public path (tenant, table) plus the real query string. Client-only. */
 export function routeQuery(): Record<string, string> {
   if (typeof location === 'undefined') return {};

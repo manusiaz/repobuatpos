@@ -257,9 +257,11 @@ async function pollGuest() {
 function enterAnon() { mode = 'anon'; tenant = null; member = null; base = shapeDB(); queue = []; compose(); }
 
 async function guestSlug(): Promise<string | null> {
-  if (typeof location === 'undefined' || !/^\/(order|kiosk)(\/|$)/.test(location.pathname) && !/^order\./.test(location.host)) return null;
+  if (typeof location === 'undefined') return null;
   const { routeQuery, config } = await import('../system/hosts.ts');
-  return routeQuery().tenant || config().tenant || null;
+  const t = routeQuery().tenant; // <tenant>.bornis.id or a merchant's own domain
+  if (t) return t;
+  return /^\/(order|kiosk)(\/|$)/.test(location.pathname) ? config().tenant || null : null;
 }
 /** BN050: the business moved to its own database. Guests follow it now; staff sign in again there (same password). */
 async function moved() {

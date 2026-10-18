@@ -2,6 +2,7 @@
 // Marketing studio: vouchers (from real promos), gift cards, push, referral page, ad pixels & SEO.
 import { same } from './same.tsx';
 import { TOOL_DEFAULTS } from '../../system/tools.ts';
+import { linkTo } from '../../system/hosts.ts';
 import { hhmm } from '../../ui/kit.tsx';
 import { Caption, F, onColor, Phone, Stage, type PP, type Tool } from './core.tsx';
 
@@ -19,7 +20,7 @@ function Push({ v, x }: PP) {
 
 function Pixels({ v, x }: PP) {
   const page = { home: ['Home', ''], menu: ['Menu', '/menu'], promo: ['Promos', '/promo'] }[v.page as 'home'];
-  const host = 'order.' + x.db.tenant.name.toLowerCase().replace(/\s/g, '') + '.id';
+  const host = linkTo('/order').replace(/^https?:\/\//, '').replace(/\/order$/, ''); // the store's real address
   return <Stage>
     <div className="card" style={{ width: 'min(560px,100%)' }}><span className="faint" style={{ fontSize: 12 }}>{host}{page[1]}</span>
       <b style={{ display: 'block', color: 'var(--info-fg)', fontSize: 18, fontWeight: 500 }}>{v['t_' + v.page] || `${page[0]} · ${x.db.tenant.name}`}</b>

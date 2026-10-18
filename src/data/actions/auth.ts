@@ -1,5 +1,6 @@
 'use client';
 // Account & device services used by sign-up, onboarding, plans and register pairing (Auth surface).
+import { RESERVED } from '../../system/hosts.ts';
 import { commit, snapshot, uid } from '../store.ts';
 import type { DB, Role } from '../schema.ts';
 import { REMOTE } from '../remote.ts';
@@ -148,7 +149,7 @@ export async function createBusiness(p: NewBusiness, onProgress: (pct: number) =
   const { sb, membership, pickTenant } = await import('../supabase.ts');
   let m = await membership().catch(() => null), tid = m?.tenantId ?? '', slug = m?.slug ?? '';
   for (let i = 0; !tid && i < 4; i++) {
-    slug = slugify(p.name) + (i ? '-' + Math.random().toString(36).slice(2, 6) : '');
+    slug = slugify(p.name) + (i || RESERVED.has(slugify(p.name)) || slugify(p.name).length < 2 ? '-' + Math.random().toString(36).slice(2, 6) : ''); // <slug>.bornis.id
     const { data, error } = await sb().rpc('bn_bootstrap', { p_name: p.name.trim(), p_slug: slug, p_employee_id: p.demo ? 'budi' : 'owner' });
     if (!error) tid = data as string;
     else if (error.code !== '23505') return humanError(error.message).text;
