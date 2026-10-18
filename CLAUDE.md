@@ -26,6 +26,12 @@ Cloud POS for Indonesian F&B / retail / UMKM. Every surface (marketing, owner, m
   - `preview.` for theme preview links
   - `menu.` as the CNAME target for merchant domains
   - `mail.` for SPF/DKIM
+- **Code per host** (one app, shared code stays shared — never copy a module per subdomain):
+  - `app.` → `src/screens/{owner,ownerMobile,manager,studios,menu,floor,brand,roles,shifts,loyalty,auth}.tsx`, `manager/`, `studio/`, `studios/`, `src/templates/` (back office)
+  - `pos.` → `src/screens/{pos,pic,online,waiter}.tsx`, `pos/`, `pic/`
+  - `kds.` → `kds.tsx`, `kitchen/` · `display.` → `display.tsx` · `order.` → `selforder.tsx`, `selforder/`, `kiosk.tsx` · `admin.` → `admin.tsx`, `admin/` · `bornis.id` → `landing.tsx`, `public/`
+  - Shared by several hosts: `insight/` (sales math: app, admin, pos shift), `ops/` (pos PIC, app manager), `guest/` (order, display), `src/domain`, `src/data`, `src/ui`, `src/system`.
+- **Self-hosting with git pull:** `deploy/` — `update.sh` (pull, install, build, restart), `borniz.service` (one process), `nginx.conf` (every host → that process; `/iclock` stays on plain HTTP for attendance machines).
 - **Root domain** is `NEXT_PUBLIC_BORNIZ_ROOT_DOMAIN`. The spec spells it `bornis.id`; the owner wrote `borniz.id`. Confirm the spelling before buying.
 - **Hosting before the domain exists.** Free `*.vercel.app` cannot have subdomains. Each surface gets an alias (`pos-soft-ajie-pos.vercel.app` …) through `NEXT_PUBLIC_BORNIZ_HOSTS`. Switch hosts on together with Supabase: browser storage is per origin.
 - **Every feature is developed to depth, not just routed.**

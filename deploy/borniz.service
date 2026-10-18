@@ -1,0 +1,16 @@
+# One process for every BorNiz host. Next.js reads .env.production from the working directory.
+[Unit]
+Description=BorNiz (bornis.id, app., pos., kds., display., order., admin.)
+After=network.target
+
+[Service]
+WorkingDirectory=/srv/borniz
+# -H localhost, not 127.0.0.1: behind nginx (X-Forwarded-Proto: https) Next only treats a subdomain rewrite as internal
+# when its own origin matches; with 127.0.0.1 every page answers 500 "Failed to proxy https://localhost:3000/…".
+ExecStart=/usr/bin/env npm start -- -p 3000 -H localhost
+Environment=NODE_ENV=production
+Restart=always
+User=www-data
+
+[Install]
+WantedBy=multi-user.target
