@@ -1,6 +1,6 @@
 # One process for every BorNiz host. Next.js reads .env.production from the working directory.
 [Unit]
-Description=BorNiz (bornis.id, app., pos., kds., display., order., admin.)
+Description=BorNiz (bornis.id, app., admin. and every <slug>.bornis.id)
 After=network.target
 
 [Service]
@@ -10,7 +10,7 @@ WorkingDirectory=/srv/borniz
 ExecStart=/usr/bin/env npm start -- -p 3000 -H localhost
 Environment=NODE_ENV=production
 Restart=always
-User=www-data
+User=borniz
 
 [Install]
 WantedBy=multi-user.target
