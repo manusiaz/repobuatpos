@@ -17,7 +17,7 @@ const RULES = [['Say what happened', 'in plain words, no error codes as the head
 
 export default function Screen() {
   const app = useApp();
-  // the gallery shows each state with demo data; a visitor on Supabase has no business of their own yet
+  // the gallery shows each state with demo data; a visitor on a live deployment has no business of their own yet
   const demo = useMemo(() => (app.db.outlets.length ? null : seed()), [app.db]);
   return demo ? <Ctx.Provider value={{ ...app, db: demo, me: demo.employees.find(e => e.role === 'owner'), outletId: demo.outlets[0].id }}><Gallery /></Ctx.Provider> : <Gallery />;
 }

@@ -1,12 +1,12 @@
 'use client';
 // One store for every surface. Local adapter: localStorage + BroadcastChannel, so the POS, KDS, customer display,
-// self-order and dashboards open in different tabs stay in sync live (the production adapter is Supabase realtime,
-// see supabase/migrations and supabaseStore.ts, used when REMOTE). Every write goes through commit() → audit log + realtime broadcast.
+// self-order and dashboards open in different tabs stay in sync live (the production adapter is live updates from PostgreSQL,
+// see db/migrations and remoteStore.ts, used when REMOTE). Every write goes through commit() → audit log + realtime broadcast.
 import { useSyncExternalStore } from 'react';
 import type { DB } from './schema.ts';
 import { DB_VERSION, seed } from './seed.ts';
 import { REMOTE } from './remote.ts';
-import { remoteCommit, remoteGet, remoteRestart, remoteSnapshot, remoteSubscribe, type CommitOpts } from './supabaseStore.ts';
+import { remoteCommit, remoteGet, remoteRestart, remoteSnapshot, remoteSubscribe, type CommitOpts } from './remoteStore.ts';
 
 const KEY = 'borniz-db';
 let db: DB | null = null;
@@ -46,12 +46,12 @@ export const snapshot = REMOTE ? remoteSnapshot : () => get();
 export const uid = (p = '') => p + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-3);
 
 /** The only way to change data. `actor` and `action` land in the audit log (never edited or deleted).
-    `opts` only matter on Supabase: `expect` = server precondition on a document, `quiet` = no toast when the server refuses. */
+    `opts` only matter with the database: `expect` = server precondition on a document, `quiet` = no toast when the server refuses. */
 export function commit(action: string, actor: string, mutate: (d: DB) => void, subject = '', outletId?: string, opts?: CommitOpts) {
   if (REMOTE) return remoteCommit(action, actor, mutate, subject, outletId, opts);
   const next = structuredClone(get());
   mutate(next);
-  // Offline: keep the same sync queue the Supabase adapter keeps, so the offline count and "synced N" read the same here.
+  // Offline: keep the same sync queue the server adapter keeps, so the offline count and "synced N" read the same here.
   if (!next.device.online && actor !== 'device') next.device.queue.push({ id: uid('q'), action, at: Date.now() });
   next.audit.unshift({ id: uid('au'), actor, action, subject, at: Date.now(), outletId });
   if (next.audit.length > 800) next.audit.length = 800;

@@ -4,10 +4,11 @@ Cloud POS for Indonesian F&B / retail / UMKM. Every surface (marketing, owner, m
 
 ## Owner notes (decisions, keep)
 - **One system.** One app, one store. Subdomains are doors into the same app and the same merchant data, never separate apps or separate data per subdomain.
-- **Hybrid tenancy (owner decision, Oct 2026).** The env Supabase project is the platform: `bornis.id`, `app.` sign-up/sign-in, `admin.`, the merchant registry, and the shared database every new merchant starts in (isolated per merchant by RLS).
+- **Own PostgreSQL, no Supabase (owner decision, Oct 2026).** The app runs on a PostgreSQL the owner hosts (`DATABASE_URL`): `db/platform.sql` (accounts, sessions, TOTP, the `anon`/`authenticated` roles) + `db/migrations/` installed by `npm run db:migrate` (each once; `deploy/update.sh` runs it on every `git pull`). The browser talks only to `app/api/bn` (functions, reads, sign-in, live updates over server-sent events from `NOTIFY bn_live`); every query runs as the caller so the migrations' RLS decides. One session cookie for `.bornis.id`.
+- **Hybrid tenancy (owner decision, Oct 2026).** The platform database is `bornis.id`, `app.` sign-up/sign-in, `admin.`, the merchant registry, and the shared database every new merchant starts in (isolated per merchant by RLS).
   - A merchant can move to its own database ("cell") with `scripts/tenant-move.sh`. `tenants.cell` + `public.cells` say where it lives; `bn_tenant_cell` resolves it.
   - After a move, all of that merchant's `<slug>.bornis.id` traffic goes there. The shared database keeps the old rows read-only and refuses writes (BN050).
-  - Server routes find the cell per tenant; each cell's server secret goes in `BORNIZ_CELLS` (`{"<cell>":"<secret>"}`).
+  - The API finds the cell per tenant: its database in `BORNIZ_DB_CELLS` (`{"<cell>":"postgres://…"}`), its server secret in `BORNIZ_CELLS` (`{"<cell>":"<secret>"}`).
   - One database per subdomain was rejected: POS, KDS, display and back office must see the same sale.
 - **Host structure** (owner decision Oct 2026, over the spec Sitemap's app./pos./kds./display./order. split; `src/system/hosts.ts` HOSTS):
   | Host | Serves |
@@ -34,7 +35,7 @@ Cloud POS for Indonesian F&B / retail / UMKM. Every surface (marketing, owner, m
   - Shared by several surfaces: `insight/` (sales math), `ops/`, `guest/`, `src/domain`, `src/data`, `src/ui`, `src/system`.
 - **Self-hosting with git pull:** `deploy/` — `update.sh` (pull, install, build, restart), `borniz.service` (one process), `nginx.conf` (every host → that process; `/iclock` stays on plain HTTP for attendance machines).
 - **Root domain** is `NEXT_PUBLIC_BORNIZ_ROOT_DOMAIN`. The spec spells it `bornis.id`; the owner wrote `borniz.id`. Confirm the spelling before buying.
-- **Hosting before the domain exists.** Free `*.vercel.app` cannot have subdomains. `NEXT_PUBLIC_BORNIZ_HOSTS` names an alias for `''`, `app`, `admin` and `tenant` (one shared host for the default business). Switch hosts on together with Supabase: browser storage is per origin.
+- **Hosting before the domain exists.** Free `*.vercel.app` cannot have subdomains. `NEXT_PUBLIC_BORNIZ_HOSTS` names an alias for `''`, `app`, `admin` and `tenant` (one shared host for the default business). Switch hosts on together with the database: demo-mode browser storage is per origin.
 - **Every feature is developed to depth, not just routed.**
   - A setting must change real behaviour on the surface it governs: no preview-only pages and no switches nobody reads.
   - Each feature gets its data, actions, permissions, approvals, alerts, states, responsive layout and a test.
@@ -47,7 +48,7 @@ Cloud POS for Indonesian F&B / retail / UMKM. Every surface (marketing, owner, m
 - `src/system/graph.ts` → `KNOWLEDGE_GRAPH.json` (`npm run graph`): page / surface / object / role / event nodes, data-dependency edges. Viewer at `/graph`.
 - `src/domain/*` — pure business rules (money, order totals, approval ladder, loyalty, stock/opname, menu scope, promo, shift). Tested: `npm test`.
 - `src/data/schema.ts` (ERD tables), `seed.ts` (Kopi Biru demo tenant), `store.ts` (`useDB`, `commit` → audit + realtime across tabs), `actions.ts` (service layer: the only writers; `notify` = the one alert engine, recipients from the alert catalog), `actions/<surface>.ts` (surface-specific services, still only through `commit`).
-- `supabase/migrations/` — production schema (ERD, RLS per tenant + outlet, approval PIN verified in `bn.decide`, ladder in `bn.level_required`, append-only audit/ledger/movements, server-side `bn.recalc_order`). `supabase/tests/core.sql` (`npm run test:db`) proves the rules.
+- `db/migrations/` — production schema (ERD, RLS per tenant + outlet, approval PIN verified in `bn.decide`, ladder in `bn.level_required`, append-only audit/ledger/movements, server-side `bn.recalc_order`). `db/tests/core.sql` (`npm run test:db`) proves the rules.
 - `src/app/App.tsx` — resolves page → session → access → shell → surface. `src/app/context.tsx` `useApp()` = `{ page, db, user, me, outletId, setOutlet, go }`.
 - `src/screens/<surface>.tsx` — dedicated screens (one per prototype). `src/templates/` — the 8 page templates for every back-office page without its own screen.
 - `src/system/pagemap.ts` — the ~600 sitemap entries are FEATURES; they live on 114 real pages (kind: page/tab/sheet/step/state/setting/template/tool) with a release (MVP → v2, from spec bn-pm.js roadmap). `src/system/connections.ts` — page links from spec LINKS + shared data. `npm run check:system` proves every feature has a page, every page is connected, no release gap, every code link is declared.
@@ -65,14 +66,13 @@ Cloud POS for Indonesian F&B / retail / UMKM. Every surface (marketing, owner, m
 - Tokens only (CSS vars in `app/globals.css`, source `spec/tokens/`); no new colors, no emoji, Lucide icons via `<Icon name="kebab-name" />`. Design system v1.0 (owner PNG set, Oct 2026): brand orange `#FF6A00`, slate neutrals, Satoshi (UI, headings, numbers; loaded from Fontshare), JetBrains Mono (IDs only). Orange text uses `--accent-fg` (ember-700) for contrast. Owner, manager and PIC share the orange; super admin keeps its dark shell. Guest screens (QR menu, kiosk, customer display) wear the merchant brand from Menu Studio.
 - Touch: 44 staff · 56 POS · 72 pay button · 64 KDS/kiosk. Text ≥ 13px staff, ≥ 15px kitchen, inputs 16px.
 - Demo sign-ins: cashier PIN `1234`, approval PIN `246810`. Users: budi (owner), andi (manager), maya/sari/lia (PIC), rina/tono/wulan (cashier), dimas/hadi (kitchen), joko/putri (waiter), admin.
-- Shared registers on Supabase: a tablet the team shares is a 'device' member (owner / manager tap "Make this a shared register"; it re-signs in anonymously, so Supabase › Auth › Anonymous sign-ins must be on). Staff sign in with their PIN → `bn_staff_login` server session; every write carries it (`src/data/staff.ts`, `p_staff`), and `private.staff_rules` enforces the real role. Approval levels are computed on the server (`private.level_required` = `src/domain/approval.ts`).
-- BorNiz staff (super admin) on Supabase: a separate account with no business, listed in `private.platform_admins`. Nobody can list themselves; add one in the SQL editor after they sign up: `insert into private.platform_admins (user_id) select id from auth.users where email = '<email>';`
+- Shared registers: a tablet the team shares is a 'device' member (owner / manager tap "Make this a shared register"; it re-signs in as an anonymous account). Staff sign in with their PIN → `bn_staff_login` server session; every write carries it (`src/data/staff.ts`, `p_staff`), and `private.staff_rules` enforces the real role. Approval levels are computed on the server (`private.level_required` = `src/domain/approval.ts`).
+- BorNiz staff (super admin): a separate account with no business, listed in `private.platform_admins`. Nobody can list themselves; add one with psql after they sign up: `insert into private.platform_admins (user_id) select id from auth.users where email = '<email>';`
 
 ## Changing things
 Add a page in the design system sitemap → `npm run spec` → it routes automatically. Then `npm run graph`, `npm test`, `npm run links` (every in-app href must be a registry path), `npx tsc --noEmit`, `npx next build` (statically generates every page).
 
 ## Known gaps (local adapter vs production)
-- Sign-in is per origin until the own-PostgreSQL login (step 3) shares one session cookie on `.bornis.id`: an owner who signs up or signs in on `app.` signs in once more on `<slug>.bornis.id`.
-- Data lives in the browser (localStorage + BroadcastChannel): one browser, one origin. Subdomain routing therefore needs the Supabase adapter before go-live (each subdomain has its own storage). Production: Supabase realtime on the same tables; swap `store.ts`, keep `actions.ts` signatures.
-- Payment gateway, WhatsApp (WABA), delivery-app webhooks and printers are simulated ("Simulate…" buttons). On Supabase with Xendit or Midtrans connected, QRIS/VA/e-wallet are real: `startPayment` asks the gateway (`chargePayment`) and every screen draws the gateway payload (`src/ui/qr.tsx`, QR v1–20). The local adapter and the simulator still draw stand-ins.
+- Demo mode (no `DATABASE_URL`): data lives in the browser (localStorage + BroadcastChannel), one browser, one origin; the server adapter (`src/data/remoteStore.ts` → `app/api/bn`) keeps the same `actions.ts` signatures.
+- Payment gateway, WhatsApp (WABA), delivery-app webhooks and printers are simulated ("Simulate…" buttons). With the database and Xendit or Midtrans connected, QRIS/VA/e-wallet are real: `startPayment` asks the gateway (`chargePayment`) and every screen draws the gateway payload (`src/ui/qr.tsx`, QR v1–20). The local adapter and the simulator still draw stand-ins.
 - Approval PIN is verified in the browser by the local adapter; production verifies it only in `bn.decide`.

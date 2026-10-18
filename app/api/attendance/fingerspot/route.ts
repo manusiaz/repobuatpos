@@ -1,13 +1,13 @@
 // Fingerspot.io → us: the webhook URL set for the device in the Fingerspot portal (…/api/attendance/fingerspot?key=<key>).
 // Body: {"type":"attlog","cloud_id":"…","data":{"pin":"622","scan":"2025-03-11 16:15:42","verify":4,"status_scan":1}}.
 import { HttpError, body, handle, json } from '../../../../src/integrations/server/http.ts';
-import { DEMO, rpc } from '../../../../src/integrations/server/supabase.ts';
+import { DEMO, rpc } from '../../../../src/integrations/server/db.ts';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export const POST = handle(async (req: Request) => {
-  if (DEMO) throw new HttpError(404, 'Attendance machines need the Supabase backend');
+  if (DEMO) throw new HttpError(404, 'Attendance machines need the database (DATABASE_URL)');
   const e = await body<{ type?: string; cloud_id?: string; data?: { pin?: string | number; scan?: string; status_scan?: string | number } }>(req);
   if (e.type !== 'attlog') return json({ ok: true }); // user, device and command events: not needed
   const sn = String(e.cloud_id ?? ''), d = e.data ?? {};

@@ -2,7 +2,7 @@
 // database (the pending payment doc), never from the caller.
 import { QRIS_TTL_MS } from '../../../domain/order.ts';
 import { HttpError } from '../http.ts';
-import { rpc } from '../supabase.ts';
+import { rpc } from '../db.ts';
 import { active, ctxOf, integrations, paymentOrder } from '../store.ts';
 import type { Headers } from '../types.ts';
 import { gateway } from './index.ts';

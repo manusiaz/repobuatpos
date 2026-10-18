@@ -44,11 +44,13 @@ export default function App({ path }: { path: string }) {
   const staff = ['pos', 'pic', 'kds', 'online', 'waiter'].includes(page.surface);
   usePrintAgent(staff);
   useOffline(!!db, WARM);
-  useDispatcher(!['selforder', 'kiosk', 'display', 'landing', 'public', 'auth'].includes(page.surface));
+  const staffDevice = !['selforder', 'kiosk', 'display', 'landing', 'public', 'auth'].includes(page.surface); // guests never run staff work
+  useDispatcher(staffDevice);
   const router = useRouter();
   const [outlet, setOutlet] = useState<string | null>(null);
   useEffect(() => { if (db && !outlet) setOutlet(user?.outletId ?? db.device.outletId); }, [db, user, outlet]);
-  useEffect(() => { const tick = () => { escalateDue(); watchKitchen(); sweepAlerts(); }; tick(); const t = setInterval(tick, 60e3); return () => clearInterval(t); }, []);
+  // staff alerts, escalations and late-kitchen checks run on staff devices only (a guest phone may not write them)
+  useEffect(() => { if (!staffDevice) return; const tick = () => { escalateDue(); watchKitchen(); sweepAlerts(); }; tick(); const t = setInterval(tick, 60e3); return () => clearInterval(t); }, [staffDevice]);
   const slug = db?.tenant.id; // the business slug (remote store) = its <slug>.bornis.id
   const go = useCallback((p: string) => { const away = leaveFor(p, slug); if (away) location.assign(away); else router.push(p); }, [router, slug]);
   const ctx = useMemo<AppCtx | null>(() => db && user ? { page, db, user, me: db.employees.find(e => e.id === user.id), outletId: outlet ?? user.outletId, setOutlet, go } : null, [page, db, user, outlet, go]);

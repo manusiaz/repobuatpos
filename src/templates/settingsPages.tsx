@@ -13,6 +13,7 @@ import { addOutlet, saveBusiness } from '../data/actions/business.ts';
 import type { Employee, Outlet, Role } from '../data/schema.ts';
 import { REFERRAL_PAGE, referral } from '../system/settings.ts';
 import { linkTo } from '../system/hosts.ts';
+import { QR } from '../ui/qr.tsx';
 import { REMOTE } from '../data/remote.ts';
 import { receiptDoc } from '../devices/receipt.ts';
 import { toText, type Doc, type Op } from '../devices/layout.ts';
@@ -70,17 +71,17 @@ export function ProfileSecurity() {
 }
 function TwoFactor() {
   const [factors, setFactors] = useState<{ id: string; status: string }[] | null>(null), [enroll, setEnroll] = useState<{ id: string; qr: string; secret: string } | null>(null), [code, setCode] = useState('');
-  const sb = async () => (await import('../data/supabase.ts')).sb();
+  const sb = async () => (await import('../data/backend.ts')).sb();
   const load = async () => { const { data } = await (await sb()).auth.mfa.listFactors(); setFactors((data?.totp ?? []).map(f => ({ id: f.id, status: f.status }))); };
   useEffect(() => { load().catch(() => setFactors([])); }, []);
-  const start = async () => { const { data, error } = await (await sb()).auth.mfa.enroll({ factorType: 'totp' }); if (error) return toast(error.message); setEnroll({ id: data.id, qr: data.totp.qr_code, secret: data.totp.secret }); };
+  const start = async () => { const { data, error } = await (await sb()).auth.mfa.enroll({ factorType: 'totp' }); if (error) return toast(error.message); setEnroll({ id: data.id, qr: data.totp.uri, secret: data.totp.secret }); };
   const verify = async () => { const { error } = await (await sb()).auth.mfa.challengeAndVerify({ factorId: enroll!.id, code }); if (error) return toast(error.message); setEnroll(null); setCode(''); toast('Two-factor sign-in is on'); load(); };
   const on = factors?.some(f => f.status === 'verified');
   if (factors === null) return <span className="muted">Checking…</span>;
   return <div className="stack">
     <span><Badge tone={on ? 'success' : 'warning'} dot>{on ? 'On' : 'Off'}</Badge></span>
     {!on && !enroll && <button className="btn" style={{ alignSelf: 'flex-start' }} onClick={() => start().catch(e => toast(e.message))}>Turn on with an authenticator app</button>}
-    {enroll && <div className="stack"><img src={enroll.qr} alt="Scan with Google Authenticator, Authy or 1Password" width={180} height={180} /><span className="mono faint">{enroll.secret}</span>
+    {enroll && <div className="stack"><span style={{ background: 'var(--ink-0)', padding: 8, borderRadius: 'var(--radius-md)', alignSelf: 'flex-start' }}><QR value={enroll.qr} size={180} fg="var(--ink-950)" bg="var(--ink-0)" label="Scan with Google Authenticator, Authy or 1Password" /></span><span className="mono faint">{enroll.secret}</span>
       <div className="row"><input className="input mono" inputMode="numeric" maxLength={6} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} aria-label="6-digit code" /><button className="btn btn-primary" disabled={code.length !== 6} onClick={() => verify().catch(e => toast(e.message))}>Verify</button></div></div>}
     {on && <button className="btn btn-ghost" style={{ alignSelf: 'flex-start' }} onClick={async () => { for (const f of factors ?? []) await (await sb()).auth.mfa.unenroll({ factorId: f.id }); toast('Two-factor sign-in is off'); load(); }}>Turn off</button>}
   </div>;

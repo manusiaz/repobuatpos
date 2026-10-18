@@ -60,13 +60,13 @@ export function ensurePlatform() {
   commit('platform.seeded', 'system', d => { Object.assign(d.records, { tenant: tenants, invoice: invoices, ticket: tickets, flag: flags, release: releases, domain: domains }); });
 }
 
-/** Supabase: the real businesses from the platform registry (BorNiz staff only). Billing, tickets, flags, releases and
+/** Live: the real businesses from the platform registry (BorNiz staff only). Billing, tickets, flags, releases and
  *  domains have no server tables yet, so they start empty instead of showing demo rows. Kept on this browser only. */
 let loading = false;
 async function loadPlatform() {
   if (loading) return; loading = true;
   try {
-    const { adminTenants } = await import('../supabase.ts');
+    const { adminTenants } = await import('../backend.ts');
     const rows = (await adminTenants()).map((t): Rec => ({ id: t.id, a: t.name, b: t.plan, c: String(t.outlets), d: 'active',
       e: JSON.stringify({ owner: t.owner ?? '', email: t.owner ?? '', city: t.city ?? '', source: t.slug } satisfies TenantMeta), at: t.createdAt }));
     commit('platform.loaded', ADMIN, d => { Object.assign(d.records, { tenant: rows, invoice: [], ticket: [], flag: [], release: [], domain: [] }); });
@@ -76,7 +76,7 @@ async function loadPlatform() {
 
 /** Plan change. For the real tenant it changes the tenant's plan everywhere in the product. */
 export function setTenantPlan(tenantId: string, plan: DB['tenant']['plan'], by = ADMIN) {
-  if (REMOTE) return void import('../supabase.ts').then(s => s.adminSetPlan(tenantId, plan)).then(() => setLocalPlan(tenantId, plan, by)).catch(e => toast('Plan not saved: ' + (e as Error).message));
+  if (REMOTE) return void import('../backend.ts').then(s => s.adminSetPlan(tenantId, plan)).then(() => setLocalPlan(tenantId, plan, by)).catch(e => toast('Plan not saved: ' + (e as Error).message));
   setLocalPlan(tenantId, plan, by);
 }
 function setLocalPlan(tenantId: string, plan: DB['tenant']['plan'], by: string) {

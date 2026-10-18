@@ -9,9 +9,9 @@ import { setDeviceOutlet, setSetting } from '../data/actions.ts';
 import { accountSignIn, accountSignOut, accountSignUp, accountUser, checkLoginPin, createBusiness, inviteEmployee, newPassword, resendConfirmation, sendPasswordReset, setPlan, slugify, whenChecked } from '../data/actions/auth.ts';
 import { RESERVED, config, isTenantSlug, onBusinessHost } from '../system/hosts.ts';
 import { DEMO_HERE, REMOTE, setDemo } from '../data/remote.ts';
-import { remoteInfo, remoteSnapshot } from '../data/supabaseStore.ts';
+import { remoteInfo, remoteSnapshot } from '../data/remoteStore.ts';
 import type { Employee, Role } from '../data/schema.ts';
-import { humanError } from '../data/supabaseDocs.ts';
+import { humanError } from '../data/remoteDocs.ts';
 import { bps, idr } from '../domain/money.ts';
 import { Avatar, Badge, Field, Icon, Numpad, Seg, Status, dateShort, toast, useNow } from '../ui/kit.tsx';
 import { PLANS, PPN_BPS, TRIAL_DAYS, billed, perMonth, planOf, type PlanId } from './public/plans.ts';
@@ -501,7 +501,7 @@ function PinLogin() {
   </div>;
 }
 
-// ── Supabase accounts (REMOTE): email + password, email confirmation, business creation with starter data ──────────────
+// ── Accounts (REMOTE): email + password, business creation with starter data ──────────────
 /** Open the signed-in account's business in this tab as its owner / manager. */
 function enterBusiness(go: (p: string) => void, path?: string) {
   const { member } = remoteInfo();
@@ -538,6 +538,7 @@ function AccountLogin() {
   const { go } = useApp();
   const acct = useAccount();
   const [email, setEmail] = useState(''), [pw, setPw] = useState(''), [err, setErr] = useState(''), [busy, setBusy] = useState(false), [unconfirmed, setUnconfirmed] = useState(false), [show, setShow] = useState(false);
+  const [mfa, setMfa] = useState(false), [code, setCode] = useState('');
   if (acct === undefined) return <Head h="Welcome back" sub="Checking your sign-in…" />;
   const m = remoteInfo().member;
   if (acct && m?.role === 'device') return <div className="stack">
@@ -562,9 +563,11 @@ function AccountLogin() {
     ev.preventDefault();
     if (!isEmail(email)) return setErr('Enter the email you signed up with.');
     if (pw.length < 8) return setErr('Passwords have at least 8 characters.');
+    if (mfa && code.length !== 6) return setErr('Enter the 6-digit code from your authenticator app.');
     setBusy(true); setErr('');
-    const r = await accountSignIn(email, pw);
+    const r = await accountSignIn(email, pw, mfa ? code : undefined);
     setBusy(false);
+    if (r.mfa && !r.error) return setMfa(true); // two-factor sign-in is on: ask for the code
     if (r.unconfirmed) return setUnconfirmed(true);
     if (r.error) return setErr(r.error);
     if (!enterBusiness(go)) go(remoteInfo().admin ? '/admin' : A + 'register');
@@ -576,8 +579,9 @@ function AccountLogin() {
       <div className="pw"><input className="input" type={show ? 'text' : 'password'} autoComplete="current-password" value={pw} onChange={e => { setPw(e.target.value); setErr(''); }} />
         <button type="button" className="btn btn-ghost icon-btn" onClick={() => setShow(s => !s)} aria-label={show ? 'Hide password' : 'Show password'}><Icon name={show ? 'eye-off' : 'eye'} /></button></div>
     </Field>
+    {mfa && <Field label="Authenticator code"><input className="input mono" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} autoFocus onChange={e => { setCode(e.target.value.replace(/\D/g, '')); setErr(''); }} /></Field>}
     {err && <Note tone="danger"><Icon name="circle-alert" /><span>{err}</span></Note>}
-    <button className="btn btn-primary btn-lg" disabled={busy}>{busy ? 'Logging in…' : 'Log in'}</button>
+    <button className="btn btn-primary btn-lg" disabled={busy}>{busy ? 'Logging in…' : mfa ? 'Verify and log in' : 'Log in'}</button>
     <button type="button" className="btn btn-lg" onClick={() => setDemo(true)}><Icon name="play" size={18} />Try the demo, no account needed</button>
     <Links><Link href={A + 'forgot-password'}>Forgot password?</Link><Link href={A + 'register'}>Create an account</Link><Link href={A + 'cashier-pin-login'}>Staff PIN login</Link></Links>
   </form>;
@@ -588,7 +592,7 @@ function SharedRegister({ tenant }: { tenant: string }) {
   const [busy, setBusy] = useState(false), [err, setErr] = useState('');
   const go = async () => {
     setBusy(true); setErr('');
-    const { makeSharedRegister } = await import('../data/supabase.ts');
+    const { makeSharedRegister } = await import('../data/backend.ts');
     const e = await makeSharedRegister(tenant);
     if (e) { setErr(humanError(e).text); setBusy(false); return; }
     try { localStorage.setItem('borniz-shared-device', '1'); } catch { /* blocked */ }

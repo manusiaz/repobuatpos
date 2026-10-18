@@ -1,5 +1,5 @@
-// Pure mapping between the app DB and the Supabase document store (public.docs: tenant, coll, id, data, t, open).
-// No browser or network here: the remote adapter (supabaseStore.ts) and the Node tests share it.
+// Pure mapping between the app DB and the document store (public.docs: tenant, coll, id, data, t, open).
+// No browser or network here: the remote adapter (remoteStore.ts) and the Node tests share it.
 import type { DB } from './schema.ts';
 
 type Any = Record<string, any>;

@@ -1,4 +1,4 @@
--- Server RPCs (supabase/migrations/20261011010000_borniz_server.sql): idempotent writes, preconditions, secrets, server writes, starter import, guest snapshot.
+-- Server RPCs (db/migrations/20261011010000_borniz_server.sql): idempotent writes, preconditions, secrets, server writes, starter import, guest snapshot.
 \set ON_ERROR_STOP 1
 begin;
 insert into auth.users values ('00000000-0000-0000-0000-00000000000a'), ('00000000-0000-0000-0000-00000000000b'), ('00000000-0000-0000-0000-00000000000c');

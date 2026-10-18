@@ -2,7 +2,7 @@
 // refund approval was decided in the app). The refund record itself is written by the app's refund service.
 import { member } from '../../../../src/integrations/server/auth.ts';
 import { HttpError, body, handle, json } from '../../../../src/integrations/server/http.ts';
-import { DEMO, rpc } from '../../../../src/integrations/server/supabase.ts';
+import { DEMO, rpc } from '../../../../src/integrations/server/db.ts';
 import { gateway } from '../../../../src/integrations/server/payments/index.ts';
 import { active, ctxOf, paymentOrder } from '../../../../src/integrations/server/store.ts';
 

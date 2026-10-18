@@ -1,4 +1,4 @@
--- Hybrid tenancy (supabase/migrations/20261011020000_borniz_cells.sql): registry lookup, a moved business is frozen here,
+-- Hybrid tenancy (db/migrations/20261011020000_borniz_cells.sql): registry lookup, a moved business is frozen here,
 -- owners can't change plan or cell.
 \set ON_ERROR_STOP 1
 begin;

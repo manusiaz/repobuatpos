@@ -1,7 +1,7 @@
 'use client';
 // The outbox runner: sends queued db.messages (WhatsApp, email, SMS) and outgoing webhook events, with retries and backoff.
 // One tab per browser runs it (Web Lock, else a localStorage lease); across devices the server dedups on the message /
-// event id, so several open registers never double-send. Demo mode (no Supabase) uses the simulator: queued → sent → delivered.
+// event id, so several open registers never double-send. Demo mode (no database) uses the simulator: queued → sent → delivered.
 import { gatewayWebhook } from '../actions.ts';
 import { useEffect } from 'react';
 import { commit, snapshot, uid } from '../store.ts';

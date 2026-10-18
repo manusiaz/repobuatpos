@@ -5,7 +5,7 @@
 // order status, so when several devices race only the first write lands; the others are refused quietly and get the result by realtime.
 import { commit, snapshot } from './store.ts';
 import { backFromPaying, notify, settleIfDone } from './actions.ts';
-import { onDocs } from './supabaseStore.ts';
+import { onDocs } from './remoteStore.ts';
 import { idr } from '../domain/money.ts';
 import type { DB } from './schema.ts';
 

@@ -1,5 +1,5 @@
 // API keys, tokens and passwords never enter the shared data every device (and every cashier) can read.
-// Production: sent once to /api/integrations/secrets → Supabase private schema; only server routes read them back.
+// Production: sent once to /api/integrations/secrets → the database's private schema; only server routes read them back.
 // Local demo: kept in this browser only.
 import { REMOTE, authHeaders } from '../data/remote.ts';
 

@@ -1,10 +1,10 @@
-// Pure parts of the Supabase adapter: doc ids, DB → document diff, document → DB merge, guest filter, error messages, finalizer need.
+// Pure parts of the server adapter: doc ids, DB → document diff, document → DB merge, guest filter, error messages, finalizer need.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { seed } from './seed.ts';
 import type { DB } from './schema.ts';
-import { allOps, applyDocs, diff, emptyDB, fromDocs, guestOps, hintOf, humanError, keysOf, MASK_PIN, opsToDocs, pinChanges, stable, SYNTHETIC, type Hint } from './supabaseDocs.ts';
-import { finalizeNeed } from './supabaseFinalize.ts';
+import { allOps, applyDocs, diff, emptyDB, fromDocs, guestOps, hintOf, humanError, keysOf, MASK_PIN, opsToDocs, pinChanges, stable, SYNTHETIC, type Hint } from './remoteDocs.ts';
+import { finalizeNeed } from './remoteFinalize.ts';
 import { settleIfDone } from './actions.ts';
 
 const S = seed(1_760_000_000_000);

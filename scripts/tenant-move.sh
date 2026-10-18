@@ -1,7 +1,7 @@
 #!/bin/sh
 # Hybrid tenancy: move one merchant from the shared database to its own database ("cell").
 #   SRC=<shared db url> DST=<new db url> scripts/tenant-move.sh <slug> <cell-id> <cell api url> <cell publishable key>
-# DST is a new Supabase project with every file in supabase/migrations applied and its own private.secrets
+# DST is a new PostgreSQL database installed with npm run db:migrate (platform.sql + db/migrations) and its own private.secrets
 # ('server', 'secrets_key'). Integration secrets are re-encrypted with the new key. Afterwards the shared database
 # keeps the old rows read-only as a backup and refuses writes for this merchant (BN050); bn_tenant_cell sends its
 # app., pos., kds., display. and order. traffic to the new database. Login accounts move with it (same passwords).

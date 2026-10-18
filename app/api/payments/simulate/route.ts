@@ -2,7 +2,7 @@
 // was charged through the simulator, by the same path a real gateway webhook takes.
 import { member } from '../../../../src/integrations/server/auth.ts';
 import { HttpError, body, handle, json } from '../../../../src/integrations/server/http.ts';
-import { DEMO } from '../../../../src/integrations/server/supabase.ts';
+import { DEMO } from '../../../../src/integrations/server/db.ts';
 import { apply } from '../../../../src/integrations/server/payments/flow.ts';
 import { integrations, paymentOrder } from '../../../../src/integrations/server/store.ts';
 

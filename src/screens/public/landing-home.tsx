@@ -48,7 +48,7 @@ export function Home() {
 /** Hero product mock built from the real menu, real outlet tax and the real totals function. Tapping adds to the cart. */
 function RegisterMock() {
   const app = useApp();
-  // a visitor on Supabase has no business yet: the marketing mock shows the Kopi Biru demo instead of nothing
+  // a visitor on a live deployment has no business yet: the marketing mock shows the Kopi Biru demo instead of nothing
   const db = useMemo(() => (app.db.outlets.length ? app.db : seed()), [app.db]);
   const outlet = db.outlets[0];
   const items = db.products.filter(p => p.status === 'live' && p.scope === 'global').slice(0, 6);

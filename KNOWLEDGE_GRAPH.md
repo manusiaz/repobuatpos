@@ -5,13 +5,13 @@
 > Graph halaman otomatis (617 halaman, generator `npm run graph`) ada di `KNOWLEDGE_GRAPH.json` dan viewer `/graph`;
 > file ini mencatat node kode + data yang dipetakan per task.
 
-Last verified: 54a01c7 — 2026-10-18
+Last verified: c5106d2 — 2026-10-18
 
 ## Stack
 
 - Next.js 16 (App Router, satu catch-all `app/[[...slug]]`), React 19, TypeScript; test `node --test --experimental-strip-types`.
-- Data: adapter lokal (`src/data/store.ts`, localStorage) atau Supabase (`src/data/supabaseStore.ts`) — dipilih `src/data/remote.ts` `REMOTE`.
-- Sumber kebenaran: halaman/izin/alert dari `spec/` → `npm run spec` → `src/system/*.json` (jangan diedit manual); schema `src/data/schema.ts`; token desain `app/globals.css`; aturan bisnis `src/domain/*`; DB `supabase/migrations/*`.
+- Data: adapter lokal (`src/data/store.ts`, localStorage) atau Supabase (`src/data/remoteStore.ts`) — dipilih `src/data/remote.ts` `REMOTE`.
+- Sumber kebenaran: halaman/izin/alert dari `spec/` → `npm run spec` → `src/system/*.json` (jangan diedit manual); schema `src/data/schema.ts`; token desain `app/globals.css`; aturan bisnis `src/domain/*`; DB `db/migrations/*`.
 - Semua tulisan lewat `commit` (`src/data/actions*.ts`); server menegakkan lewat `bn_write` + trigger `private.docs_guard / docs_rules / staff_rules`.
 
 ## Entry points
@@ -27,7 +27,7 @@ Tidak ada CI di repo (`.github/workflows` kosong). Urutan murah → mahal:
 npx tsc --noEmit && npm test && npm run -s links && npm run -s check:system && npm run -s check:deploy && npm run -s test:db && npx next build
 ```
 
-`test:db` butuh Postgres lokal di `localhost:5433` (`/tmp/bnpg`); memasang database lewat `scripts/db-migrate.mjs` (sama dengan produksi) di atas `supabase/platform.sql`. Verifikasi UI: Playwright (Chromium di `/opt/pw-browsers`) terhadap `npx next start`.
+`test:db` butuh Postgres lokal di `localhost:5433` (`/tmp/bnpg`); memasang database lewat `scripts/db-migrate.mjs` (sama dengan produksi) di atas `db/platform.sql`. Verifikasi UI: Playwright (Chromium di `/opt/pw-browsers`) terhadap `npx next start`.
 
 ## Nodes
 
@@ -50,7 +50,7 @@ npx tsc --noEmit && npm test && npm run -s links && npm run -s check:system && n
 | page:/manager create booking | page | src/screens/manager/create.tsx | Form reservasi manager (pilih meja) |
 | page:/order (QR menu) | page | src/screens/selforder/shared.tsx | Menu tamu; membaca meja dari QR |
 | table:outlets | table | src/data/schema.ts | Outlet; `floor?: FloorTable[]` + `tables` |
-| policy:staff_rules | policy | supabase/migrations/20261016000000_borniz_staff_sessions.sql | Kasir/dapur/waiter tidak boleh menulis `outlets` (termasuk denah) |
+| policy:staff_rules | policy | db/migrations/20261016000000_borniz_staff_sessions.sql | Kasir/dapur/waiter tidak boleh menulis `outlets` (termasuk denah) |
 | fn:notify | fn | src/data/actions.ts | Satu mesin alert: penerima dari katalog alert, fallback per pemanggil |
 | page:/pos/selling/register-order | page | src/screens/pos/Register.tsx | Register POS; hapus/void baris |
 | fn:findTable | fn | src/domain/tables.ts | Meja dari QR di denah outlet: nama, lalu nama lama (`was`); null = tidak ada di denah |
@@ -61,8 +61,15 @@ npx tsc --noEmit && npm test && npm run -s links && npm run -s check:system && n
 | fn:leaveFor | fn | src/system/hosts.ts | Navigasi in-app yang harus pindah host (app. → <slug>.); dipakai go() |
 | fn:onBusinessHost | fn | src/system/hosts.ts | Halaman yang sama di host bisnis: daftar/masuk pindah ke <slug>.bornis.id |
 | fn:isTenantSlug | fn | src/system/hosts.ts | Nama bisnis yang sah untuk <slug>.bornis.id (bukan host platform, RESERVED) |
-| policy:tenants_slug_not_reserved | policy | supabase/migrations/20261018000000_borniz_tenant_hosts.sql | DB menolak slug yang sama dengan host platform |
-| config:platform | config | supabase/platform.sql | Platform tanpa Supabase: skema auth (users, sessions, mfa_factors), auth.uid(), role anon/authenticated |
+| policy:tenants_slug_not_reserved | policy | db/migrations/20261018000000_borniz_tenant_hosts.sql | DB menolak slug yang sama dengan host platform |
+| api:/api/bn | api | app/api/bn/[...op]/route.ts | Backend sendiri: rpc/<bn_fn>, read/(members|docs|audit), auth/*, live (SSE) |
+| fn:dbCall | fn | src/integrations/server/db.ts | Panggil public.bn_* sebagai pemanggil (anon/authenticated + claim), routing sel per tenant |
+| fn:authSession | fn | src/integrations/server/session.ts | Akun, password scrypt, sesi cookie .root, TOTP, link reset sekali pakai |
+| fn:liveHub | fn | src/integrations/server/live.ts | LISTEN bn_live per database → stream SSE per bisnis, baris dibaca ulang sebagai user (RLS) |
+| policy:bn_guest_write | policy | db/migrations/20261019010000_borniz_guest_fire.sql | Tulisan tamu; notifikasi dapur hanya di batch yang menembakkan item baru |
+| test:guest_fire | test | db/tests/guest_fire.sql | Tamu bayar di kasir: pesanan + notifikasi dapur diterima; notifikasi palsu/ulang ditolak |
+| test:api | test | db/tests/api.mjs | API ujung ke ujung di role non-superuser: akun, RLS, 2FA, reset, live |
+| config:platform | config | db/platform.sql | Platform tanpa Supabase: skema auth (users, sessions, mfa_factors), auth.uid(), role anon/authenticated |
 | fn:dbMigrate | fn | scripts/db-migrate.mjs | Pasang/update DB: platform.sql + migration yang belum jalan (ledger public.bn_migrations), hak role app |
 | config:deploy | config | deploy/ | Self-host lewat git pull: satu proses Next untuk semua host, nginx meneruskan Host |
 | config:proxy | config | proxy.ts | Host → halaman (rewrite/redirect) memakai src/system/hosts.ts |
@@ -104,8 +111,8 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | page:/owner/outlets/table-qr-generator | reads | fn:tableNames | src/screens/menu.tsx:328 |
 | page:/order (QR menu) | calls | fn:findTable | src/screens/selforder/shared.tsx:42 (QR lama → meja yang di-rename; tak dikenal → tidak bisa pesan) |
 | page:/order (QR menu) | calls | fn:tableParam | src/screens/selforder/shared.tsx:42 |
-| page:/owner/outlets/outlets | routes-to | page:/owner/outlets/tables-and-floor-plan | src/templates/settingsPages.tsx:181 |
-| table:outlets | guarded-by | policy:staff_rules | supabase/migrations/20261016000000_borniz_staff_sessions.sql (BN054 list) |
+| page:/owner/outlets/outlets | routes-to | page:/owner/outlets/tables-and-floor-plan | src/templates/settingsPages.tsx:182 |
+| table:outlets | guarded-by | policy:staff_rules | db/migrations/20261016000000_borniz_staff_sessions.sql (BN054 list) |
 | page:/owner/outlets/tables-and-floor-plan | renders | comp:Field | src/screens/floor.tsx (Name / Seats / Area) |
 | page:/pos/selling/table-picker | reads | fn:holdsTable | src/screens/pos/OrderSheets.tsx:95 |
 | page:/waiter | reads | fn:holdsTable | src/screens/waiter.tsx:42 |
@@ -130,8 +137,12 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | test:tables | tests | fn:findTable | src/domain/tables.test.ts |
 | page:/account (sign-in, create business) | calls | fn:onBusinessHost | src/screens/auth.tsx:511 (enterBusiness) |
 | fn:publicUrl | reads | fn:isTenantSlug | src/system/hosts.ts:87 (resolve: label host → tenant) |
-| policy:tenants_slug_not_reserved | documents | fn:isTenantSlug | supabase/migrations/20261018000000_borniz_tenant_hosts.sql (daftar sama dengan RESERVED, isTenantSlug di hosts.ts) |
-| fn:dbMigrate | reads | config:platform | scripts/db-migrate.mjs:24 (supabase/platform.sql) |
+| policy:tenants_slug_not_reserved | documents | fn:isTenantSlug | db/migrations/20261018000000_borniz_tenant_hosts.sql (daftar sama dengan RESERVED, isTenantSlug di hosts.ts) |
+| api:/api/bn | calls | fn:dbCall | app/api/bn/[...op]/route.ts:7 (import call from db.ts) |
+| api:/api/bn | calls | fn:liveHub | app/api/bn/[...op]/route.ts:9 (import subscribe from live.ts) |
+| test:api | tests | api:/api/bn | db/tests/api.mjs |
+| test:guest_fire | tests | policy:bn_guest_write | db/tests/guest_fire.sql |
+| fn:dbMigrate | reads | config:platform | scripts/db-migrate.mjs:24 (db/platform.sql) |
 | config:deploy | routes-to | config:proxy | deploy/nginx.conf:28 (proxy_set_header Host; hosts.ts routes by it) |
 | test:changes | tests | fn:moveTable | src/data/changes.test.ts |
 | test:changes | tests | fn:voidItem | src/data/changes.test.ts |
@@ -176,6 +187,9 @@ graph LR
 | 2026-10-14 | page:/owner/outlets/tables-and-floor-plan | Halaman bernama "floor plan" hanya berisi daftar reservasi | fixed (editor denah) |
 | 2026-10-14 | comp:Field | Label tidak terhubung ke input di seluruh aplikasi (a11y, tap label) | fixed |
 | 2026-10-14 | src/screens/brand.tsx | Preview KDS menampilkan "T-T-05" (`'T-' + o.table`) | fixed |
+| 2026-10-18 | policy:bn_guest_write | BN047: tamu "bayar di kasir" tidak bisa kirim pesanan ke dapur (notifikasi 'New order' dari fire() ditolak, seluruh batch gagal) — juga terjadi di Supabase, baru ketahuan lewat uji ujung ke ujung | fixed (migration guest_fire + tes) |
+| 2026-10-18 | src/app/App.tsx | HP tamu menjalankan mesin alert staf (sweepAlerts/escalate/watchKitchen) tiap 60 dtk → tulis alert staf yang selalu ditolak server | fixed (hanya perangkat staf) |
+| 2026-10-18 | fn:authSession | 2FA bisa diaktifkan tapi tidak pernah diminta saat login | fixed (kode TOTP wajib saat masuk) |
 | 2026-10-18 | config:proxy | Redirect proxy membuang query: QR lama `order.bornis.id/kopibiru/t/07?o=kem` kehilangan outlet | fixed (query ikut) |
 | 2026-10-18 | test (npm test) | `--test-force-exit` memotong output: 2 tes terakhir alerts.test.ts kadang tidak dilaporkan (201/203); akar: BroadcastChannel di store.ts menahan proses Node | fixed (unref, flag dihapus; 203 stabil 4×) |
 | 2026-10-18 | config:deploy | Di belakang reverse proxy (X-Forwarded-Proto https) dengan `next start -H 127.0.0.1`, semua halaman subdomain 500 ("Failed to proxy https://localhost:3000"); `-H localhost` lolos | fixed (deploy/borniz.service) |
@@ -200,6 +214,7 @@ graph LR
 | 2026-10-14 | "Pindah meja" memindah semua pesanan hidup di meja itu | Satu meja bisa punya pesanan QR lunas + ronde POS baru; tamu pindah bersama semuanya | page:/pos/selling/move-table |
 | 2026-10-14 | HP tamu ikut pindah hanya bila staf yang memindah (`movedFrom`); tamu yang pindah sendiri dapat tombol "minta staf pindahkan" | QR lama di URL tidak boleh menarik pesanan kembali; scan meja lain = niat tamu | page:/order status |
 | 2026-10-18 | Jalan 2: PostgreSQL sendiri tanpa software Supabase; logika SQL (migrations) dipakai utuh di atas platform.sql | Owner pakai VPS sendiri; semua aturan DB sudah teruji di Postgres biasa | config:platform, fn:dbMigrate |
+| 2026-10-18 | Jalan 2 selesai: tanpa software Supabase; API sendiri (app/api/bn), login sendiri (cookie .root), realtime NOTIFY→SSE, folder supabase/ → db/ | Owner memilih PostgreSQL sendiri di VPS | api:/api/bn, fn:authSession, fn:liveHub, fn:dbCall |
 | 2026-10-18 | SEMUA milik bisnis (owner, manager, studios, POS, PIC, online, waiter, KDS, display, QR, kiosk) di `<slug>.bornis.id`; platform = bornis.id, app. (daftar/masuk), admin.; pos./kds./display. → app., order.<slug> → <slug>.; daftar baru memilih alamat dan langsung pindah ke subdomain | Keputusan owner (2×), mengganti pembagian host spec | fn:publicUrl, fn:leaveFor, fn:onBusinessHost, fn:isTenantSlug, config:deploy |
 | 2026-10-18 | Bisnis di `<slug>.bornis.id` (bukan `order.bornis.id/<slug>`); link lama di-redirect; slug platform ditolak di app + DB | Keputusan owner; spec Sitemap masih `order.` | fn:publicUrl, fn:isTenantSlug, config:deploy |
 | 2026-10-18 | Satu folder repo + satu proses untuk semua subdomain; tidak ada folder/app per subdomain | Kode dipakai lintas host (insight/, ops/, guest/); salinan per subdomain = data & logika bercabang (keputusan owner "one system") | config:deploy |

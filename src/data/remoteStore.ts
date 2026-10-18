@@ -1,5 +1,5 @@
 'use client';
-// Remote adapter (Supabase). Same DB shape and commit() contract as the local adapter in store.ts:
+// Remote adapter (own PostgreSQL). Same DB shape and commit() contract as the local adapter in store.ts:
 //   load    the signed-in business's documents (orders, payments, movements, ledger … of the last WINDOW days, plus anything still open)
 //           and opening balances before that (bn_opening) so stock levels and bean balances stay right
 //   write   commit() applies the change at once (optimistic), diffs the DB into document ops and queues one bn_write per commit
@@ -9,8 +9,8 @@
 //   guests  QR menu / kiosk visitors read bn_public_snapshot, write through bn_guest_write and poll bn_guest_order
 import type { Audit, DB } from './schema.ts';
 import { seed } from './seed.ts';
-import { applyDocs, diff, emptyDB, fromDocs, guestOps, humanError, opsToDocs, pinChanges, wire, SYNTHETIC, type Doc, type Hint, type Op, type PinSet } from './supabaseDocs.ts';
-import type { Membership } from './supabase.ts';
+import { applyDocs, diff, emptyDB, fromDocs, guestOps, humanError, opsToDocs, pinChanges, wire, SYNTHETIC, type Doc, type Hint, type Op, type PinSet } from './remoteDocs.ts';
+import type { Membership } from './backend.ts';
 import { staffToken } from './staff.ts';
 
 type Any = Record<string, any>;
@@ -21,7 +21,7 @@ interface Pending { opId: string; action: string; actor: string; subject: string
 const WINDOW_MS = (Number(process.env.NEXT_PUBLIC_BORNIZ_WINDOW_DAYS) || 35) * 864e5;
 const NAMES = ['order', 'po'];
 const DONE = ['paid', 'voided', 'refunded', 'part_refunded'];
-const lib = () => import('./supabase.ts');
+const lib = () => import('./backend.ts');
 const toast = (m: string) => { import('../ui/kit.tsx').then(k => k.toast(m)).catch(() => {}); };
 const rid = (p: string) => p + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
 const ls = {
@@ -159,16 +159,16 @@ function auditIn(r: Any) {
   if (db) { db = { ...db, audit }; emit(); }
 }
 
+/** Live changes of this business (server-sent events from app/api/bn/live, read under the member's own access). */
 async function listen(tid: string) {
-  const { sb } = await lib();
   let first = true;
-  const f = 'tenant_id=eq.' + tid;
-  channel = sb().channel('bn-' + tid)
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'docs', filter: f }, e => incoming(e.new))
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'docs', filter: f }, e => incoming(e.new))
-    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'docs' }, e => { if ((e.old as Any).tenant_id === tid) incoming({ ...e.old, data: null }); })
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_log', filter: f }, e => auditIn(e.new))
-    .subscribe(s => { if (s === 'SUBSCRIBED') { if (!first) resync(); first = false; } });
+  const es = new EventSource('/api/bn/live?tenant=' + encodeURIComponent(tid), { withCredentials: true });
+  const on = (ev: string, f: (r: Any) => void) => es.addEventListener(ev, e => { try { f(JSON.parse((e as MessageEvent).data)); } catch { /* bad frame */ } });
+  on('doc', r => { if (r.tenant_id === tid) incoming(r); });
+  on('audit', auditIn);
+  on('ready', () => { if (!first) resync(); first = false; }); // reconnected after a gap: reload
+  on('reset', () => resync());
+  channel = { unsubscribe: () => es.close() };
 }
 /** Reconnected after a gap: reload, keep the pending queue on top. */
 async function resync() {
@@ -182,13 +182,12 @@ async function loadMember(): Promise<DB> {
   try {
     const docs: Doc[] = [];
     for (let from = 0; ; from += 1000) {
-      const { data, error } = await sb().from('docs').select('coll,id,data').eq('tenant_id', tid).or(`t.is.null,t.gte.${since},open.is.true`).order('coll').order('id').range(from, from + 999);
+      const { data, error } = await sb().read<Doc[]>('docs', { tenant: tid, since, from });
       if (error) throw error;
-      docs.push(...(data as Doc[]));
+      docs.push(...(data ?? []));
       if ((data ?? []).length < 1000) break;
     }
-    const [op, au] = await Promise.all([sb().rpc('bn_opening', { p_tenant: tid, p_before: since }),
-      sb().from('audit_log').select('id,actor,action,subject,outlet_id,at').eq('tenant_id', tid).order('at', { ascending: false }).limit(500)]);
+    const [op, au] = await Promise.all([sb().rpc('bn_opening', { p_tenant: tid, p_before: since }), sb().read<Any[]>('audit', { tenant: tid })]);
     if (op.error) throw op.error;
     hint = {};
     const d = fromDocs(shapeDB(), docs, hint) as unknown as Any, o = (op.data ?? {}) as { stock?: Any[]; beans?: Any[] };
@@ -215,7 +214,7 @@ async function enterMember(m: Membership) {
   device = { ...base.device, ...saved, queue: [] } as DB['device'];
   if (!base.outlets.some(o => o.id === device!.outletId) && base.outlets[0]) device.outletId = base.outlets[0].id;
   compose(); drain(); flush(); topUp();
-  import('./supabaseFinalize.ts').then(f => f.startFinalizer()).catch(() => {});
+  import('./remoteFinalize.ts').then(f => f.startFinalizer()).catch(() => {});
 }
 
 function guestBase(snap: Any, slug: string, prev: DB | null): DB {
@@ -226,8 +225,7 @@ function guestBase(snap: Any, slug: string, prev: DB | null): DB {
     movements: portions.map(p => ({ outletId: p.outletId, stockItemId: SYNTHETIC + p.productId, qty: Number(p.n), type: 'adjust' as const, sourceId: SYNTHETIC + 'portions', by: 'system', at: 0 })) };
 }
 async function snapshotOf(slug: string) {
-  const { sb, cellOf, goHome } = await lib();
-  goHome(await cellOf({ slug }), true); // a merchant with its own database serves its guests from there (null = shared)
+  const { sb } = await lib(); // a merchant on its own database: the server answers from there
   const { data, error } = await sb().rpc('bn_public_snapshot', { p_slug: slug }); if (error) throw error; return data as Any | null; }
 async function enterGuest(slug: string): Promise<boolean> {
   const snap = await snapshotOf(slug);
@@ -264,14 +262,10 @@ async function guestSlug(): Promise<string | null> {
   if (!/^\/(order|kiosk)(\/|$)/.test(internal)) return null;
   return (r.type === 'rewrite' ? r.query.tenant : '') || config().tenant || null;
 }
-/** BN050: the business moved to its own database. Guests follow it now; staff sign in again there (same password). */
+/** BN050: the business moved to its own database while this device was open: the server routes to it now, so reload. */
 async function moved() {
-  const { cellOf, goHome, sb } = await lib();
   if (!tenant) return;
-  const c = await cellOf({ tenant: tenant.id }).catch(() => null);
   toast(humanError('BN050').text);
-  if (mode === 'guest') goHome(c, true);
-  else { await sb().auth.signOut().catch(() => {}); goHome(c); }
   remoteRestart();
 }
 const offline = () => typeof navigator !== 'undefined' && navigator.onLine === false;
@@ -284,8 +278,6 @@ async function memberOf(): Promise<Membership | null> {
 }
 async function enter() {
   try {
-    const { goHome } = await lib();
-    goHome(undefined, true); // staff use this browser's home; a guest page resolves its own below
     admin = userId ? await (await lib()).isPlatformAdmin().catch(() => false) : false;
     const m = userId ? await memberOf() : null;
     if (m) return await enterMember(m);

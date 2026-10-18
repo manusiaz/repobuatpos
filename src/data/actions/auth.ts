@@ -6,8 +6,8 @@ import type { DB, Role } from '../schema.ts';
 import { REMOTE } from '../remote.ts';
 import { seed } from '../seed.ts';
 import { verifyPin } from '../actions.ts';
-import { remoteInfo, remoteReady, remoteRestart } from '../supabaseStore.ts';
-import { allOps, emptyDB, humanError, pinChanges, wire } from '../supabaseDocs.ts';
+import { remoteInfo, remoteReady, remoteRestart } from '../remoteStore.ts';
+import { allOps, emptyDB, humanError, pinChanges, wire } from '../remoteDocs.ts';
 
 export const PAIR_TTL_MS = 10 * 60e3;
 const pairKey = (deviceId: string) => 'pair:' + deviceId;
@@ -64,11 +64,11 @@ export function pairDevice(deviceId: string, code: string): string | null {
   return null;
 }
 
-// ── Supabase accounts, PINs and starter data (REMOTE) ──────────────────────────────────────
+// ── Accounts, PINs and starter data (REMOTE) ──────────────────────────────────────
 export type Check = string | null | Promise<string | null>;
-/** Approval PIN: on Supabase the server checks it (and opens a 2-minute window for this approver's decisions); locally verifyPin. */
+/** Approval PIN: With the database the server checks it (and opens a 2-minute window for this approver's decisions); locally verifyPin. */
 export function checkApprovalPin(employeeId: string, pin: string): Check { return REMOTE ? serverPin('bn_check_approval_pin', employeeId, pin) : verifyPin(employeeId, pin); }
-/** Staff login PIN on a register. On Supabase it opens a server session for that person; their writes carry its token. */
+/** Staff login PIN on a register. With the database it opens a server session for that person; their writes carry its token. */
 export function checkLoginPin(employeeId: string, pin: string): Check {
   if (REMOTE) return staffSignIn(employeeId, pin);
   return snapshot().employees.find(e => e.id === employeeId)?.pin === pin ? null : 'Wrong PIN.';
@@ -76,7 +76,7 @@ export function checkLoginPin(employeeId: string, pin: string): Check {
 async function staffSignIn(employeeId: string, pin: string) {
   const t = remoteInfo().tenant;
   if (!t) return 'This device is not signed in to a business. Log in first.';
-  const { staffLogin } = await import('../supabase.ts');
+  const { staffLogin } = await import('../backend.ts');
   const r = await staffLogin(t.id, employeeId, pin);
   if (r.token) { (await import('../staff.ts')).setStaffToken(employeeId, r.token); return null; }
   return r.error ? humanError(r.error).text : 'Sign-in failed. Try again.';
@@ -84,7 +84,7 @@ async function staffSignIn(employeeId: string, pin: string) {
 async function serverPin(fn: string, employeeId: string, pin: string) {
   const t = remoteInfo().tenant;
   if (!t) return 'This device is not signed in to a business. Log in first.';
-  const { sb } = await import('../supabase.ts');
+  const { sb } = await import('../backend.ts');
   const { data, error } = await sb().rpc(fn, { p_tenant: t.id, p_employee: employeeId, p_pin: pin });
   return error ? humanError(error.message).text : (data as string | null);
 }
@@ -93,34 +93,28 @@ export const whenChecked = (r: Check, then: (err: string | null) => void) => { i
 
 const site = () => (typeof location !== 'undefined' ? location.origin : '');
 const msg = (e: { message?: string } | null) => e?.message ? humanError(e.message).text : null;
-export async function accountSignIn(email: string, password: string): Promise<{ error: string | null; unconfirmed?: boolean }> {
-  const { sb, membership, cellOf, goHome, home } = await import('../supabase.ts');
-  if (home()) { await sb().auth.signOut().catch(() => {}); goHome(null); } // every sign-in starts at the platform registry
-  let { data, error } = await sb().auth.signInWithPassword({ email: email.trim(), password });
-  if (error) return /confirm/i.test(error.message) ? { error: 'Confirm your email first: open the link we sent you.', unconfirmed: true } : { error: /invalid/i.test(error.message) ? 'Wrong email or password. No account yet? Tap Create an account below.' : error.message };
-  // the business lives in its own database: sign in there too (accounts moved with it, same password)
-  const m = await membership(), cell = m && await cellOf({ tenant: m.tenantId });
-  if (cell) {
-    await sb().auth.signOut().catch(() => {}); goHome(cell);
-    ({ data, error } = await sb().auth.signInWithPassword({ email: email.trim(), password }));
-    if (error) { goHome(null); return { error: 'Your business moved to its own server and this account is not there yet. Ask BorNiz support.' }; }
-  }
+/** Email + password, plus the authenticator code once two-factor sign-in is on (mfa: ask for it and call again). */
+export async function accountSignIn(email: string, password: string, code?: string): Promise<{ error: string | null; unconfirmed?: boolean; mfa?: boolean }> {
+  const { sb } = await import('../backend.ts');
+  const { data, error } = await sb().auth.signInWithPassword({ email: email.trim(), password, ...(code ? { code } : {}) });
+  if (error?.code === 'mfa_required') return { error: code ? error.message : null, mfa: true };
+  if (error) return { error: /invalid/i.test(error.message) ? 'Wrong email or password. No account yet? Tap Create an account.' : humanError(error.message).text };
   await remoteReady(data.user?.id ?? null);
   return { error: null };
 }
 export async function accountSignUp(p: { email: string; password: string; name: string; phone: string }): Promise<{ error: string | null; confirm: boolean }> {
-  const { sb } = await import('../supabase.ts');
-  const { data, error } = await sb().auth.signUp({ email: p.email.trim(), password: p.password, options: { data: { name: p.name, phone: p.phone }, emailRedirectTo: site() + '/account/login' } });
+  const { sb } = await import('../backend.ts');
+  const { data, error } = await sb().auth.signUp({ email: p.email.trim(), password: p.password, options: { data: { name: p.name, phone: p.phone } } });
   if (error) return { error: error.message, confirm: false };
   if (data.session) await remoteReady(data.user?.id ?? null);
   return { error: null, confirm: !data.session };
 }
-export async function resendConfirmation(email: string) { const { sb } = await import('../supabase.ts'); return msg((await sb().auth.resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo: site() + '/account/login' } })).error); }
-export async function sendPasswordReset(email: string) { const { sb } = await import('../supabase.ts'); return msg((await sb().auth.resetPasswordForEmail(email.trim(), { redirectTo: site() + '/account/reset-password' })).error); }
-export async function newPassword(password: string) { const { sb } = await import('../supabase.ts'); return msg((await sb().auth.updateUser({ password })).error); }
-export async function accountUser() { const { sb } = await import('../supabase.ts'); return (await sb().auth.getUser()).data.user; }
+export async function resendConfirmation(email: string) { const { sb } = await import('../backend.ts'); return msg((await sb().auth.resend({ type: 'signup', email: email.trim() })).error); }
+export async function sendPasswordReset(email: string) { const { sb } = await import('../backend.ts'); return msg((await sb().auth.resetPasswordForEmail(email.trim(), { redirectTo: site() + '/account/reset-password' })).error); }
+export async function newPassword(password: string) { const { sb } = await import('../backend.ts'); return msg((await sb().auth.updateUser({ password })).error); }
+export async function accountUser() { const { sb } = await import('../backend.ts'); return (await sb().auth.getUser()).data.user; }
 export async function accountSignOut() {
-  const { sb } = await import('../supabase.ts');
+  const { sb } = await import('../backend.ts');
   try { sessionStorage.removeItem('borniz-session'); localStorage.removeItem('borniz-shared-device'); } catch { /* blocked */ }
   await sb().auth.signOut();
   await remoteReady(null);
@@ -146,7 +140,7 @@ export function starterData(p: NewBusiness, slug: string): DB {
 export async function createBusiness(p: NewBusiness, onProgress: (pct: number) => void = () => {}): Promise<string | null> {
   if (!/^\d{4}$/.test(p.pin)) return 'Your staff PIN is 4 digits.';
   if (!/^\d{6}$/.test(p.approvalPin)) return 'Your approval PIN is 6 digits.';
-  const { sb, membership, pickTenant } = await import('../supabase.ts');
+  const { sb, membership, pickTenant } = await import('../backend.ts');
   let m = await membership().catch(() => null), tid = m?.tenantId ?? '', slug = m?.slug ?? '';
   const want = p.slug?.trim().toLowerCase();
   if (!tid && want) { // the address the owner picked: exactly that one, or say it is taken

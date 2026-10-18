@@ -2,7 +2,7 @@
 // tenant's active connector for that channel. messageId is the idempotency key: a second device gets the first result.
 import { member } from '../../../../src/integrations/server/auth.ts';
 import { HttpError, body, handle, json } from '../../../../src/integrations/server/http.ts';
-import { DEMO, rpc } from '../../../../src/integrations/server/supabase.ts';
+import { DEMO, rpc } from '../../../../src/integrations/server/db.ts';
 import { KIND_OF, sender, type Channel } from '../../../../src/integrations/server/messaging/index.ts';
 import { active, ctxOf } from '../../../../src/integrations/server/store.ts';
 import { str } from '../../../../src/integrations/server/types.ts';

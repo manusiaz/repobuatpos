@@ -1,14 +1,14 @@
 'use client';
 // Who is using this tab. Shared devices (POS, KDS, display) sign in with a PIN; owner/manager with account + 2FA.
 // Per tab (sessionStorage) so one browser can run the POS, the KDS and the owner dashboard side by side.
-// On Supabase the browser is signed in once with the owner/manager account; a tab starts as that person unless the device is
+// With the database the browser is signed in once with the owner/manager account; a tab starts as that person unless the device is
 // shared (a staff PIN was used on it), and switching to anyone else needs their PIN (grantSession after bn_check_login_pin).
 import { useEffect, useState } from 'react';
 import type { Surface } from './system/registry.ts';
 import type { Role } from './data/schema.ts';
 import { REMOTE } from './data/remote.ts';
 import { clearStaffTokens } from './data/staff.ts';
-import { remoteInfo, remoteSnapshot, remoteSubscribe } from './data/supabaseStore.ts';
+import { remoteInfo, remoteSnapshot, remoteSubscribe } from './data/remoteStore.ts';
 
 export interface SessionUser { id: string; role: Role; outletId: string }
 const DEFAULT: Partial<Record<Surface, SessionUser>> = {
@@ -82,5 +82,5 @@ export function useSession(surface: Surface, pathRole?: string): SessionUser | n
 /** Signing out of a register ends the staff sessions this tab opened on the server. */
 function endStaffSessions() {
   const tokens = clearStaffTokens();
-  if (tokens.length) import('./data/supabase.ts').then(({ sb }) => Promise.all(tokens.map(t => sb().rpc('bn_staff_logout', { p_token: t })))).catch(() => {});
+  if (tokens.length) import('./data/backend.ts').then(({ sb }) => Promise.all(tokens.map(t => sb().rpc('bn_staff_logout', { p_token: t })))).catch(() => {});
 }

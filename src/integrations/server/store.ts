@@ -3,7 +3,8 @@ import type { Integration, Order, Payment } from '../../data/schema.ts';
 import type { Kind } from '../types.ts';
 import type { Ctx } from './types.ts';
 import { HttpError } from './http.ts';
-import { rpc } from './supabase.ts';
+import { as, rpc } from './db.ts';
+import type { Member } from './auth.ts';
 
 export const integrations = async (tenant: string, kind: Kind) => ((await rpc<Integration[] | null>('bn_integrations', { p_tenant: tenant, p_kind: kind })) ?? []).filter(i => i.enabled);
 export const secretsOf = async (tenant: string, integrationId: string) => (await rpc<Record<string, string> | null>('bn_get_secrets', { p_tenant: tenant, p_integration: integrationId })) ?? {};
@@ -18,9 +19,9 @@ export async function active(tenant: string, kind: Kind, outletId: string | null
   return best;
 }
 /** One integration row, read as the signed-in member (RLS proves it belongs to their business). */
-export async function integrationAsMember(db: import('@supabase/supabase-js').SupabaseClient, tenant: string, id: string): Promise<Integration> {
-  const { data } = await db.from('docs').select('data').eq('tenant_id', tenant).eq('coll', 'integrations').eq('id', id).maybeSingle();
-  if (!data) throw new HttpError(404, 'Connection not found');
-  return data.data as Integration;
+export async function integrationAsMember(m: Member, id: string): Promise<Integration> {
+  const r = await as(m.userId, m.cell, c => c.query("select data from public.docs where tenant_id = $1 and coll = 'integrations' and id = $2", [m.tenantId, id]));
+  if (!r.rowCount) throw new HttpError(404, 'Connection not found');
+  return r.rows[0].data as Integration;
 }
 export const paymentOrder = (tenant: string, paymentId: string) => rpc<{ payment: (Payment & { provider?: string }) | null; order: Order | null }>('bn_payment_order', { p_tenant: tenant, p_payment_id: paymentId });

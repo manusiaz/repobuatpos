@@ -13,13 +13,12 @@
     "graph": "node --experimental-strip-types scripts/graph.ts",
     "paths": "node --experimental-strip-types scripts/paths.ts",
     "links": "node --experimental-strip-types scripts/check-links.ts",
-    "test:db": "sh supabase/tests/run.sh",
+    "test:db": "sh db/tests/run.sh",
     "db:migrate": "node scripts/db-migrate.mjs",
     "check:system": "node --experimental-strip-types scripts/check-system.ts",
     "check:deploy": "node --experimental-strip-types scripts/check-deploy.ts"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.117.3",
     "chart.js": "^4.5.1",
     "lucide-react": "^1.55.0",
     "next": "^16.4.0",

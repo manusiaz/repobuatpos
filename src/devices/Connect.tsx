@@ -119,7 +119,7 @@ export function ConnectDevice() {
           <span className="faint" style={{ fontSize: 13 }}>Needs a machine whose Cloud Server menu has HTTPS (most ZKTeco models since 2019).</span>
         </>}
         <span className="faint" style={{ fontSize: 13 }}>Each scan then clocks the person in or out at this outlet, marked “Verified on {machine?.name ?? (brand === 'fingerspot' ? 'Fingerspot machine' : 'Attendance machine')}”.</span>
-        {!REMOTE && <span className="faint" style={{ fontSize: 13 }}>Demo mode: settings are saved, but a machine can only reach BorNiz once the app runs on Supabase.</span>}
+        {!REMOTE && <span className="faint" style={{ fontSize: 13 }}>Demo mode: settings are saved, but a machine can only reach BorNiz once the app runs with its database.</span>}
       </div>
       <button className="btn btn-primary btn-lg" disabled={busy || !serial.trim()} onClick={connect}><Icon name="plug" />{busy ? 'Saving…' : machine ? 'Save and check the machine' : 'Connect and check the machine'}</button>
     </>}

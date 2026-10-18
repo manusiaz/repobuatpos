@@ -2,7 +2,7 @@
 // each outlet connection's secret; the order lands at the outlet whose merchant ID it names (bn_platform_order: idempotent
 // on the platform order id, numbered by the server sequence, raises "New online order").
 import { HttpError, UUID, handle, json } from '../../../../../src/integrations/server/http.ts';
-import { DEMO, rpc } from '../../../../../src/integrations/server/supabase.ts';
+import { DEMO, rpc } from '../../../../../src/integrations/server/db.ts';
 import { PLATFORMS, normalizeOrder, parsePlatform, type Platform } from '../../../../../src/integrations/server/delivery/index.ts';
 import { integrations, secretsOf } from '../../../../../src/integrations/server/store.ts';
 
@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export const POST = handle(async (req: Request, { params }: { params: Promise<{ platform: string }> }) => {
   const platform = (await params).platform as Platform;
   if (!PLATFORMS.includes(platform)) throw new HttpError(404, 'Unknown platform');
-  if (DEMO) throw new HttpError(404, 'Delivery webhooks need the Supabase backend');
+  if (DEMO) throw new HttpError(404, 'Delivery webhooks need the database (DATABASE_URL)');
   const tenant = new URL(req.url).searchParams.get('tenant') ?? '';
   if (!UUID.test(tenant)) throw new HttpError(400, 'tenant query parameter is required');
   const raw = await req.text();

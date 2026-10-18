@@ -1,7 +1,7 @@
 // Provider → us: delivery receipts (sent / delivered / read / failed) for messages we sent. ?tenant=<id>.
 // GET answers Meta's subscription check (hub.verify_token must match the connection's verify token).
 import { HttpError, UUID, handle, json } from '../../../../../src/integrations/server/http.ts';
-import { DEMO, rpc } from '../../../../../src/integrations/server/supabase.ts';
+import { DEMO, rpc } from '../../../../../src/integrations/server/db.ts';
 import { metaCloud } from '../../../../../src/integrations/server/messaging/index.ts';
 import { ctxOf, integrations } from '../../../../../src/integrations/server/store.ts';
 import { safeEqual } from '../../../../../src/integrations/server/sign.ts';
@@ -13,7 +13,7 @@ type P = { params: Promise<{ provider: string }> };
 async function setup(req: Request, params: P['params']) {
   const { provider } = await params;
   if (provider !== 'meta-cloud') throw new HttpError(404, 'Unknown provider');
-  if (DEMO) throw new HttpError(404, 'Message webhooks need the Supabase backend');
+  if (DEMO) throw new HttpError(404, 'Message webhooks need the database (DATABASE_URL)');
   const tenant = new URL(req.url).searchParams.get('tenant') ?? '';
   if (!UUID.test(tenant)) throw new HttpError(400, 'tenant query parameter is required');
   const ctxs = await Promise.all((await integrations(tenant, 'whatsapp')).filter(i => i.connector === provider).map(i => ctxOf(tenant, i)));

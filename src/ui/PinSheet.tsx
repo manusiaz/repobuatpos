@@ -21,7 +21,7 @@ export function PinSheet({ req, onClose }: { req: PinRequest | null; onClose: ()
     if (!/^\d$/.test(k)) return;
     const p = (pin + k).slice(0, PIN_LEN); setPin(p); setErr('');
     if (p.length === PIN_LEN) {
-      // on Supabase the server checks the PIN first; decide() then runs inside the 2-minute proof window it opens
+      // With the database the server checks the PIN first; decide() then runs inside the 2-minute proof window it opens
       whenChecked(checkApprovalPin(who, p), e => {
         if (e) { setErr(e); setShake(true); setTimeout(() => { setShake(false); setPin(''); }, 320); }
         else { onClose(); req.onOk(who); }

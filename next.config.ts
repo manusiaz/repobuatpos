@@ -5,6 +5,8 @@ const root = process.env.NEXT_PUBLIC_BORNIZ_ROOT_DOMAIN || 'bornis.id';
 const STAFF = '/:area(owner|manager|pic|pos|admin|account|kds|display|waiter|graph)/:path*';
 const config: NextConfig = {
   reactStrictMode: true,
+  // The browser bundle knows whether this deployment has a database (the URL itself stays on the server).
+  env: { NEXT_PUBLIC_BORNIZ_BACKEND: process.env.DATABASE_URL ? '1' : '' },
   poweredByHeader: false,
   // Dev only: let `next dev` serve the subdomains (app., pos., kds. …) and *.localhost when testing subdomain routing locally.
   allowedDevOrigins: [root, '*.' + root, '*.localhost'],

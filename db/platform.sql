@@ -18,6 +18,13 @@ create table if not exists auth.sessions (
   expires_at timestamptz not null
 );
 create index if not exists sessions_user on auth.sessions (user_id);
+alter table auth.users add column if not exists meta jsonb not null default '{}';   -- name and phone given at sign-up
+create table if not exists auth.one_time (      -- password-reset links (sha256 of the token)
+  token_hash text primary key,
+  user_id uuid not null references auth.users on delete cascade,
+  purpose text not null,
+  expires_at timestamptz not null
+);
 create table if not exists auth.mfa_factors (   -- TOTP second factor (Settings › Security)
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users on delete cascade,
@@ -38,4 +45,4 @@ grant usage on schema public, auth, extensions to anon, authenticated;
 alter default privileges in schema public grant all on tables to anon, authenticated;
 alter default privileges in schema public grant all on sequences to anon, authenticated;
 -- Accounts and sessions are only touched by the API's own login code, never through a role.
-revoke all on auth.users, auth.sessions, auth.mfa_factors from anon, authenticated;
+revoke all on auth.users, auth.sessions, auth.mfa_factors, auth.one_time from anon, authenticated;

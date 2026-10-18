@@ -1,4 +1,4 @@
-// Staff sessions on Supabase: the PIN sign-in returns a server token for that person on this device (bn_staff_login).
+// Staff sessions on the server: the PIN sign-in returns a server token for that person on this device (bn_staff_login).
 // Every write carries the token of whoever is acting, so the server knows the real person and role. Per tab, like the session.
 const KEY = 'borniz-staff';
 type Tokens = { by: Record<string, string>; last: string | null };
