@@ -6,7 +6,7 @@ cd "$(dirname "$0")/../.."
 URL=${BN_TEST_URL:-postgres://postgres@localhost:5433}
 for d in bn_src bn_dst; do
   psql "$URL/postgres" -qX -v ON_ERROR_STOP=1 -c "set client_min_messages = warning" -c "drop database if exists $d" -c "create database $d"
-  set -- -f supabase/tests/stub.sql; for f in supabase/migrations/*.sql; do set -- "$@" -f "$f"; done
+  set -- -f supabase/platform.sql; for f in supabase/migrations/*.sql; do set -- "$@" -f "$f"; done
   psql "$URL/$d" -qX -v ON_ERROR_STOP=1 "$@" >/dev/null
 done
 psql "$URL/bn_src" -qX -v ON_ERROR_STOP=1 >/dev/null <<'SQL'

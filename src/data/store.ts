@@ -12,6 +12,7 @@ const KEY = 'borniz-db';
 let db: DB | null = null;
 const subs = new Set<() => void>();
 const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('borniz') : null;
+(channel as { unref?: () => void } | null)?.unref?.(); // Node (tests, server): never keeps the process alive
 
 const isHistory = (id: string) => id.startsWith('h');
 function persist(d: DB) {

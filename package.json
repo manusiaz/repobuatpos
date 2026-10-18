@@ -8,12 +8,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --test --test-force-exit --experimental-strip-types src/domain/*.test.ts src/system/*.test.ts src/data/*.test.ts",
+    "test": "node --test --experimental-strip-types src/domain/*.test.ts src/system/*.test.ts src/data/*.test.ts",
     "typecheck": "tsc --noEmit",
     "graph": "node --experimental-strip-types scripts/graph.ts",
     "paths": "node --experimental-strip-types scripts/paths.ts",
     "links": "node --experimental-strip-types scripts/check-links.ts",
     "test:db": "sh supabase/tests/run.sh",
+    "db:migrate": "node scripts/db-migrate.mjs",
     "check:system": "node --experimental-strip-types scripts/check-system.ts",
     "check:deploy": "node --experimental-strip-types scripts/check-deploy.ts"
   },
@@ -22,11 +23,13 @@
     "chart.js": "^4.5.1",
     "lucide-react": "^1.55.0",
     "next": "^16.4.0",
+    "pg": "^8.23.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "typescript": "^5.9.3"
