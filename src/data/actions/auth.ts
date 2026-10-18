@@ -1,6 +1,6 @@
 'use client';
 // Account & device services used by sign-up, onboarding, plans and register pairing (Auth surface).
-import { RESERVED } from '../../system/hosts.ts';
+import { RESERVED, isTenantSlug } from '../../system/hosts.ts';
 import { commit, snapshot, uid } from '../store.ts';
 import type { DB, Role } from '../schema.ts';
 import { REMOTE } from '../remote.ts';
@@ -126,8 +126,8 @@ export async function accountSignOut() {
   await remoteReady(null);
 }
 
-export interface NewBusiness { name: string; owner: string; phone: string; outlet: string; pin: string; approvalPin: string; demo: boolean }
-const slugify = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30).replace(/-$/, '') || 'toko';
+export interface NewBusiness { name: string; owner: string; phone: string; outlet: string; pin: string; approvalPin: string; demo: boolean; /** its <slug>.bornis.id, chosen at sign-up */ slug?: string }
+export const slugify = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30).replace(/-$/, '') || 'toko';
 /** The data a new business starts with: the Kopi Biru demo (owner = you; demo staff keep PIN 1234 / 246810) or one empty outlet. */
 export function starterData(p: NewBusiness, slug: string): DB {
   const s = seed();
@@ -148,6 +148,13 @@ export async function createBusiness(p: NewBusiness, onProgress: (pct: number) =
   if (!/^\d{6}$/.test(p.approvalPin)) return 'Your approval PIN is 6 digits.';
   const { sb, membership, pickTenant } = await import('../supabase.ts');
   let m = await membership().catch(() => null), tid = m?.tenantId ?? '', slug = m?.slug ?? '';
+  const want = p.slug?.trim().toLowerCase();
+  if (!tid && want) { // the address the owner picked: exactly that one, or say it is taken
+    if (!isTenantSlug(want)) return `${want} can't be a business address: 2–41 letters, numbers or dashes, and not a BorNiz name.`;
+    const { data, error } = await sb().rpc('bn_bootstrap', { p_name: p.name.trim(), p_slug: want, p_employee_id: p.demo ? 'budi' : 'owner' });
+    if (error) return error.code === '23505' ? `${want} is taken. Pick another address.` : humanError(error.message).text;
+    tid = data as string; slug = want;
+  }
   for (let i = 0; !tid && i < 4; i++) {
     slug = slugify(p.name) + (i || RESERVED.has(slugify(p.name)) || slugify(p.name).length < 2 ? '-' + Math.random().toString(36).slice(2, 6) : ''); // <slug>.bornis.id
     const { data, error } = await sb().rpc('bn_bootstrap', { p_name: p.name.trim(), p_slug: slug, p_employee_id: p.demo ? 'budi' : 'owner' });

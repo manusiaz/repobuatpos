@@ -5,7 +5,7 @@ import { config as hostConfig, resolve } from './src/system/hosts.ts';
 const cfg = hostConfig();
 export function proxy(req: NextRequest) {
   const r = resolve(req.headers.get('host') ?? '', req.nextUrl.pathname, cfg);
-  if (r.type === 'redirect') return NextResponse.redirect(r.url, 308);
+  if (r.type === 'redirect') { const u = new URL(r.url); if (!u.search) u.search = req.nextUrl.search; return NextResponse.redirect(u, 308); } // old QR codes carry ?o=<outlet>
   if (r.type === 'rewrite') {
     const url = req.nextUrl.clone();
     url.pathname = r.path;

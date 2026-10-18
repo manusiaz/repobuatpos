@@ -9,10 +9,10 @@ for (const p of PAGES) {
   const got = r.type === 'rewrite' ? r.path : r.type === 'next' ? u.pathname.replace(/\/$/, '') || '/' : null;
   if (got !== p.path) { bad++; console.log('NOT REACHABLE', p.path, '→', u.href, JSON.stringify(r)); }
 }
-const hosts = HOSTS.map(h => (h.sub ? h.sub + '.' : '') + root).filter(h => h !== root);
+const hosts = HOSTS.filter(h => h.sub && h.sub !== '*').map(h => h.sub + '.' + root);
 console.log('DNS (every name points at the one server running BorNiz, deploy/nginx.conf):');
 console.log(`  ${root.padEnd(24)} A     <server IP>`);
-console.log(`  ${('*.' + root).padEnd(24)} A     <server IP>   businesses at <slug>.${root}; also covers ${['www', ...hosts.map(h => h.split('.')[0])].join(', ')}, menu`);
+console.log(`  ${('*.' + root).padEnd(24)} A     <server IP>   every business at <slug>.${root} (QR menu, POS, kitchen, display, back office); also covers ${['www', ...hosts.map(h => h.split('.')[0])].join(', ')}, menu`);
 console.log(`TLS: one certificate for ${root} + *.${root} (wildcard needs the DNS-01 challenge, e.g. certbot certonly --manual --preferred-challenges dns -d ${root} -d '*.${root}')`);
 console.log(`Env: NEXT_PUBLIC_BORNIZ_ROUTING=subdomain NEXT_PUBLIC_BORNIZ_ROOT_DOMAIN=${root}`);
 console.log(`Merchant domains: CNAME → menu.${root}, then list them in NEXT_PUBLIC_BORNIZ_CUSTOM_DOMAINS and in nginx server_name with their own certificate.`);

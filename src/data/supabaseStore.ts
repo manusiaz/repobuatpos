@@ -258,10 +258,11 @@ function enterAnon() { mode = 'anon'; tenant = null; member = null; base = shape
 
 async function guestSlug(): Promise<string | null> {
   if (typeof location === 'undefined') return null;
-  const { routeQuery, config } = await import('../system/hosts.ts');
-  const t = routeQuery().tenant; // <tenant>.bornis.id or a merchant's own domain
-  if (t) return t;
-  return /^\/(order|kiosk)(\/|$)/.test(location.pathname) ? config().tenant || null : null;
+  const { resolve, config } = await import('../system/hosts.ts');
+  const r = resolve(location.host, location.pathname, config()); // <slug>.bornis.id also serves the business's staff pages
+  const internal = r.type === 'rewrite' ? r.path : location.pathname;
+  if (!/^\/(order|kiosk)(\/|$)/.test(internal)) return null;
+  return (r.type === 'rewrite' ? r.query.tenant : '') || config().tenant || null;
 }
 /** BN050: the business moved to its own database. Guests follow it now; staff sign in again there (same password). */
 async function moved() {

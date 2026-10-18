@@ -11,7 +11,7 @@ import { escalateDue, watchKitchen } from '../data/actions.ts';
 import { sweepAlerts } from '../data/alerts/index.ts';
 import { setMoneyStyle } from '../domain/money.ts';
 import { menuDomain, moneyFormat, roleTheme } from '../system/tools.ts';
-import { setOwnHost } from '../system/hosts.ts';
+import { leaveFor, setOwnHost } from '../system/hosts.ts';
 import { useDispatcher } from '../data/actions/dispatch.ts';
 import { usePrintAgent } from '../devices/agent.ts';
 import { setSession, useSession } from '../session.ts';
@@ -49,7 +49,8 @@ export default function App({ path }: { path: string }) {
   const [outlet, setOutlet] = useState<string | null>(null);
   useEffect(() => { if (db && !outlet) setOutlet(user?.outletId ?? db.device.outletId); }, [db, user, outlet]);
   useEffect(() => { const tick = () => { escalateDue(); watchKitchen(); sweepAlerts(); }; tick(); const t = setInterval(tick, 60e3); return () => clearInterval(t); }, []);
-  const go = useCallback((p: string) => router.push(p), [router]);
+  const slug = db?.tenant.id; // the business slug (remote store) = its <slug>.bornis.id
+  const go = useCallback((p: string) => { const away = leaveFor(p, slug); if (away) location.assign(away); else router.push(p); }, [router, slug]);
   const ctx = useMemo<AppCtx | null>(() => db && user ? { page, db, user, me: db.employees.find(e => e.id === user.id), outletId: outlet ?? user.outletId, setOutlet, go } : null, [page, db, user, outlet, go]);
   if (!ctx) return <div style={{ padding: 24 }}><Loading /></div>;
   setMoneyStyle(...moneyFormat(ctx.db, page.surface, ctx.outletId)); // Studios: price display rules, number format per outlet

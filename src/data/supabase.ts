@@ -42,6 +42,9 @@ export async function membership(): Promise<Membership | null> {
   if (error) throw error;
   const rows = (data ?? []).map(r => { const t = (Array.isArray(r.tenants) ? r.tenants[0] : r.tenants) as { slug: string; name: string; plan: Membership['plan'] } | null;
     return { tenantId: r.tenant_id as string, slug: t?.slug ?? '', name: t?.name ?? '', plan: t?.plan ?? 'free', employeeId: r.employee_id as string, role: r.role as Membership['role'] }; });
+  const { hostTenant } = await import('../system/hosts.ts');
+  const here = hostTenant(); // on <slug>.bornis.id only that business opens: a member of another one is not signed in here
+  if (here) return rows.find(r => r.slug === here) ?? null;
   let pick = ''; try { pick = localStorage.getItem(PICK) ?? ''; } catch { /* blocked */ }
   return rows.find(r => r.tenantId === pick) ?? rows[0] ?? null;
 }

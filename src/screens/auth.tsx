@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { useApp } from '../app/context.tsx';
 import { grantSession, setSession } from '../session.ts';
 import { setDeviceOutlet, setSetting } from '../data/actions.ts';
-import { accountSignIn, accountSignOut, accountSignUp, accountUser, checkLoginPin, createBusiness, inviteEmployee, newPassword, resendConfirmation, sendPasswordReset, setPlan, whenChecked } from '../data/actions/auth.ts';
+import { accountSignIn, accountSignOut, accountSignUp, accountUser, checkLoginPin, createBusiness, inviteEmployee, newPassword, resendConfirmation, sendPasswordReset, setPlan, slugify, whenChecked } from '../data/actions/auth.ts';
+import { RESERVED, config, isTenantSlug, onBusinessHost } from '../system/hosts.ts';
 import { DEMO_HERE, REMOTE, setDemo } from '../data/remote.ts';
 import { remoteInfo, remoteSnapshot } from '../data/supabaseStore.ts';
 import type { Employee, Role } from '../data/schema.ts';
@@ -506,6 +507,9 @@ function enterBusiness(go: (p: string) => void, path?: string) {
   const { member } = remoteInfo();
   if (!member) return false;
   const role: Role = member.role === 'manager' ? 'manager' : 'owner';
+  // Everything of a business lives on <slug>.bornis.id: a new or signed-in owner continues there.
+  const away = onBusinessHost(path ?? (role === 'owner' ? '/owner' : '/manager'), member.slug);
+  if (away) { location.assign(away); return true; }
   const d = remoteSnapshot(), outletId = d.employees.find(x => x.id === member.employeeId)?.outlets[0] ?? d.outlets[0]?.id ?? '';
   finishLogin({ id: member.employeeId, role, outletId }, () => {});
   go(path ?? (role === 'owner' ? '/owner' : '/manager'));
@@ -635,13 +639,15 @@ function AccountRegister() {
 function CreateBusiness({ name, phone }: { name: string; phone: string }) {
   const { go } = useApp();
   const [f, setF] = useState({ name: '', owner: name, outlet: '', pin: '', approvalPin: '' }), [demo, setDemo] = useState<'demo' | 'empty'>('empty');
+  const [addr, setAddr] = useState<string | null>(null), slug = addr ?? slugify(f.name); // <slug>.bornis.id: from the name until the owner edits it
   const [busy, setBusy] = useState(-1), [err, setErr] = useState('');
   const errs: Record<keyof typeof f, string> = { name: f.name.trim().length < 2 ? 'Name your business' : '', owner: !f.owner.trim() ? 'Enter your name' : '', outlet: '',
     pin: !/^\d{4}$/.test(f.pin) ? '4 digits' : '', approvalPin: !/^\d{6}$/.test(f.approvalPin) ? '6 digits' : '' };
-  const ok = !Object.values(errs).some(Boolean);
+  const slugErr = slug && !isTenantSlug(slug) ? (RESERVED.has(slug) ? 'That name belongs to BorNiz' : '2–41 letters, numbers or dashes') : '';
+  const ok = !Object.values(errs).some(Boolean) && !slugErr;
   const start = async () => {
     setBusy(0); setErr('');
-    const e = await createBusiness({ name: f.name.trim(), owner: f.owner.trim(), phone, outlet: f.outlet.trim(), pin: f.pin, approvalPin: f.approvalPin, demo: demo === 'demo' }, setBusy);
+    const e = await createBusiness({ name: f.name.trim(), owner: f.owner.trim(), phone, outlet: f.outlet.trim(), pin: f.pin, approvalPin: f.approvalPin, demo: demo === 'demo', slug: slug || undefined }, setBusy);
     setBusy(-1);
     if (e) return setErr(e);
     toast('Your business is ready');
@@ -653,6 +659,10 @@ function CreateBusiness({ name, phone }: { name: string; phone: string }) {
   return <div className="stack">
     <Head h="Create your business" sub="One account runs every outlet, register and kitchen screen." />
     {input('name', 'Business name', 0, 'Kopi Biru')}
+    <Field label="Business address" error={slugErr || undefined}><div className="row" style={{ gap: 6 }}>
+      <input className="input grow" aria-label="Business address" value={slug} autoComplete="off" spellCheck={false} placeholder="kopibiru" onChange={e => setAddr(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 41))} />
+      <span className="muted" style={{ whiteSpace: 'nowrap' }}>.{config().root}</span></div></Field>
+    <span className="faint" style={{ fontSize: 13 }}>Your POS, kitchen screen, back office and QR menu all open at {slug || 'your-name'}.{config().root}.</span>
     {input('owner', 'Your name')}
     <Choices value={demo} onChange={setDemo} items={[['empty', 'Start empty', 'One outlet, your own menu'], ['demo', 'Start with demo data', 'Kopi Biru: 3 outlets, menu, staff and 2 weeks of sales']]} />
     {demo === 'empty' && input('outlet', 'First outlet name', 0, 'Main outlet')}

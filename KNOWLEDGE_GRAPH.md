@@ -5,7 +5,7 @@
 > Graph halaman otomatis (617 halaman, generator `npm run graph`) ada di `KNOWLEDGE_GRAPH.json` dan viewer `/graph`;
 > file ini mencatat node kode + data yang dipetakan per task.
 
-Last verified: 9736196 — 2026-10-18
+Last verified: 54a01c7 — 2026-10-18
 
 ## Stack
 
@@ -57,6 +57,9 @@ npx tsc --noEmit && npm test && npm run -s links && npm run -s check:system && n
 | fn:tableNo | fn | src/domain/tables.ts | Label meja untuk tamu: "T-07" → "07", nama lain apa adanya |
 | fn:publicUrl | fn | src/system/hosts.ts | URL publik (QR, struk, WA); nama meja di-encode di path `/t/` |
 | page:/display | page | src/screens/display.tsx | Customer display |
+| page:/account (sign-in, create business) | page | src/screens/auth.tsx | Daftar, masuk, buat bisnis (pilih alamat <slug>.bornis.id) |
+| fn:leaveFor | fn | src/system/hosts.ts | Navigasi in-app yang harus pindah host (app. → <slug>.); dipakai go() |
+| fn:onBusinessHost | fn | src/system/hosts.ts | Halaman yang sama di host bisnis: daftar/masuk pindah ke <slug>.bornis.id |
 | fn:isTenantSlug | fn | src/system/hosts.ts | Nama bisnis yang sah untuk <slug>.bornis.id (bukan host platform, RESERVED) |
 | policy:tenants_slug_not_reserved | policy | supabase/migrations/20261018000000_borniz_tenant_hosts.sql | DB menolak slug yang sama dengan host platform |
 | config:platform | config | supabase/platform.sql | Platform tanpa Supabase: skema auth (users, sessions, mfa_factors), auth.uid(), role anon/authenticated |
@@ -123,9 +126,10 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | page:/order status | reads | table:orders | src/screens/selforder/shared.tsx:44 (pesanan milik HP ini; movedFrom → ikut pindah) |
 | fn:findTable | reads | fn:tablesOf | src/domain/tables.ts:54 |
 | page:/display | calls | fn:tableNo | src/screens/display.tsx:185 |
-| page:/owner/outlets/table-qr-generator | calls | fn:publicUrl | src/system/hosts.ts:121 (linkTo → publicUrl, dipanggil tableUrl) |
+| page:/owner/outlets/table-qr-generator | calls | fn:publicUrl | src/system/hosts.ts:127 (linkTo → publicUrl, dipanggil tableUrl) |
 | test:tables | tests | fn:findTable | src/domain/tables.test.ts |
-| fn:publicUrl | reads | fn:isTenantSlug | src/system/hosts.ts:81 (resolve: label host → tenant) |
+| page:/account (sign-in, create business) | calls | fn:onBusinessHost | src/screens/auth.tsx:511 (enterBusiness) |
+| fn:publicUrl | reads | fn:isTenantSlug | src/system/hosts.ts:87 (resolve: label host → tenant) |
 | policy:tenants_slug_not_reserved | documents | fn:isTenantSlug | supabase/migrations/20261018000000_borniz_tenant_hosts.sql (daftar sama dengan RESERVED, isTenantSlug di hosts.ts) |
 | fn:dbMigrate | reads | config:platform | scripts/db-migrate.mjs:24 (supabase/platform.sql) |
 | config:deploy | routes-to | config:proxy | deploy/nginx.conf:28 (proxy_set_header Host; hosts.ts routes by it) |
@@ -172,6 +176,7 @@ graph LR
 | 2026-10-14 | page:/owner/outlets/tables-and-floor-plan | Halaman bernama "floor plan" hanya berisi daftar reservasi | fixed (editor denah) |
 | 2026-10-14 | comp:Field | Label tidak terhubung ke input di seluruh aplikasi (a11y, tap label) | fixed |
 | 2026-10-14 | src/screens/brand.tsx | Preview KDS menampilkan "T-T-05" (`'T-' + o.table`) | fixed |
+| 2026-10-18 | config:proxy | Redirect proxy membuang query: QR lama `order.bornis.id/kopibiru/t/07?o=kem` kehilangan outlet | fixed (query ikut) |
 | 2026-10-18 | test (npm test) | `--test-force-exit` memotong output: 2 tes terakhir alerts.test.ts kadang tidak dilaporkan (201/203); akar: BroadcastChannel di store.ts menahan proses Node | fixed (unref, flag dihapus; 203 stabil 4×) |
 | 2026-10-18 | config:deploy | Di belakang reverse proxy (X-Forwarded-Proto https) dengan `next start -H 127.0.0.1`, semua halaman subdomain 500 ("Failed to proxy https://localhost:3000"); `-H localhost` lolos | fixed (deploy/borniz.service) |
 | 2026-10-18 | config:deploy | `.env.example` hanya 5 dari 13 env yang dibaca kode (tanpa Supabase / server secret) | fixed |
@@ -195,6 +200,7 @@ graph LR
 | 2026-10-14 | "Pindah meja" memindah semua pesanan hidup di meja itu | Satu meja bisa punya pesanan QR lunas + ronde POS baru; tamu pindah bersama semuanya | page:/pos/selling/move-table |
 | 2026-10-14 | HP tamu ikut pindah hanya bila staf yang memindah (`movedFrom`); tamu yang pindah sendiri dapat tombol "minta staf pindahkan" | QR lama di URL tidak boleh menarik pesanan kembali; scan meja lain = niat tamu | page:/order status |
 | 2026-10-18 | Jalan 2: PostgreSQL sendiri tanpa software Supabase; logika SQL (migrations) dipakai utuh di atas platform.sql | Owner pakai VPS sendiri; semua aturan DB sudah teruji di Postgres biasa | config:platform, fn:dbMigrate |
+| 2026-10-18 | SEMUA milik bisnis (owner, manager, studios, POS, PIC, online, waiter, KDS, display, QR, kiosk) di `<slug>.bornis.id`; platform = bornis.id, app. (daftar/masuk), admin.; pos./kds./display. → app., order.<slug> → <slug>.; daftar baru memilih alamat dan langsung pindah ke subdomain | Keputusan owner (2×), mengganti pembagian host spec | fn:publicUrl, fn:leaveFor, fn:onBusinessHost, fn:isTenantSlug, config:deploy |
 | 2026-10-18 | Bisnis di `<slug>.bornis.id` (bukan `order.bornis.id/<slug>`); link lama di-redirect; slug platform ditolak di app + DB | Keputusan owner; spec Sitemap masih `order.` | fn:publicUrl, fn:isTenantSlug, config:deploy |
 | 2026-10-18 | Satu folder repo + satu proses untuk semua subdomain; tidak ada folder/app per subdomain | Kode dipakai lintas host (insight/, ops/, guest/); salinan per subdomain = data & logika bercabang (keputusan owner "one system") | config:deploy |
 | 2026-10-15 | Rename meja menyimpan nama lama di `was` | QR yang sudah tertempel tetap jalan sampai dicetak ulang | fn:findTable, page:/owner/outlets/tables-and-floor-plan |

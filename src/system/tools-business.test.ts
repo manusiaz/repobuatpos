@@ -124,5 +124,5 @@ test('theme per role, widgets, terminology, industry, legal, receipts, custom do
   const sub = config({ NEXT_PUBLIC_BORNIZ_ROUTING: 'subdomain', NEXT_PUBLIC_BORNIZ_ROOT_DOMAIN: 'bornis.id' });
   assert.equal(publicUrl('/order?t=07&o=sen', sub, 'kopibiru', '', 'order.kopibiru.id'), 'https://order.kopibiru.id/t/07?o=sen');
   assert.equal(publicUrl('/order/customer-links/digital-receipt?o=1', config({}), 'kopibiru', 'http://localhost:3000', 'order.kopibiru.id'), 'https://order.kopibiru.id/order/customer-links/digital-receipt?o=1');
-  assert.equal(publicUrl('/owner', sub, 'kopibiru', '', 'order.kopibiru.id'), 'https://app.bornis.id/owner', 'staff links stay on BorNiz hosts');
+  assert.equal(publicUrl('/owner', sub, 'kopibiru', '', 'order.kopibiru.id'), 'https://kopibiru.bornis.id/owner', 'staff links go to the business subdomain, never the guest domain');
 });
