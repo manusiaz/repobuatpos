@@ -1,0 +1,16 @@
+# The automation worker (src/integrations/server/worker.ts): once a minute, for every business, the rules a staff device
+# runs while it is open (alert sweep, approval escalation, late kitchen, gateway settlement, messages, webhooks), so they
+# happen with every device closed. Same database and env file as the app; deploy/update.sh restarts it after each pull.
+[Unit]
+Description=BorNiz automation worker
+After=network.target postgresql.service
+
+[Service]
+WorkingDirectory=/srv/borniz
+ExecStart=/usr/bin/env node --env-file=.env.production --experimental-strip-types src/integrations/server/worker.ts
+Restart=always
+RestartSec=10
+User=borniz
+
+[Install]
+WantedBy=multi-user.target

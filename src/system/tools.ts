@@ -274,5 +274,3 @@ export function receiptFor(db: DB, outletId: string) {
 export const letterhead = (db: DB) => { const v = toolValue(db, 'letter'); return v.co ? v : null; };
 /** Embeds & widgets (Pro): WhatsApp button, reviews, custom head code on menu pages, the iframe widget. */
 export const embeds = (db: DB) => { const v = toolValue(db, 'embed', 'pro'); return Object.keys(v).length ? v : null; };
-/** Custom menu domain (Enterprise) for QR codes, receipts and shared links. */
-export const menuDomain = (db: DB) => String(toolValue(db, 'domain', 'enterprise').menu ?? '').trim();

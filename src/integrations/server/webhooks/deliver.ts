@@ -1,6 +1,7 @@
 import { lookup } from 'node:dns/promises';
 import { BlockList, isIP } from 'node:net';
 import { signOutgoing } from '../sign.ts';
+import { rpc } from '../db.ts';
 import type { OutEvent } from './events.ts';
 
 // Private, loopback, link-local (cloud metadata), CGNAT, multicast and reserved ranges, plus every IPv4-mapped IPv6 address.
@@ -39,4 +40,14 @@ export async function deliver(url: string, secret: string, tenantId: string, e: 
       headers: { 'content-type': 'application/json', 'user-agent': 'BorNiz-Webhooks/1', 'x-borniz-event': e.event, 'x-borniz-delivery': e.id, 'x-borniz-signature': signOutgoing(secret, body) } });
     return { ok: r.status >= 200 && r.status < 300, status: r.status };
   } catch { return { ok: false, status: 0 }; } finally { clearTimeout(timer); }
+}
+
+/** Delivers one event to one endpoint once (outbox key per event and connection): /api/webhooks/deliver and the
+ *  automation worker. `duplicate` = another device already took it. */
+export async function deliverOnce(tenant: string, key: string, url: string, secret: string, e: OutEvent): Promise<{ ok: boolean; status?: number | string; duplicate?: boolean }> {
+  const c = await rpc<{ claimed: boolean; status?: string }>('bn_outbox_claim', { p_tenant: tenant, p_key: key, p_provider: 'webhook-out' });
+  if (!c.claimed) return { ok: c.status === 'sent', duplicate: true, status: c.status };
+  const r = await deliver(url, secret, tenant, { id: e.id, event: e.event, at: Number(e.at) || Date.now(), data: e.data });
+  await rpc('bn_outbox_done', { p_tenant: tenant, p_key: key, p_provider_id: null, p_status: r.ok ? 'sent' : 'failed', p_error: r.ok ? null : `HTTP ${r.status}` });
+  return { ok: r.ok, status: r.status };
 }

@@ -56,7 +56,7 @@ export function defaultDesign(theme: Theme): MenuDesign {
     mc: { style: 'brand', prog: 'Biru Rewards', pts: 'beans', t0: 'Silver', t1: 'Gold', t2: 'Platinum', barcode: true, progress: true },
     pub: { when: 'now', at: '', from: '', to: '', season: 'Ramadan', ov_sen: false, ov_kem: true, ov_bsd: false },
     opts: { prices: true, desc: true, sold: true, lang: true, powered: true, tex: false },
-    adv: { css: '', domain: 'menu.kopibiru.id', seoTitle: theme.name + ' · Order online', seoDesc: 'Order ahead or dine in.' },
+    adv: { css: '', seoTitle: theme.name + ' · Order online', seoDesc: 'Order ahead or dine in.' },
     x: {},
   };
 }

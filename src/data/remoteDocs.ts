@@ -1,6 +1,7 @@
 // Pure mapping between the app DB and the document store (public.docs: tenant, coll, id, data, t, open).
 // No browser or network here: the remote adapter (remoteStore.ts) and the Node tests share it.
 import type { DB } from './schema.ts';
+import { seed } from './seed.ts';
 
 type Any = Record<string, any>;
 export interface Op { op: 'put' | 'del'; coll: string; id: string; data?: unknown; t?: number | null; open?: boolean; expect?: Record<string, unknown>; fresh?: boolean }
@@ -224,4 +225,23 @@ export function humanError(msg: string): { code: string | null; text: string } {
   if (!m) return { code: null, text: /fetch|network/i.test(msg) ? 'No connection. Saved on this device, it syncs when you’re back online.' : msg || 'Something went wrong' };
   const rest = m[2].replace(/\s*\(.*\)$/, '');
   return { code: 'BN' + m[1], text: MESSAGES[m[1]] ?? (rest ? rest[0].toUpperCase() + rest.slice(1) + (/[.!?]$/.test(rest) ? '' : '.') : 'Not allowed.') };
+}
+
+/** History every device loads (and the automation worker): NEXT_PUBLIC_BORNIZ_WINDOW_DAYS, default 35. */
+export const WINDOW_MS = (Number(process.env.NEXT_PUBLIC_BORNIZ_WINDOW_DAYS) || 35) * 864e5;
+let blank: DB | null = null;
+/** The empty shape a business's documents fill in. */
+export function blankDB(): DB {
+  if (blank) return blank;
+  const s = emptyDB(seed());
+  return blank = { ...s, tenant: { ...s.tenant, id: '', name: '', plan: 'free' }, theme: { ...s.theme, name: '' }, staffBrand: { ...s.staffBrand, workspace: '' } };
+}
+/** A business as a signed-in device (remoteStore) and the automation worker see it: its documents inside the history
+ *  window, plus stock and beans from before it as opening rows. */
+export function memberDB(docs: Doc[], opening: { stock?: Any[]; beans?: Any[] }, since: number, hint: Hint, t: { slug: string; name?: string; plan?: string }): DB {
+  const d = fromDocs(blankDB(), docs, hint) as unknown as Any;
+  d.movements = [...(opening.stock ?? []).map(s => ({ outletId: s.outletId, stockItemId: s.stockItemId, qty: Number(s.qty), type: 'adjust', sourceId: SYNTHETIC + 'opening', by: 'system', at: since - 1 })), ...d.movements];
+  d.ledger = [...(opening.beans ?? []).map(b => ({ customerId: b.customerId, points: Number(b.points), reason: 'Opening balance', orderId: SYNTHETIC + 'opening', at: since - 1 })), ...d.ledger];
+  d.tenant = { ...d.tenant, id: t.slug, name: d.tenant.name || t.name || '', plan: t.plan ?? 'free' }; // plan is set by BorNiz (tenants.plan)
+  return d as DB;
 }

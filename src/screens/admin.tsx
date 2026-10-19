@@ -14,6 +14,7 @@ import { endSupportAccess, ensurePlatform, logAdmin, patchRecord, requestSupport
 import type { DB, Rec } from '../data/schema.ts';
 import { PLANS, STATUS_TONE, accessOf, churn, mrrHistory, planName, planPrice, priceKey, tenants, withTax, type Plan, type Tenant } from './admin/platform.ts';
 import { useQuery } from './insight/query.ts';
+import { cnameTarget, config as hostConfig, liveDomain } from '../system/hosts.ts';
 
 const DETAIL = '/admin/tenant-detail-and-plan';
 const St = ({ s }: { s: string }) => <Badge tone={STATUS_TONE[s] ?? 'neutral'} dot>{human(s)}</Badge>;
@@ -367,53 +368,53 @@ function Themes({ db }: { db: DB }) {
   </>;
 }
 function WhiteLabel({ db }: { db: DB }) {
-  const wl = tenants(db).filter(t => t.meta.wl), doms = db.records.domain ?? [];
+  const wl = tenants(db).filter(t => t.meta.wl);
   return <section className="card flat"><div className="row between" style={{ padding: '16px 20px' }}><h3>White-label tenants</h3><Badge>Enterprise and add-on</Badge></div>
     {wl.length === 0 ? <Empty icon="badge" title="No white-label tenants" /> : <div className="scroll-x"><table className="table"><thead><tr><th>Tenant</th><th>App name</th><th>Plan</th><th>Domain</th></tr></thead>
-      <tbody>{wl.map(t => { const d = doms.find(x => x.b === t.id); return <tr key={t.id}><td><Link href={`${DETAIL}?t=${t.id}`}>{t.name}</Link></td><td>{t.meta.appName ?? '—'}</td><td>{planName(t.plan)}</td><td>{d ? <span className="row"><Mono>{d.a}</Mono><St s={d.c} /></span> : <span className="faint">None</span>}</td></tr>; })}</tbody></table></div>}
+      <tbody>{wl.map(t => { return <tr key={t.id}><td><Link href={`${DETAIL}?t=${t.id}`}>{t.name}</Link></td><td>{t.meta.appName ?? '—'}</td><td>{planName(t.plan)}</td><td>{liveDomain(t.meta.slug ?? t.id) ? <Mono>{liveDomain(t.meta.slug ?? t.id)}</Mono> : <span className="faint">None</span>}</td></tr>; })}</tbody></table></div>}
   </section>;
 }
 
-// ── Custom domains ────────────────────────────────────────────────────────────────────────
+// ── Custom domains: the ones this deployment serves (NEXT_PUBLIC_BORNIZ_CUSTOM_DOMAINS), switched on by deploy/add-domain.sh ──
 function Domains({ db }: { db: DB }) {
-  const { user } = useApp();
   const [q, setQ] = useQuery({ d: '' });
-  const [checking, setChecking] = useState(false), [add, setAdd] = useState(false), [host, setHost] = useState(''), [tenant, setTenant] = useState(db.tenant.id);
-  const rows = db.records.domain ?? [], sel = rows.find(r => r.id === q.d), ts = tenants(db);
-  const check = async (r: Rec) => {
-    setChecking(true);
+  const [dns, setDns] = useState(''), [add, setAdd] = useState(false), [host, setHost] = useState(''), [pick, setPick] = useState(db.tenant.id);
+  const live = hostConfig().customDomains, ts = tenants(db), slug = (t: Tenant) => t.meta.slug ?? t.id;
+  // live ones, then the ones a business asked for in Studios that are not switched on yet
+  const rows: [string, string, boolean][] = [...Object.entries(live).map(([h, t]) => [h, t, true] as [string, string, boolean]),
+    ...ts.filter(t => t.meta.domain && !live[t.meta.domain.toLowerCase()]).map(t => [t.meta.domain!.toLowerCase(), slug(t), false] as [string, string, boolean])];
+  const sel = rows.find(([h]) => h === q.d);
+  const check = async (h: string) => {
+    setDns('Checking…');
     try {
-      // Public DNS-over-HTTPS lookup of the TXT record the tenant was asked to add.
-      const res = await fetch(`https://dns.google/resolve?name=_borniz-verify.${encodeURIComponent(r.a)}&type=TXT`);
-      const j = await res.json() as { Answer?: { data: string }[] };
-      const ok = (j.Answer ?? []).some(a => a.data.replace(/"/g, '') === r.d);
-      saveRecord('domain', { ...r, c: ok ? 'verified' : j.Answer?.length ? 'failed' : 'pending', e: String(Date.now()) }, user.id);
-      toast(ok ? `${r.a} verified` : j.Answer?.length ? 'TXT record found but the value doesn’t match' : 'TXT record not found yet. DNS can take up to 24 h.');
-    } catch { toast('Couldn’t reach DNS. Check your connection and try again.'); }
-    setChecking(false);
+      const j = await (await fetch(`https://dns.google/resolve?name=${encodeURIComponent(h)}&type=CNAME`)).json() as { Answer?: { data: string }[] };
+      setDns((j.Answer ?? []).some(a => a.data.replace(/\.$/, '') === cnameTarget()) ? 'CNAME is right' : 'CNAME not found yet. DNS can take up to 24 h.');
+    } catch { setDns('Couldn’t reach DNS. Check your connection and try again.'); }
   };
+  const cmd = (h: string, t: string) => `sudo sh /srv/borniz/deploy/add-domain.sh ${h} ${t}`;
   const okHost = /^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(host.trim().toLowerCase());
   return <>
-    <div className="row between"><span className="muted" style={{ fontSize: 14 }}>{rows.filter(r => r.c === 'verified').length} of {rows.length} verified</span><button className="btn btn-primary" onClick={() => setAdd(true)}><Icon name="plus" size={18} />Add domain</button></div>
-    <Split table={rows.length === 0 ? <Empty icon="globe" title="No custom domains yet" /> : <div className="scroll-x"><table className="table"><thead><tr><th>Domain</th><th>Tenant</th><th>Status</th><th>Last check</th></tr></thead>
-      <tbody>{rows.map(r => <tr key={r.id} className="click" tabIndex={0} style={{ background: q.d === r.id ? 'var(--role-soft)' : undefined }} onClick={() => setQ({ d: q.d === r.id ? null : r.id })} onKeyDown={e => e.key === 'Enter' && setQ({ d: r.id })}>
-        <td><Mono>{r.a}</Mono></td><td>{nameOf(db, r.b)}</td><td><St s={r.c} /></td><td className="faint">{r.e ? ago(Number(r.e)) : 'Never'}</td></tr>)}</tbody></table></div>}
-      detail={!sel ? <Empty icon="mouse-pointer-click" title="Select a domain">DNS records to add and the verification status show here.</Empty> : <>
-        <div className="row between"><Mono>{sel.a}</Mono><St s={sel.c} /></div>
-        <span className="muted" style={{ fontSize: 14 }}>Ask {nameOf(db, sel.b)} to add these records at their DNS provider:</span>
-        <div className="sunken stack sm" style={{ fontSize: 13 }}>
-          <span className="cap">TXT</span><Mono>_borniz-verify.{sel.a}</Mono><Mono>{sel.d}</Mono>
-          <span className="cap" style={{ marginTop: 6 }}>CNAME</span><Mono>{sel.a} → edge.bornis.id</Mono>
-        </div>
-        <span className="faint" style={{ fontSize: 12 }}>HTTPS certificate is issued automatically once verified.</span>
-        <button className="btn btn-primary" disabled={checking} onClick={() => check(sel)}>{checking ? 'Checking…' : 'Check DNS now'}</button>
+    <div className="row between"><span className="muted" style={{ fontSize: 14 }}>{rows.filter(r => r[2]).length} live · {rows.filter(r => !r[2]).length} asked for</span><button className="btn btn-primary" onClick={() => setAdd(true)}><Icon name="plus" size={18} />Switch on a domain</button></div>
+    <Split table={rows.length === 0 ? <Empty icon="globe" title="No custom domains live" /> : <div className="scroll-x"><table className="table"><thead><tr><th>Domain</th><th>Business</th><th>Status</th></tr></thead>
+      <tbody>{rows.map(([h, t, on]) => <tr key={h} className="click" tabIndex={0} style={{ background: q.d === h ? 'var(--role-soft)' : undefined }} onClick={() => { setDns(''); setQ({ d: q.d === h ? null : h }); }} onKeyDown={e => e.key === 'Enter' && setQ({ d: h })}>
+        <td><Mono>{h}</Mono></td><td>{ts.find(x => slug(x) === t)?.name ?? t}</td><td>{on ? <Badge tone="success">Live</Badge> : <Badge tone="warning">Asked for</Badge>}</td></tr>)}</tbody></table></div>}
+      detail={!sel ? <Empty icon="mouse-pointer-click" title="Select a domain">Its DNS record and a live check show here.</Empty> : <>
+        <Mono>{sel[0]}</Mono>
+        <div className="sunken stack sm" style={{ fontSize: 13 }}><span className="cap">CNAME</span><Mono>{sel[0]} → {cnameTarget()}</Mono></div>
+        <button className="btn" onClick={() => check(sel[0])}>Check DNS now</button>{dns && <span className="muted" style={{ fontSize: 13 }}>{dns}</span>}
+        {!sel[2] && <><div className="sunken stack sm" style={{ fontSize: 13 }}><span className="cap">Switch it on, on the server</span><Mono>{cmd(sel[0], sel[1])}</Mono></div>
+          <button className="btn btn-ghost" onClick={() => navigator.clipboard?.writeText(cmd(sel[0], sel[1])).then(() => toast('Command copied'))}><Icon name="copy" size={18} />Copy command</button></>}
       </>} />
     <WhiteLabel db={db} />
-    <Sheet open={add} onClose={() => setAdd(false)} side="center" title="Add custom domain" sub="The tenant proves they own it with a TXT record."
-      footer={<><button className="btn" onClick={() => setAdd(false)}>Cancel</button><button className="btn btn-primary" disabled={!okHost} onClick={() => { const id = uid('dm'); saveRecord('domain', { id, a: host.trim().toLowerCase(), b: tenant, c: 'pending', d: 'borniz-verify=' + uid().slice(0, 10), e: '', at: Date.now() }, user.id); setAdd(false); setHost(''); setQ({ d: id }); }}>Add domain</button></>}>
+    <Sheet open={add} onClose={() => setAdd(false)} side="center" title="Switch on a custom domain" sub="After the business points a CNAME at BorNiz, run this once on the server: it gets the certificate, serves the domain and rebuilds."
+      footer={<button className="btn btn-primary" onClick={() => setAdd(false)}>Done</button>}>
       <div className="stack">
-        <Field label="Tenant"><select className="input" value={tenant} onChange={e => setTenant(e.target.value)}>{ts.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></Field>
+        <Field label="Business"><select className="input" value={pick} onChange={e => setPick(e.target.value)}>{ts.map(t => <option key={t.id} value={slug(t)}>{t.name}</option>)}</select></Field>
         <Field label="Domain" error={host && !okHost ? 'Enter a domain like order.yourbrand.id' : undefined}><input className="input" value={host} onChange={e => setHost(e.target.value)} placeholder="order.yourbrand.id" autoCapitalize="none" /></Field>
+        <div className="sunken stack sm" style={{ fontSize: 13 }}><span className="cap">CNAME at their DNS</span><Mono>{(okHost ? host.trim().toLowerCase() : 'order.yourbrand.id') + ' → ' + cnameTarget()}</Mono></div>
+        {okHost && <><button className="btn" onClick={() => check(host.trim().toLowerCase())}>Check DNS now</button>{dns && <span className="muted" style={{ fontSize: 13 }}>{dns}</span>}
+          <div className="sunken stack sm" style={{ fontSize: 13 }}><span className="cap">On the server</span><Mono>{cmd(host.trim().toLowerCase(), pick)}</Mono></div>
+          <button className="btn btn-ghost" onClick={() => navigator.clipboard?.writeText(cmd(host.trim().toLowerCase(), pick)).then(() => toast('Command copied'))}><Icon name="copy" size={18} />Copy command</button></>}
       </div>
     </Sheet>
   </>;

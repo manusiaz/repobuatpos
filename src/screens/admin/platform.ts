@@ -1,7 +1,7 @@
 // Platform numbers for the super admin console, derived from the tenant / invoice records (never stored).
 import type { Approval, DB, Rec } from '../../data/schema.ts';
 import { PLAN_PRICE, PPN_BPS, type TenantMeta } from '../../data/actions/admin.ts';
-import { whiteLabel } from '../../system/tools.ts';
+import { toolValue, whiteLabel } from '../../system/tools.ts';
 
 export type Plan = DB['tenant']['plan'];
 /** Plans from spec/bn-pm.js: SaaS per outlet. Price overrides are platform settings. */
@@ -24,7 +24,7 @@ export function tenants(db: DB): Tenant[] {
     const plan = (real ? db.tenant.plan : r.b) as Plan, outlets = real ? db.outlets.length : Number(r.c) || 0, status = r.d as TenantStatus;
     const base = plan === 'enterprise' ? meta.custom ?? 0 : planPrice(db, plan) * outlets;
     const wl = real ? whiteLabel(db) : null; // the tenant's published white-label app (Studios, Enterprise)
-    return { id: r.id, name: real ? db.tenant.name : r.a, plan, outlets, status, meta: real ? { ...meta, theme: db.theme.name, ...(wl ? { wl: true, appName: wl.name } : {}) } : meta, signedUp: r.at, real, mrr: PAYING.includes(status) ? base : 0 };
+    return { id: r.id, name: real ? db.tenant.name : r.a, plan, outlets, status, meta: real ? { ...meta, slug: db.tenant.id, domain: String(toolValue(db, 'domain', 'enterprise').menu ?? ''), theme: db.theme.name, ...(wl ? { wl: true, appName: wl.name } : {}) } : meta, signedUp: r.at, real, mrr: PAYING.includes(status) ? base : 0 };
   });
 }
 export const withTax = (n: number) => n + Math.round((n * PPN_BPS) / 10000);

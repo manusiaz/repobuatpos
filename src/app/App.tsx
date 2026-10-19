@@ -10,8 +10,8 @@ import { useDB } from '../data/store.ts';
 import { escalateDue, watchKitchen } from '../data/actions.ts';
 import { sweepAlerts } from '../data/alerts/index.ts';
 import { setMoneyStyle } from '../domain/money.ts';
-import { menuDomain, moneyFormat, roleTheme } from '../system/tools.ts';
-import { leaveFor, setOwnHost } from '../system/hosts.ts';
+import { moneyFormat, roleTheme } from '../system/tools.ts';
+import { leaveFor } from '../system/hosts.ts';
 import { useDispatcher } from '../data/actions/dispatch.ts';
 import { usePrintAgent } from '../devices/agent.ts';
 import { setSession, useSession } from '../session.ts';
@@ -60,7 +60,6 @@ export default function App({ path }: { path: string }) {
   const ctx = useMemo<AppCtx | null>(() => db && user ? { page, db, user, me: db.employees.find(e => e.id === user.id), outletId, setOutlet, go } : null, [page, db, user, outletId, go]);
   if (!ctx) return <div style={{ padding: 24 }}><Loading /></div>;
   setMoneyStyle(...moneyFormat(ctx.db, page.surface, ctx.outletId)); // Studios: price display rules, number format per outlet
-  setOwnHost(menuDomain(ctx.db)); // Studios: custom domain for QR, receipt and shared links
   const rt = roleTheme(ctx.db, ctx.user.role); // Studios: theme per role (accent, density, dark)
   const Surface = SURFACES[page.surface];
   const allowed = canOpen(ctx.user.role, page);

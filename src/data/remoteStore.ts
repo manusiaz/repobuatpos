@@ -9,7 +9,7 @@
 //   guests  QR menu / kiosk visitors read bn_public_snapshot, write through bn_guest_write and poll bn_guest_order
 import type { Audit, DB } from './schema.ts';
 import { seed } from './seed.ts';
-import { applyDocs, diff, emptyDB, fromDocs, guestOps, humanError, opsToDocs, pinChanges, wire, SYNTHETIC, type Doc, type Hint, type Op, type PinSet } from './remoteDocs.ts';
+import { applyDocs, blankDB, diff, emptyDB, fromDocs, guestOps, memberDB, WINDOW_MS, humanError, opsToDocs, pinChanges, wire, SYNTHETIC, type Doc, type Hint, type Op, type PinSet } from './remoteDocs.ts';
 import type { Membership } from './backend.ts';
 import { staffToken } from './staff.ts';
 
@@ -18,7 +18,6 @@ export type Mode = 'boot' | 'anon' | 'member' | 'guest';
 export interface CommitOpts { expect?: { coll: string; id: string; data: Record<string, unknown> }[]; quiet?: boolean }
 interface Pending { opId: string; action: string; actor: string; subject: string; outletId?: string; ops: Op[]; at: number; pins?: PinSet[]; quiet?: boolean; local?: boolean; staff?: string | null }
 
-const WINDOW_MS = (Number(process.env.NEXT_PUBLIC_BORNIZ_WINDOW_DAYS) || 35) * 864e5;
 const NAMES = ['order', 'po'];
 const DONE = ['paid', 'voided', 'refunded', 'part_refunded'];
 const lib = () => import('./backend.ts');
@@ -32,7 +31,7 @@ const ls = {
 let admin = false;
 let mode: Mode = 'boot', started = false, userId: string | null = null, enteredFor: string | null | undefined, loading = false;
 let tenant: { id: string; slug: string } | null = null, member: Membership | null = null;
-let shape: DB | null = null, base: DB | null = null, db: DB | null = null, hint: Hint = {};
+let base: DB | null = null, db: DB | null = null, hint: Hint = {};
 let queue: Pending[] = [], audit: Audit[] = [], device: DB['device'] | null = null, blocks: Record<string, [number, number][]> = {}, tracked: string[] = [];
 let seq = 0, inbox: Doc[] = [], inboxTimer: ReturnType<typeof setTimeout> | null = null, cacheTimer: ReturnType<typeof setTimeout> | null = null;
 let channel: { unsubscribe: () => unknown } | null = null, timers: ReturnType<typeof setInterval>[] = [];
@@ -41,11 +40,7 @@ const subs = new Set<() => void>(), docSubs = new Set<(docs: Doc[]) => void>();
 const key = (k: string) => `borniz-${k}:${mode}:${tenant?.id ?? ''}`;
 const emit = () => subs.forEach(f => f());
 
-function shapeDB(): DB {
-  if (shape) return shape;
-  const s = emptyDB(seed());
-  return shape = { ...s, tenant: { ...s.tenant, id: '', name: '', plan: 'free' }, theme: { ...s.theme, name: '' }, staffBrand: { ...s.staffBrand, workspace: '' } };
-}
+const shapeDB = blankDB;
 function countersNow(): Record<string, number> {
   const t = Math.floor(Date.now() / 1000);
   if (mode === 'guest') return { order: 10000 + t % 90000, po: 0 };
@@ -190,10 +185,7 @@ async function loadMember(): Promise<DB> {
     const [op, au] = await Promise.all([sb().rpc('bn_opening', { p_tenant: tid, p_before: since }), sb().read<Any[]>('audit', { tenant: tid })]);
     if (op.error) throw op.error;
     hint = {};
-    const d = fromDocs(shapeDB(), docs, hint) as unknown as Any, o = (op.data ?? {}) as { stock?: Any[]; beans?: Any[] };
-    d.movements = [...(o.stock ?? []).map(s => ({ outletId: s.outletId, stockItemId: s.stockItemId, qty: Number(s.qty), type: 'adjust', sourceId: SYNTHETIC + 'opening', by: 'system', at: since - 1 })), ...d.movements];
-    d.ledger = [...(o.beans ?? []).map(b => ({ customerId: b.customerId, points: Number(b.points), reason: 'Opening balance', orderId: SYNTHETIC + 'opening', at: since - 1 })), ...d.ledger];
-    d.tenant = { ...d.tenant, id: tenant!.slug, name: d.tenant.name || member?.name || '', plan: member?.plan ?? 'free' }; // plan is set by BorNiz (tenants.plan)
+    const d = memberDB(docs, (op.data ?? {}) as { stock?: Any[]; beans?: Any[] }, since, hint, { slug: tenant!.slug, name: member?.name, plan: member?.plan }) as unknown as Any;
     const local = audit.filter(a => a.id.startsWith('au'));
     audit = [...local, ...(au.data ?? []).map(r => ({ id: 'a' + r.id, actor: r.actor, action: r.action, subject: r.subject ?? '', at: Date.parse(r.at), outletId: r.outlet_id ?? undefined }))].slice(0, 800);
     return d as unknown as DB;

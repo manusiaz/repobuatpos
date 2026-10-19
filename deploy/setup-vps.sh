@@ -19,8 +19,8 @@ val() { sed -n "s|^$1=||p" "$2" | head -1; }
 
 echo "== packages"
 apt-get update -qq
-apt-get install -y -qq git curl openssl openssh-client nginx postgresql postgresql-contrib >/dev/null
-if ! command -v node >/dev/null || [ "$(node -p 'process.versions.node.split(".")[0]')" -lt 20 ]; then
+apt-get install -y -qq git curl openssl openssh-client nginx certbot postgresql postgresql-contrib >/dev/null
+if ! command -v node >/dev/null || [ "$(node -p 'process.versions.node.split(".")[0]')" -lt 22 ]; then # 22: the worker runs TypeScript as is
   curl -fsSL https://deb.nodesource.com/setup_22.x | bash - >/dev/null; apt-get install -y -qq nodejs >/dev/null
 fi
 # next build needs ~2 GB: small servers get a swap file
@@ -38,7 +38,7 @@ if ! as git ls-remote "$REPO" >/dev/null 2>&1; then
   cat "$H/.ssh/id_ed25519.pub"
   echo "Then run this script again."; exit 1
 fi
-echo "$U ALL=(root) NOPASSWD: /usr/bin/systemctl restart borniz" > /etc/sudoers.d/borniz; chmod 440 /etc/sudoers.d/borniz
+printf '%s ALL=(root) NOPASSWD: /usr/bin/systemctl restart borniz\n%s ALL=(root) NOPASSWD: /usr/bin/systemctl restart borniz-worker\n' $U $U > /etc/sudoers.d/borniz; chmod 440 /etc/sudoers.d/borniz
 
 echo "== folders"
 for d in "$LIVE" "$DEV"; do
@@ -82,11 +82,14 @@ SQL
 (cd "$DEV" && as npm ci --silent && as node --env-file="$DENV" scripts/db-migrate.mjs)
 
 echo "== service + nginx ($PROTO)"
-sed "s|^WorkingDirectory=.*|WorkingDirectory=$LIVE|" "$LIVE/deploy/borniz.service" > /etc/systemd/system/borniz.service
-systemctl daemon-reload; systemctl enable -q borniz
+for unit in borniz borniz-worker; do sed "s|^WorkingDirectory=.*|WorkingDirectory=$LIVE|" "$LIVE/deploy/$unit.service" > /etc/systemd/system/$unit.service; done
+systemctl daemon-reload; systemctl enable -q borniz borniz-worker
+mkdir -p /var/www/certbot /etc/nginx/borniz-domains
+cp "$LIVE/deploy/nginx-proxy.conf" /etc/nginx/snippets/borniz-proxy.conf
+rm -f /etc/nginx/sites-enabled/default # ours is the default server on port 80 (merchant domains, attendance machines by IP)
 if [ "$PROTO" = https ]; then sed "s|bornis\.id|$DOMAIN|g" "$LIVE/deploy/nginx.conf"
-else # no certificate yet: every host on plain http, same app
-  printf 'server {\n  listen 80;\n  server_name %s *.%s;\n  client_max_body_size 10m;\n  location / {\n    proxy_pass http://localhost:3000;\n    proxy_http_version 1.1;\n    proxy_set_header Host $host;\n    proxy_set_header X-Forwarded-For $remote_addr;\n    proxy_set_header X-Forwarded-Proto $scheme;\n    proxy_buffering off;\n  }\n}\n' "$DOMAIN" "$DOMAIN"
+else # no certificate yet: every name on plain http, same app (the certificate challenge path stays reachable)
+  printf 'upstream borniz { server localhost:3000; keepalive 32; }\nserver {\n  listen 80 default_server;\n  server_name _;\n  client_max_body_size 10m;\n  location /.well-known/acme-challenge/ { root /var/www/certbot; }\n  location / { include snippets/borniz-proxy.conf; }\n}\ninclude /etc/nginx/borniz-domains/*.conf;\n'
 fi > /etc/nginx/sites-enabled/borniz.conf
 nginx -t -q
 systemctl reload nginx
@@ -101,7 +104,7 @@ DNS (at your registrar): A  $DOMAIN  and  A  *.$DOMAIN  → this server's IP.
 EOF
 [ "$PROTO" = https ] || cat <<EOF
 https: the wildcard certificate needs the DNS challenge (a TXT record you add when certbot asks):
-  apt-get install -y certbot && certbot certonly --manual --preferred-challenges dns -d $DOMAIN -d '*.$DOMAIN'
+  certbot certonly --manual --preferred-challenges dns -d $DOMAIN -d '*.$DOMAIN'
   then run this script again. (--manual does not renew itself: with Cloudflare DNS use python3-certbot-dns-cloudflare.)
 EOF
 cat <<EOF

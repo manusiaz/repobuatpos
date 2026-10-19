@@ -10,28 +10,11 @@ import { Badge, Empty, Icon, Kpi, Seg, Status, Toggle, ago, dateShort, hhmm, toa
 import { LineChart } from '../../ui/Chart.tsx';
 import { IntegrationsPanel } from '../../integrations/Panel.tsx';
 import { toolValue, TOOL_DEFAULTS } from '../../system/tools.ts';
+import { BASE, fromRec, templates, VARS, type Cat, type Tpl } from '../../domain/messages.ts';
+export { templates, VARS, type Tpl } from '../../domain/messages.ts';
 import { Caption, CopyRow, F, fillVars, orderVars, outletName, pct, Phone, Stage, type Ctx, type PP, type Tool, type V } from './core.tsx';
 
-// ── Templates ────────────────────────────────────────────────────────────────────────────
-type Cat = 'UTILITY' | 'MARKETING';
-export interface Tpl { id: string; name: string; body: string; button: string; cat: Cat; status: 'approved' | 'pending' | 'rejected' | 'draft'; at: number }
-const BASE: Omit<Tpl, 'status' | 'at'>[] = [
-  { id: 'thanks_visit', name: 'Thank you for visiting', cat: 'UTILITY', button: 'Rate your visit', body: 'Hi {{name}}, terima kasih sudah mampir ke {{outlet}} hari ini!\n\nKami harap {{item}} kamu enak. Boleh kasih rating 10 detik?' },
-  { id: 'e_receipt', name: 'E-receipt', cat: 'UTILITY', button: 'View receipt', body: 'Hi {{name}}, ini struk digital kamu dari {{outlet}}.\n\nTotal: {{total}}\nPoin didapat: +{{points}}' },
-  { id: 'order_ready', name: 'Order ready / pickup', cat: 'UTILITY', button: 'Show my order', body: 'Hi {{name}}, pesanan {{order}} sudah siap diambil di counter {{outlet}}. Tidak perlu antre.' },
-  { id: 'booking_reminder', name: 'Reservation reminder', cat: 'UTILITY', button: 'Manage booking', body: 'Hi {{name}}, reminder reservasi kamu jam {{time}} untuk {{pax}} orang di {{outlet}}.' },
-  { id: 'feedback_request', name: 'Feedback & review link', cat: 'MARKETING', button: 'Write a review', body: 'Senang dengarnya, {{name}}! Mau bantu kami di Google? Tap untuk tulis review.' },
-  { id: 'winback_30d', name: 'We miss you', cat: 'MARKETING', button: 'Claim offer', body: 'Lama nggak ketemu, {{name}}. Minggu ini ada promo buat kamu, tinggal tunjukkan kode {{code}}.' },
-  { id: 'birthday', name: 'Happy birthday', cat: 'MARKETING', button: 'See my gift', body: 'Selamat ulang tahun lebih awal, {{name}}! Dessert gratis menunggumu sepanjang minggu ulang tahun.' },
-  { id: 'points_expiry', name: 'Points expiring', cat: 'UTILITY', button: 'Redeem now', body: 'Hi {{name}}, {{points}} beans kamu akan hangus dalam 14 hari. Tukar dengan hadiah di {{outlet}}?' },
-];
-export const VARS = ['name', 'outlet', 'item', 'total', 'points', 'order', 'time', 'pax', 'code'];
-export function templates(db: DB): Tpl[] {
-  const recs = db.records.msg_template ?? [];
-  const base = BASE.map(b => { const r = recs.find(x => x.id === b.id); return r ? fromRec(r) : { ...b, status: 'approved' as const, at: 0 }; });
-  return [...base, ...recs.filter(r => !BASE.some(b => b.id === r.id)).map(fromRec)];
-}
-const fromRec = (r: Rec): Tpl => ({ id: r.id, name: r.a, body: r.b, button: r.c, cat: r.d as Cat, status: r.e as Tpl['status'], at: r.at });
+// ── Templates ──────────────────────────────────────────────────────────────────────────
 const toRec = (t: Tpl): Rec => ({ id: t.id, a: t.name, b: t.body, c: t.button, d: t.cat, e: t.status, at: t.at });
 const tplName = (db: DB, id: string) => templates(db).find(t => t.id === id)?.name ?? id.replace(/_/g, ' ');
 const META_REVIEW_MS = 30e3;

@@ -14,6 +14,10 @@ git pull --ff-only
 npm ci
 ENV=.env.production; [ -f $ENV ] || ENV=.env
 node --env-file=$ENV scripts/db-migrate.mjs
-npm run build
+# build next to the live one: a failed build changes nothing, and visitors never get half-written files
+rm -rf .next-new
+BORNIZ_BUILD_DIR=.next-new npm run build
+rm -rf .next-old; [ -d .next ] && mv .next .next-old; mv .next-new .next
 sudo systemctl restart borniz
+sudo systemctl restart borniz-worker # alerts, escalations, gateway settlement and messages with no device open
 echo "BorNiz updated to $(git log --oneline -1)"

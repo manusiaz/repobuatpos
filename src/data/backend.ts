@@ -76,7 +76,7 @@ export async function membership(): Promise<Membership | null> {
 }
 /** BorNiz staff (private.platform_admins): the super admin console. Platform database only. */
 export async function isPlatformAdmin() { const { data } = await sb().rpc('bn_is_platform_admin'); return data === true; }
-export interface PlatformTenant { id: string; slug: string; name: string; plan: string; cell: string | null; createdAt: number; owner: string | null; city: string | null; outlets: number; orders30: number; lastActive: number | null }
+export interface PlatformTenant { id: string; slug: string; name: string; plan: string; cell: string | null; createdAt: number; owner: string | null; city: string | null; outlets: number; orders30: number; lastActive: number | null; domain: string | null }
 export async function adminTenants(): Promise<PlatformTenant[]> { const { data, error } = await sb().rpc('bn_admin_tenants'); if (error) throw error; return (data ?? []) as PlatformTenant[]; }
 export async function adminSetPlan(tenant: string, plan: string) { const { error } = await sb().rpc('bn_admin_set_plan', { p_tenant: tenant, p_plan: plan }); if (error) throw error; }
 /** Shared register: owner / manager get a one-time code, the tablet re-signs in anonymously and joins with it (no owner rights). */

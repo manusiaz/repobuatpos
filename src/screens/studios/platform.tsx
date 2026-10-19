@@ -1,5 +1,5 @@
 'use client';
-import { cnameTarget, config as hostConfig, linkTo } from '../../system/hosts.ts';
+import { cnameTarget, config as hostConfig, linkTo, liveDomain } from '../../system/hosts.ts';
 import { productImage } from '../../ui/kit.tsx';
 import { SFX, tone } from '../../ui/sound.ts';
 import { TOOL_DEFAULTS } from '../../system/tools.ts';
@@ -134,24 +134,24 @@ function White({ v, x }: PP) {
     <div className="row" style={{ gap: 8, overflow: 'hidden' }}>{['Menu', 'Beans', 'Order'].map(s => <div key={s} style={{ flex: 1, aspectRatio: '9/16', borderRadius: 12, background: `linear-gradient(180deg,${c},${t.ink})`, color: onColor(c, t.ink), padding: 8, fontSize: 12, fontWeight: 700 }}>{s}</div>)}</div>
   </div><Caption>BorNiz builds, signs and submits the app under your developer accounts. Members, beans and orders stay the same data.</Caption></Stage>;
 }
-function DomainPanel({ v, set }: PP) {
-  const [st, setSt] = useState<Record<string, string>>({});
-  const check = async (name: string) => { setSt(s => ({ ...s, [name]: 'Checking…' })); try { const r = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(name)}&type=CNAME`); const j = await r.json() as { Answer?: { data: string }[] }; setSt(s => ({ ...s, [name]: (j.Answer ?? []).some(a => a.data.includes(hostConfig().root) || a.data.includes(cnameTarget())) ? 'Verified' : 'Not found' })); } catch { setSt(s => ({ ...s, [name]: 'Couldn’t check' })); } };
+function DomainPanel({ v, set, x }: PP) {
+  const [st, setSt] = useState('');
+  const host = String(v.menu ?? '').trim().toLowerCase(), live = liveDomain(x.db.tenant.id);
+  const check = async () => { setSt('Checking…'); try { const r = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(host)}&type=CNAME`); const j = await r.json() as { Answer?: { data: string }[] }; setSt((j.Answer ?? []).some(a => a.data.replace(/\.$/, '') === cnameTarget()) ? 'CNAME is right' : 'CNAME not found yet'); } catch { setSt('Couldn’t check'); } };
   return <div className="stack">
-    {[['menu', 'Menu & store domain', cnameTarget()], ['dash', 'Dashboard domain', 'app.' + hostConfig().root]].map(([k, l, target]) => <div key={k} className="stack sm">
-      <div className="field"><label>{l}</label><input className="input" value={v[k]} onChange={e => set(k, e.target.value)} /></div>
-      <CopyRow label="CNAME" value={target} /><div className="row between"><button className="btn btn-sm" onClick={() => check(v[k])}>Check DNS</button>{st[v[k]] && <Badge tone={st[v[k]] === 'Verified' ? 'success' : 'warning'}>{st[v[k]]}</Badge>}</div></div>)}
-    <div className="field"><label>Staff sign-in</label><Seg value={v.sso} options={[['none', 'Password'], ['google', 'Google'], ['ms', 'Microsoft'], ['saml', 'SAML']] as const} onChange={s => set('sso', s)} /></div>
-    <label className="row between" style={{ minHeight: 44 }}><span>Require SSO for all staff</span><input type="checkbox" checked={!!v.enforce} onChange={e => set('enforce', e.target.checked)} style={{ width: 22, height: 22, accentColor: 'var(--role)' }} /></label>
-    <p className="faint" style={{ fontSize: 13 }}>Cashier PIN sign-in on shared devices stays as is. SSL certificates renew automatically.</p>
+    <div className="field"><label>Menu & store domain</label><input className="input" value={String(v.menu ?? '')} onChange={e => set('menu', e.target.value)} placeholder="order.yourbrand.id" autoCapitalize="none" /></div>
+    <CopyRow label="CNAME" value={cnameTarget()} />
+    <div className="row between"><button className="btn btn-sm" disabled={!host} onClick={check}>Check DNS</button>{st && <Badge tone={st === 'CNAME is right' ? 'success' : 'warning'}>{st}</Badge>}</div>
+    {live ? <Badge tone="success" dot>Live at {live}</Badge> : <Badge tone="warning" dot>Not live yet</Badge>}
+    <p className="faint" style={{ fontSize: 13 }}>Your domain serves the QR menu, kiosk and online store; staff keep using {x.db.tenant.id}.{hostConfig().root}. Once the CNAME is right, BorNiz switches it on with its certificate, and QR codes, receipts and shared links move to it then, not before.</p>
   </div>;
 }
 function Domain({ v, x }: PP) {
+  const live = liveDomain(x.db.tenant.id);
   return <Stage><div className="card stack" style={{ width: 'min(400px,100%)', alignItems: 'stretch' }}>
-    <span className="faint mono" style={{ fontSize: 12 }}>https://{v.dash}</span><b style={{ fontSize: 22 }}>Sign in to {x.db.tenant.name}</b>
-    {v.sso !== 'none' && <button className="btn btn-lg"><Icon name="key-round" />{{ google: 'Continue with Google', ms: 'Continue with Microsoft', saml: 'Continue with company SSO' }[v.sso as 'google']}</button>}
-    {!(v.enforce && v.sso !== 'none') && <><input className="input" placeholder="Email" readOnly /><input className="input" placeholder="Password" readOnly type="password" /><button className="btn btn-primary">Sign in</button></>}
-  </div><Caption>Guests order at https://{v.menu}.</Caption></Stage>;
+    <span className="faint mono" style={{ fontSize: 12 }}>https://{live || String(v.menu || 'order.yourbrand.id')}</span><b style={{ fontSize: 22 }}>{x.db.tenant.name}</b>
+    <span className="muted">QR menu, kiosk and online store on your own domain.</span>
+  </div><Caption>{live ? `Live: QR codes and receipts link to ${live}.` : 'Not live yet: links stay on your BorNiz address until it is switched on.'}</Caption></Stage>;
 }
 function Embed({ v, x }: PP) {
   const tenant = x.db.tenant.id, rv = x.db.reviews, avg = rv.length ? rv.reduce((a, r) => a + r.stars, 0) / rv.length : 0;
@@ -344,7 +344,7 @@ export const PLATFORM: Tool[] = [
   { id: 'lang', group: 'PLATFORM', name: 'Languages & translations', icon: 'languages', plan: 'free', desc: 'Add languages and translate any menu item. Customers switch language on the menu.', def: { ...TOOL_DEFAULTS.lang }, Preview: Lang, Panel: LangPanel },
   { id: 'white', group: 'PLATFORM', name: 'White-label app', icon: 'smartphone', plan: 'enterprise', desc: 'Your own member app on the App Store and Google Play, built on BorNiz.', def: { name: 'Kopi Biru', sub: 'Order ahead & earn beans', bundle: 'id.kopibiru.app', color: 'primary' }, Preview: White,
     fields: (_, x) => [F.text('App name', 'name'), F.text('Subtitle', 'sub'), F.text('Bundle ID', 'bundle'), F.swatch('Brand color', 'color', themeSwatches(x.db.theme)), F.note('You need Apple Developer and Google Play accounts in your company name.', 'warn')] },
-  { id: 'domain', group: 'PLATFORM', name: 'Custom domain & SSO', icon: 'globe', plan: 'enterprise', desc: 'Serve the menu and dashboard from your own domain, and sign staff in with company accounts.', def: { menu: 'order.kopibiru.id', dash: 'admin.kopibiru.id', sso: 'google', enforce: false }, Preview: Domain, Panel: DomainPanel },
+  { id: 'domain', group: 'PLATFORM', name: 'Custom domain', icon: 'globe', plan: 'enterprise', desc: 'Serve the QR menu, kiosk and online store from your own domain.', def: { menu: '' }, Preview: Domain, Panel: DomainPanel },
   { id: 'embed', group: 'PLATFORM', name: 'Embeds & widgets', icon: 'code', plan: 'pro', desc: 'Put ordering, reviews and chat on your own website, and add third-party widgets to your menu pages.', def: { wa: true, reviews: true, ig: false, code: '' }, Preview: Embed,
     fields: () => [F.toggle('WhatsApp chat button', 'wa'), F.toggle('Google Reviews widget', 'reviews'), F.toggle('Instagram feed', 'ig'), F.area('Custom HTML / script (head)', 'code'), F.note('Custom scripts run on menu pages only, never on checkout or payment pages.', 'warn')] },
   { id: 'kit', group: 'PLATFORM', name: 'Import brand kit', icon: 'download', plan: 'free', desc: 'Pull colors and fonts from a tokens file you already have (Figma, Canva, JSON or CSS).', Preview: Kit, Panel: KitPanel },

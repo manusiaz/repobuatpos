@@ -3,9 +3,9 @@
 // Non-2xx from the endpoint answers 502 so the dispatcher retries with backoff.
 import { member } from '../../../../src/integrations/server/auth.ts';
 import { HttpError, body, handle, json } from '../../../../src/integrations/server/http.ts';
-import { DEMO, rpc } from '../../../../src/integrations/server/db.ts';
+import { DEMO } from '../../../../src/integrations/server/db.ts';
 import { integrationAsMember, publishedTool, secretsOf } from '../../../../src/integrations/server/store.ts';
-import { deliver, publicEndpoint } from '../../../../src/integrations/server/webhooks/deliver.ts';
+import { deliverOnce, publicEndpoint } from '../../../../src/integrations/server/webhooks/deliver.ts';
 import { EVENTS, subscribed, type OutEvent } from '../../../../src/integrations/server/webhooks/events.ts';
 import { str } from '../../../../src/integrations/server/types.ts';
 
@@ -22,22 +22,14 @@ export const POST = handle(async (req: Request) => {
     const url = str(v.url), secret = str(v.secret);
     if (!publicEndpoint(url)) throw new HttpError(400, 'Endpoint must be a public https URL');
     if (!secret) throw new HttpError(409, 'Signing secret is not set');
-    const key = `wh:${e.id}:studio`;
-    const c = await rpc<{ claimed: boolean; status?: string }>('bn_outbox_claim', { p_tenant: m.tenantId, p_key: key, p_provider: 'webhook-out' });
-    if (!c.claimed) return json({ ok: c.status === 'sent', duplicate: true, status: c.status }, c.status === 'sending' ? 409 : 200);
-    const r = await deliver(url, secret, m.tenantId, { id: e.id, event: e.event, at: Number(e.at) || Date.now(), data: e.data });
-    await rpc('bn_outbox_done', { p_tenant: m.tenantId, p_key: key, p_provider_id: null, p_status: r.ok ? 'sent' : 'failed', p_error: r.ok ? null : `HTTP ${r.status}` });
-    return json({ ok: r.ok, status: r.status }, r.ok ? 200 : 502);
+    const r = await deliverOnce(m.tenantId, `wh:${e.id}:studio`, url, secret, e);
+    return json({ ok: r.ok, status: r.status, ...(r.duplicate ? { duplicate: true } : {}) }, r.ok || r.duplicate ? (r.status === 'sending' ? 409 : 200) : 502);
   }
   const i = await integrationAsMember(m, b.integrationId);
   if (i.connector !== 'webhook-out' || !i.enabled) throw new HttpError(409, 'Not an active webhook connection');
   if (!subscribed(i.config, e.event)) return json({ ok: true, skipped: true });
-  const key = `wh:${e.id}:${i.id}`;
-  const c = await rpc<{ claimed: boolean; status?: string }>('bn_outbox_claim', { p_tenant: m.tenantId, p_key: key, p_provider: 'webhook-out' });
-  if (!c.claimed) return json({ ok: c.status === 'sent', duplicate: true, status: c.status }, c.status === 'sending' ? 409 : 200);
   const secrets = await secretsOf(m.tenantId, i.id);
-  if (!secrets.secret) { await rpc('bn_outbox_done', { p_tenant: m.tenantId, p_key: key, p_provider_id: null, p_status: 'failed', p_error: 'no secret' }); throw new HttpError(409, 'Signing secret is not set'); }
-  const r = await deliver(str(i.config.url), secrets.secret, m.tenantId, { id: e.id, event: e.event, at: Number(e.at) || Date.now(), data: e.data });
-  await rpc('bn_outbox_done', { p_tenant: m.tenantId, p_key: key, p_provider_id: null, p_status: r.ok ? 'sent' : 'failed', p_error: r.ok ? null : `HTTP ${r.status}` });
-  return json({ ok: r.ok, status: r.status }, r.ok ? 200 : 502);
+  if (!secrets.secret) throw new HttpError(409, 'Signing secret is not set');
+  const r = await deliverOnce(m.tenantId, `wh:${e.id}:${i.id}`, str(i.config.url), secrets.secret, e);
+  return json({ ok: r.ok, status: r.status, ...(r.duplicate ? { duplicate: true } : {}) }, r.ok || r.duplicate ? (r.status === 'sending' ? 409 : 200) : 502);
 });

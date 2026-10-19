@@ -41,13 +41,22 @@ const subscribe = REMOTE ? remoteSubscribe : (f: () => void) => { subs.add(f); r
 /** Returns null during server render and hydration (and while the remote adapter loads); templates show their loading skeleton. */
 export function useDB(): DB | null { return useSyncExternalStore(subscribe, REMOTE ? remoteGet : get, serverSnap); }
 export function useDBSelect<T>(pick: (d: DB) => T): T | null { const d = useDB(); return d ? pick(d) : null; }
-export const snapshot = REMOTE ? remoteSnapshot : () => get();
+export const snapshot = (): DB => onServer ?? (REMOTE ? remoteSnapshot() : get());
+
+/** The automation worker (src/integrations/server/worker.ts) runs the app's own rules on one business's data inside the
+ *  server process: while `fn` runs, commit() and snapshot() work on `d` alone (no browser storage, no broadcast). */
+let onServer: DB | null = null;
+export async function onServerDB(d: DB, fn: () => unknown | Promise<unknown>): Promise<DB> {
+  onServer = d;
+  try { await fn(); return onServer; } finally { onServer = null; }
+}
 
 export const uid = (p = '') => p + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-3);
 
 /** The only way to change data. `actor` and `action` land in the audit log (never edited or deleted).
     `opts` only matter with the database: `expect` = server precondition on a document, `quiet` = no toast when the server refuses. */
 export function commit(action: string, actor: string, mutate: (d: DB) => void, subject = '', outletId?: string, opts?: CommitOpts) {
+  if (onServer) { const next = structuredClone(onServer); mutate(next); onServer = next; return; }
   if (REMOTE) return remoteCommit(action, actor, mutate, subject, outletId, opts);
   const next = structuredClone(get());
   mutate(next);

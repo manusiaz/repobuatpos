@@ -1,5 +1,5 @@
 'use client';
-import { cnameTarget, linkTo } from '../system/hosts.ts';
+import { linkTo } from '../system/hosts.ts';
 // Menu Studio (spec: BorNiz Menu Studio + Page Builder). Edits the merchant theme and menu presentation that /order,
 // /kiosk and /display read live. Owner publishes; manager "Send to owner" (publish() creates the approval).
 // Every sitemap page of the surface is one tool of the studio; drafts autosave as versions.
@@ -218,7 +218,7 @@ function Studio() {
         f.tog('powered', 'Show “Powered by BorNiz”', db.tenant.plan === 'free' || db.tenant.plan === 'basic' ? 'Removable on Pro and up' : 'Removable on your plan', db.tenant.plan === 'free' || db.tenant.plan === 'basic' ? 'Locked by plan' : undefined)]} />
       <Block title="Custom CSS" right={locked ? <Badge><Icon name="lock" size={12} />Locked by plan · Enterprise</Badge> : undefined} hint="Scoped to .bn-menu. Status colors, payment marks and legal lines ignore custom CSS.">
         <textarea className="input mono" disabled={locked} value={String(d.adv.css)} onChange={e => setIn('adv')('css', e.target.value)} aria-label="Custom CSS" placeholder=".bn-menu h1 { letter-spacing: .02em; }" /></Block>
-      <Fields g={d.adv} set={setIn('adv')} fs={[f.text('domain', 'Custom domain', 'CNAME to ' + cnameTarget()), f.text('seoTitle', 'SEO title'), f.area('seoDesc', 'SEO description')]} />
+      <Fields g={d.adv} set={setIn('adv')} fs={[f.text('seoTitle', 'SEO title'), f.area('seoDesc', 'SEO description')]} />
     </>,
     submit: () => submitPanel(owner ? ['menu', 'page'] : ['menu']),
     psubmit: () => submitPanel(['page']),

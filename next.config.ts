@@ -5,6 +5,8 @@ const root = process.env.NEXT_PUBLIC_BORNIZ_ROOT_DOMAIN || 'bornis.id';
 const STAFF = '/:area(owner|manager|pic|pos|admin|account|kds|display|waiter|graph)/:path*';
 const config: NextConfig = {
   reactStrictMode: true,
+  // deploy/update.sh builds into .next-new while the live site keeps serving .next, then swaps the two
+  distDir: process.env.BORNIZ_BUILD_DIR || '.next',
   // The browser bundle knows whether this deployment has a database (the URL itself stays on the server).
   env: { NEXT_PUBLIC_BORNIZ_BACKEND: process.env.DATABASE_URL ? '1' : '' },
   poweredByHeader: false,

@@ -125,12 +125,14 @@ export function resolve(hostHeader: string, pathname: string, cfg: HostConfig, e
 /** Every page's public URL in the current mode (deploy checks, sitemap.xml, the page map). */
 export const allPublicUrls = (cfg: HostConfig) => PAGES.map(p => ({ path: p.path, url: publicUrl(p.path, cfg) }));
 
-let ownHost = '';
-/** The custom menu domain the merchant published (set by the app shell from src/system/tools.ts menuDomain). */
-export const setOwnHost = (h: string) => { ownHost = h.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, ''); };
+/** A merchant's own domain once this deployment serves it (NEXT_PUBLIC_BORNIZ_CUSTOM_DOMAINS, switched on with
+ *  deploy/add-domain.sh): QR codes, receipts and shared links use it. A domain only asked for in Studios is not live yet. */
+export const liveDomain = (tenant?: string, cfg = config()) => (tenant && Object.keys(cfg.customDomains).find(h => cfg.customDomains[h] === tenant)) || '';
 /** Public link for a page in this deployment (QR codes, receipts, WhatsApp, embeds). */
-export const linkTo = (internal: string, tenant?: string) =>
-  publicUrl(internal, config(), tenant ?? hostTenant(), typeof location !== 'undefined' ? location.origin : '', ownHost);
+export const linkTo = (internal: string, tenant?: string) => {
+  const t = tenant ?? hostTenant();
+  return publicUrl(internal, config(), t, typeof location !== 'undefined' ? location.origin : '', liveDomain(t));
+};
 /** Where a merchant points their own domain (CNAME). */
 export const cnameTarget = () => { const c = config(); return c.routing === 'subdomain' ? hostOf('menu', c) : (typeof location !== 'undefined' ? location.host : c.root); };
 /** In-app navigation that has to change host (sign-in on app. → the business's own subdomain, or the reverse):
@@ -139,7 +141,7 @@ export function leaveFor(internal: string, tenant?: string): string | null {
   const cfg = config();
   if (cfg.routing === 'path' || typeof location === 'undefined') return null;
   if (hostTenant() && ruleFor(internal.split('?')[0]).sub === 'app') return null; // sign-in and PIN login stay on the business's own host
-  const url = publicUrl(internal, cfg, tenant ?? hostTenant(), location.origin, ownHost);
+  const t = tenant ?? hostTenant(), url = publicUrl(internal, cfg, t, location.origin, liveDomain(t, cfg));
   return new URL(url).origin === location.origin ? null : url;
 }
 /** The same page on a business's own host, for sign-up and sign-in moving there; null when already on it (or subfolder mode). */

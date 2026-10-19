@@ -133,7 +133,7 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | page:/order status | reads | table:orders | src/screens/selforder/shared.tsx:44 (pesanan milik HP ini; movedFrom → ikut pindah) |
 | fn:findTable | reads | fn:tablesOf | src/domain/tables.ts:54 |
 | page:/display | calls | fn:tableNo | src/screens/display.tsx:185 |
-| page:/owner/outlets/table-qr-generator | calls | fn:publicUrl | src/system/hosts.ts:133 (linkTo → publicUrl, dipanggil tableUrl) |
+| page:/owner/outlets/table-qr-generator | calls | fn:publicUrl | src/system/hosts.ts:134 (linkTo → publicUrl, dipanggil tableUrl) |
 | test:tables | tests | fn:findTable | src/domain/tables.test.ts |
 | page:/account (sign-in, create business) | calls | fn:onBusinessHost | src/screens/auth.tsx:511 (enterBusiness) |
 | fn:publicUrl | reads | fn:isTenantSlug | src/system/hosts.ts:93 (resolve: label host → tenant) |
@@ -143,7 +143,7 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | test:api | tests | api:/api/bn | db/tests/api.mjs |
 | test:guest_fire | tests | policy:bn_guest_write | db/tests/guest_fire.sql |
 | fn:dbMigrate | reads | config:platform | scripts/db-migrate.mjs:24 (db/platform.sql) |
-| config:deploy | routes-to | config:proxy | deploy/nginx.conf:37 (proxy_set_header Host; hosts.ts routes by it) |
+| config:deploy | routes-to | config:proxy | deploy/nginx-proxy.conf:4 (proxy_set_header Host; hosts.ts routes by it) |
 | config:deploy | calls | fn:dbMigrate | deploy/update.sh (node --env-file … scripts/db-migrate.mjs); deploy/setup-vps.sh migrasi borniz_dev |
 | test:changes | tests | fn:moveTable | src/data/changes.test.ts |
 | test:changes | tests | fn:voidItem | src/data/changes.test.ts |
@@ -212,6 +212,11 @@ graph LR
 | 2026-10-19 | api:/api/payments/charge | Charge dipanggil sebelum baris pembayaran sampai server → 404 "Payment not found" untuk setiap QRIS/VA | fixed (remoteSent: tunggu baris terkirim) |
 | 2026-10-19 | api:/api/payments/simulate | Tombol "Simulate payment" di HP tamu → 401 | fixed (tamu boleh untuk pesanan tamu, hanya bila simulator aktif) |
 | 2026-10-19 | src/screens/states.tsx | Galeri state crash di bisnis tanpa produk/stok | fixed (pakai data demo) |
+| 2026-10-19 | fn:publicUrl | Domain merchant tercatat di 3 tempat (Menu Studio, Platform Studio, admin di browser saja) dan tak satu pun dibaca router; QR/struk pindah ke domain yang belum dilayani server; admin bilang CNAME edge.bornis.id, Studio bilang menu.bornis.id; "sertifikat otomatis" tidak benar | fixed (satu sumber: config deployment + deploy/add-domain.sh; liveDomain; admin lihat permintaan via bn_admin_tenants) |
+| 2026-10-19 | src/screens/studios/platform.tsx | Tombol "Continue with Google/Microsoft/SAML" + "Require SSO" tidak melakukan apa-apa | removed (SSO belum dibangun, CLAUDE.md Known gaps) |
+| 2026-10-19 | fn:dbMigrate | Semua otomasi (sweep alert, eskalasi, pelunasan QRIS, outbox WA/email/webhook) hanya jalan bila ada perangkat staf terbuka | fixed (worker server: src/integrations/server/worker.ts + borniz-worker.service; uji: QRIS settled → paid tanpa perangkat) |
+| 2026-10-19 | config:deploy | update.sh build langsung di .next yang sedang dilayani: build gagal = situs rusak, selama build file setengah jadi | fixed (build ke .next-new lalu tukar; uji: build gagal → situs tetap 200) |
+| 2026-10-19 | src/data/actions/admin.ts | Mode database: slug bisnis ditaruh di meta.source (kanal akuisisi) | fixed (meta.slug) |
 | 2026-10-19 | scripts/tenant-move.sh | Pindah merchant ke DB sendiri belum siap di backend sendiri (routing tanpa p_tenant, migrasi cell, copy auth.users) | open (CLAUDE.md Known gaps) |
 | 2026-10-15 | fn:tableNo | `/^T-?/` membuang "T" dari nama apa pun: "Teras 1" tampil "eras 1" di ±20 layar tamu + customer display | fixed |
 | 2026-10-15 | fn:publicUrl | Nama meja tidak di-encode di URL QR: "Bar/1" → meja "Bar", "VIP #2" → "VIP"; "Meja 100%" bikin halaman tamu crash (decode dua kali) | fixed |
@@ -229,6 +234,8 @@ graph LR
 
 | Tanggal | Keputusan | Alasan | Node terdampak |
 |---|---|---|---|
+| 2026-10-19 | Domain merchant diaktifkan operator (deploy/add-domain.sh), bukan routing dinamis dari DB | Halaman statis (618) + env yang di-bake saat build; satu VPS, merchant enterprise jarang: script lebih sederhana dan benar daripada cookie/edge config | fn:publicUrl, config:deploy |
+| 2026-10-19 | Worker otomasi = proses Node terpisah (systemd), bukan di dalam Next | Next mengompilasi instrumentation sebagai Server Component yang menolak modul ber-hook; proses terpisah memakai kode yang sama tanpa build | fn:dbMigrate, config:deploy |
 | 2026-10-18 | Satu VPS = dua salinan: live `/srv/borniz` + DB `borniz`, dev `/srv/borniz-dev` + DB `borniz_dev` (PostgreSQL yang sama), user `borniz`; dev lewat SSH tunnel :3001 | Owner mau develop langsung di VPS; develop di folder/DB live = setiap edit langsung kena pelanggan dan migrasi setengah jadi merusak data asli | config:deploy, fn:dbMigrate |
 | 2026-10-14 | Kunci meja = namanya | `orders.table` / `reservations.table` / tiket sudah menyimpan nama; rename meja bertagihan ditolak | fn:saveFloor, semua konsumen |
 | 2026-10-14 | "Pindah meja" memindah semua pesanan hidup di meja itu | Satu meja bisa punya pesanan QR lunas + ronde POS baru; tamu pindah bersama semuanya | page:/pos/selling/move-table |

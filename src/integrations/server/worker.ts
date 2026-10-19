@@ -1,0 +1,105 @@
+// The automation worker, its own process next to the app (deploy/borniz-worker.service): once a minute, for every business in
+// this database, the rules a staff device runs while it is open, so they happen with every device closed:
+//   gateway settlement (remoteFinalize) · approval escalation · late-kitchen check · alert sweep · the outbox (messages, webhooks)
+// It is the same code as the devices (store commit on the server, src/data/store.ts onServerDB), with the same dedupe ids and
+// outbox keys, so it is safe next to open devices. Every document it changes carries its old content as a precondition: a
+// device that changed it in the meantime wins and the worker tries again next minute. One worker per database (advisory lock).
+import { pool, rpc } from './db.ts';
+import { HttpError } from './http.ts';
+import { secretsOf } from './store.ts';
+import { sendMessage } from './messaging/send.ts';
+import { deliverOnce } from './webhooks/deliver.ts';
+import { str } from './types.ts';
+import type { Channel } from './messaging/index.ts';
+import type { DB } from '../../data/schema.ts';
+import { onServerDB, snapshot } from '../../data/store.ts';
+import { diff, memberDB, WINDOW_MS, wire, type Doc, type Hint, type Op } from '../../data/remoteDocs.ts';
+import { finalize, finalizeNeed } from '../../data/remoteFinalize.ts';
+import { escalateDue, watchKitchen } from '../../data/actions.ts';
+import { sweepAlerts } from '../../data/alerts/index.ts';
+import { render, tick, type Result, type Transport } from '../../data/actions/dispatch.ts';
+
+type Tenant = { id: string; slug: string; name: string; plan: string };
+const LOCK = 'borniz-worker', EVERY = 60e3, GATEWAY = ['qris', 'va', 'ewallet'];
+
+/** A refused request is not retried by the outbox (same split as the browser transport). */
+const result = (p: Promise<{ ok: boolean; status?: unknown; simulated?: boolean; duplicate?: boolean }>): Promise<Result> => p.then(
+  r => ({ ok: r.ok, status: typeof r.status === 'string' ? r.status : undefined, simulated: r.simulated }),
+  e => ({ ok: false, message: (e as Error).message, permanent: e instanceof HttpError && [400, 401, 403, 404, 422, 501].includes(e.status) }));
+
+function transport(t: Tenant): Transport {
+  return {
+    message: x => result(sendMessage(t.id, { ...x, channel: x.channel as Channel })),
+    webhook: async (integrationId, e) => {
+      const i = snapshot().integrations.find(x => x.id === integrationId);
+      const secret = i ? (await secretsOf(t.id, i.id)).secret : '';
+      return secret ? result(deliverOnce(t.id, `wh:${e.id}:${integrationId}`, str(i!.config.url), secret, e)) : { ok: false, message: 'Signing secret is not set', permanent: true };
+    },
+    hook: (h, e) => result(deliverOnce(t.id, `wh:${e.id}:studio`, h.url, h.secret, e)),
+  };
+}
+
+async function load(t: Tenant): Promise<{ db: DB; stored: Map<string, unknown> }> {
+  const since = Date.now() - WINDOW_MS, docs: Doc[] = [];
+  for (let from = 0; ; from += 1000) {
+    const page = await rpc<Doc[]>('bn_server_docs', { p_tenant: t.id, p_since: since, p_from: from });
+    docs.push(...page);
+    if (page.length < 1000) break;
+  }
+  const opening = await rpc<{ stock?: Record<string, unknown>[]; beans?: Record<string, unknown>[] }>('bn_server_opening', { p_tenant: t.id, p_before: since });
+  const hint: Hint = {};
+  return { db: memberDB(docs, opening, since, hint, t), stored: new Map(docs.map(d => [d.coll + '/' + d.id, d.data])) };
+}
+
+/** Writes what changed; each document that already existed must still hold what the worker read. */
+async function save(t: Tenant, before: DB, after: DB, stored: Map<string, unknown>, action: string) {
+  const ops: Op[] = diff(before, after);
+  if (!ops.length) return 0;
+  for (const o of ops) { const old = stored.get(o.coll + '/' + o.id); if (old) o.expect = old as Record<string, unknown>; }
+  await rpc('bn_server_write', { p_tenant: t.id, p_ops: wire(ops), p_action: action });
+  return ops.length;
+}
+
+export async function runTenant(t: Tenant, now = Date.now()) {
+  let { db, stored } = await load(t);
+  // gateway settlement first, one order per write: a device finishing the same order first is not an error
+  const open = new Set(db.orders.filter(o => finalizeNeed(db, o.id)).map(o => o.id));
+  for (const p of db.payments) {
+    if (!open.has(p.orderId) || !GATEWAY.includes(p.method)) continue;
+    open.delete(p.orderId);
+    const need = finalizeNeed(db, p.orderId)!;
+    const next = await onServerDB(structuredClone(db), () => finalize(snapshot(), p.orderId, need));
+    try { await save(t, db, next, stored, need === 'settle' ? 'payment.settled' : 'payment.failed'); db = next; }
+    catch { ({ db, stored } = await load(t)); }
+  }
+  const next = await onServerDB(structuredClone(db), async () => {
+    escalateDue(now); watchKitchen(now); sweepAlerts(now);
+    await tick({ now, transport: transport(t), render: render() });
+  });
+  return save(t, db, next, stored, 'automation');
+}
+
+let busy = false;
+async function pass() {
+  if (busy) return;
+  busy = true;
+  const c = await pool().connect().catch(() => null);
+  try {
+    if (!c || !(await c.query('select pg_try_advisory_lock(hashtext($1)) ok', [LOCK])).rows[0].ok) return; // another process runs it
+    try {
+      for (const t of await rpc<Tenant[]>('bn_server_tenants', {})) {
+        const n = await runTenant(t).catch(e => { console.error('[worker]', t.slug, (e as Error).message); return 0; });
+        if (n) console.log('[worker]', t.slug, n, 'change(s)');
+      }
+    } finally { await c.query('select pg_advisory_unlock(hashtext($1))', [LOCK]); }
+  } catch (e) { console.error('[worker]', (e as Error).message); }
+  finally { c?.release(); busy = false; }
+}
+
+// node --env-file=.env.production --experimental-strip-types src/integrations/server/worker.ts [--once]  (npm run worker)
+if (import.meta.url === `file://${process.argv[1]}`) {
+  if (!process.env.DATABASE_URL || !process.env.BORNIZ_SERVER_SECRET) { console.error('[worker] needs DATABASE_URL and BORNIZ_SERVER_SECRET'); process.exit(1); }
+  if (process.argv.includes('--once')) await pass().then(() => process.exit(0)); // one pass, then exit (checks, cron)
+  console.log('[worker] running every minute');
+  void pass(); setInterval(pass, EVERY);
+}

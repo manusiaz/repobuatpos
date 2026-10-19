@@ -11,6 +11,7 @@ import { reportIntegration } from './integrations.ts';
 import { subscribed, type OutEvent } from '../../integrations/server/webhooks/events.ts';
 import { emailFrom, hookWants, quietNow, studioHook, toolValue } from '../../system/tools.ts';
 import { linkTo } from '../../system/hosts.ts';
+import { fillVars, orderVars, templates } from '../../domain/messages.ts';
 
 export interface Outgoing { messageId: string; channel: Message['channel']; to: string; template: string; params: string[]; subject: string; text: string; tenantId: string; from?: string }
 export interface Result { ok: boolean; status?: string; simulated?: boolean; message?: string; permanent?: boolean }
@@ -135,8 +136,7 @@ export async function withLock(fn: () => Promise<void>) {
 const LEASE = Math.random().toString(36).slice(2);
 
 /** Template text and positional WhatsApp params from the same templates and variables the studio previews. */
-async function loadRender(): Promise<Render> {
-  const [{ templates }, { orderVars, fillVars }] = await Promise.all([import('../../screens/studios/messaging.tsx'), import('../../screens/studios/core.tsx')]);
+export function render(): Render {
   return (db, m) => {
     const o = m.orderId ? db.orders.find(x => x.id === m.orderId) : undefined;
     const vars: Record<string, unknown> = { brand: db.tenant.name, ...orderVars(db, o?.outletId ?? db.outlets[0]?.id ?? '', m.customerId ?? undefined) };
@@ -151,10 +151,10 @@ async function loadRender(): Promise<Render> {
 export function useDispatcher(enabled = true) {
   useEffect(() => {
     if (!enabled) return;
-    let stop = false, timer: ReturnType<typeof setTimeout> | undefined, render: Render = plain;
-    loadRender().then(r => { render = r; }).catch(() => undefined);
+    let stop = false, timer: ReturnType<typeof setTimeout> | undefined;
+    const fill = render();
     const loop = async () => {
-      try { await withLock(() => tick({ render })); } catch { /* next pass retries */ }
+      try { await withLock(() => tick({ render: fill })); } catch { /* next pass retries */ }
       if (!stop) timer = setTimeout(loop, TICK_MS);
     };
     timer = setTimeout(loop, 1000);

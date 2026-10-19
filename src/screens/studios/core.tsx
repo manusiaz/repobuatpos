@@ -110,23 +110,9 @@ export const mix = (a: string, b: string, t: number) => { const x = rgb(a), y = 
 export const themePairs = (t: Theme): [string, string, string][] => [[t.ink, t.paper, 'Text on background'], [onColor(t.p, t.ink), t.p, 'Button label on primary'], [t.p, t.paper, 'Links on background']];
 
 // ── Real data ────────────────────────────────────────────────────────────────────────────
-export const first = (n?: string | null) => (n ?? 'Guest').split(' ')[0];
-export const outletName = (db: DB, id: string) => db.outlets.find(o => o.id === id)?.name ?? id;
-export const latest = (db: DB, outletId: string | null, pred: (o: Order) => boolean = () => true) =>
-  db.orders.filter(o => (!outletId || o.outletId === outletId) && pred(o)).reduce<Order | undefined>((a, o) => (!a || o.createdAt > a.createdAt ? o : a), undefined);
-export const customerOf = (db: DB, o?: Order) => (o?.customerId ? db.customers.find(c => c.id === o.customerId) : undefined);
+export { customerOf, first, fillVars, latest, orderVars, outletName } from '../../domain/messages.ts';
 export const modsText = (o: Order['lines'][0]) => o.mods.map(m => m.name).join(' · ');
 
-/** Variables for message templates, filled from a real paid order of a known customer at this outlet. */
-export function orderVars(db: DB, outletId: string, customerId?: string) {
-  const o = latest(db, outletId, x => x.status === 'paid' && !!x.customerId && (!customerId || x.customerId === customerId)) ?? latest(db, null, x => x.status === 'paid' && !!x.customerId);
-  const c = customerOf(db, o) ?? db.customers[0];
-  const pts = o && c ? earn(o.subtotal - o.discount, tierOf(db.ledger, c.id)) : 0;
-  const res = db.reservations.find(r => r.status === 'booked');
-  const voucher = db.promos.find(p => p.code)?.code ?? '';
-  return { name: first(c?.name), outlet: outletName(db, o?.outletId ?? outletId), item: o?.lines[0]?.name ?? '', total: o ? idr(o.total) : '', points: String(pts), order: o?.no ?? '', time: res ? new Date(res.at).toTimeString().slice(0, 5) : '', pax: String(res?.guests ?? ''), code: voucher, _order: o, _customer: c };
-}
-export const fillVars = (t: string, vars: Record<string, unknown>) => t.replace(/\{\{?(\w+)\}?\}/g, (m, k) => (typeof vars[k] === 'string' && vars[k] ? vars[k] as string : m));
 
 export interface MenuRow { p: Product; price: number; is86: boolean; hidden: boolean }
 export function menuOf(db: DB, outletId: string) {

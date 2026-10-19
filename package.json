@@ -14,6 +14,7 @@
     "paths": "node --experimental-strip-types scripts/paths.ts",
     "links": "node --experimental-strip-types scripts/check-links.ts",
     "test:db": "sh db/tests/run.sh",
+    "worker": "node --experimental-strip-types src/integrations/server/worker.ts",
     "db:migrate": "node scripts/db-migrate.mjs",
     "check:system": "node --experimental-strip-types scripts/check-system.ts",
     "check:deploy": "node --experimental-strip-types scripts/check-deploy.ts"

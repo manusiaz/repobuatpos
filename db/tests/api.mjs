@@ -83,6 +83,12 @@ assert.equal((await api('b', 'auth/signin', { email: 'b@kopib.id', password: 'ba
 await api('a', 'auth/signout'); assert.equal((await api('a', 'auth/user')).data.user, null, 'signed out');
 await api('a', 'auth/signin', { email: 'owner@kopia.id', password: 'rahasia123', code: totp(f.totp.secret) });
 
+// the automation worker reads businesses with the server secret only
+await assert.rejects(pool().query("select public.bn_server_tenants('wrong')"), /BN016/);
+assert.ok((await pool().query("select public.bn_server_tenants('api-test-secret') r")).rows[0].r.some(t => t.slug === 'kopi-a'));
+assert.ok((await pool().query("select public.bn_server_docs('api-test-secret', $1, 0, 0) r", [A])).rows[0].r.some(d => d.coll === 'outlets'));
+assert.deepEqual(Object.keys((await pool().query("select public.bn_server_opening('api-test-secret', $1, 0) r", [A])).rows[0].r).sort(), ['beans', 'stock']);
+
 // live: a change to business A reaches its member's stream, not another account's
 const live = async who => { const ac = new AbortController(); const res = await GET(new Request('https://app.bornis.id/api/bn/live?tenant=' + A, { headers: { cookie: 'bn_session=' + jar[who] }, signal: ac.signal }), { params: Promise.resolve({ op: ['live'] }) }); return { res, ac }; };
 assert.equal((await live('b')).res.status, 403);

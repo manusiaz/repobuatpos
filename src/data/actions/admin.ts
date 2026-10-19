@@ -13,7 +13,7 @@ const month = (t: number, back: number) => { const d = new Date(t); return new D
 const ym = (t: number) => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
 
 /** Tenant row: a name · b plan · c outlets · d status · e JSON meta · at signed up. */
-export interface TenantMeta { owner: string; email: string; city: string; custom?: number; wl?: boolean; appName?: string; theme?: string; churnedAt?: number; trialEnds?: number; source?: string }
+export interface TenantMeta { owner: string; email: string; city: string; custom?: number; wl?: boolean; appName?: string; theme?: string; churnedAt?: number; trialEnds?: number; source?: string; slug?: string; domain?: string }
 export const PLAN_PRICE: Record<string, number> = { free: 0, basic: 149_000, pro: 349_000, enterprise: 0 };
 export const PPN_BPS = 1100;
 
@@ -68,7 +68,7 @@ async function loadPlatform() {
   try {
     const { adminTenants } = await import('../backend.ts');
     const rows = (await adminTenants()).map((t): Rec => ({ id: t.id, a: t.name, b: t.plan, c: String(t.outlets), d: 'active',
-      e: JSON.stringify({ owner: t.owner ?? '', email: t.owner ?? '', city: t.city ?? '', source: t.slug } satisfies TenantMeta), at: t.createdAt }));
+      e: JSON.stringify({ owner: t.owner ?? '', email: t.owner ?? '', city: t.city ?? '', slug: t.slug, domain: t.domain ?? '' } satisfies TenantMeta), at: t.createdAt }));
     commit('platform.loaded', ADMIN, d => { Object.assign(d.records, { tenant: rows, invoice: [], ticket: [], flag: [], release: [], domain: [] }); });
   } catch (e) { toast((e as Error).message); }
   finally { loading = false; }

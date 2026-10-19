@@ -27,13 +27,16 @@ function run(orderId: string) {
   waiting.delete(orderId);
   const d0 = snapshot(), need = finalizeNeed(d0, orderId), o = d0.orders.find(x => x.id === orderId);
   if (!need || !o) return;
-  commit(need === 'settle' ? 'payment.settled' : 'payment.failed', 'gateway', d => {
-    const x = d.orders.find(y => y.id === orderId)!;
-    if (need === 'settle') return settleIfDone(d, x, 'gateway');
-    const p = d.payments.filter(y => y.orderId === x.id && GATEWAY.includes(y.method)).at(-1)!;
-    x.status = backFromPaying(x);
-    notify(d, 'Payment failed / declined', 'warn', ['cashier'], x.outletId, `${x.no}${x.table ? ' · ' + x.table : ''} · ${p.method.toUpperCase()} ${p.status} · ${idr(p.amount)}`);
-  }, orderId, o.outletId, { expect: [{ coll: 'orders', id: orderId, data: { status: o.status } }], quiet: true });
+  commit(need === 'settle' ? 'payment.settled' : 'payment.failed', 'gateway', d => finalize(d, orderId, need), orderId, o.outletId,
+    { expect: [{ coll: 'orders', id: orderId, data: { status: o.status } }], quiet: true });
+}
+/** The order effects of a settled or failed gateway payment: the same on a device and in the automation worker. */
+export function finalize(d: DB, orderId: string, need: 'settle' | 'fail') {
+  const x = d.orders.find(y => y.id === orderId)!;
+  if (need === 'settle') return settleIfDone(d, x, 'gateway');
+  const p = d.payments.filter(y => y.orderId === x.id && GATEWAY.includes(y.method)).at(-1)!;
+  x.status = backFromPaying(x);
+  notify(d, 'Payment failed / declined', 'warn', ['cashier'], x.outletId, `${x.no}${x.table ? ' · ' + x.table : ''} · ${p.method.toUpperCase()} ${p.status} · ${idr(p.amount)}`);
 }
 function consider(orderId: string) {
   const d = snapshot();

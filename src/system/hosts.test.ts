@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { config, isTenantSlug, publicUrl, resolve, allPublicUrls } from './hosts.ts';
+import { config, isTenantSlug, liveDomain, publicUrl, resolve, allPublicUrls } from './hosts.ts';
 import { tableParam } from '../domain/tables.ts';
 import { PAGES } from './registry.ts';
 
@@ -97,4 +97,10 @@ test('old order.bornis.id/<slug> QR codes redirect to <slug>.bornis.id; platform
   // the old pos./kds./display. hosts do not know the business: the account door picks it
   for (const h of ['pos', 'kds', 'display']) assert.deepEqual(resolve(h + '.bornis.id', '/selling/register-order', sub), { type: 'redirect', url: 'https://app.bornis.id/' }, h);
   assert.equal(publicUrl('/order?t=07', sub, 'kopibiru', '', 'menu.kopibiru.id'), 'https://menu.kopibiru.id/t/07');
+});
+
+test('a merchant domain is used for links only once this deployment serves it', () => {
+  assert.equal(liveDomain('kopibiru', sub), 'menu.kopibiru.id');
+  assert.equal(liveDomain('warung-bu-sri', sub), '', 'asked for in Studios but not switched on: links stay on <slug>.bornis.id');
+  assert.equal(publicUrl('/order?t=07', sub, 'warung-bu-sri', '', liveDomain('warung-bu-sri', sub)), 'https://warung-bu-sri.bornis.id/t/07');
 });
