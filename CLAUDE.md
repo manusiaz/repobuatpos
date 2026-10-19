@@ -15,7 +15,7 @@ Cloud POS for Indonesian F&B / retail / UMKM. Every surface (marketing, owner, m
   |---|---|
   | `bornis.id` | landing |
   | `app.bornis.id` | sign up / sign in (`/account`); a new or signed-in owner then continues on their business host |
-  | `<slug>.bornis.id` | **everything of that business**: `/` QR menu (`/t/07` = table 07), `/kiosk`, `/owner`, `/manager`, `/studios`, `/pos`, `/pic`, `/online`, `/waiter`, `/kds`, `/display`, plus `/account` sign-in and PIN login on its own host |
+  | `<slug>.bornis.id` | **everything of that business**: `/` QR menu (`/t/07` = table 07), `/kiosk`, `/owner`, `/manager`, `/studios`, `/pos`, `/pic`, `/online`, `/waiter`, `/kds`, `/display`, `/system/mobile` (owner mobile), plus `/account` sign-in and PIN login on its own host |
   | `admin.bornis.id` | super admin |
 
   - Old links redirect: `order.bornis.id/<slug>/…` → `<slug>.bornis.id/…` (query kept, so printed QR codes keep their outlet); `pos.`, `kds.`, `display.` → `app.bornis.id`.
@@ -56,7 +56,8 @@ Cloud POS for Indonesian F&B / retail / UMKM. Every surface (marketing, owner, m
 - `src/system/hosts.ts` + `proxy.ts` — domains: `bornis.id`, `app.`, `<slug>.` (one per business), `admin.`, merchant custom domains; or one domain with subfolders (`NEXT_PUBLIC_BORNIZ_ROUTING=path`). Use `linkTo(path)` for any public link (QR, receipt, WA). `npm run check:deploy` prints the domains/DNS and proves every page is reachable.
 - `src/integrations/server/worker.ts` — the automation worker (`npm run worker`, `--once` for one pass; its own systemd unit): every minute, for every business, gateway settlement, approval escalation, late kitchen, the alert sweep and the outbox (messages, webhooks) with no device open. Same code as the devices (`onServerDB` in `store.ts`), dedupe ids, outbox keys, and the old document as precondition for every write. Reads with `bn_server_docs` / `bn_server_opening`.
 - `src/domain/messages.ts` — message templates and their variables (studio previews, device outbox and worker share them).
-- `src/system/perms.ts` — permission matrix (`perm(db, role, action, outletId)` → y/o/a/n). `src/system/access.ts` — which roles open which surface (launcher APPS).
+- `src/system/perms.ts` — permission matrix (`perm(db, role, action, outletId)` → y/o/a/n). `src/system/access.ts` — which roles open which surface (launcher APPS); `HOME` = each role's start (owner `/owner`, manager `/manager`, PIC `/pic`, cashier the register, kitchen `/kds`, waiter `/waiter`), `startFor(role, next)` = where a sign-in lands.
+- **Start points.** A page that needs a sign-in sends the tab to `/account/login` or the PIN login with `?next=<page>` (`session.ts`); the PIN login lists the staff who may open that page (the KDS asks the kitchen, the waiter phone the waiters) and lands each on it, else on `HOME`. A shared register opens the customer display with no staff PIN. Each screen links its own installable app (`src/system/apps.ts` → `/api/app-manifest?app=`), so an installed KDS, kiosk or display opens itself.
 - `src/ui/PinSheet.tsx` — the only approval PIN sheet (`usePin()`). `src/screens/insight/metrics.ts` — the only sales math (dashboards + reports).
 - `src/ui/kit.tsx` (Icon, Badge, Status, Sheet, Seg, Toggle, Field, Numpad, Kpi, Empty, Loading, toast…), `src/ui/Chart.tsx` (Chart.js per DS), `app/globals.css` (tokens + component classes).
 

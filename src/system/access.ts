@@ -18,6 +18,10 @@ export function canOpen(role: Role, page: Page) {
 }
 /** A link is shown only if this role can open where it goes. */
 export const canReach = (role: Role, path: string) => { const p = pageAt(path.split(/[?#]/)[0]); return !!p && canOpen(role, p); };
+/** Where each role starts: after a PIN or account sign-in, and on a device nobody pointed at a page. */
+export const HOME: Record<Role, string> = { owner: '/owner', manager: '/manager', pic: '/pic', cashier: '/pos/selling/register-order', kitchen: '/kds', waiter: '/waiter', admin: '/admin', customer: '/order', public: '/' };
+/** After sign-in: the page that was asked for (a notification link, the device's screen) when this role may open it, else its own start. */
+export const startFor = (role: Role, next?: string | null) => (next && /^\/(?!\/)/.test(next) && canReach(role, next) ? next : HOME[role]);
 /** Manager on an owner-gated action: "Send to owner" instead of Save/Publish (Roles, lg-menu). */
 export const GATED = /(price|publish|payroll|refund|billing|plan|bank|withdraw|royalt|delete|profit|p&l|supplier|points adjustment|limits|franchise|lock|api key)/i;
 export const isGated = (role: Role, page: Page) => role === 'manager' && GATED.test(page.name);

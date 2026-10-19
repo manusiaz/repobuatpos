@@ -35,6 +35,7 @@ const SURFACES: Record<Surface, ComponentType> = {
 const DARK: Partial<Record<Surface, true>> = { kds: true, display: true };
 const WARM = () => [import('../screens/pos.tsx'), import('../screens/pic.tsx'), import('../screens/online.tsx'), import('../screens/waiter.tsx'),
   import('../screens/kds.tsx'), import('../screens/display.tsx'), import('../screens/owner.tsx'), import('../screens/manager.tsx')];
+const NO_OUTLET: Partial<Record<Surface, true>> = { landing: true, auth: true, states: true, graph: true, admin: true };
 const GUEST: Partial<Record<Surface, true>> = { selforder: true, kiosk: true, display: true, landing: true, auth: true };
 
 export default function App({ path }: { path: string }) {
@@ -57,7 +58,9 @@ export default function App({ path }: { path: string }) {
   useEffect(() => { if (!staffDevice) return; const tick = () => { escalateDue(); watchKitchen(); sweepAlerts(); }; tick(); const t = setInterval(tick, 60e3); return () => clearInterval(t); }, [staffDevice]);
   const slug = db?.tenant.id; // the business slug (remote store) = its <slug>.bornis.id
   const go = useCallback((p: string) => { const away = leaveFor(p, slug); if (away) location.assign(away); else router.push(p); }, [router, slug]);
-  const ctx = useMemo<AppCtx | null>(() => db && user ? { page, db, user, me: db.employees.find(e => e.id === user.id), outletId, setOutlet, go } : null, [page, db, user, outletId, go]);
+  // a business always has an outlet: none yet means its data is still arriving, and every business screen reads its outlet
+  const loaded = !!db && (db.outlets.length > 0 || NO_OUTLET[page.surface]);
+  const ctx = useMemo<AppCtx | null>(() => db && user && loaded ? { page, db, user, me: db.employees.find(e => e.id === user.id), outletId, setOutlet, go } : null, [page, db, user, loaded, outletId, go]);
   if (!ctx) return <div style={{ padding: 24 }}><Loading /></div>;
   setMoneyStyle(...moneyFormat(ctx.db, page.surface, ctx.outletId)); // Studios: price display rules, number format per outlet
   const rt = roleTheme(ctx.db, ctx.user.role); // Studios: theme per role (accent, density, dark)

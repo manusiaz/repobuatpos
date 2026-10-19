@@ -19,7 +19,7 @@ interface HostRule { sub: string; serves: string[]; strip?: string; tenant?: boo
 /** Which internal path prefixes each host serves. `strip` = the prefix that disappears from public URLs. */
 export const HOSTS: HostRule[] = [
   { sub: 'app', serves: ['/account', '/graph', '/system'], strip: '/account' },
-  { sub: '*', serves: ['/owner', '/manager', '/studios', '/pos', '/pic', '/online', '/waiter', '/kds', '/display', '/order', '/kiosk'], tenant: true },
+  { sub: '*', serves: ['/owner', '/manager', '/studios', '/pos', '/pic', '/online', '/waiter', '/kds', '/display', '/order', '/kiosk', '/system/mobile'], tenant: true },
   { sub: 'admin', serves: ['/admin'], strip: '/admin' },
   { sub: '', serves: ['/'] }, // marketing: everything else
 ];
@@ -31,7 +31,12 @@ const GUEST = ['/order', '/kiosk'];
 export const RESERVED = new Set(['www', 'app', 'pos', 'kds', 'display', 'order', 'admin', 'go', 'status', 'preview', 'menu', 'mail', 'api', 'cdn', 'static', 'help', 'docs', 'blog']);
 export const isTenantSlug = (s: string) => /^[a-z0-9][a-z0-9-]{1,40}$/.test(s) && !RESERVED.has(s);
 const under = (p: string, prefix: string) => prefix === '/' || p === prefix || p.startsWith(prefix + '/');
-export const ruleFor = (internal: string) => HOSTS.find(h => h.serves.some(s => s !== '/' && under(internal, s))) ?? HOSTS[HOSTS.length - 1];
+/** The host that serves a page: the longest matching prefix wins (/system/mobile is the business's, /system the platform's). */
+export const ruleFor = (internal: string) => {
+  let best: HostRule | undefined, len = 0;
+  for (const h of HOSTS) for (const s of h.serves) if (s !== '/' && under(internal, s) && s.length > len) { best = h; len = s.length; }
+  return best ?? HOSTS[HOSTS.length - 1];
+};
 
 // Literal process.env.NEXT_PUBLIC_* reads so Next inlines them into the browser bundle.
 const ENV: Record<string, string | undefined> = {
@@ -130,7 +135,7 @@ export const allPublicUrls = (cfg: HostConfig) => PAGES.map(p => ({ path: p.path
 export const liveDomain = (tenant?: string, cfg = config()) => (tenant && Object.keys(cfg.customDomains).find(h => cfg.customDomains[h] === tenant)) || '';
 /** Public link for a page in this deployment (QR codes, receipts, WhatsApp, embeds). */
 export const linkTo = (internal: string, tenant?: string) => {
-  const t = tenant ?? hostTenant();
+  const t = tenant || hostTenant();
   return publicUrl(internal, config(), t, typeof location !== 'undefined' ? location.origin : '', liveDomain(t));
 };
 /** Where a merchant points their own domain (CNAME). */
@@ -141,7 +146,7 @@ export function leaveFor(internal: string, tenant?: string): string | null {
   const cfg = config();
   if (cfg.routing === 'path' || typeof location === 'undefined') return null;
   if (hostTenant() && ruleFor(internal.split('?')[0]).sub === 'app') return null; // sign-in and PIN login stay on the business's own host
-  const t = tenant ?? hostTenant(), url = publicUrl(internal, cfg, t, location.origin, liveDomain(t, cfg));
+  const t = tenant || hostTenant(), url = publicUrl(internal, cfg, t, location.origin, liveDomain(t, cfg));
   return new URL(url).origin === location.origin ? null : url;
 }
 /** The same page on a business's own host, for sign-up and sign-in moving there; null when already on it (or subfolder mode). */

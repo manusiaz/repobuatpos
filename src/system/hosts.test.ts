@@ -104,3 +104,9 @@ test('a merchant domain is used for links only once this deployment serves it', 
   assert.equal(liveDomain('warung-bu-sri', sub), '', 'asked for in Studios but not switched on: links stay on <slug>.bornis.id');
   assert.equal(publicUrl('/order?t=07', sub, 'warung-bu-sri', '', liveDomain('warung-bu-sri', sub)), 'https://warung-bu-sri.bornis.id/t/07');
 });
+
+test('every app starts on the host that holds its data: owner mobile on the business, the states gallery on app.', () => {
+  assert.equal(publicUrl('/system/mobile/owner-mobile-live-monitor', sub), 'https://kopibiru.bornis.id/system/mobile/owner-mobile-live-monitor');
+  assert.deepEqual(resolve('kopibiru.bornis.id', '/system/mobile/owner-mobile-live-monitor', sub), { type: 'rewrite', path: '/system/mobile/owner-mobile-live-monitor', query: { tenant: 'kopibiru' } });
+  assert.equal(publicUrl('/system/states/empty-states', sub), 'https://app.bornis.id/system/states/empty-states');
+});

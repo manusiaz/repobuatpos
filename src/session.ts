@@ -21,6 +21,8 @@ const DEFAULT: Partial<Record<Surface, SessionUser>> = {
 const KEY = 'borniz-session', SHARED = 'borniz-shared-device';
 const PUBLIC: Surface[] = ['landing', 'auth', 'selforder', 'kiosk', 'states', 'graph'];
 const subs = new Set<() => void>();
+/** The page this tab wanted, carried through sign-in (?next=) so a notification link or a KDS tablet lands where it was going. */
+const nextHere = () => (/^\/account(\/|$)/.test(location.pathname) ? '' : '?next=' + encodeURIComponent(location.pathname + location.search));
 const granted = new Map<string, number>();
 const GUEST: SessionUser = { id: 'guest', role: 'customer', outletId: 'sen' };
 
@@ -31,6 +33,7 @@ function remoteDefault(surface: Surface): SessionUser | null {
   const d = remoteSnapshot(), out = d.device.outletId || d.outlets[0]?.id || '';
   if (mode === 'member' && member) {
     let shared = member.role === 'device'; try { shared ||= localStorage.getItem(SHARED) === '1'; } catch { /* blocked */ }
+    if (shared && surface === 'display') return { ...GUEST, outletId: out }; // the customer display faces guests: no staff sign-in
     if (shared && !PUBLIC.includes(surface)) return null;
     const e = d.employees.find(x => x.id === member.employeeId);
     return { id: member.employeeId, role: member.role === 'owner' || member.role === 'manager' ? member.role : e?.role ?? 'cashier', outletId: e?.outlets.includes(out) ? out : e?.outlets[0] ?? out };
@@ -52,7 +55,7 @@ export function grantSession(employeeId: string, shared: boolean) {
 export function setSession(u: SessionUser | null) {
   if (REMOTE && u && (granted.get(u.id) ?? 0) < Date.now() && u.id !== getSession('landing').id) {
     import('./ui/kit.tsx').then(k => k.toast('Switch staff with their PIN')).catch(() => {});
-    location.assign('/account/cashier-pin-login');
+    location.assign('/account/cashier-pin-login' + nextHere());
     return;
   }
   if (u) sessionStorage.setItem(KEY, JSON.stringify(u)); else { sessionStorage.removeItem(KEY); if (REMOTE) endStaffSessions(); }
@@ -66,8 +69,9 @@ export function useSession(surface: Surface, pathRole?: string): SessionUser | n
       let s: SessionUser | null = null;
       try { s = JSON.parse(sessionStorage.getItem(KEY) || 'null'); } catch { /* first visit */ }
       s ??= remoteDefault(surface);
-      if (remoteInfo().mode !== 'boot' && !PUBLIC.includes(surface) && (!s || s.role === 'customer')) {
-        location.assign(remoteInfo().mode === 'member' ? '/account/cashier-pin-login' : '/account/login');
+      const facing = surface === 'display' && remoteInfo().mode === 'member'; // a business's customer display: no staff sign-in
+      if (remoteInfo().mode !== 'boot' && !PUBLIC.includes(surface) && !facing && (!s || s.role === 'customer')) {
+        location.assign((remoteInfo().mode === 'member' ? '/account/cashier-pin-login' : '/account/login') + nextHere());
         return;
       }
       setU(remoteInfo().mode === 'boot' ? null : s);

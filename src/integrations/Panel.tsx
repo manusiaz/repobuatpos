@@ -4,6 +4,8 @@
 import { useState } from 'react';
 import type { Integration } from '../data/schema.ts';
 import { useApp } from '../app/context.tsx';
+import { REMOTE } from '../data/remote.ts';
+import { remoteInfo } from '../data/remoteStore.ts';
 import { Badge, copy, Empty, Field, Icon, Sheet, Toggle, toast } from '../ui/kit.tsx';
 import { removeIntegration, reportIntegration, saveIntegration } from '../data/actions/integrations.ts';
 import { connectorsOf } from './registry.ts';
@@ -57,7 +59,8 @@ function ConnectSheet({ c, i, outletId, deviceId, onClose }: { c: Connector; i: 
   const [cfg, setCfg] = useState<Record<string, string | number | boolean>>(i?.config ?? {});
   const [sec, setSec] = useState<Record<string, string>>({});
   const [err, setErr] = useState(''), [busy, setBusy] = useState(false);
-  const hook = c.webhook && typeof location !== 'undefined' ? `${location.origin}${c.webhook}?tenant=${db.tenant.id}` : '';
+  // the business's own id: on the database db.tenant.id is its address (slug), and the webhook routes take the id
+  const hook = c.webhook && typeof location !== 'undefined' ? `${location.origin}${c.webhook}?tenant=${(REMOTE && remoteInfo().tenant?.id) || db.tenant.id}` : '';
   const save = async () => {
     const miss = c.fields.find(f => f.required && (f.type === 'secret' ? !sec[f.key] && !i?.secrets.includes(f.key) : cfg[f.key] === undefined || cfg[f.key] === ''));
     if (miss) return setErr(`${miss.label} is required.`);

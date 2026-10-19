@@ -8,6 +8,8 @@ import { grantSession, setSession } from '../session.ts';
 import { setDeviceOutlet, setSetting } from '../data/actions.ts';
 import { accountSignIn, accountSignOut, accountSignUp, accountUser, checkLoginPin, createBusiness, inviteEmployee, newPassword, resendConfirmation, sendPasswordReset, setPlan, slugify, whenChecked } from '../data/actions/auth.ts';
 import { RESERVED, config, isTenantSlug, onBusinessHost } from '../system/hosts.ts';
+import { canReach, startFor } from '../system/access.ts';
+import { useQuery } from './insight/query.ts';
 import { DEMO_HERE, REMOTE, setDemo } from '../data/remote.ts';
 import { remoteInfo, remoteSnapshot } from '../data/remoteStore.ts';
 import type { Employee, Role } from '../data/schema.ts';
@@ -18,7 +20,6 @@ import { PLANS, PPN_BPS, TRIAL_DAYS, billed, perMonth, planOf, type PlanId } fro
 import { PairDevice, ProductImporter } from './public/states-kit.tsx';
 
 const A = '/account/';
-const POS_HOME = '/pos/selling/register-order';
 const OB = ['onboarding-business-profile', 'onboarding-outlet-and-tax', 'onboarding-import-products', 'onboarding-invite-team', 'choose-plan'];
 const OB_LABEL = ['Business', 'Outlet & tax', 'Products', 'Team', 'Plan'];
 const STEPS: [string, string][] = [['login', 'Log in'], ['register', 'Register'], ['verify-email-otp', 'Verify'], ...OB.map((s, i) => [s, OB_LABEL[i]] as [string, string]), ['plan-activated', 'Ready'], ['choose-outlet', 'Outlet'], ['choose-register', 'Register'], ['cashier-pin-login', 'PIN']];
@@ -473,7 +474,9 @@ function PinLogin() {
   const { db, go } = useApp();
   const o = db.outlets.find(x => x.id === db.device.outletId) ?? db.outlets[0];
   const reg = db.devices.find(d => d.id === db.device.paired.pos);
-  const staff = db.employees.filter(e => e.active && e.pin && (e.outlets.includes(o.id)) && ['cashier', 'pic', 'manager', 'owner'].includes(e.role));
+  // the screen this device was opened for (?next=, from session.ts): the KDS asks the kitchen, the waiter phone the waiters
+  const [q] = useQuery({ next: '' }), next = q.next || null, till = !next || next.startsWith('/pos');
+  const staff = db.employees.filter(e => e.active && e.pin && e.outlets.includes(o.id) && (next ? canReach(e.role, next) : e.role !== 'admin'));
   const [who, setWho] = useState<Employee | null>(null), [pin, setPin] = useState(''), [err, setErr] = useState(''), [tries, setTries] = useState(0);
   const key = (k: string) => {
     if (!who) return;
@@ -483,13 +486,13 @@ function PinLogin() {
     if (p.length < 4) return;
     if (REMOTE) return whenChecked(checkLoginPin(who.id, p), e => {
       if (e) { setErr(e); setTimeout(() => setPin(''), 300); return; }
-      grantSession(who.id, true); setSession({ id: who.id, role: who.role, outletId: o.id }); toast(`Welcome, ${who.name}`); go(POS_HOME);
+      grantSession(who.id, true); setSession({ id: who.id, role: who.role, outletId: o.id }); toast(`Welcome, ${who.name}`); go(startFor(who.role, next));
     });
     if (p !== who.pin) { setTries(t => t + 1); setErr(tries + 1 >= 5 ? 'Too many tries. Ask your manager to reset your PIN.' : `Wrong PIN. ${4 - tries} tries left.`); setTimeout(() => setPin(''), 300); return; }
-    setSession({ id: who.id, role: who.role, outletId: o.id }); toast(`Welcome, ${who.name}`); go(POS_HOME);
+    setSession({ id: who.id, role: who.role, outletId: o.id }); toast(`Welcome, ${who.name}`); go(startFor(who.role, next));
   };
   return <div className="stack" onKeyDown={e => key(e.key === 'Backspace' ? 'del' : e.key)} tabIndex={-1}>
-    <Head h={who ? `Hi ${who.name}, enter your PIN` : 'Who’s selling?'} sub={<>{o.name} · {reg?.name ?? <Link href={A + 'choose-register'}>pair a register</Link>}</>} />
+    <Head h={who ? `Hi ${who.name}, enter your PIN` : till ? 'Who’s selling?' : 'Who’s working here?'} sub={<>{o.name}{till && <> · {reg?.name ?? <Link href={A + 'choose-register'}>pair a register</Link>}</>}</>} />
     {!who ? <div className="grid" style={{ ['--min' as string]: '120px', gap: 10 }}>{staff.map(e => <button key={e.id} className="card stack" style={{ alignItems: 'center', cursor: 'pointer', padding: 16, minHeight: 120 }} onClick={() => { setWho(e); setPin(''); setErr(''); setTries(0); }}>
       <Avatar name={e.name} color={e.color} size={48} /><b>{e.name}</b><span className="faint" style={{ fontSize: 12 }}>{e.role === 'pic' ? 'PIC' : e.role}</span></button>)}</div>
       : <>
@@ -508,11 +511,12 @@ function enterBusiness(go: (p: string) => void, path?: string) {
   if (!member) return false;
   const role: Role = member.role === 'manager' ? 'manager' : 'owner';
   // Everything of a business lives on <slug>.bornis.id: a new or signed-in owner continues there.
-  const away = onBusinessHost(path ?? (role === 'owner' ? '/owner' : '/manager'), member.slug);
+  const start = startFor(role, path);
+  const away = onBusinessHost(start, member.slug);
   if (away) { location.assign(away); return true; }
   const d = remoteSnapshot(), outletId = d.employees.find(x => x.id === member.employeeId)?.outlets[0] ?? d.outlets[0]?.id ?? '';
   finishLogin({ id: member.employeeId, role, outletId }, () => {});
-  go(path ?? (role === 'owner' ? '/owner' : '/manager'));
+  go(start);
   return true;
 }
 function useAccount() {
@@ -537,18 +541,19 @@ function ConfirmEmail({ email }: { email: string }) {
 function AccountLogin() {
   const { go } = useApp();
   const acct = useAccount();
+  const [q] = useQuery({ next: '' }), next = q.next || undefined; // the page that sent here (session.ts)
   const [email, setEmail] = useState(''), [pw, setPw] = useState(''), [err, setErr] = useState(''), [busy, setBusy] = useState(false), [unconfirmed, setUnconfirmed] = useState(false), [show, setShow] = useState(false);
   const [mfa, setMfa] = useState(false), [code, setCode] = useState('');
   if (acct === undefined) return <Head h="Welcome back" sub="Checking your sign-in…" />;
   const m = remoteInfo().member;
   if (acct && m?.role === 'device') return <div className="stack">
     <Head h={`Shared register · ${m.name}`} sub="Staff sign in here with their PIN. This tablet holds no owner or manager sign-in." />
-    <Link className="btn btn-primary btn-lg" href={A + 'cashier-pin-login'}>Staff PIN login</Link>
+    <Link className="btn btn-primary btn-lg" href={A + 'cashier-pin-login' + (next ? '?next=' + encodeURIComponent(next) : '')}>Staff PIN login</Link>
     <button className="btn btn-ghost" onClick={signOutAndReload}><Icon name="log-out" size={18} />Remove this register</button>
   </div>;
   if (acct && m) return <div className="stack">
     <Head h={`Signed in to ${m.name}`} sub={<>As <b>{acct.email}</b>. This browser stays signed in for the register, kitchen and back office.</>} />
-    <button className="btn btn-primary btn-lg" onClick={() => enterBusiness(go)}>Open the {m.role === 'manager' ? 'manager' : 'owner'} dashboard</button>
+    <button className="btn btn-primary btn-lg" onClick={() => enterBusiness(go, next)}>Open the {m.role === 'manager' ? 'manager' : 'owner'} dashboard</button>
     <SharedRegister tenant={m.tenantId} />
     <button className="btn btn-ghost" onClick={signOutAndReload}><Icon name="log-out" size={18} />Sign out</button>
   </div>;
@@ -570,7 +575,7 @@ function AccountLogin() {
     if (r.mfa && !r.error) return setMfa(true); // two-factor sign-in is on: ask for the code
     if (r.unconfirmed) return setUnconfirmed(true);
     if (r.error) return setErr(r.error);
-    if (!enterBusiness(go)) go(remoteInfo().admin ? '/admin' : A + 'register');
+    if (!enterBusiness(go, next)) go(remoteInfo().admin ? '/admin' : A + 'register');
   };
   return <form className="stack" onSubmit={submit} noValidate>
     <Head h="Welcome back" sub="Log in to manage your outlets." />

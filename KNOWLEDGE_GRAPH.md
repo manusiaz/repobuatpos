@@ -133,10 +133,10 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | page:/order status | reads | table:orders | src/screens/selforder/shared.tsx:44 (pesanan milik HP ini; movedFrom → ikut pindah) |
 | fn:findTable | reads | fn:tablesOf | src/domain/tables.ts:54 |
 | page:/display | calls | fn:tableNo | src/screens/display.tsx:185 |
-| page:/owner/outlets/table-qr-generator | calls | fn:publicUrl | src/system/hosts.ts:134 (linkTo → publicUrl, dipanggil tableUrl) |
+| page:/owner/outlets/table-qr-generator | calls | fn:publicUrl | src/system/hosts.ts:139 (linkTo → publicUrl, dipanggil tableUrl) |
 | test:tables | tests | fn:findTable | src/domain/tables.test.ts |
-| page:/account (sign-in, create business) | calls | fn:onBusinessHost | src/screens/auth.tsx:511 (enterBusiness) |
-| fn:publicUrl | reads | fn:isTenantSlug | src/system/hosts.ts:93 (resolve: label host → tenant) |
+| page:/account (sign-in, create business) | calls | fn:onBusinessHost | src/screens/auth.tsx:515 (enterBusiness) |
+| fn:publicUrl | reads | fn:isTenantSlug | src/system/hosts.ts:98 (resolve: label host → tenant) |
 | policy:tenants_slug_not_reserved | documents | fn:isTenantSlug | db/migrations/20261018000000_borniz_tenant_hosts.sql (daftar sama dengan RESERVED, isTenantSlug di hosts.ts) |
 | api:/api/bn | calls | fn:dbCall | app/api/bn/[...op]/route.ts:7 (import call from db.ts) |
 | api:/api/bn | calls | fn:liveHub | app/api/bn/[...op]/route.ts:9 (import subscribe from live.ts) |
@@ -217,6 +217,12 @@ graph LR
 | 2026-10-19 | fn:dbMigrate | Semua otomasi (sweep alert, eskalasi, pelunasan QRIS, outbox WA/email/webhook) hanya jalan bila ada perangkat staf terbuka | fixed (worker server: src/integrations/server/worker.ts + borniz-worker.service; uji: QRIS settled → paid tanpa perangkat) |
 | 2026-10-19 | config:deploy | update.sh build langsung di .next yang sedang dilayani: build gagal = situs rusak, selama build file setengah jadi | fixed (build ke .next-new lalu tukar; uji: build gagal → situs tetap 200) |
 | 2026-10-19 | src/data/actions/admin.ts | Mode database: slug bisnis ditaruh di meta.source (kanal akuisisi) | fixed (meta.slug) |
+| 2026-10-19 | src/screens/auth.tsx | Login PIN mengirim SEMUA role ke kasir, dan hanya kasir/PIC/manager/owner yang tampil: dapur & waiter tidak bisa login di KDS / HP waiter (mode database) | fixed (HOME + startFor, staf sesuai halaman tujuan, ?next=) |
+| 2026-10-19 | src/session.ts | Customer display di register bersama minta PIN staf; link notifikasi hilang setelah login (selalu ke /owner) | fixed (display tanpa PIN; ?next= dibawa) |
+| 2026-10-19 | src/system/hosts.ts | Sesaat setelah login (data bisnis belum termuat, id "") go() pindah ke https://.bornis.id/… lalu app.bornis.id | fixed (tenant \|\| hostTenant + tes yang gagal tanpa fix) |
+| 2026-10-19 | src/integrations/Panel.tsx | URL webhook gateway/ojol yang disalin merchant berisi slug, route webhook hanya terima id → setiap pelunasan QRIS & order ojol via webhook ditolak 400 | fixed (id bisnis; uji: slug 400, id lolos ke cek signature) |
+| 2026-10-19 | src/system/hosts.ts | Owner Mobile (/system/mobile) dilayani di app. (host tanpa bisnis) | fixed (prefix terpanjang menang: host bisnis) |
+| 2026-10-19 | app/manifest.ts | Satu PWA start_url /pos untuk semua: tablet KDS / kiosk / display yang di-install terbuka di kasir | fixed (manifest per aplikasi: /api/app-manifest) |
 | 2026-10-19 | scripts/tenant-move.sh | Pindah merchant ke DB sendiri belum siap di backend sendiri (routing tanpa p_tenant, migrasi cell, copy auth.users) | open (CLAUDE.md Known gaps) |
 | 2026-10-15 | fn:tableNo | `/^T-?/` membuang "T" dari nama apa pun: "Teras 1" tampil "eras 1" di ±20 layar tamu + customer display | fixed |
 | 2026-10-15 | fn:publicUrl | Nama meja tidak di-encode di URL QR: "Bar/1" → meja "Bar", "VIP #2" → "VIP"; "Meja 100%" bikin halaman tamu crash (decode dua kali) | fixed |
