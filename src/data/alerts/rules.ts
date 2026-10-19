@@ -52,7 +52,7 @@ export interface Ix {
 export function index(db: DB, now: number): Ix {
   const t0 = startOfDay(now), memo = new Map<string, unknown>();
   const once = <T,>(k: string, f: () => T): T => { if (!memo.has(k)) memo.set(k, f()); return memo.get(k) as T; };
-  const out = new Map(db.outlets.map(o => [o.id, o])), byName = new Map(db.outlets.map(o => [o.name.toLowerCase(), o.id]));
+  const out = new Map(db.outlets.map(o => [o.id, o])), byName = new Map(db.outlets.map(o => [(o.name ?? '').toLowerCase(), o.id]));
   const opens = (o: string) => t0 + hm(out.get(o)?.opens ?? '00:00'), closes = (o: string) => t0 + hm(out.get(o)?.closes ?? '24:00');
   const rday = (new Date(now).getDay() + 6) % 7;
   const ins = once('clock', () => { const m = new Map<string, number[]>(); for (const c of db.clock) if (c.kind === 'in') { const k = c.employeeId + '|' + c.outletId; m.set(k, [...(m.get(k) ?? []), c.at]); } return m; });

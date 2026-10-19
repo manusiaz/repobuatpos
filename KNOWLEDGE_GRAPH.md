@@ -142,7 +142,7 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | api:/api/bn | calls | fn:liveHub | app/api/bn/[...op]/route.ts:9 (import subscribe from live.ts) |
 | test:api | tests | api:/api/bn | db/tests/api.mjs |
 | test:guest_fire | tests | policy:bn_guest_write | db/tests/guest_fire.sql |
-| fn:dbMigrate | reads | config:platform | scripts/db-migrate.mjs:24 (db/platform.sql) |
+| fn:dbMigrate | reads | config:platform | scripts/db-migrate.mjs:25 (db/platform.sql) |
 | config:deploy | routes-to | config:proxy | deploy/nginx-proxy.conf:4 (proxy_set_header Host; hosts.ts routes by it) |
 | config:deploy | calls | fn:dbMigrate | deploy/update.sh (node --env-file … scripts/db-migrate.mjs); deploy/setup-vps.sh migrasi borniz_dev |
 | test:changes | tests | fn:moveTable | src/data/changes.test.ts |
@@ -224,7 +224,8 @@ graph LR
 | 2026-10-19 | src/system/hosts.ts | Owner Mobile (/system/mobile) dilayani di app. (host tanpa bisnis) | fixed (prefix terpanjang menang: host bisnis) |
 | 2026-10-19 | app/manifest.ts | Satu PWA start_url /pos untuk semua: tablet KDS / kiosk / display yang di-install terbuka di kasir | fixed (manifest per aplikasi: /api/app-manifest) |
 | 2026-10-19 | src/data/alerts/staff.ts | Katalog menjanjikan WhatsApp ke staf (refund besar, opname, telat, Z report, payslip …) tapi tidak ada yang terkirim | fixed (12 alert dari katalog, saklar owner default mati, uji worker: owner + manager outlet menerima WA tanpa perangkat terbuka) |
-| 2026-10-19 | scripts/tenant-move.sh | Pindah merchant ke DB sendiri belum siap di backend sendiri (routing tanpa p_tenant, migrasi cell, copy auth.users) | open (CLAUDE.md Known gaps) |
+| 2026-10-20 | src/data/alerts/rules.ts | Satu outlet tanpa nama (dokumen tak lengkap) membuat index() alert crash → seluruh sweep + otomasi worker bisnis itu berhenti | fixed (name ?? '') |
+| 2026-10-19 | scripts/tenant-move.sh | Pindah merchant ke DB sendiri belum siap di backend sendiri (routing tanpa p_tenant, migrasi cell, copy auth.users) | fixed 2026-10-20 (call(): p_slug / host / BN050 → cell, akun disalin, plan di dua DB, worker ikut, db:migrate cell, copy akun tanpa duplikat + write_ops; tes move.sh + cells-api.mjs gagal tanpa fix) |
 | 2026-10-15 | fn:tableNo | `/^T-?/` membuang "T" dari nama apa pun: "Teras 1" tampil "eras 1" di ±20 layar tamu + customer display | fixed |
 | 2026-10-15 | fn:publicUrl | Nama meja tidak di-encode di URL QR: "Bar/1" → meja "Bar", "VIP #2" → "VIP"; "Meja 100%" bikin halaman tamu crash (decode dua kali) | fixed |
 | 2026-10-15 | fn:findTable | QR yang sudah tertempel setelah meja di-rename (atau QR asal) membuat pesanan di meja hantu yang tidak ada di denah POS/waiter | fixed (alias `was`; meja tak dikenal = tidak bisa pesan) |

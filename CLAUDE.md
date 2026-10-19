@@ -8,7 +8,7 @@ Cloud POS for Indonesian F&B / retail / UMKM. Every surface (marketing, owner, m
 - **Hybrid tenancy (owner decision, Oct 2026).** The platform database is `bornis.id`, `app.` sign-up/sign-in, `admin.`, the merchant registry, and the shared database every new merchant starts in (isolated per merchant by RLS).
   - A merchant can move to its own database ("cell") with `scripts/tenant-move.sh`. `tenants.cell` + `public.cells` say where it lives; `bn_tenant_cell` resolves it.
   - After a move, all of that merchant's `<slug>.bornis.id` traffic goes there. The shared database keeps the old rows read-only and refuses writes (BN050).
-  - The API finds the cell per tenant: its database in `BORNIZ_DB_CELLS` (`{"<cell>":"postgres://…"}`), its server secret in `BORNIZ_CELLS` (`{"<cell>":"<secret>"}`).
+  - The API finds the cell per call (`src/integrations/server/db.ts` `call`): by `p_tenant`, `p_slug`, or the request's business (X-BorNiz-Tenant / `<slug>.` host); a call the frozen copy answers with BN050 runs again in the cell it names (attendance machines). Its database in `BORNIZ_DB_CELLS` (`{"<cell>":"postgres://…"}`), its server secret in `BORNIZ_CELLS`, its owner url in `BORNIZ_DB_CELLS_ADMIN` (so `npm run db:migrate` migrates it too). Accounts stay on the platform; a member's row is copied into the cell on first use.
   - One database per subdomain was rejected: POS, KDS, display and back office must see the same sale.
 - **Host structure** (owner decision Oct 2026, over the spec Sitemap's app./pos./kds./display./order. split; `src/system/hosts.ts` HOSTS):
   | Host | Serves |
@@ -80,11 +80,7 @@ Add a page in the design system sitemap → `npm run spec` → it routes automat
 - Demo mode (no `DATABASE_URL`): data lives in the browser (localStorage + BroadcastChannel), one browser, one origin; the server adapter (`src/data/remoteStore.ts` → `app/api/bn`) keeps the same `actions.ts` signatures.
 - Payment gateway, WhatsApp (WABA), delivery-app webhooks and printers are simulated ("Simulate…" buttons). With the database and Xendit or Midtrans connected, QRIS/VA/e-wallet are real: `startPayment` asks the gateway (`chargePayment`) and every screen draws the gateway payload (`src/ui/qr.tsx`, QR v1–20). The local adapter and the simulator still draw stand-ins.
 - Approval PIN is verified in the browser by the local adapter; production verifies it only in `bn.decide`.
-- **Moving a merchant to its own database (`scripts/tenant-move.sh`) is not ready on the own backend (review Oct 2026), don't use it yet:**
-  - calls without `p_tenant` still go to the shared database: `bn_public_snapshot` (guest menu frozen at the move), `bn_machine_clock` (attendance scans refused BN050), `bn_device_join`, `bn_staff_logout`; `bn_admin_set_plan` goes the other way
-  - `npm run db:migrate` does not migrate the cells in `BORNIZ_DB_CELLS`
-  - the script copies `auth.users` without skipping members it already moved, needs a superuser (`session_replication_role`), and skips `private.write_ops` (offline replays apply twice)
+- `scripts/tenant-move.sh` runs with a superuser on the target (triggers off during the copy). Proven by `db/tests/move.sh` + `db/tests/cells-api.mjs` (guest menu, attendance, new accounts, plan change, worker); not yet run on a real second server.
 - Live updates run one read per open device per change on the same pool of 10 connections as every other request: a busy business with many screens can slow sign-in and writes.
 - **Staff alerts: in the app always; WhatsApp to staff for the 12 alerts the catalog sends there** (`src/data/alerts/staff.ts`, from the catalog's destinations; Settings › Notifications › "WhatsApp to staff", off by default because each message costs the business; template `staff_alert`). Not sent yet: push (47 alerts), email (25) and the daily/weekly digests. Needs Web Push keys, staff email addresses (employees have a phone only) and digest times.
 - Staff sign-in with Google / Microsoft / SAML (spec: own dashboard domain + SSO) is not built; the Studios tool only covers the custom menu domain.
-- The worker skips merchants moved to their own database (cells).

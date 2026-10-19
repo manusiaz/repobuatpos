@@ -4,10 +4,10 @@
 //   POST auth/<what>      signup, signin, anonymous, signout, user, update, reset, recover, mfa/list|enroll|verify|unenroll
 //   GET  live?tenant=     server-sent events: changed documents and audit rows of a business I belong to
 import { HttpError, UUID } from '../../../../src/integrations/server/http.ts';
-import { DEMO, as, call, cellFor, dbError } from '../../../../src/integrations/server/db.ts';
+import { DEMO, as, call, cellFor, dbError, rpc } from '../../../../src/integrations/server/db.ts';
 import * as auth from '../../../../src/integrations/server/session.ts';
 import { subscribe } from '../../../../src/integrations/server/live.ts';
-import { ownsHost } from '../../../../src/system/hosts.ts';
+import { config, ownsHost, resolve } from '../../../../src/system/hosts.ts';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -35,7 +35,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ op: str
   let b: Record<string, any> = {};
   try { b = await req.json(); } catch { /* empty body */ }
   try {
-    if (kind === 'rpc') return out(await call(name, b, (await auth.userOf(req))?.id ?? null));
+    if (kind === 'rpc') {
+      const host = (resolve(req.headers.get('host') ?? '', '/', config()) as { query?: { tenant?: string } }).query?.tenant ?? null;
+      const r = await call(name, b, (await auth.userOf(req))?.id ?? null, req.headers.get('x-borniz-tenant') || host);
+      // a moved business keeps its own copy of the plan: the registry changed here, the business's database next
+      if (name === 'bn_admin_set_plan' && typeof b.p_tenant === 'string' && await cellFor(b.p_tenant)) await rpc('bn_server_set_plan', { p_tenant: b.p_tenant, p_plan: b.p_plan });
+      return out(r);
+    }
     if (kind === 'read') {
       const u = await auth.requireUser(req);
       if (name === 'members') return out((await as(u.id, null, c => c.query(`select m.tenant_id, m.employee_id, m.role, t.slug, t.name, t.plan

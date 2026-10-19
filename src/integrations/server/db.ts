@@ -33,17 +33,39 @@ export async function as<T>(uid: string | null, cell: string | null, fn: (c: pg.
   finally { c.release(); }
 }
 
-/** Where a merchant's data lives (registry on the platform), cached for a minute. null = the platform database. */
+/** Where a merchant's data lives (registry on the platform), by id or by its address, cached for a minute. null = the platform database. */
 const cells = new Map<string, { at: number; cell: string | null }>();
-export async function cellFor(tenant: string): Promise<string | null> {
-  if (!UUID.test(tenant)) return null;
-  const hit = cells.get(tenant);
+async function cellBy(key: string, slug: string | null, id: string | null): Promise<string | null> {
+  const hit = cells.get(key);
   if (hit && Date.now() - hit.at < 60e3) return hit.cell;
-  const r = await as(null, null, c => c.query('select public.bn_tenant_cell(null, $1::uuid) r', [tenant]));
+  const r = await as(null, null, c => c.query('select public.bn_tenant_cell($1::text, $2::uuid) r', [slug, id]));
   const cell = (r.rows[0]?.r as { cell?: string | null } | null)?.cell ?? null;
-  cells.set(tenant, { at: Date.now(), cell });
+  cells.set(key, { at: Date.now(), cell });
   return cell;
 }
+export const cellFor = (tenant: string) => (UUID.test(tenant) ? cellBy(tenant, null, tenant) : Promise.resolve(null));
+const cellForSlug = (slug: string) => cellBy('slug:' + slug, slug, null);
+
+/** Platform-only functions (accounts, registry, super admin) never go to a merchant's own database. */
+const PLATFORM = /^bn_(admin_|tenant_cell$|bootstrap$|server_tenants$|is_platform_admin$)/;
+/** The database a call belongs to: the business in p_tenant, or at p_slug, or the hint (an id, or the slug of the host asked). */
+async function cellOf(fn: string, args: Record<string, unknown>, hint?: string | null): Promise<string | null> {
+  if (PLATFORM.test(fn)) return null;
+  if (typeof args.p_tenant === 'string') return cellFor(args.p_tenant);
+  if (typeof args.p_slug === 'string') return cellForSlug(args.p_slug);
+  return hint ? (UUID.test(hint) ? cellFor(hint) : cellForSlug(hint)) : null;
+}
+/** A merchant's database holds its members, so the signed-in account must exist there too (sign-in stays on the
+ *  platform): a device that joins a moved business, or a new manager, gets its row copied before the call. */
+const synced = new Set<string>();
+async function ensureUser(cell: string, uid: string) {
+  if (synced.has(cell + uid)) return;
+  const u = (await pool(null).query('select id, email, is_anonymous, meta from auth.users where id = $1', [uid])).rows[0];
+  if (u) await pool(cell).query('insert into auth.users (id, email, is_anonymous, meta) values ($1, $2, $3, $4) on conflict do nothing', [u.id, u.email, u.is_anonymous, u.meta]);
+  synced.add(cell + uid);
+}
+/** "BN050 This business moved to its own database (<cell>)": the frozen copy answered; the call belongs there. */
+const movedTo = (e: unknown) => /^BN050 .*\(([a-z0-9][a-z0-9-]*)\)/.exec(String((e as { message?: string }).message ?? ''))?.[1] ?? null;
 
 /** Argument names and types of a public bn_* function, read from the database itself (so new migrations just work). */
 const sigs = new Map<string, Map<string, string>>();
@@ -70,23 +92,30 @@ export const dbError = (e: unknown): DbError => {
   return { message: x.status ? String(x.message) : String(x.message ?? 'Database error').split('\n')[0], code: x.code };
 };
 
-/** Call public.<fn>(named args) as the caller, in the database of p_tenant. */
-export async function call(fn: string, args: Record<string, unknown>, uid: string | null = null): Promise<unknown> {
+/** Call public.<fn>(named args) as the caller, in the business's database (cellOf); a call the frozen shared copy
+ *  answers with BN050 runs again in the database it names. `hint` = the business of the request (X-BorNiz-Tenant, or the <slug>. host). */
+export async function call(fn: string, args: Record<string, unknown>, uid: string | null = null, hint: string | null = null, to?: string | null): Promise<unknown> {
   if (!/^bn_[a-z0-9_]+$/.test(fn)) throw new HttpError(404, 'Unknown function ' + fn);
-  const tenant = typeof args.p_tenant === 'string' ? args.p_tenant : '';
-  const cell = tenant ? await cellFor(tenant) : null;
-  return as(uid, cell, async c => {
-    const types = await signature(c, cell ?? '', fn), names = Object.keys(args).filter(n => args[n] !== undefined), values: unknown[] = [];
-    const list = names.map((n, i) => {
-      const ty = types.get(n);
-      if (!ty || !/^[a-z_][a-z0-9_]*$/.test(n)) throw new HttpError(400, `${fn} has no argument ${n}`);
-      const v = args[n];
-      values.push(v === null ? null : ty === 'jsonb' || ty === 'json' ? JSON.stringify(v) : v);
-      return `${n} => $${i + 1}::${ty}`;
+  const cell = to !== undefined ? to : await cellOf(fn, args, hint);
+  if (cell && uid) await ensureUser(cell, uid);
+  try {
+    return await as(uid, cell, async c => {
+      const types = await signature(c, cell ?? '', fn), names = Object.keys(args).filter(n => args[n] !== undefined), values: unknown[] = [];
+      const list = names.map((n, i) => {
+        const ty = types.get(n);
+        if (!ty || !/^[a-z_][a-z0-9_]*$/.test(n)) throw new HttpError(400, `${fn} has no argument ${n}`);
+        const v = args[n];
+        values.push(v === null ? null : ty === 'jsonb' || ty === 'json' ? JSON.stringify(v) : v);
+        return `${n} => $${i + 1}::${ty}`;
+      });
+      const r = await c.query(`select public.${fn}(${list.join(', ')}) as r`, values);
+      return r.rows[0]?.r ?? null;
     });
-    const r = await c.query(`select public.${fn}(${list.join(', ')}) as r`, values);
-    return r.rows[0]?.r ?? null;
-  });
+  } catch (e) {
+    const moved = cell === null && !PLATFORM.test(fn) ? movedTo(e) : null;
+    if (!moved) throw e;
+    return call(fn, 'p_secret' in args ? { ...args, p_secret: serverSecret(moved) } : args, uid, hint, moved);
+  }
 }
 
 /** Shared secret for server-only functions: private.secrets 'server' of the database being called.
@@ -98,8 +127,8 @@ export function serverSecret(cell?: string | null): string {
 }
 /** Server-secret function call, in the database of p_tenant. Database errors come back as their BNxxx message, never with arguments. */
 export async function rpc<T = unknown>(fn: string, args: Record<string, unknown>): Promise<T> {
-  const cell = typeof args.p_tenant === 'string' ? await cellFor(args.p_tenant) : null;
-  try { return await call(fn, { p_secret: serverSecret(cell), ...args }) as T; }
+  const cell = await cellOf(fn, args);
+  try { return await call(fn, { p_secret: serverSecret(cell), ...args }, null, null, cell) as T; }
   catch (e) {
     if (e instanceof HttpError) throw e;
     const m = dbError(e).message;
