@@ -17,3 +17,4 @@ out=$(psql "$URL/bn_test" -qXAt -v ON_ERROR_STOP=1 -f db/tests/core.sql -f db/te
 echo "$out" | grep -E 'hold'
 sh db/tests/move.sh | grep -E hold
 node --experimental-strip-types db/tests/cells-api.mjs 2>/dev/null | grep hold
+DATABASE_URL="$URL/bn_test" node --experimental-strip-types db/tests/live-load.mjs 2>/dev/null | grep hold

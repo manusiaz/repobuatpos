@@ -11,17 +11,20 @@ export const DEMO = !process.env.DATABASE_URL;
 const g = globalThis as { bnPools?: Map<string, pg.Pool> };
 const pools = (g.bnPools ??= new Map());
 
-export function pool(cell: string | null = null): pg.Pool {
+/** Connections of one database: 10 for requests; live updates read on their own 3 (live.ts), so a burst of changes
+ *  on many open screens never makes a sign-in or a sale wait for a connection. */
+export function pool(cell: string | null = null, live = false): pg.Pool {
   const url = cell ? (JSON.parse(process.env.BORNIZ_DB_CELLS || '{}') as Record<string, string>)[cell] : process.env.DATABASE_URL;
   if (!url) throw new HttpError(503, cell ? `BORNIZ_DB_CELLS has no database for ${cell}` : 'DATABASE_URL is not set');
-  let p = pools.get(url);
-  if (!p) { p = new pg.Pool({ connectionString: url, max: 10 }); p.on('error', () => {}); pools.set(url, p); }
+  const key = (live ? 'live|' : '') + url;
+  let p = pools.get(key);
+  if (!p) { p = new pg.Pool({ connectionString: url, max: live ? 3 : 10 }); p.on('error', () => {}); pools.set(key, p); }
   return p;
 }
 
 /** One transaction as the caller: anon (uid null) or the signed-in user. */
-export async function as<T>(uid: string | null, cell: string | null, fn: (c: pg.PoolClient) => Promise<T>): Promise<T> {
-  const c = await pool(cell).connect();
+export async function as<T>(uid: string | null, cell: string | null, fn: (c: pg.PoolClient) => Promise<T>, live = false): Promise<T> {
+  const c = await pool(cell, live).connect();
   try {
     await c.query('begin');
     await c.query(uid ? 'set local role authenticated' : 'set local role anon');
