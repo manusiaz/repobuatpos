@@ -15,9 +15,10 @@ export const BASE: Omit<Tpl, 'status' | 'at'>[] = [
   { id: 'feedback_request', name: 'Feedback & review link', cat: 'MARKETING', button: 'Write a review', body: 'Senang dengarnya, {{name}}! Mau bantu kami di Google? Tap untuk tulis review.' },
   { id: 'winback_30d', name: 'We miss you', cat: 'MARKETING', button: 'Claim offer', body: 'Lama nggak ketemu, {{name}}. Minggu ini ada promo buat kamu, tinggal tunjukkan kode {{code}}.' },
   { id: 'birthday', name: 'Happy birthday', cat: 'MARKETING', button: 'See my gift', body: 'Selamat ulang tahun lebih awal, {{name}}! Dessert gratis menunggumu sepanjang minggu ulang tahun.' },
+  { id: 'staff_alert', name: 'Staff alert', cat: 'UTILITY', button: 'Open BorNiz', body: '{{alert}} · {{outlet}}\n{{text}}' },
   { id: 'points_expiry', name: 'Points expiring', cat: 'UTILITY', button: 'Redeem now', body: 'Hi {{name}}, {{points}} beans kamu akan hangus dalam 14 hari. Tukar dengan hadiah di {{outlet}}?' },
 ];
-export const VARS = ['name', 'outlet', 'item', 'total', 'points', 'order', 'time', 'pax', 'code'];
+export const VARS = ['name', 'outlet', 'item', 'total', 'points', 'order', 'time', 'pax', 'code', 'alert', 'text'];
 export function templates(db: DB): Tpl[] {
   const recs = db.records.msg_template ?? [];
   const base = BASE.map(b => { const r = recs.find(x => x.id === b.id); return r ? fromRec(r) : { ...b, status: 'approved' as const, at: 0 }; });

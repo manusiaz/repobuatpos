@@ -45,7 +45,7 @@ export interface PurchaseOrder { id: string; no: string; supplierId: string; out
 export interface Opname { id: string; outletId: string; area: string; countedBy: string; approvedBy: string | null; status: 'counting' | 'submitted' | 'locked' | 'recount' | 'approved' | 'rejected' | 'posted'; lines: OpnameLine[]; at: number; requirePhotoAll: boolean }
 export interface Reservation { id: string; outletId: string; name: string; phone: string; at: number; guests: number; table: string; status: 'booked' | 'seated' | 'cancelled' | 'no_show'; deposit: IDR }
 export interface Review { id: string; outletId: string; customerId: string | null; name: string; stars: number; text: string; at: number; reply: string | null; orderId: string | null }
-export interface Message { id: string; channel: 'wa' | 'email' | 'sms' | 'push'; template: string; to: string; status: 'queued' | 'sent' | 'delivered' | 'read' | 'failed'; at: number; customerId: string | null; orderId?: string }
+export interface Message { id: string; channel: 'wa' | 'email' | 'sms' | 'push'; template: string; to: string; status: 'queued' | 'sent' | 'delivered' | 'read' | 'failed'; at: number; customerId: string | null; orderId?: string; /** template values the row carries itself (staff alerts) */ vars?: Record<string, string> }
 export interface Device { id: string; outletId: string; kind: 'pos' | 'kds' | 'display' | 'kiosk' | 'pic' | 'printer' | 'edc' | 'waiter'; name: string; lastSeen: number; pairCode: string | null; status: 'online' | 'offline' }
 /** A configured connection to a third-party system (src/integrations). Secrets never live here: only which keys are set. */
 export interface Integration {

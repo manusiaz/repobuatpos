@@ -139,7 +139,7 @@ const LEASE = Math.random().toString(36).slice(2);
 export function render(): Render {
   return (db, m) => {
     const o = m.orderId ? db.orders.find(x => x.id === m.orderId) : undefined;
-    const vars: Record<string, unknown> = { brand: db.tenant.name, ...orderVars(db, o?.outletId ?? db.outlets[0]?.id ?? '', m.customerId ?? undefined) };
+    const vars: Record<string, unknown> = { brand: db.tenant.name, ...orderVars(db, o?.outletId ?? db.outlets[0]?.id ?? '', m.customerId ?? undefined), ...m.vars };
     const t = templates(db).find(x => x.id === m.template), body = t?.body ?? '', marketing = t?.cat === 'MARKETING', c = toolValue(db, 'optin');
     const foot = m.channel === 'email' && c.footer ? `\n\nUnsubscribe: ${linkTo('/order/customer-links/unsubscribe-message-preferences')}` : m.channel === 'sms' && marketing ? `\nReply ${c.stop} to stop` : '';
     return { params: [...body.matchAll(/\{\{(\w+)\}\}/g)].map(x => (typeof vars[x[1]] === 'string' ? vars[x[1]] as string : '')), subject: `${t?.name ?? m.template.replace(/_/g, ' ')} · ${db.tenant.name}`, text: fillVars(body, vars) + foot,

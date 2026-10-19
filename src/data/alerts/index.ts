@@ -4,6 +4,7 @@ import alertsCatalog from '../../system/alerts.json' with { type: 'json' };
 import { commit, snapshot } from '../store.ts';
 import type { DB, Message, Notice, Role } from '../schema.ts';
 import { RULES, SERVICE, index, type Fire, type Level, type Rule } from './rules.ts';
+import { staffWhatsApp } from './staff.ts';
 
 export { RULES, SERVICE };
 type Row = [string, string, Record<string, number>, string, string, ...string[]];
@@ -61,8 +62,10 @@ export function applyAlerts(d: DB, plan: Planned[], at = Date.now()) {
 /** Every 60 s on every open device (App.tsx). Commits only when something new fires. */
 export function sweepAlerts(at = Date.now()) {
   const plan = planAlerts(snapshot(), at);
-  if (!plan.length) return 0;
   let n = 0;
-  commit('alerts.swept', 'system', d => { n = applyAlerts(d, plan, at); }, `${plan.length} alerts`);
+  if (plan.length) commit('alerts.swept', 'system', d => { n = applyAlerts(d, plan, at); }, `${plan.length} alerts`);
+  // alerts that also go to staff on WhatsApp (Settings › Notifications › WhatsApp to staff)
+  const wa = staffWhatsApp(snapshot(), at, (notice, employee) => noticeId('staff-wa', notice + '|' + employee));
+  if (wa.length) commit('alerts.staff_whatsapp', 'system', d => { const have = new Set(d.messages.map(m => m.id)); d.messages.unshift(...wa.filter(m => !have.has(m.id))); }, `${wa.length} messages`);
   return n;
 }

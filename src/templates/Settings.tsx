@@ -4,6 +4,7 @@
 import { useState, type ReactNode } from 'react';
 import authority from '../system/authority.json' with { type: 'json' };
 import alerts from '../system/alerts.json' with { type: 'json' };
+import { STAFF_WA } from '../data/alerts/staff.ts';
 import { useApp } from '../app/context.tsx';
 import { isGated } from '../system/access.ts';
 import { Badge, Field, Icon, Toggle, toast } from '../ui/kit.tsx';
@@ -84,7 +85,8 @@ export default function Settings() {
       <select className="input" style={{ width: 180 }} value={c.station} onChange={e => { setStation(c.id, e.target.value as typeof c.station, user.id); toast(`${c.name} → ${e.target.value} station`); }}><option value="bar">Bar</option><option value="kitchen">Kitchen</option><option value="pastry">Pastry</option></select></div>)}
       {T('expo', 'Expo / pass screen sees the whole order', 'Runner checks every station before serving')}{T('print-ticket', 'Print kitchen ticket as backup', 'When the KDS is offline', false)}</div> },
       { t: 'Kitchen & receipt printers', body: <IntegrationsPanel kinds={['printer']} /> }];
-    if (/notification/.test(n)) return (alerts.groups as [string, string, [string, string, unknown, string, string][]][]).map(([g, , list]) => ({ t: g.charAt(0) + g.slice(1).toLowerCase(), body: <>{list.map(a => T('al-' + a[0], a[0], a[1] + ' · ' + a[3], true, /fraud|audit|pin locked|cash variance/i.test(a[0] + g)))}</> }));
+    if (/notification/.test(n)) return [{ t: 'WhatsApp to staff', body: <>{T('staff-wa', 'Send WhatsApp to staff', `${STAFF_WA.size} alerts also go to the phone of the staff they are for (${[...STAFF_WA.keys()].slice(0, 3).join(', ')} …). Needs a WhatsApp connection; each message costs the business. In the app they always arrive.`, false)}</> },
+      ...(alerts.groups as [string, string, [string, string, unknown, string, string][]][]).map(([g, , list]) => ({ t: g.charAt(0) + g.slice(1).toLowerCase(), body: <>{list.map(a => T('al-' + a[0], a[0], a[1] + ' · ' + a[3], true, /fraud|audit|pin locked|cash variance/i.test(a[0] + g)))}</> }))];
     if (/devices|kiosk management/.test(n)) return [{ t: 'Connect a device', body: <ConnectDevice /> }, { t: 'Printers', body: <IntegrationsPanel kinds={['printer']} /> }, { t: 'Card terminals (EDC)', body: <IntegrationsPanel kinds={['edc']} /> },
       { t: 'Cash drawers', body: <IntegrationsPanel kinds={['drawer']} /> }, { t: 'Scanners & scales', body: <IntegrationsPanel kinds={['scanner', 'scale']} /> }, { t: 'Customer displays', body: <IntegrationsPanel kinds={['display']} /> }, { t: 'Paired devices', body: <div className="stack">{db.devices.map(d => <div key={d.id} className="row between"><span className="row"><Icon name={d.kind === 'printer' ? 'printer' : d.kind === 'kds' ? 'chef-hat' : d.kind === 'display' ? 'monitor' : d.kind === 'edc' ? 'credit-card' : 'tablet'} size={18} />{d.name} · {db.outlets.find(o => o.id === d.outletId)?.name}</span><Badge tone={d.status === 'online' ? 'success' : 'danger'} dot>{d.status}</Badge></div>)}
       <PairCode /></div> }];
