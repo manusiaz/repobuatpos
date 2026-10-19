@@ -2,7 +2,7 @@
 // Shared studio frame (Design Notes "studios", layout A): tools list · settings panel · live preview.
 // Used by Menu Studio (customer-facing + pages) and Brand Studio (staff tools).
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '../../ui/Link.tsx';
 import { Badge, Icon, Seg, Toggle, toast, type Tone } from '../../ui/kit.tsx';
 import { useApp } from '../../app/context.tsx';
 import type { Group, Val } from '../../data/actions/studio.ts';

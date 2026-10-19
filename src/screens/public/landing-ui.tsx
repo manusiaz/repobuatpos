@@ -1,7 +1,7 @@
 'use client';
 // Marketing building blocks (spec/BorNiz Landing): 1200px container, fluid display type, ink bands, 20–24px card radius.
 import type { CSSProperties, ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '../../ui/Link.tsx';
 import { Icon } from '../../ui/kit.tsx';
 
 export const Wrap = ({ children, style, as: Tag = 'section' }: { children: ReactNode; style?: CSSProperties; as?: 'section' | 'div' | 'article' }) =>

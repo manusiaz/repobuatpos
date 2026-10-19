@@ -111,7 +111,7 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | page:/owner/outlets/table-qr-generator | reads | fn:tableNames | src/screens/menu.tsx:328 |
 | page:/order (QR menu) | calls | fn:findTable | src/screens/selforder/shared.tsx:42 (QR lama → meja yang di-rename; tak dikenal → tidak bisa pesan) |
 | page:/order (QR menu) | calls | fn:tableParam | src/screens/selforder/shared.tsx:42 |
-| page:/owner/outlets/outlets | routes-to | page:/owner/outlets/tables-and-floor-plan | src/templates/settingsPages.tsx:182 |
+| page:/owner/outlets/outlets | routes-to | page:/owner/outlets/tables-and-floor-plan | src/templates/settingsPages.tsx:185 |
 | table:outlets | guarded-by | policy:staff_rules | db/migrations/20261016000000_borniz_staff_sessions.sql (BN054 list) |
 | page:/owner/outlets/tables-and-floor-plan | renders | comp:Field | src/screens/floor.tsx (Name / Seats / Area) |
 | page:/pos/selling/table-picker | reads | fn:holdsTable | src/screens/pos/OrderSheets.tsx:95 |
@@ -133,17 +133,17 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | page:/order status | reads | table:orders | src/screens/selforder/shared.tsx:44 (pesanan milik HP ini; movedFrom → ikut pindah) |
 | fn:findTable | reads | fn:tablesOf | src/domain/tables.ts:54 |
 | page:/display | calls | fn:tableNo | src/screens/display.tsx:185 |
-| page:/owner/outlets/table-qr-generator | calls | fn:publicUrl | src/system/hosts.ts:127 (linkTo → publicUrl, dipanggil tableUrl) |
+| page:/owner/outlets/table-qr-generator | calls | fn:publicUrl | src/system/hosts.ts:133 (linkTo → publicUrl, dipanggil tableUrl) |
 | test:tables | tests | fn:findTable | src/domain/tables.test.ts |
 | page:/account (sign-in, create business) | calls | fn:onBusinessHost | src/screens/auth.tsx:511 (enterBusiness) |
-| fn:publicUrl | reads | fn:isTenantSlug | src/system/hosts.ts:87 (resolve: label host → tenant) |
+| fn:publicUrl | reads | fn:isTenantSlug | src/system/hosts.ts:93 (resolve: label host → tenant) |
 | policy:tenants_slug_not_reserved | documents | fn:isTenantSlug | db/migrations/20261018000000_borniz_tenant_hosts.sql (daftar sama dengan RESERVED, isTenantSlug di hosts.ts) |
 | api:/api/bn | calls | fn:dbCall | app/api/bn/[...op]/route.ts:7 (import call from db.ts) |
 | api:/api/bn | calls | fn:liveHub | app/api/bn/[...op]/route.ts:9 (import subscribe from live.ts) |
 | test:api | tests | api:/api/bn | db/tests/api.mjs |
 | test:guest_fire | tests | policy:bn_guest_write | db/tests/guest_fire.sql |
 | fn:dbMigrate | reads | config:platform | scripts/db-migrate.mjs:24 (db/platform.sql) |
-| config:deploy | routes-to | config:proxy | deploy/nginx.conf:28 (proxy_set_header Host; hosts.ts routes by it) |
+| config:deploy | routes-to | config:proxy | deploy/nginx.conf:37 (proxy_set_header Host; hosts.ts routes by it) |
 | config:deploy | calls | fn:dbMigrate | deploy/update.sh (node --env-file … scripts/db-migrate.mjs); deploy/setup-vps.sh migrasi borniz_dev |
 | test:changes | tests | fn:moveTable | src/data/changes.test.ts |
 | test:changes | tests | fn:voidItem | src/data/changes.test.ts |
@@ -197,6 +197,22 @@ graph LR
 | 2026-10-18 | config:deploy | `.env.example` hanya 5 dari 13 env yang dibaca kode (tanpa Supabase / server secret) | fixed |
 | 2026-10-18 | config:deploy | Service jalan sebagai www-data tapi `.env.production` chmod 600 milik root → app tidak bisa baca env, diam-diam jalan mode demo; `git pull` sebagai root di folder milik user lain ditolak git | fixed (user `borniz` memiliki folder + service; update.sh pindah ke pemilik folder) |
 | 2026-10-18 | config:deploy | setup-vps.sh: `nginx -t && reload` di bawah `set -e` → config nginx rusak tetap "Done" (ketahuan saat uji di Ubuntu 24.04 container) | fixed (baris terpisah) |
+| 2026-10-19 | fn:tOf | Mode database: pelanggan ikut jendela riwayat 35 hari (t = joinedAt) → member lama hilang dari POS, loyalty, template pesan | fixed (UNWINDOWED + migration customers_unwindowed + tes) |
+| 2026-10-19 | comp:Link | 113 halaman: prefetch Link ke halaman host lain (terms, developer docs, login) → redirect lintas origin → error CORS | fixed (src/ui/Link.tsx, semua import) |
+| 2026-10-19 | src/devices/Connect.tsx | `crypto.randomUUID` tidak ada di http (sebelum sertifikat) → halaman perangkat/kiosk/printer crash | fixed (getRandomValues) |
+| 2026-10-19 | src/screens/studio/extras.tsx | Preview referral & custom fields crash di bisnis tanpa pelanggan/produk (`customers[0].name`) | fixed |
+| 2026-10-19 | src/templates/Form.tsx | Form PO crash di bisnis tanpa supplier (`suppliers[0].id`) | fixed (Empty state) |
+| 2026-10-19 | api:/api/bn | Reset password: link dibangun dari Host header → Host palsu bikin email asli berisi link ke situs penyerang → ambil alih akun tanpa 2FA | fixed (ownsHost + nginx default_server 444 + tes) |
+| 2026-10-19 | api:/api/payments/charge | Tamu QR tidak bisa bayar QRIS/VA (tenantId = slug, bukan UUID); orang yang login di bisnis lain ditolak 403 | fixed |
+| 2026-10-19 | api:/api/bn | Cookie lama bisa matikan 2FA & ganti password; reset tidak memutus sesi lain; stream live jalan terus setelah logout | fixed (kode 2FA, sesi ≤15 menit, revoke, cek sesi per 25 dtk + tes) |
+| 2026-10-19 | config:deploy | nginx `$proxy_add_x_forwarded_for` → IP palsu tembus batas percobaan login | fixed ($remote_addr) |
+| 2026-10-19 | api:/api/payments/refund | Refund lewat gateway tanpa approval, bisa dobel bila 2 request bersamaan | fixed (wajib approval refund yang approved, sekali per approval via outbox claim) |
+| 2026-10-19 | api:/api/messages/send | Register bersama bisa kirim WA/email ke nomor & pengirim bebas; webhook Studio menerima url+secret dari body | fixed (hanya baris messages yang antre; endpoint & pengirim dari versi Studio yang dipublish) |
+| 2026-10-19 | src/app/App.tsx | Outlet aktif dipilih sekali saat data bisnis belum termuat → tetap outlet seed `sen`: bisnis "Start empty" crash di 92 halaman, bisnis lain diam-diam salah outlet | fixed (outlet selalu salah satu outlet bisnis; crawl bisnis kosong 92 → 0) |
+| 2026-10-19 | api:/api/payments/charge | Charge dipanggil sebelum baris pembayaran sampai server → 404 "Payment not found" untuk setiap QRIS/VA | fixed (remoteSent: tunggu baris terkirim) |
+| 2026-10-19 | api:/api/payments/simulate | Tombol "Simulate payment" di HP tamu → 401 | fixed (tamu boleh untuk pesanan tamu, hanya bila simulator aktif) |
+| 2026-10-19 | src/screens/states.tsx | Galeri state crash di bisnis tanpa produk/stok | fixed (pakai data demo) |
+| 2026-10-19 | scripts/tenant-move.sh | Pindah merchant ke DB sendiri belum siap di backend sendiri (routing tanpa p_tenant, migrasi cell, copy auth.users) | open (CLAUDE.md Known gaps) |
 | 2026-10-15 | fn:tableNo | `/^T-?/` membuang "T" dari nama apa pun: "Teras 1" tampil "eras 1" di ±20 layar tamu + customer display | fixed |
 | 2026-10-15 | fn:publicUrl | Nama meja tidak di-encode di URL QR: "Bar/1" → meja "Bar", "VIP #2" → "VIP"; "Meja 100%" bikin halaman tamu crash (decode dua kali) | fixed |
 | 2026-10-15 | fn:findTable | QR yang sudah tertempel setelah meja di-rename (atau QR asal) membuat pesanan di meja hantu yang tidak ada di denah POS/waiter | fixed (alias `was`; meja tak dikenal = tidak bisa pesan) |

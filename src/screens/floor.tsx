@@ -3,7 +3,7 @@
 // to edit it, then tap another cell (or drag it there) to move it. The POS table picker, waiter app, QR codes,
 // reservations and PIC sections all read this plan (src/domain/tables.ts tablesOf).
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import { useApp } from '../app/context.tsx';
 import { PageHead } from '../templates/common.tsx';
 import { saveFloor } from '../data/actions/business.ts';

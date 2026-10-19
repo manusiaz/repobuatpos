@@ -2,7 +2,7 @@
 // Insights & recommendations and Budget & sales forecast (owner back office; a manager sees only their outlets),
 // plus the owner dashboard's top-3 card. Numbers come from domain/recommend.ts and domain/forecast.ts.
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '../../ui/Link.tsx';
 import { useApp } from '../../app/context.tsx';
 import { Badge, Empty, Icon, Kpi, Seg, useNow, type Tone } from '../../ui/kit.tsx';
 import { LineChart } from '../../ui/Chart.tsx';

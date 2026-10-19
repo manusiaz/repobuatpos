@@ -2,7 +2,7 @@
 // Loyalty, owner tools (spec/BorNiz Loyalty.dc.html → Owner admin): program & members, rules, rewards catalog,
 // points adjustment. Beans live in one append-only ledger; balance and tier are always derived (domain/loyalty.ts).
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import { useApp } from '../app/context.tsx';
 import { Badge, Empty, Field, Icon, Kpi, Seg, Sheet, ago, dateShort, toast } from '../ui/kit.tsx';
 import { usePin } from '../ui/PinSheet.tsx';

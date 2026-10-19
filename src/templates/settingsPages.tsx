@@ -3,7 +3,7 @@
 // Each edits the real record the rest of the system reads (receipt printer, sign-in, QR menu, every outlet screen).
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import { useApp } from '../app/context.tsx';
 import { Avatar, Badge, Empty, Field, Icon, Sheet, Toggle, toast } from '../ui/kit.tsx';
 import { usePin } from '../ui/PinSheet.tsx';
@@ -83,7 +83,10 @@ function TwoFactor() {
     {!on && !enroll && <button className="btn" style={{ alignSelf: 'flex-start' }} onClick={() => start().catch(e => toast(e.message))}>Turn on with an authenticator app</button>}
     {enroll && <div className="stack"><span style={{ background: 'var(--ink-0)', padding: 8, borderRadius: 'var(--radius-md)', alignSelf: 'flex-start' }}><QR value={enroll.qr} size={180} fg="var(--ink-950)" bg="var(--ink-0)" label="Scan with Google Authenticator, Authy or 1Password" /></span><span className="mono faint">{enroll.secret}</span>
       <div className="row"><input className="input mono" inputMode="numeric" maxLength={6} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} aria-label="6-digit code" /><button className="btn btn-primary" disabled={code.length !== 6} onClick={() => verify().catch(e => toast(e.message))}>Verify</button></div></div>}
-    {on && <button className="btn btn-ghost" style={{ alignSelf: 'flex-start' }} onClick={async () => { for (const f of factors ?? []) await (await sb()).auth.mfa.unenroll({ factorId: f.id }); toast('Two-factor sign-in is off'); load(); }}>Turn off</button>}
+    {on && <div className="row"><input className="input mono" inputMode="numeric" maxLength={6} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} aria-label="Current 6-digit code" placeholder="Current code" />
+      <button className="btn btn-ghost" disabled={code.length !== 6} onClick={async () => {
+        for (const f of factors ?? []) { const { error } = await (await sb()).auth.mfa.unenroll({ factorId: f.id, code }); if (error) return toast(error.message); }
+        setCode(''); toast('Two-factor sign-in is off'); load(); }}>Turn off</button></div>}
   </div>;
 }
 

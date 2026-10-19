@@ -164,6 +164,7 @@ export function useDispatcher(enabled = true) {
 
 /** Remote mode: asks the gateway for the QR / VA / deeplink of a pending payment (the server stores it on the payment). */
 export async function chargePayment(paymentId: string) {
+  await (await import('../remoteStore.ts')).remoteSent('payments', paymentId);
   const r = await post('/api/payments/charge', { paymentId, tenantId: snapshot().tenant.id });
   if (!r.ok) throw new Error(r.message ?? 'Could not start the payment');
   return r as Result & { provider: string; providerRef: string; qrString?: string; vaNumber?: string; deeplink?: string; expiresAt: number };

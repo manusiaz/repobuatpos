@@ -1,7 +1,7 @@
 'use client';
 // Customer screens Menu Studio already edits. One editor per screen, so the live page never has two sources:
 // the tool here shows what is published and opens the Menu Studio page that changes it.
-import Link from 'next/link';
+import Link from '../../ui/Link.tsx';
 import { EXTRAS } from '../studio/extras.tsx';
 import { DeviceView } from '../studio/Frame.tsx';
 import { menuDesign } from '../../data/actions/studio.ts';

@@ -20,8 +20,11 @@ export const POST = handle(async (req: Request) => {
     const method = GATEWAY_METHODS.includes(b.method as GatewayMethod) ? b.method! : 'qris';
     return json({ ok: true, demo: true, provider: 'simulator', ...(await simulator.createCharge({ tenantId: 'demo', paymentId: b.paymentId, orderNo: String(b.orderNo ?? ''), amount: Math.round(Number(b.amount) || 0), method, expiresAt: Number(b.expiresAt) || Date.now() + QRIS_TTL_MS }, { config: {}, secrets: {} })) });
   }
-  const guest = !tokenOf(req); // no session: a guest paying from the QR menu or kiosk
-  const tenant = guest ? String(b.tenantId ?? '') : (await member(req, null, b.tenantId)).tenantId;
+  // the business: the header the app sends (a guest page's own tenant id is its slug), else the body
+  const tenant = req.headers.get('x-borniz-tenant') ?? String(b.tenantId ?? '');
   if (!UUID.test(tenant)) throw new HttpError(400, 'tenantId is required');
-  return json({ ok: true, ...(await charge(tenant, b.paymentId, guest)) });
+  // not a member of it (no session, or signed in to another business on the shared *.bornis.id cookie): a guest,
+  // allowed only for a guest-source order
+  const m = tokenOf(req) ? await member(req, null, tenant).catch(() => null) : null;
+  return json({ ok: true, ...(await charge(tenant, b.paymentId, !m)) });
 });

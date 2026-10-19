@@ -63,7 +63,9 @@ export function fromDoc(c: string, data: Any): Any {
   if (c === 'records') { const { o: _o, ...rest } = data; return rest; }
   return data;
 }
-const tOf = (c: string, x: Any) => { const f = ASC[c] ?? DESC[c] ?? (c === 'records' ? 'at' : ''); const v = f ? x?.[f] : undefined; return typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : null; };
+/** Listed by time but never left out of a device's history window: a member who joined last year still earns points today. */
+const UNWINDOWED = ['customers'];
+const tOf = (c: string, x: Any) => { const f = UNWINDOWED.includes(c) ? '' : ASC[c] ?? DESC[c] ?? (c === 'records' ? 'at' : ''); const v = f ? x?.[f] : undefined; return typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : null; };
 const put = (coll: string, id: string, data: Any, src: Any = data, fresh = false): Op => ({ op: 'put', coll, id, data, t: tOf(coll, src), open: OPEN[coll]?.(src) ?? false, ...(fresh ? { fresh } : {}) });
 
 // Serialisations are cached per object: DB objects are never mutated after a commit (every commit works on a clone).

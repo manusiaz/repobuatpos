@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useApp } from '../app/context.tsx';
 import { isGated } from '../system/access.ts';
-import { Field, Icon, toast } from '../ui/kit.tsx';
+import { Empty, Field, Icon, toast } from '../ui/kit.tsx';
 import { createPO, saveModifierGroup } from '../data/actions.ts';
 import { uid } from '../data/store.ts';
 import { idr } from '../domain/money.ts';
@@ -72,8 +72,10 @@ function ModifierForm() {
 
 function POForm() {
   const { db, user, outletId } = useApp();
-  const [sup, setSup] = useState(db.suppliers[0].id), [out, setOut] = useState(outletId), [lines, setLines] = useState<{ stockItemId: string; qty: number; price: number }[]>([]);
+  const [pick, setSup] = useState(''), [out, setOut] = useState(outletId), [lines, setLines] = useState<{ stockItemId: string; qty: number; price: number }[]>([]);
   const total = lines.reduce((a, l) => a + l.qty * l.price, 0), lvl = levelRequired('po', total);
+  const sup = pick || db.suppliers[0]?.id;
+  if (!sup) return <><PageHead sub="A purchase order goes to one supplier." /><Empty icon="truck" title="Add a supplier first">Inventory → Suppliers, then come back here.</Empty></>;
   const add = (id: string) => { const s = db.stockItems.find(x => x.id === id)!; setLines([...lines, { stockItemId: id, qty: Math.max(1, s.par), price: s.unitCost }]); };
   return <>
     <PageHead sub="≤ IDR 500k the manager approves, above that the owner. The approver can’t be the requester." />

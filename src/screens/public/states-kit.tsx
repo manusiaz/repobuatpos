@@ -2,7 +2,7 @@
 // System states (spec/BorNiz States Gallery). Reusable: any screen can import these instead of inventing its own.
 // Rules: say what happened, say what to do (one verb), keep work safe, same place, color = meaning, no blame.
 import { useEffect, useState, type ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '../../ui/Link.tsx';
 import { Ctx, useApp } from '../../app/context.tsx';
 import { PAGES, pageAt } from '../../system/registry.ts';
 import { canOpen } from '../../system/access.ts';

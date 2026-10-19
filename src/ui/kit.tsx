@@ -1,7 +1,7 @@
 'use client';
 // Base components (spec: BorNiz Components). Everything else is composed from these + the CSS in app/globals.css.
 import { cloneElement, isValidElement, useContext, useEffect, useId, useRef, useState, type ReactElement, type ReactNode, type CSSProperties } from 'react';
-import Link from 'next/link';
+import Link from './Link.tsx';
 import { Ctx } from '../app/context.tsx';
 import { drillTo } from '../system/drill.ts';
 import { icons, type LucideProps } from 'lucide-react';

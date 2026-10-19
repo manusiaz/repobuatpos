@@ -7,6 +7,7 @@ import { HttpError, UUID } from '../../../../src/integrations/server/http.ts';
 import { DEMO, as, call, cellFor, dbError } from '../../../../src/integrations/server/db.ts';
 import * as auth from '../../../../src/integrations/server/session.ts';
 import { subscribe } from '../../../../src/integrations/server/live.ts';
+import { ownsHost } from '../../../../src/system/hosts.ts';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,11 +20,13 @@ const fail = (e: unknown) => {
 };
 const withSession = (req: Request, data: unknown, token: string | null) => out(data, { 'set-cookie': auth.cookie(req, token) });
 const ip = (req: Request) => req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'local';
-/** Reset links only ever point back at this deployment (no open redirect in a mail). */
+/** Reset links only ever point back at this deployment (no open redirect in a mail): a Host or redirectTo this
+ *  deployment does not serve is refused, whatever a client or a misrouted proxy sends. */
 function ownUrl(req: Request, wanted: unknown, fallback: string) {
-  const u = new URL(req.url), root = process.env.NEXT_PUBLIC_BORNIZ_ROOT_DOMAIN || '';
-  try { const w = new URL(String(wanted)); if (w.host === (req.headers.get('host') ?? u.host) || (root && (w.hostname === root || w.hostname.endsWith('.' + root)))) return w.origin + w.pathname; } catch { /* not a URL */ }
-  return `${req.headers.get('x-forwarded-proto') ?? u.protocol.replace(':', '')}://${req.headers.get('host') ?? u.host}${fallback}`;
+  const u = new URL(req.url), host = req.headers.get('host') ?? u.host;
+  if (!ownsHost(host)) throw new HttpError(400, 'Unknown host');
+  try { const w = new URL(String(wanted)); if (/^https?:$/.test(w.protocol) && ownsHost(w.host)) return w.origin + w.pathname; } catch { /* not a URL */ }
+  return `${req.headers.get('x-forwarded-proto') ?? u.protocol.replace(':', '')}://${host}${fallback}`;
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ op: string[] }> }) {
@@ -58,7 +61,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ op: str
         case 'anonymous': { auth.guard(ip(req) + '|anonymous'); const u = await auth.anonymousUser(); await auth.endSession(req); return withSession(req, { user: u }, await auth.newSession(u.id)); }
         case 'signout': await auth.endSession(req); return withSession(req, null, null);
         case 'user': return out({ user: await auth.userOf(req) });
-        case 'update': { const u = await auth.requireUser(req); if (b.password) await auth.setPassword(u.id, String(b.password)); return out({ user: u }); }
+        case 'update': { const u = await auth.requireUser(req); if (b.password) await auth.setPassword(req, u.id, String(b.password)); return out({ user: u }); }
         case 'reset': {
           auth.guard(ip(req) + '|reset');
           const to = ownUrl(req, b.redirectTo, '/account/reset-password');
@@ -69,7 +72,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ op: str
         case 'mfa/list': return out({ totp: await auth.mfaList((await auth.requireUser(req)).id) });
         case 'mfa/enroll': return out(await auth.mfaEnroll(await auth.requireUser(req)));
         case 'mfa/verify': await auth.mfaVerify((await auth.requireUser(req)).id, String(b.factorId ?? ''), String(b.code ?? '')); return out({});
-        case 'mfa/unenroll': await auth.mfaRemove((await auth.requireUser(req)).id, String(b.factorId ?? '')); return out({});
+        case 'mfa/unenroll': await auth.mfaRemove((await auth.requireUser(req)).id, String(b.factorId ?? ''), String(b.code ?? '')); return out({});
       }
       throw new HttpError(404, 'Unknown auth action ' + name);
     }
@@ -89,10 +92,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ op: stri
       start(ctl) {
         const send = (event: string, data: unknown) => { try { ctl.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)); } catch { stop(); } };
         const off = subscribe({ tenant, uid: u.id, cell, send });
-        const beat = setInterval(() => send('ping', {}), 25e3); // proxies close quiet connections
+        // proxies close quiet connections; a signed-out or expired session stops receiving here too
+        const beat = setInterval(() => auth.userOf(req).then(x => (x?.id === u.id ? send('ping', {}) : end()), () => send('ping', {})), 25e3);
+        const end = () => { stop(); try { ctl.close(); } catch { /* closed */ } };
         stop = () => { clearInterval(beat); off(); };
         send('ready', {});
-        req.signal.addEventListener('abort', () => { stop(); try { ctl.close(); } catch { /* closed */ } });
+        req.signal.addEventListener('abort', end);
       },
       cancel() { stop(); },
     });

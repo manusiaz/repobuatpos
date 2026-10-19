@@ -3,7 +3,7 @@
 // or change prices. Inbox, pickup shelf, scheduled orders, busy mode & pause, delivery kanban, integrations.
 // /pos/... pages run full screen on the register; back-office pages render inside the shell (page.shell).
 import { useMemo, useState, type ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import { useApp } from '../app/context.tsx';
 import { studioValue } from '../system/studio.ts';
 import { IntegrationsPanel } from '../integrations/Panel.tsx';

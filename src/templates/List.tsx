@@ -1,7 +1,7 @@
 'use client';
 // LIST template: index of records. Filter, search, select, act. Actions depend on where the data comes from (page mode).
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import { useApp } from '../app/context.tsx';
 import { PAGES } from '../system/registry.ts';
 import { isGated } from '../system/access.ts';

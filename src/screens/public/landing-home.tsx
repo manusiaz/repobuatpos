@@ -2,7 +2,7 @@
 import { productImage } from '../../ui/kit.tsx';
 // Home, features, solutions, hardware, integrations and case studies (spec/BorNiz Landing, layout A: hero + product mock).
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '../../ui/Link.tsx';
 import { useApp } from '../../app/context.tsx';
 import { priceAt } from '../../data/actions.ts';
 import { seed } from '../../data/seed.ts';

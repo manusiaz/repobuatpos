@@ -77,3 +77,8 @@ Add a page in the design system sitemap → `npm run spec` → it routes automat
 - Demo mode (no `DATABASE_URL`): data lives in the browser (localStorage + BroadcastChannel), one browser, one origin; the server adapter (`src/data/remoteStore.ts` → `app/api/bn`) keeps the same `actions.ts` signatures.
 - Payment gateway, WhatsApp (WABA), delivery-app webhooks and printers are simulated ("Simulate…" buttons). With the database and Xendit or Midtrans connected, QRIS/VA/e-wallet are real: `startPayment` asks the gateway (`chargePayment`) and every screen draws the gateway payload (`src/ui/qr.tsx`, QR v1–20). The local adapter and the simulator still draw stand-ins.
 - Approval PIN is verified in the browser by the local adapter; production verifies it only in `bn.decide`.
+- **Moving a merchant to its own database (`scripts/tenant-move.sh`) is not ready on the own backend (review Oct 2026), don't use it yet:**
+  - calls without `p_tenant` still go to the shared database: `bn_public_snapshot` (guest menu frozen at the move), `bn_machine_clock` (attendance scans refused BN050), `bn_device_join`, `bn_staff_logout`; `bn_admin_set_plan` goes the other way
+  - `npm run db:migrate` does not migrate the cells in `BORNIZ_DB_CELLS`
+  - the script copies `auth.users` without skipping members it already moved, needs a superuser (`session_replication_role`), and skips `private.write_ops` (offline replays apply twice)
+- Live updates run one read per open device per change on the same pool of 10 connections as every other request: a busy business with many screens can slow sign-in and writes.

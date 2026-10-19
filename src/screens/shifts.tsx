@@ -1,7 +1,7 @@
 'use client';
 // Shifts (spec/BorNiz Shifts.dc.html, layout A "week grid"): one PIC per shift, roster, attendance, drawer sessions per shift.
 // Model: business day → shift → drawer session → orders. Roster rows live in db.roster (Mon = day 0).
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import { useMemo, useState } from 'react';
 import { useApp } from '../app/context.tsx';
 import { pagesOf } from '../system/registry.ts';

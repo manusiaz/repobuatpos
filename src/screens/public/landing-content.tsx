@@ -1,7 +1,7 @@
 'use client';
 // Content pages: blog, FAQ, help center, about, careers and the legal pages.
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '../../ui/Link.tsx';
 import { PAGES } from '../../system/registry.ts';
 import { Badge, Icon, Empty } from '../../ui/kit.tsx';
 import { Cards, Cta, H2, PageHead, Prose, Toc, Wrap } from './landing-ui.tsx';

@@ -2,7 +2,7 @@
 // System states (spec/BorNiz States Gallery). Every state is a real, reusable component from ./public/states-kit.tsx;
 // this screen shows each one on its own URL with live data.
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import { Ctx, useApp } from '../app/context.tsx';
 import { seed } from '../data/seed.ts';
 import { pagesOf } from '../system/registry.ts';
@@ -17,8 +17,9 @@ const RULES = [['Say what happened', 'in plain words, no error codes as the head
 
 export default function Screen() {
   const app = useApp();
-  // the gallery shows each state with demo data; a visitor on a live deployment has no business of their own yet
-  const demo = useMemo(() => (app.db.outlets.length ? null : seed()), [app.db]);
+  // the gallery shows each state with real data when there is some; a visitor with no business, or a business with no
+  // products or stock yet, sees it with the demo data
+  const demo = useMemo(() => (app.db.outlets.length && app.db.products.length && app.db.stockItems.length ? null : seed()), [app.db]);
   return demo ? <Ctx.Provider value={{ ...app, db: demo, me: demo.employees.find(e => e.role === 'owner'), outletId: demo.outlets[0].id }}><Gallery /></Ctx.Provider> : <Gallery />;
 }
 function Gallery() {

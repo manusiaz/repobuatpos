@@ -2,7 +2,7 @@
 // Roles & permissions matrix (spec/BorNiz Roles, bn-perms.js). Defaults from catalog.perms, saved overrides in db.perms
 // ("<outlet>|<action>" or "all|<action>", full 7-char row). Owner signs every change with the approval PIN; managers propose.
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import catalog from '../system/catalog.json' with { type: 'json' };
 import { useApp } from '../app/context.tsx';
 import { PERM_ACTIONS, PERM_COLS, LOCKED_COLS, permRow } from '../system/perms.ts';

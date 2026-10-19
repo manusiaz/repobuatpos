@@ -117,3 +117,11 @@ test('finalizer: a gateway-settled payment asks for the order effects once', () 
   d.orders.push({ ...o, id: 'q2', status: 'paying' }); d.payments.push({ ...d.payments[0], id: 'qp2', orderId: 'q2', method: 'qris', status: 'expired' });
   assert.equal(finalizeNeed(d, 'q2'), 'fail');
 });
+
+test('history window: old orders drop out of it, customers never do', () => {
+  const ops = allOps(seed());
+  const old = Date.now() - 400 * 864e5;
+  const c = allOps({ ...seed(), customers: [{ ...seed().customers[0], joinedAt: old }] }).find(o => o.coll === 'customers')!;
+  assert.equal(c.t, null);
+  assert.ok(ops.some(o => o.coll === 'orders' && typeof o.t === 'number'));
+});

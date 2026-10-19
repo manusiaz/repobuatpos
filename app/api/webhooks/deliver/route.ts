@@ -4,7 +4,7 @@
 import { member } from '../../../../src/integrations/server/auth.ts';
 import { HttpError, body, handle, json } from '../../../../src/integrations/server/http.ts';
 import { DEMO, rpc } from '../../../../src/integrations/server/db.ts';
-import { integrationAsMember, secretsOf } from '../../../../src/integrations/server/store.ts';
+import { integrationAsMember, publishedTool, secretsOf } from '../../../../src/integrations/server/store.ts';
 import { deliver, publicEndpoint } from '../../../../src/integrations/server/webhooks/deliver.ts';
 import { EVENTS, subscribed, type OutEvent } from '../../../../src/integrations/server/webhooks/events.ts';
 import { str } from '../../../../src/integrations/server/types.ts';
@@ -13,17 +13,19 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export const POST = handle(async (req: Request) => {
-  const b = await body<{ integrationId?: string; url?: string; secret?: string; event?: OutEvent; tenantId?: string }>(req), e = b.event;
+  const b = await body<{ integrationId?: string; url?: string; event?: OutEvent; tenantId?: string }>(req), e = b.event;
   if ((!b.integrationId && !b.url) || !e?.id || !(EVENTS as readonly string[]).includes(e.event) || typeof e.data !== 'object') throw new HttpError(400, 'integrationId (or url) and an event { id, event, at, data } are required');
   if (DEMO) throw new HttpError(503, 'Webhooks need the database (DATABASE_URL)');
   const m = await member(req, null, b.tenantId);
-  if (!b.integrationId) { // the endpoint published in Studios › Webhooks & API (url + signing secret from the tenant's own settings)
-    if (!publicEndpoint(str(b.url))) throw new HttpError(400, 'Endpoint must be a public https URL');
-    if (!b.secret) throw new HttpError(409, 'Signing secret is not set');
+  if (!b.integrationId) { // the endpoint published in Studios › Webhooks & API, read here: never a url or secret a device sends
+    const v = await publishedTool(m, 'hooks');
+    const url = str(v.url), secret = str(v.secret);
+    if (!publicEndpoint(url)) throw new HttpError(400, 'Endpoint must be a public https URL');
+    if (!secret) throw new HttpError(409, 'Signing secret is not set');
     const key = `wh:${e.id}:studio`;
     const c = await rpc<{ claimed: boolean; status?: string }>('bn_outbox_claim', { p_tenant: m.tenantId, p_key: key, p_provider: 'webhook-out' });
     if (!c.claimed) return json({ ok: c.status === 'sent', duplicate: true, status: c.status }, c.status === 'sending' ? 409 : 200);
-    const r = await deliver(str(b.url), b.secret, m.tenantId, { id: e.id, event: e.event, at: Number(e.at) || Date.now(), data: e.data });
+    const r = await deliver(url, secret, m.tenantId, { id: e.id, event: e.event, at: Number(e.at) || Date.now(), data: e.data });
     await rpc('bn_outbox_done', { p_tenant: m.tenantId, p_key: key, p_provider_id: null, p_status: r.ok ? 'sent' : 'failed', p_error: r.ok ? null : `HTTP ${r.status}` });
     return json({ ok: r.ok, status: r.status }, r.ok ? 200 : 502);
   }

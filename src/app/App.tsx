@@ -48,12 +48,16 @@ export default function App({ path }: { path: string }) {
   useDispatcher(staffDevice);
   const router = useRouter();
   const [outlet, setOutlet] = useState<string | null>(null);
-  useEffect(() => { if (db && !outlet) setOutlet(user?.outletId ?? db.device.outletId); }, [db, user, outlet]);
+  // the outlet in use is always one of this business's outlets: a choice made while the data was still loading
+  // (or an outlet since removed) falls back to the person's own, then the device's, then the first
+  const here = (id?: string | null) => !!id && !!db?.outlets.some(o => o.id === id);
+  const outletId = here(outlet) ? outlet! : [user?.outletId, db?.device.outletId, db?.outlets[0]?.id].find(here) ?? user?.outletId ?? '';
+  useEffect(() => { if (db && user && outletId && outletId !== outlet) setOutlet(outletId); }, [db, user, outlet, outletId]);
   // staff alerts, escalations and late-kitchen checks run on staff devices only (a guest phone may not write them)
   useEffect(() => { if (!staffDevice) return; const tick = () => { escalateDue(); watchKitchen(); sweepAlerts(); }; tick(); const t = setInterval(tick, 60e3); return () => clearInterval(t); }, [staffDevice]);
   const slug = db?.tenant.id; // the business slug (remote store) = its <slug>.bornis.id
   const go = useCallback((p: string) => { const away = leaveFor(p, slug); if (away) location.assign(away); else router.push(p); }, [router, slug]);
-  const ctx = useMemo<AppCtx | null>(() => db && user ? { page, db, user, me: db.employees.find(e => e.id === user.id), outletId: outlet ?? user.outletId, setOutlet, go } : null, [page, db, user, outlet, go]);
+  const ctx = useMemo<AppCtx | null>(() => db && user ? { page, db, user, me: db.employees.find(e => e.id === user.id), outletId, setOutlet, go } : null, [page, db, user, outletId, go]);
   if (!ctx) return <div style={{ padding: 24 }}><Loading /></div>;
   setMoneyStyle(...moneyFormat(ctx.db, page.surface, ctx.outletId)); // Studios: price display rules, number format per outlet
   setOwnHost(menuDomain(ctx.db)); // Studios: custom domain for QR, receipt and shared links

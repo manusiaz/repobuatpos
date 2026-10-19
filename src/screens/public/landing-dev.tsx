@@ -2,7 +2,7 @@
 // Developer API docs (service events from src/system/graph.ts, tables from the live store = the ERD in src/data/schema.ts)
 // and system status (devices, outlets, payments and messages from the store).
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '../../ui/Link.tsx';
 import { useApp } from '../../app/context.tsx';
 import { EVENTS } from '../../system/graph.ts';
 import { PROTOTYPE, type Surface } from '../../system/registry.ts';

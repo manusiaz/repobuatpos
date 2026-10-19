@@ -86,7 +86,7 @@ sed "s|^WorkingDirectory=.*|WorkingDirectory=$LIVE|" "$LIVE/deploy/borniz.servic
 systemctl daemon-reload; systemctl enable -q borniz
 if [ "$PROTO" = https ]; then sed "s|bornis\.id|$DOMAIN|g" "$LIVE/deploy/nginx.conf"
 else # no certificate yet: every host on plain http, same app
-  printf 'server {\n  listen 80;\n  server_name %s *.%s;\n  client_max_body_size 10m;\n  location / {\n    proxy_pass http://localhost:3000;\n    proxy_http_version 1.1;\n    proxy_set_header Host $host;\n    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n    proxy_set_header X-Forwarded-Proto $scheme;\n    proxy_buffering off;\n  }\n}\n' "$DOMAIN" "$DOMAIN"
+  printf 'server {\n  listen 80;\n  server_name %s *.%s;\n  client_max_body_size 10m;\n  location / {\n    proxy_pass http://localhost:3000;\n    proxy_http_version 1.1;\n    proxy_set_header Host $host;\n    proxy_set_header X-Forwarded-For $remote_addr;\n    proxy_set_header X-Forwarded-Proto $scheme;\n    proxy_buffering off;\n  }\n}\n' "$DOMAIN" "$DOMAIN"
 fi > /etc/nginx/sites-enabled/borniz.conf
 nginx -t -q
 systemctl reload nginx

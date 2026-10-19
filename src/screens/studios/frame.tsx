@@ -1,7 +1,7 @@
 'use client';
 // Layout A: tools list · settings · live preview. Below 1024px: preview first, settings in a floating panel (bottom sheet).
 import { useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
+import Link from '../../ui/Link.tsx';
 import { publish, setSetting } from '../../data/actions.ts';
 import { snapshot } from '../../data/store.ts';
 import type { Version } from '../../data/schema.ts';

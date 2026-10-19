@@ -1,7 +1,7 @@
 'use client';
 // DETAIL template: one record with key facts, tabs and activity. Opened by ?id= or the record picker.
 import { useState, type ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import { useSearchParams } from 'next/navigation';
 import { useApp } from '../app/context.tsx';
 import { Badge, Empty, Icon, Seg, Status, ago, hhmm, dateShort, toast } from '../ui/kit.tsx';

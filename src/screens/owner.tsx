@@ -2,7 +2,7 @@
 // Owner dashboard, layout A (spec/BorNiz Owner Dashboard.dc.html): KPIs, revenue trend vs last week, decisions, outlets live.
 // /owner = the dashboard with period filters; /owner/monitor/live-monitor = the same board pinned to today, refreshing live.
 import { useMemo, useState, type ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import { useApp } from '../app/context.tsx';
 import { Badge, Empty, Icon, Kpi, Seg, ago, hhmm, useNow, Avatar, type Tone } from '../ui/kit.tsx';
 import { LineChart } from '../ui/Chart.tsx';

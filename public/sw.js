@@ -2,7 +2,7 @@
 //   install   cache the key surfaces (and the pages open now) with the /_next/static files their HTML names
 //   static    /_next/static and fonts: cache-first (file names are content-hashed)
 //   pages     network-first; offline → this page, else a cached page of the same surface, else the POS
-//   never     /api/*, Supabase and every other host pass straight through
+//   never     /api/* and every other host pass straight through
 const VERSION = 'bn-1';
 const SHELL = ['/pos', '/kds', '/pic', '/waiter', '/display', '/owner', '/manager'];
 const FONTS = ['fonts.googleapis.com', 'fonts.gstatic.com', 'api.fontshare.com', 'cdn.fontshare.com'];

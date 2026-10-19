@@ -315,4 +315,10 @@ export async function remoteReady(user: string | null) {
   for (let i = 0; i < 600 && !(enteredFor === user && mode !== 'boot'); i++) await new Promise(r => setTimeout(r, 100));
   return remoteInfo();
 }
+/** Resolves once no pending write still carries this document (sent, or refused): a server route that reads it, such
+ *  as the gateway charge reading its payment, must not run before the row is there. */
+export const remoteSent = (coll: string, id: string, ms = 30e3) => new Promise<void>(ok => {
+  const end = Date.now() + ms, check = () => (!queue.some(p => !p.local && p.ops.some(o => o.coll === coll && o.id === id)) || Date.now() > end ? ok() : setTimeout(check, 100));
+  check();
+});
 export const remoteInfo = () => ({ mode, tenant, member, admin, pending: queue.filter(p => !p.local).length });

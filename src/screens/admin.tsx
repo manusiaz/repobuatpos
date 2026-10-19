@@ -2,7 +2,7 @@
 // Super admin console, layout A "dense tables + detail" (spec/BorNiz Super Admin.dc.html). Dark, violet accent (shell).
 // Every action goes through commit() and lands in the audit log. Never show card data: methods only, no numbers.
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import { useApp } from '../app/context.tsx';
 import catalog from '../system/catalog.json' with { type: 'json' };
 import { Badge, Empty, Field, Icon, Kpi, Loading, Seg, Sheet, Toggle, ago, dateShort, hhmm, human, toast } from '../ui/kit.tsx';

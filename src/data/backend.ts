@@ -46,7 +46,7 @@ const auth = {
     listFactors: () => api<{ totp: { id: string; status: string }[] }>('auth/mfa/list'),
     enroll: (_p?: { factorType: 'totp' }) => api<{ id: string; totp: { secret: string; uri: string } }>('auth/mfa/enroll'),
     challengeAndVerify: (p: { factorId: string; code: string }) => api('auth/mfa/verify', p),
-    unenroll: (p: { factorId: string }) => api('auth/mfa/unenroll', p),
+    unenroll: (p: { factorId: string; code?: string }) => api('auth/mfa/unenroll', p),
   },
 };
 const client = { rpc: <T = any>(fn: string, args: Record<string, unknown> = {}) => api<T>('rpc/' + fn, args), read: <T = any>(what: string, args: Record<string, unknown> = {}) => api<T>('read/' + what, args), auth };

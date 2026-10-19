@@ -92,7 +92,7 @@ function FieldsPanel({ v, set, x }: PP) {
 function CustomFields({ v, x }: PP) {
   const ent = v.ent ?? 'customer', rows = (x.db.records.custom_field ?? []).filter(r => r.a === ent);
   const c = x.db.customers[0], p = x.db.products[0];
-  const base = ent === 'customer' ? [['Name', c.name], ['WhatsApp', c.phone], ['Email', c.email]] : [['Name', p.name], ['Price', idr(p.basePrice)], ['SKU', p.sku]];
+  const base = ent === 'customer' ? [['Name', c?.name ?? ''], ['WhatsApp', c?.phone ?? ''], ['Email', c?.email ?? '']] : [['Name', p?.name ?? ''], ['Price', p ? idr(p.basePrice) : ''], ['SKU', p?.sku ?? '']];
   return <Stage><div className="card stack" style={{ width: 'min(440px,100%)' }}><h3>Edit {ent}</h3>
     {base.map(([k, val]) => <div key={k} className="field"><label>{k}</label><input className="input" value={val} readOnly /></div>)}
     {rows.length ? rows.map(r => <div key={r.id} className="field"><label>{r.b}{r.d === 'y' && ' *'}</label>{r.c === 'toggle' ? <Toggle on={false} onChange={() => { }} label={r.b} /> : <input className="input" type={r.c === 'number' ? 'number' : r.c === 'date' ? 'date' : 'text'} placeholder={r.c === 'select' ? 'Choose…' : r.c === 'tags' ? 'Add tags' : ''} />}</div>)

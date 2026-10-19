@@ -1,7 +1,7 @@
 'use client';
 // PIC floor: sold-out (86) list, stock requests + blind stock count (opname), incident log.
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '../../ui/Link.tsx';
 import type { Opname } from '../../data/schema.ts';
 import { requestApproval, startOpname, stockEntry, toggle86, updateOpnameLine } from '../../data/actions.ts';
 import { isCounted, logIncident, opnamePhoto, recountLine, resendCount, submitCount } from '../../data/actions/pic.ts';

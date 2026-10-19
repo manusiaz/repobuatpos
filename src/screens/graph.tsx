@@ -2,7 +2,7 @@
 // Knowledge graph explorer (spec/BorNiz Connections): every page, surface, data object, role, service event and design doc,
 // and every real dependency between them. ?node=<id> preselects a node.
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import { buildGraph, neighbours, type GEdge, type GNode, type NodeKind } from '../system/graph.ts';
 import { surfaceHome, type Surface } from '../system/registry.ts';
 import { Badge, Icon, Empty, type Tone } from '../ui/kit.tsx';

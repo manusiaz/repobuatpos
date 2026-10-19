@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '../src/ui/Link.tsx';
 export default function NotFound() {
   return <div className="empty" style={{ minHeight: '80dvh', justifyContent: 'center' }}>
     <span className="cap">404</span><h1 style={{ color: 'var(--fg-1)' }}>This page doesn’t exist</h1>

@@ -1,7 +1,7 @@
 'use client';
 // Manager dashboard (spec/BorNiz Manager Dashboard.dc.html, layout A "sidebar + today"): owner's tools scoped to the
 // manager's outlets (me.outlets). Approvals one tap with reason + PIN; owner-gated requests show "Send to owner".
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import { useMemo, useState } from 'react';
 import { useApp } from '../app/context.tsx';
 import { widgetsFor } from '../system/tools.ts';

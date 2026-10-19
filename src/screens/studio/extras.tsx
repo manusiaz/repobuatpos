@@ -84,7 +84,7 @@ export const EXTRAS: Extra[] = [
   { key: 'referral-page', label: 'Referral page', icon: 'users', device: 'phone', defaults: STUDIO_DEFAULTS['referral-page'],
     fields: () => [f.text('give', 'Friend gets'), f.text('get', 'You get'), f.text('prefix', 'Code prefix'), f.seg('share', 'Share button', 'wa:WhatsApp|link:Copy link|both:Both')],
     preview: (g, ctx) => { const c = ctx.db.customers[0]; return <Page ctx={ctx} title="Refer a friend"><H ctx={ctx}>Bring a friend</H><p>Your friend gets <b>{String(g.give)}</b>. You get <b>{String(g.get)}</b> when they pay.</p>
-      <div style={{ padding: 14, borderRadius: 'var(--bn-r)', border: '2px dashed var(--bn-p)', textAlign: 'center' }}><span style={{ fontSize: 12, opacity: .7 }}>Your code</span><br /><b className="mono" style={{ fontSize: 22 }}>{String(g.prefix)}-{c.name.split(' ')[0].toUpperCase()}</b></div>
+      <div style={{ padding: 14, borderRadius: 'var(--bn-r)', border: '2px dashed var(--bn-p)', textAlign: 'center' }}><span style={{ fontSize: 12, opacity: .7 }}>Your code</span><br /><b className="mono" style={{ fontSize: 22 }}>{String(g.prefix)}-{(c?.name ?? 'Friend').split(' ')[0].toUpperCase()}</b></div>
       {g.share !== 'link' && <GBtn d={ctx.d}>Share on WhatsApp</GBtn>}{g.share !== 'wa' && <GBtn d={ctx.d} ghost>Copy link</GBtn>}</Page>; } },
 
   { key: 'delivery-tracking-page', label: 'Delivery tracking page', icon: 'bike', device: 'phone', defaults: STUDIO_DEFAULTS['delivery-tracking-page'],

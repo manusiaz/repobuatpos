@@ -1,4 +1,4 @@
-// Sign-in accounts on our own PostgreSQL (supabase/platform.sql auth schema): scrypt passwords, opaque session tokens
+// Sign-in accounts on our own PostgreSQL (db/platform.sql auth schema): scrypt passwords, opaque session tokens
 // (only their sha256 is stored) in an HttpOnly cookie shared by every host of the root domain, TOTP second factor,
 // one-time links for password reset. Platform database only: one account works for every business it belongs to.
 import { createHash, createHmac, randomBytes, scrypt as scryptCb, timingSafeEqual } from 'node:crypto';
@@ -90,9 +90,15 @@ export async function anonymousUser(): Promise<User> {
   const r = await db().query("insert into auth.users (is_anonymous) values (true) returning id, email, is_anonymous, meta");
   return userRow(r.rows[0]);
 }
-export async function setPassword(userId: string, password: string) {
+/** A new password: only from a session opened in the last 15 minutes (a sign-in or the reset link), not any old
+ *  cookie; every other session of the account ends with it. */
+export async function setPassword(req: Request, userId: string, password: string) {
   if (password.length < 8) throw new HttpError(400, 'Passwords have at least 8 characters.');
+  const t = sha(tokenOf(req) ?? '');
+  const r = await db().query("select 1 from auth.sessions where token_hash = $1 and user_id = $2 and created_at > now() - interval '15 minutes'", [t, userId]);
+  if (!r.rowCount) throw new HttpError(401, 'Log in again to change your password.');
   await db().query('update auth.users set encrypted_password = $2, updated_at = now() where id = $1', [userId, await hashPassword(password)]);
+  await db().query('delete from auth.sessions where user_id = $1 and token_hash <> $2', [userId, t]);
 }
 
 // ── password reset: a one-time link, mailed through Resend when RESEND_API_KEY is set (else written to the server log) ──
@@ -110,6 +116,7 @@ export async function sendReset(email: string, link: (token: string) => string) 
 export async function useReset(token: string): Promise<string> {
   const r = await db().query("delete from auth.one_time where token_hash = $1 and purpose = 'reset' and expires_at > now() returning user_id", [sha(token)]);
   if (!r.rowCount) throw new HttpError(400, 'This reset link has expired. Ask for a new one.');
+  await db().query('delete from auth.sessions where user_id = $1', [r.rows[0].user_id]); // whoever else was signed in is out
   return r.rows[0].user_id as string;
 }
 
@@ -136,5 +143,10 @@ export async function mfaVerify(userId: string, factorId: string, code: string) 
 }
 export const mfaList = async (userId: string) => (await db().query('select id, verified from auth.mfa_factors where user_id = $1 order by created_at', [userId])).rows
   .map(r => ({ id: r.id as string, status: r.verified ? 'verified' : 'unverified' }));
-export const mfaRemove = (userId: string, factorId: string) => db().query('delete from auth.mfa_factors where id = $1 and user_id = $2', [factorId, userId]);
+/** Turning a working second factor off takes a code from it: a stolen cookie alone cannot. */
+export async function mfaRemove(userId: string, factorId: string, code: string) {
+  const r = await db().query('select secret, verified from auth.mfa_factors where id = $1 and user_id = $2', [factorId, userId]);
+  if (r.rows[0]?.verified && !totpOk(r.rows[0].secret, code)) throw new HttpError(400, 'Enter the current 6-digit code to turn it off.');
+  await db().query('delete from auth.mfa_factors where id = $1 and user_id = $2', [factorId, userId]);
+}
 

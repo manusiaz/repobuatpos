@@ -1,7 +1,7 @@
 'use client';
 // Pricing (Free · Basic · Pro · Enterprise, yearly toggle) and contact sales (form → sent state).
 import { useState, type FormEvent } from 'react';
-import Link from 'next/link';
+import Link from '../../ui/Link.tsx';
 import { useApp } from '../../app/context.tsx';
 import { saveRecord } from '../../data/actions.ts';
 import { uid } from '../../data/store.ts';

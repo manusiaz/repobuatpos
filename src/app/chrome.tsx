@@ -1,7 +1,7 @@
 'use client';
 // Shared chrome on every staff app: Apps launcher (⌘K, "nobody types URLs"), alerts bell, user switch, outlet picker.
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import catalog from '../system/catalog.json' with { type: 'json' };
 import { PAGES, PROTOTYPE, surfaceHome, type Surface } from '../system/registry.ts';
 import { canOpen, canReach } from '../system/access.ts';

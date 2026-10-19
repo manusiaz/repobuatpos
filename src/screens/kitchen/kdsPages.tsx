@@ -2,7 +2,7 @@
 // The KDS pages beyond the live ticket views: station, expo, all-day, completed / recall, 86, detail, runner, clock,
 // recipes, targets, performance, settings. Same dark tokens, 15px minimum, no prices.
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '../../ui/Link.tsx';
 import { useSearchParams } from 'next/navigation';
 import { ago, hhmm, toast, Toggle } from '../../ui/kit.tsx';
 import { LineChart } from '../../ui/Chart.tsx';

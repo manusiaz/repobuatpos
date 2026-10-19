@@ -2,7 +2,7 @@
 // Studios (spec/BorNiz Studios.dc.html): every customization tool beyond Menu & Brand Studio. One frame (tools · settings ·
 // live preview); every route opens its tool, some with a preset (e.g. the thank-you template or the salon template).
 import { useMemo } from 'react';
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import { useApp } from '../app/context.tsx';
 import { setSetting } from '../data/actions.ts';
 import { snapshot } from '../data/store.ts';

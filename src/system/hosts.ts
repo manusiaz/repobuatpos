@@ -45,6 +45,12 @@ export function config(env: Record<string, string | undefined> = ENV): HostConfi
   return { routing: env.NEXT_PUBLIC_BORNIZ_ROUTING === 'subdomain' || Object.keys(hosts).length ? 'subdomain' : 'path', root: env.NEXT_PUBLIC_BORNIZ_ROOT_DOMAIN || 'bornis.id',
     protocol: env.NEXT_PUBLIC_BORNIZ_PROTOCOL || 'https', tenant: env.NEXT_PUBLIC_BORNIZ_DEFAULT_TENANT || 'kopibiru', customDomains: json(env.NEXT_PUBLIC_BORNIZ_CUSTOM_DOMAINS), hosts };
 }
+/** A Host this deployment serves: the root and its subdomains, host-map aliases, merchant domains, local dev.
+ *  The server trusts no other Host header (password-reset links are built from it). */
+export function ownsHost(host: string, cfg = config()): boolean {
+  const h = host.split(':')[0].toLowerCase();
+  return h === cfg.root || h.endsWith('.' + cfg.root) || Object.values(cfg.hosts).includes(h) || h in cfg.customDomains || h === 'localhost' || h === '127.0.0.1';
+}
 /** The hostname that serves a platform surface ('' = marketing). */
 export const hostOf = (sub: string, cfg: HostConfig) => cfg.hosts[sub] ?? (sub ? sub + '.' : '') + cfg.root;
 /** Where one business lives: its own subdomain (or the host map's one shared host). */

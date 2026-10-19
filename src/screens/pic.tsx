@@ -1,7 +1,7 @@
 'use client';
 // PIC tablet (spec/BorNiz PIC.dc.html, layout A): dark rail of the four groups, shift header, one view per registry page.
 import { DeviceChrome } from '../app/chrome.tsx';
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import { useMemo, useState } from 'react';
 import { pagesOf, surfaceHome } from '../system/registry.ts';
 import { recordTo } from '../system/drill.ts';

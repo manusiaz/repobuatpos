@@ -3,7 +3,7 @@ import { linkTo } from '../../system/hosts.ts';
 // Page Builder inside Menu Studio (spec: BorNiz Page Builder): pages, section library, section settings,
 // visibility rules, preview-as, devices and the promo blocks. Flash sales write db.promos (kind 'flash') for the POS.
 import { useEffect, useState, type ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '../../ui/Link.tsx';
 import { Badge, Empty, Icon, Seg, toast } from '../../ui/kit.tsx';
 import { idr } from '../../domain/money.ts';
 import { flashPrice } from '../../domain/promo.ts';

@@ -25,3 +25,10 @@ export async function integrationAsMember(m: Member, id: string): Promise<Integr
   return r.rows[0].data as Integration;
 }
 export const paymentOrder = (tenant: string, paymentId: string) => rpc<{ payment: (Payment & { provider?: string }) | null; order: Order | null }>('bn_payment_order', { p_tenant: tenant, p_payment_id: paymentId });
+/** Values of a tool the owner published in Studios (the newest published version), read as the member: server routes
+ *  take endpoints and senders from here, never from a request body. */
+export async function publishedTool(m: Member, tool: string): Promise<Record<string, unknown>> {
+  const r = await as(m.userId, m.cell, c => c.query(`select data->'data'->'values' v from public.docs where tenant_id = $1 and coll = 'versions'
+    and data->>'kind' = 'page' and data->>'status' = 'published' and data->'data'->>'tool' = $2 order by (data->>'at')::bigint desc limit 1`, [m.tenantId, tool]));
+  return (r.rows[0]?.v ?? {}) as Record<string, unknown>;
+}

@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useState, type ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import { PAGES, surfaceHome } from '../system/registry.ts';
 import { FEATURES, REAL, homeOf, featuresOf, type RealPage, type Release } from '../system/pagemap.ts';
 import { linksOf } from '../system/connections.ts';

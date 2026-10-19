@@ -4,7 +4,7 @@
 import { DeviceChrome } from '../app/chrome.tsx';
 import { expoOn } from '../system/settings.ts';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import { useApp } from '../app/context.tsx';
 import { Sheet, toast, useNow, hhmm, Icon } from '../ui/kit.tsx';
 import { pagesOf } from '../system/registry.ts';

@@ -26,7 +26,7 @@ export function ConnectDevice() {
   const { db, user, me, outletId } = useApp();
   const [gear, setGear] = useState<Gear | null>(null), [via, setVia] = useState<Via | null>(null);
   const [paper, setPaper] = useState<'80' | '58'>('80'), [station, setStation] = useState('kitchen'), [host, setHost] = useState(''), [bank, setBank] = useState('BCA');
-  const [brand, setBrand] = useState<Brand>('zkteco'), [key] = useState(() => crypto.randomUUID().replace(/-/g, ''));
+  const [brand, setBrand] = useState<Brand>('zkteco'), [key] = useState(() => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('') /* randomUUID is https-only */);
   const [serial, setSerial] = useState(''), [tz, setTz] = useState('+07:00'), [users, setUsers] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false), [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const code = perm(db, user.role, 'Connect devices & printers', outletId);

@@ -3,7 +3,7 @@ import { realNav, ReleaseTag } from '../app/Shells.tsx';
 // Owner mobile (spec/BorNiz Owner Mobile.dc.html): the owner dashboard below 768px. Bottom tabs, cards instead of tables,
 // chips for filters, approvals one-handed with 52px buttons. Each tab is its own URL under /system/mobile/.
 import { useMemo, useState, type ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import { useApp } from '../app/context.tsx';
 import { UserSwitch } from '../app/chrome.tsx';
 import { Badge, Empty, Icon, Status, ago, hhmm, useNow, type Tone } from '../ui/kit.tsx';

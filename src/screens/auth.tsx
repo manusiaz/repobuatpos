@@ -2,7 +2,7 @@
 // Auth & onboarding (spec/BorNiz Auth, layout A: split panel, single column on phone). Sign up to first sale in 5 minutes:
 // WhatsApp OTP first, every onboarding step skippable, no card for Free or a trial.
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '../ui/Link.tsx';
 import { useApp } from '../app/context.tsx';
 import { grantSession, setSession } from '../session.ts';
 import { setDeviceOutlet, setSetting } from '../data/actions.ts';
