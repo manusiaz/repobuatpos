@@ -63,7 +63,7 @@ test('customer receipt, 58 and 80 mm: golden bytes, every line fits the roll, to
     const text = lines.join('\n');
     for (const s of ['Subtotal', '130,000', 'Service 5%', '6,500', 'PB1 10%', '13,650', 'Cash rounding', '-50', 'IDR 150,100', 'Change', '49,900', '+ Large', 'Terima kasih sudah mampir!', 'WiFi KOPIBIRU-GUEST'])
       assert.ok(text.includes(s), `${paper} mm shows ${s}`);
-    assert.ok(text.includes('/order/customer-links/feedback-and-rating?o=o-test'), 'QR follows the published receipt design (rating)');
+    assert.match(text, /\[QR\] https?:\/\/[^\s/]+\/order\/customer-links\/feedback-and-rating\?o=o-test/, 'QR follows the published receipt design (rating), a full address even off a page');
   }
   assert.deepEqual(toText(docs['58']).slice(0, RECEIPT_58.length), RECEIPT_58);
   const b58 = toEscPos(docs['58']), b80 = toEscPos(docs['80']);
@@ -154,4 +154,4 @@ test('LAN bridge delivers the exact bytes to a printer socket (port 9100 stand-i
   bridge.close(); printer.close();
 });
 
-const GOLDEN = { r58: 'bea731baefa9697d', r80: 'abaa2d874f3818a1', k58: '075f26e0f86b8131', k80: '7b54a5045cbb0095' };
+const GOLDEN = { r58: 'd20fbe316ef5a4d2', r80: '6cfa4e376ed8b819', k58: '075f26e0f86b8131', k80: '7b54a5045cbb0095' };

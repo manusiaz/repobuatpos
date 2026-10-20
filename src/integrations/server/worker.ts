@@ -27,9 +27,10 @@ const result = (p: Promise<{ ok: boolean; status?: unknown; simulated?: boolean;
   r => ({ ok: r.ok, status: typeof r.status === 'string' ? r.status : undefined, simulated: r.simulated }),
   e => ({ ok: false, message: (e as Error).message, permanent: e instanceof HttpError && [400, 401, 403, 404, 422, 501].includes(e.status) }));
 
-function transport(t: Tenant): Transport {
+/** sent: the messages the server already marked (bn_outbox_done forwards sent / failed onto the document). */
+function transport(t: Tenant, sent: Set<string>): Transport {
   return {
-    message: x => result(sendMessage(t.id, { ...x, channel: x.channel as Channel })),
+    message: x => result(sendMessage(t.id, { ...x, channel: x.channel as Channel }).then(r => { sent.add(x.messageId); return r; })),
     webhook: async (integrationId, e) => {
       const i = snapshot().integrations.find(x => x.id === integrationId);
       const secret = i ? (await secretsOf(t.id, i.id)).secret : '';
@@ -51,12 +52,17 @@ async function load(t: Tenant): Promise<{ db: DB; stored: Map<string, unknown> }
   return { db: memberDB(docs, opening, since, hint, t), stored: new Map(docs.map(d => [d.coll + '/' + d.id, d.data])) };
 }
 
-/** Writes what changed; each document that already existed must still hold what the worker read. */
-async function save(t: Tenant, before: DB, after: DB, stored: Map<string, unknown>, action: string) {
-  const ops: Op[] = diff(before, after);
+/** Writes what changed; each document that already existed must still hold what the worker read (a message's status
+ *  excepted: the server moves it as the provider answers). Afterwards stored holds what was written. */
+async function save(t: Tenant, before: DB, after: DB, stored: Map<string, unknown>, action: string, sent = new Set<string>()) {
+  const ops: Op[] = diff(before, after).filter(o => !(o.coll === 'messages' && sent.has(o.id) && stored.has('messages/' + o.id)));
   if (!ops.length) return 0;
-  for (const o of ops) { const old = stored.get(o.coll + '/' + o.id); if (old) o.expect = old as Record<string, unknown>; }
+  for (const o of ops) {
+    const old = stored.get(o.coll + '/' + o.id) as Record<string, unknown> | undefined;
+    if (old) { const { status: _s, ...rest } = old; o.expect = o.coll === 'messages' ? rest : old; }
+  }
   await rpc('bn_server_write', { p_tenant: t.id, p_ops: wire(ops), p_action: action });
+  for (const o of ops) if (o.op === 'del') stored.delete(o.coll + '/' + o.id); else stored.set(o.coll + '/' + o.id, JSON.parse(JSON.stringify(o.data)));
   return ops.length;
 }
 
@@ -72,11 +78,12 @@ export async function runTenant(t: Tenant, now = Date.now()) {
     try { await save(t, db, next, stored, need === 'settle' ? 'payment.settled' : 'payment.failed'); db = next; }
     catch { ({ db, stored } = await load(t)); }
   }
+  const sent = new Set<string>();
   const next = await onServerDB(structuredClone(db), async () => {
     escalateDue(now); watchKitchen(now); sweepAlerts(now);
-    await tick({ now, transport: transport(t), render: render() });
+    await tick({ now, transport: transport(t, sent), render: render() });
   });
-  return save(t, db, next, stored, 'automation');
+  return save(t, db, next, stored, 'automation', sent);
 }
 
 let busy = false;

@@ -35,7 +35,8 @@ const SURFACES: Record<Surface, ComponentType> = {
 const DARK: Partial<Record<Surface, true>> = { kds: true, display: true };
 const WARM = () => [import('../screens/pos.tsx'), import('../screens/pic.tsx'), import('../screens/online.tsx'), import('../screens/waiter.tsx'),
   import('../screens/kds.tsx'), import('../screens/display.tsx'), import('../screens/owner.tsx'), import('../screens/manager.tsx')];
-const NO_OUTLET: Partial<Record<Surface, true>> = { landing: true, auth: true, states: true, graph: true, admin: true };
+// selforder / kiosk: a guest link to no business (wrong slug) shows its own "not available" state
+const NO_OUTLET: Partial<Record<Surface, true>> = { landing: true, auth: true, states: true, graph: true, admin: true, selforder: true, kiosk: true };
 const GUEST: Partial<Record<Surface, true>> = { selforder: true, kiosk: true, display: true, landing: true, auth: true };
 
 export default function App({ path }: { path: string }) {

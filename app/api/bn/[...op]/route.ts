@@ -7,7 +7,7 @@ import { HttpError, UUID } from '../../../../src/integrations/server/http.ts';
 import { DEMO, as, call, cellFor, dbError, rpc } from '../../../../src/integrations/server/db.ts';
 import * as auth from '../../../../src/integrations/server/session.ts';
 import { subscribe } from '../../../../src/integrations/server/live.ts';
-import { config, ownsHost, resolve } from '../../../../src/system/hosts.ts';
+import { config, hostOf, ownsHost, resolve } from '../../../../src/system/hosts.ts';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -21,10 +21,10 @@ const fail = (e: unknown) => {
 const withSession = (req: Request, data: unknown, token: string | null) => out(data, { 'set-cookie': auth.cookie(req, token) });
 const ip = (req: Request) => req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'local';
 /** Reset links only ever point back at this deployment (no open redirect in a mail): a Host or redirectTo this
- *  deployment does not serve is refused, whatever a client or a misrouted proxy sends. */
+ *  deployment does not serve (a forged header, the server's IP) gets the link on the deployment's own address. */
 function ownUrl(req: Request, wanted: unknown, fallback: string) {
-  const u = new URL(req.url), host = req.headers.get('host') ?? u.host;
-  if (!ownsHost(host)) throw new HttpError(400, 'Unknown host');
+  const u = new URL(req.url), host = req.headers.get('host') ?? u.host, cfg = config();
+  if (!ownsHost(host)) return `${cfg.protocol}://${cfg.routing === 'path' ? cfg.root : hostOf('app', cfg)}${fallback}`; // sign-in lives on app.
   try { const w = new URL(String(wanted)); if (/^https?:$/.test(w.protocol) && ownsHost(w.host)) return w.origin + w.pathname; } catch { /* not a URL */ }
   return `${req.headers.get('x-forwarded-proto') ?? u.protocol.replace(':', '')}://${host}${fallback}`;
 }

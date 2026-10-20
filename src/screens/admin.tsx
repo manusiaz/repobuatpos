@@ -378,8 +378,9 @@ function WhiteLabel({ db }: { db: DB }) {
 // ── Custom domains: the ones this deployment serves (NEXT_PUBLIC_BORNIZ_CUSTOM_DOMAINS), switched on by deploy/add-domain.sh ──
 function Domains({ db }: { db: DB }) {
   const [q, setQ] = useQuery({ d: '' });
-  const [dns, setDns] = useState(''), [add, setAdd] = useState(false), [host, setHost] = useState(''), [pick, setPick] = useState(db.tenant.id);
+  const [dns, setDns] = useState(''), [add, setAdd] = useState(false), [host, setHost] = useState(''), [chosen, setPick] = useState('');
   const live = hostConfig().customDomains, ts = tenants(db), slug = (t: Tenant) => t.meta.slug ?? t.id;
+  const pick = chosen || (ts[0] ? slug(ts[0]) : ''); // the select shows the first business until one is picked
   // live ones, then the ones a business asked for in Studios that are not switched on yet
   const rows: [string, string, boolean][] = [...Object.entries(live).map(([h, t]) => [h, t, true] as [string, string, boolean]),
     ...ts.filter(t => t.meta.domain && !live[t.meta.domain.toLowerCase()]).map(t => [t.meta.domain!.toLowerCase(), slug(t), false] as [string, string, boolean])];

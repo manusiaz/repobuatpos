@@ -10,10 +10,10 @@ import { useApp } from '../app/context.tsx';
 import { sendToKitchen } from '../data/actions.ts';
 import { orderPlaced } from '../data/actions/selforder.ts';
 import { brandVars } from './guest/kit.tsx';
-import { Empty } from '../ui/kit.tsx';
 import { GuestHead, GuestStyle } from './guest/look.tsx';
 import { guestVars, guestZoom } from '../system/tools.ts';
 import { useGuest, type G } from './selforder/shared.tsx';
+import { Unavailable } from './guest/kit.tsx';
 import { AddMore, Call, Cart, Category, Checkout, Closed, Home, Item, Landing, Language, Qris, Search, Status } from './selforder/order.tsx';
 import { Booking, EmailThanks, Feedback, MemberCard, Prefs, Queue, Receipt, Track, Voucher, WaThanks } from './selforder/links.tsx';
 import { ComboPage, GiftCards, PrintMenu, SplitBill, Store } from './selforder/more.tsx';
@@ -35,9 +35,7 @@ const VIEWS: Record<string, ComponentType<{ g: G }>> = {
 export default function Screen() {
   const { db } = useApp();
   // a link to a business that doesn't exist (wrong slug, or not on this database): a clear state, not a crash
-  if (!db.outlets.length) return <div style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', padding: 24 }}>
-    <Empty icon="store" title="This menu isn’t available">Check the link or the QR code with the staff. The business may have moved or closed.</Empty></div>;
-  return <Guest />;
+  return db.outlets.length ? <Guest /> : <Unavailable />;
 }
 function Guest() {
   const { page } = useApp();

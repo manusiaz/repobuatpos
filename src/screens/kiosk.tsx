@@ -12,6 +12,7 @@ import { productImage } from '../ui/kit.tsx';
 // paid; "pay at cashier" holds it for the register. Resets to the attract screen after 60 s without a touch.
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useApp } from '../app/context.tsx';
+import { Unavailable } from './guest/kit.tsx';
 import { pagesOf } from '../system/registry.ts';
 import { Icon, toast, useNow } from '../ui/kit.tsx';
 import { idr } from '../domain/money.ts';
@@ -30,7 +31,8 @@ const CARD: CSSProperties = { border: 0, borderRadius: '5cqw', background: 'var(
 const PRIMARY: CSSProperties = { height: TOUCH, border: 0, borderRadius: '5cqw', background: 'var(--bn-p)', color: 'var(--ink-0)', fontSize: '5cqw', fontWeight: 800, cursor: 'pointer', fontFamily: 'var(--font-display)' };
 const placed = (o: Order) => o.lines.length > 0 && (o.status === 'held' || o.lines.every(l => l.fired));
 
-export default function Screen() {
+export default function Screen() { return useApp().db.outlets.length ? <Kiosk /> : <Unavailable />; }
+function Kiosk() {
   const { page, db, outletId, go } = useApp();
   const view = (Object.entries(SLUG).find(([, s]) => s === page.slug)?.[0] ?? 'attract') as View;
   const [orderId, setOrderId] = useLocal<string | null>('bn-kiosk-order:' + outletId, null);

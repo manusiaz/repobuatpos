@@ -9,7 +9,7 @@ const { pool, rpc } = await import('../../src/integrations/server/db.ts');
 const { newSession } = await import('../../src/integrations/server/session.ts');
 const { runTenant } = await import('../../src/integrations/server/worker.ts');
 const src = pool(null), dst = pool('kb'), T = (await dst.query("select id from public.tenants where slug = 'kopibiru'")).rows[0].id;
-const api = async (path, body, cookie = '', host = 'kopibiru.bornis.id') => (await POST(new Request('https://' + host + '/api/bn/' + path, { method: 'POST', headers: { host, 'content-type': 'application/json', ...(cookie ? { cookie: 'bn_session=' + cookie } : {}) }, body: JSON.stringify(body) }), { params: Promise.resolve({ op: path.split('/') }) })).json();
+const api = async (path, body, cookie = '', host = 'kopibiru.bornis.id', tenant = '') => (await POST(new Request('https://' + host + '/api/bn/' + path, { method: 'POST', headers: { host, 'content-type': 'application/json', ...(cookie ? { cookie: 'bn_session=' + cookie } : {}), ...(tenant ? { 'x-borniz-tenant': tenant } : {}) }, body: JSON.stringify(body) }), { params: Promise.resolve({ op: path.split('/') }) })).json();
 
 // the guest menu comes from the business's own database, not the frozen copy
 await rpc('bn_server_write', { p_tenant: T, p_ops: [{ op: 'put', coll: 'products', id: 'p2', data: { id: 'p2', name: 'Es Kopi Baru', basePrice: 22000, status: 'live' } }], p_action: 'test' });
@@ -25,6 +25,12 @@ assert.equal((await dst.query("select count(*)::int n from public.docs where col
 const u = (await src.query("insert into auth.users (is_anonymous) values (true) returning id")).rows[0].id;
 await api('rpc/bn_is_member', { p_tenant: T }, await newSession(u));
 assert.equal((await dst.query('select count(*)::int n from auth.users where id = $1', [u])).rows[0].n, 1, 'account row copied to the cell');
+
+// the owner makes a shared register from app.bornis.id: the code is made in the cell, the tablet joins there
+const code = (await api('rpc/bn_device_code', { p_tenant: T }, await newSession('00000000-0000-0000-0000-00000000000a'), 'app.bornis.id')).data;
+const tab = await newSession((await src.query("insert into auth.users (is_anonymous) values (true) returning id")).rows[0].id);
+r = await api('rpc/bn_device_join', { p_code: code }, tab, 'app.bornis.id', T);
+assert.equal(r.error, null, 'device joins the moved business: ' + JSON.stringify(r.error));
 
 // super admin changes the plan: the registry here and the business's own copy there, no BN050
 const a = '00000000-0000-0000-0000-00000000000a';

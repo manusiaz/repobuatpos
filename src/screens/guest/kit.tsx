@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties, type Rea
 import type { DB, ModifierGroup, Order, Outlet, Product, Theme } from '../../data/schema.ts';
 import { priceAt, sellable } from '../../data/actions.ts';
 import { flashPrice } from '../../domain/promo.ts';
-import { Icon } from '../../ui/kit.tsx';
+import { Empty, Icon } from '../../ui/kit.tsx';
 
 // ── Brand ───────────────────────────────────────────────────────────────────────────────
 const FONTS: Record<string, string> = { space: "'Space Grotesk',sans-serif", bricolage: "'Space Grotesk',sans-serif", serif: "Georgia,'Times New Roman',serif", system: "'Instrument Sans',sans-serif" };
@@ -152,3 +152,7 @@ export const Wordmark = ({ name, size = 40, radius = 12 }: { name: string; size?
 /** Merchant-branded section heading. */
 export const H = ({ children, sub }: { children: ReactNode; sub?: ReactNode }) =>
   <div className="stack" style={{ gap: 2 }}><h2 style={{ fontSize: 22, fontWeight: 800 }}>{children}</h2>{sub && <span style={{ fontSize: 14, color: MUTED }}>{sub}</span>}</div>;
+
+/** A guest link to no business (wrong slug, or not on this database): QR menu and kiosk. */
+export const Unavailable = () => <div style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', padding: 24 }}>
+  <Empty icon="store" title="This menu isn’t available">Check the link or the QR code with the staff. The business may have moved or closed.</Empty></div>;

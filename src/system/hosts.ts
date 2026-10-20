@@ -135,8 +135,8 @@ export const allPublicUrls = (cfg: HostConfig) => PAGES.map(p => ({ path: p.path
 export const liveDomain = (tenant?: string, cfg = config()) => (tenant && Object.keys(cfg.customDomains).find(h => cfg.customDomains[h] === tenant)) || '';
 /** Public link for a page in this deployment (QR codes, receipts, WhatsApp, embeds). */
 export const linkTo = (internal: string, tenant?: string) => {
-  const t = tenant || hostTenant();
-  return publicUrl(internal, config(), t, typeof location !== 'undefined' ? location.origin : '', liveDomain(t));
+  const t = tenant || hostTenant(), cfg = config(); // on the server (worker) there is no page: the deployment's own address
+  return publicUrl(internal, cfg, t, typeof location !== 'undefined' ? location.origin : `${cfg.protocol}://${cfg.root}`, liveDomain(t));
 };
 /** Where a merchant points their own domain (CNAME). */
 export const cnameTarget = () => { const c = config(); return c.routing === 'subdomain' ? hostOf('menu', c) : (typeof location !== 'undefined' ? location.host : c.root); };

@@ -7,10 +7,11 @@ type R<T = any> = { data: T; error: BnError | null };
 export interface User { id: string; email: string | null; is_anonymous: boolean; user_metadata: Record<string, unknown> }
 
 let recovering: Promise<unknown> | null = null;
-async function api<T = any>(path: string, body?: unknown): Promise<R<T>> {
+/** tenant: which business the call is for when its arguments don't name it (the API finds that business's database). */
+async function api<T = any>(path: string, body?: unknown, tenant?: string): Promise<R<T>> {
   if (recovering && !path.startsWith('auth/recover')) await recovering;
   try {
-    const res = await fetch('/api/bn/' + path, { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body ?? {}) });
+    const res = await fetch('/api/bn/' + path, { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json', ...(tenant ? { 'x-borniz-tenant': tenant } : {}) }, body: JSON.stringify(body ?? {}) });
     const j = await res.json().catch(() => ({ data: null, error: { message: 'Server error' } }));
     return { data: j.data as T, error: j.error ? { ...j.error, status: res.status } : null };
   } catch { return { data: null as T, error: { message: 'No connection. Check the internet and try again.', status: 0 } }; }
@@ -49,7 +50,7 @@ const auth = {
     unenroll: (p: { factorId: string; code?: string }) => api('auth/mfa/unenroll', p),
   },
 };
-const client = { rpc: <T = any>(fn: string, args: Record<string, unknown> = {}) => api<T>('rpc/' + fn, args), read: <T = any>(what: string, args: Record<string, unknown> = {}) => api<T>('read/' + what, args), auth };
+const client = { rpc: <T = any>(fn: string, args: Record<string, unknown> = {}, tenant?: string) => api<T>('rpc/' + fn, args, tenant), read: <T = any>(what: string, args: Record<string, unknown> = {}) => api<T>('read/' + what, args), auth };
 export const sb = () => client;
 
 // A password-reset link (…/reset-password#bn_reset=<token>) signs this browser in once, then the page sets the new password.
@@ -86,7 +87,7 @@ export async function makeSharedRegister(tenant: string): Promise<string | null>
   await sb().auth.signOut();
   const a = await sb().auth.signInAnonymously();
   if (a.error) return a.error.message;
-  const j = await sb().rpc('bn_device_join', { p_code: c.data });
+  const j = await sb().rpc('bn_device_join', { p_code: c.data }, tenant); // the code lives in that business's database
   return j.error ? j.error.message : null;
 }
 export async function staffLogin(tenant: string, employee: string, pin: string): Promise<{ error?: string; token?: string }> {

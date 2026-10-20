@@ -5,7 +5,7 @@ import { config, publicUrl, resolve } from '../../../src/system/hosts.ts';
 export const dynamic = 'force-dynamic';
 
 export function GET(req: Request) {
-  const u = new URL(req.url), key = (u.searchParams.get('app') ?? '') in APPS ? u.searchParams.get('app') as App : 'bornis', app = APPS[key];
+  const u = new URL(req.url), key = Object.hasOwn(APPS, u.searchParams.get('app') ?? '') ? u.searchParams.get('app') as App : 'bornis', app = APPS[key];
   const host = req.headers.get('host') ?? u.host, origin = `${req.headers.get('x-forwarded-proto') ?? u.protocol.replace(':', '')}://${host}`, cfg = config();
   const tenant = (resolve(host, '/', cfg) as { query?: Record<string, string> }).query?.tenant;
   // installed from the merchant's own domain: starts there; from <slug>.<root>: starts there (an app never jumps host)
