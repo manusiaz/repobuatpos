@@ -10,7 +10,10 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { seed } from './seed.ts';
 import type { DB, Integration, Order, OrderLine } from './schema.ts';
-import { pendingJobs, prune, ticketLines } from '../devices/routing.ts';
+import { pendingJobs, prune, thisDevice, ticketLines } from '../devices/routing.ts';
+import { printedBefore } from '../devices/receipt.ts';
+import { markReceiptPrinted } from './actions.ts';
+import { snapshot } from './store.ts';
 import { receiptDoc } from '../devices/receipt.ts';
 import { toText } from '../devices/layout.ts';
 import { ROUTING_PAGE } from '../system/settings.ts';
@@ -93,3 +96,42 @@ test('the receipt adds up: line amounts as charged, cash rounded up shown', () =
 
 });
 
+
+test('only a register (or a paired device) drives the outlet printers: an unpaired waiter phone prints nothing', () => {
+  const db = seed(T);
+  assert.equal(thisDevice(db, false), null, 'not the register, not paired');
+  assert.ok(thisDevice(db, true), 'the register keeps the outlet fallback');
+});
+
+test('a receipt auto-prints at the register that took the money, not at every register', () => {
+  const o = bill([L('l1', 20000)], { subtotal: 20000, total: 20000 }), db = withBill(o);
+  db.integrations.push(printer('receipt', { autoPrint: true }));
+  db.payments.push({ id: 'pz', orderId: o.id, outletId: 'sen', method: 'cash', amount: 20000, tip: 0, status: 'settled', ref: 'REF-Z', at: T, expiresAt: null, sessionId: null, takenOn: 'd2' });
+  assert.equal(pendingJobs(db, 'd1', {}, T - 1).filter(j => j.kind === 'receipt').length, 0);
+});
+
+test('lines moved by merge or split keep their print record: no second ticket', () => {
+  const o = bill([L('l1', 20000, { movedFrom: 'o-old' })], { status: 'sent' });
+  assert.equal(pendingJobs(withBill(o), 'd1', { 'l:o-old:l1': T }, T - 1).filter(j => j.kind === 'ticket').length, 0);
+});
+
+test('a void reaches the kitchen printer from whichever device approves it: bill voided, item voided, platform cancel', () => {
+  const voided = bill([L('l1', 20000)], { status: 'voided' });
+  assert.deepEqual(pendingJobs(withBill(voided), 'd1', {}, T - 1).map(j => [j.kind, (j.lineIds ?? []).join()]), [['void', 'l1']]);
+  const item = bill([L('l2', 20000)], { status: 'sent', stopped: [{ ...L('l1', 20000), stoppedAt: T }] });
+  assert.deepEqual(pendingJobs(withBill(item), 'd1', { 'l:o-p:l2': T }, T - 1).map(j => [j.kind, (j.lineIds ?? []).join()]), [['void', 'l1']]);
+});
+
+test('the printer’s own roll width wins over the template; a reprint shows the refund; COPY is known on every device', () => {
+  const o = bill([L('l1', 25000)], { subtotal: 25000, total: 25000, status: 'part_refunded' }), db = withBill(o);
+  db.versions.push({ id: 'v-rcpt', kind: 'page', by: 'budi', at: T, status: 'published', data: { tool: 'rcpt', values: { paper: '80' } }, note: '' });
+  db.payments.push({ id: 'pr', orderId: o.id, outletId: 'sen', method: 'cash', amount: 25000, tip: 0, status: 'settled', ref: 'REF-R', at: T, expiresAt: null, sessionId: null });
+  db.refunds.push({ id: 'rf', orderId: o.id, paymentId: 'pr', amount: 10000, reason: 'cold', approvalId: 'a', at: T, toStock: false, sessionId: null });
+  const lines = toText(receiptDoc(db, o, '58', { paperFixed: true }));
+  assert.ok(lines.every(l => l.length <= 32 || l.startsWith('[QR]')), 'a 58 mm printer gets 32 columns');
+  assert.ok(lines.some(l => /^Refund/.test(l) && /-10,000/.test(l)), 'refund on the reprint');
+  const sale = snapshot().orders.find(x => x.status === 'paid')!;
+  assert.equal(printedBefore(snapshot(), sale), false);
+  markReceiptPrinted(sale.id, 'rina');
+  assert.equal(printedBefore(snapshot(), snapshot().orders.find(x => x.id === sale.id)!), true, 'the next print says COPY, on any register');
+});

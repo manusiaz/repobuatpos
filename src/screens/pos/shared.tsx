@@ -8,7 +8,6 @@ import { decide, requestApproval } from '../../data/actions.ts';
 import { checkApprovalPin, whenChecked } from '../../data/actions/auth.ts';
 import { applyPosApproval } from '../../data/actions/pos.ts';
 import { snapshot } from '../../data/store.ts';
-import { printTickets } from '../../devices/hardware.ts';
 import type { DB, Employee, Order, Session } from '../../data/schema.ts';
 import type { SessionUser } from '../../session.ts';
 import { levelRequired, PIN_LEN, type Level, type RequestType } from '../../domain/approval.ts';
@@ -179,11 +178,11 @@ export function ApproverPad({ approvalId, level, title, detail, onOk, onClose }:
 }
 
 /** Approvals this order is waiting for (shown as a live banner in the cart / sheets). */
-/** After a void: a VOID slip at the kitchen printers for food still being made (the KDS drops the line on its own). */
-export function voidSlip(db: DB, o: Order, lineIds: string[], by: string, msg = 'Item voided') {
-  const ids = o.lines.filter(l => lineIds.includes(l.id) && l.fired && l.kds !== 'done').map(l => l.id);
-  if (!ids.length) return toast(msg);
-  printTickets(db, o, by, true, ids, 'Void - do not make').then(r => toast(`${msg} · ${r.ok ? 'void slip printed' : 'the kitchen screen shows it'}`));
+/** After a void: the printer agent sends the VOID slip to the kitchen printer for food still being made, from whichever
+ *  device drives it (also when the void is approved later from a queue); the KDS drops the line on its own. */
+export function voidSlip(db: DB, o: Order, lineIds: string[], _by: string, msg = 'Item voided') {
+  const making = o.lines.some(l => lineIds.includes(l.id) && l.fired && l.kds !== 'done');
+  toast(making ? `${msg} · the kitchen gets a void slip` : msg);
 }
 export const waitingFor = (db: DB, orderId: string) => db.approvals.filter(a => a.status === 'waiting' && (a.subjectId === orderId || (a.payload as { orderId?: string } | undefined)?.orderId === orderId));
 

@@ -4,7 +4,7 @@
 // what was printed is remembered per device, so reloads and other tabs never print twice. Failures wait in the print queue.
 import { useEffect, useState } from 'react';
 import { snapshot, useDB } from '../data/store.ts';
-import { keysOf, pendingJobs, prune, thisDevice, type AgentState, type Job } from './routing.ts';
+import { keysOf, pendingJobs, prune, thisDevice, voidLines, type AgentState, type Job } from './routing.ts';
 import { printReceipt, printTickets, type Result } from './hardware.ts';
 import './testers.ts';
 
@@ -12,13 +12,16 @@ export interface Failed { job: Job; no: string; at: number; error: string }
 type State = AgentState & { failed: Failed[] };
 const KEY = (dev: string) => 'borniz-print-agent:' + dev;
 const listeners = new Set<() => void>();
+const memory = new Map<string, string>(); // storage blocked (private mode, locked-down kiosk browser): this tab remembers
 function load(dev: string): State {
-  try { const s = JSON.parse(localStorage.getItem(KEY(dev)) || 'null') as State | null; if (s?.since) return { ...s, failed: s.failed ?? [] }; } catch { /* blocked */ }
+  let raw = memory.get(KEY(dev)) ?? null; try { raw = localStorage.getItem(KEY(dev)) ?? raw; } catch { /* blocked */ }
+  try { const s = JSON.parse(raw || 'null') as State | null; if (s?.since) return { ...s, failed: s.failed ?? [] }; } catch { /* unreadable */ }
   const s = { since: Date.now(), done: {}, failed: [] }; save(dev, s); return s;
 }
 function save(dev: string, s: State) {
   prune(s);
-  try { localStorage.setItem(KEY(dev), JSON.stringify(s)); } catch { /* storage blocked: dedupe stays in memory for this tab */ }
+  const raw = JSON.stringify(s); memory.set(KEY(dev), raw);
+  try { localStorage.setItem(KEY(dev), raw); } catch { /* storage blocked: the memory copy above */ }
   listeners.forEach(f => f());
 }
 /** Change shown on the cash receipt: the register keeps it for the success screen (per tab, see screens/pos/shared uiGet). */
@@ -27,12 +30,13 @@ const lastChange = (orderId: string) => { try { const v = JSON.parse(sessionStor
 function runJob(j: Job): Promise<Result> {
   const db = snapshot(), o = db.orders.find(x => x.id === j.orderId);
   if (!o) return Promise.resolve({ ok: false, message: 'Order not found' });
-  return j.kind === 'receipt' ? printReceipt(db, o, thisDevice(db), 'device', { change: lastChange(o.id) }) : printTickets(db, o, 'device', false, j.lineIds);
+  if (j.kind === 'void') return printTickets(db, { ...o, lines: voidLines(o, j.lineIds!) }, 'device', true, j.lineIds, 'Void - do not make');
+  return j.kind === 'receipt' ? printReceipt(db, o, thisDevice(db, register), 'device', { change: lastChange(o.id) }) : printTickets(db, o, 'device', false, j.lineIds);
 }
 
-let chain: Promise<void> = Promise.resolve(), leader = false, asked = false;
+let chain: Promise<void> = Promise.resolve(), leader = false, asked = false, register = false;
 async function work() {
-  const db = snapshot(), dev = thisDevice(db);
+  const db = snapshot(), dev = thisDevice(db, register);
   if (!dev || !db.integrations.some(i => i.kind === 'printer' && i.enabled)) return;
   const s0 = load(dev);
   for (const j of pendingJobs(db, dev, s0.done, s0.since)) {
@@ -51,10 +55,11 @@ function elect() {
   locks.request('borniz-print-agent', () => { leader = true; kick(); return new Promise<void>(() => {}); }).catch(() => { leader = true; });
 }
 
-/** Mount once in the app shell. `on` = this surface may print (staff devices). */
-export function usePrintAgent(on = true) {
+/** Mount once in the app shell. `on` = this surface may print (staff devices); `onRegister` = the register screen, which
+ *  may stand in for the outlet's first register when this browser is not paired. */
+export function usePrintAgent(on = true, onRegister = false) {
   const db = useDB();
-  useEffect(() => { if (on && db) { elect(); kick(); } }, [db, on]);
+  useEffect(() => { register = onRegister; if (on && db) { elect(); kick(); } }, [db, on, onRegister]);
 }
 
 /** Print queue of this device (failed jobs) for the Device page. */
@@ -62,7 +67,7 @@ export function usePrintQueue(dev: string | null) {
   const [, bump] = useState(0);
   useEffect(() => { const f = () => bump(n => n + 1); listeners.add(f); return () => { listeners.delete(f); }; }, []);
   if (!dev) return [];
-  try { return (JSON.parse(localStorage.getItem(KEY(dev)) || 'null') as State | null)?.failed ?? []; } catch { return []; }
+  try { return (JSON.parse(localStorage.getItem(KEY(dev)) || memory.get(KEY(dev)) || 'null') as State | null)?.failed ?? []; } catch { return (JSON.parse(memory.get(KEY(dev)) || 'null') as State | null)?.failed ?? []; }
 }
 export async function retryFailed(dev: string): Promise<number> {
   const s = load(dev), jobs = s.failed; s.failed = []; save(dev, s);

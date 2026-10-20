@@ -3,9 +3,10 @@ import { ticketsOnPaper } from '../system/settings.ts';
 import type { Category, DB, Integration, Order, OrderLine } from '../data/schema.ts';
 import type { Paper } from './escpos.ts';
 
-/** This register: the paired POS (Auth › pairing), else the first register at the device's outlet. */
-export function thisDevice(db: DB): string | null {
-  return db.device.paired.pos ?? db.devices.find(d => d.kind === 'pos' && d.outletId === db.device.outletId)?.id ?? null;
+/** This register: the paired POS (Auth › pairing), else, on the register screen, the first register at the outlet.
+ *  Any other unpaired screen (waiter phone, PIC tablet, KDS) is no register and drives no printer. */
+export function thisDevice(db: DB, register = true): string | null {
+  return db.device.paired.pos ?? (register ? db.devices.find(d => d.kind === 'pos' && d.outletId === db.device.outletId)?.id ?? null : null);
 }
 export const outletOfDevice = (db: DB, deviceId: string | null) => db.devices.find(d => d.id === deviceId)?.outletId ?? db.device.outletId;
 
@@ -30,8 +31,9 @@ export function receiptPrinter(db: DB, outletId: string, deviceId: string | null
   return ps.find(i => ownerOf(db, i) === deviceId) ?? ps[0];
 }
 
-export interface Job { key: string; kind: 'ticket' | 'receipt'; integrationId: string; orderId: string; station?: Category['station']; lineIds?: string[] }
-export const lineKey = (o: Order, l: OrderLine) => `l:${o.id}:${l.id}`;
+export interface Job { key: string; kind: 'ticket' | 'receipt' | 'void'; integrationId: string; orderId: string; station?: Category['station']; lineIds?: string[] }
+export const lineKey = (o: Order, l: OrderLine) => `l:${l.movedFrom ?? o.id}:${l.id}`; // a merged / split line keeps its first bill's record
+export const voidKey = (o: Order, l: OrderLine) => `v:${o.id}:${l.id}`;
 export const receiptKey = (o: Order) => `r:${o.id}`;
 
 /** Jobs this device owes: each fired line once to its station printer, and the receipt of each paid register order
@@ -41,7 +43,18 @@ export function pendingJobs(db: DB, deviceId: string | null, done: Record<string
   const mine = (i: Integration | undefined): i is Integration => !!i && ownerOf(db, i) === deviceId;
   const paper = outletId ? ticketsOnPaper(db, outletId) : false; // the KDS is the ticket; paper when no KDS is online or as the owner's backup
   for (const o of db.orders) {
-    if (o.outletId !== outletId || !paper || o.status === 'voided') continue; // a voided bill is not cooked
+    if (o.outletId !== outletId || !paper) continue;
+    // a VOID slip for food the kitchen was making: an item voided (o.stopped) or the whole bill (its fired lines)
+    const stops = new Map<string, Job>();
+    for (const l of [...(o.stopped ?? []), ...(o.status === 'voided' ? o.lines : [])]) {
+      if (!l.fired || l.kds === 'done' || (l.firedAt ?? 0) < since || done[voidKey(o, l)]) continue;
+      const p = stationPrinter(db, outletId, l.station);
+      if (!mine(p)) continue;
+      const g = stops.get(p.id + ':' + l.station) ?? { key: `v:${o.id}:${l.station}:${l.id}`, kind: 'void' as const, integrationId: p.id, orderId: o.id, station: l.station, lineIds: [] };
+      g.lineIds!.push(l.id); stops.set(p.id + ':' + l.station, g);
+    }
+    jobs.push(...stops.values());
+    if (o.status === 'voided') continue; // a voided bill is not cooked
     const groups = new Map<string, Job>();
     for (const l of o.lines) {
       if (!l.fired || l.kds === 'done' || (l.firedAt ?? 0) < since || done[lineKey(o, l)]) continue; // finished: already made
@@ -52,7 +65,9 @@ export function pendingJobs(db: DB, deviceId: string | null, done: Record<string
       g.lineIds!.push(l.id); groups.set(k, g);
     }
     jobs.push(...groups.values());
-    if (o.source === 'pos' && o.status === 'paid' && (o.paidAt ?? 0) >= since && !done[receiptKey(o)]) {
+    // the receipt prints at the register that took the money (bills paid before registers were recorded: the outlet's own)
+    const took = db.payments.filter(x => x.orderId === o.id && x.status === 'settled' && x.takenOn).map(x => x.takenOn);
+    if (o.source === 'pos' && o.status === 'paid' && (o.paidAt ?? 0) >= since && !done[receiptKey(o)] && (!took.length || took.includes(deviceId))) {
       const p = receiptPrinter(db, outletId, deviceId);
       if (mine(p) && p.config.autoPrint) jobs.push({ key: receiptKey(o), kind: 'receipt', integrationId: p.id, orderId: o.id });
     }
@@ -60,7 +75,9 @@ export function pendingJobs(db: DB, deviceId: string | null, done: Record<string
   return jobs;
 }
 /** The dedupe keys a job settles (every line of a ticket, or the receipt). */
-export const keysOf = (j: Job, o: Order) => j.kind === 'receipt' ? [receiptKey(o)] : o.lines.filter(l => j.lineIds!.includes(l.id)).map(l => lineKey(o, l));
+export const keysOf = (j: Job, o: Order) => j.kind === 'receipt' ? [receiptKey(o)] : j.kind === 'void' ? j.lineIds!.map(id => `v:${o.id}:${id}`) : o.lines.filter(l => j.lineIds!.includes(l.id)).map(l => lineKey(o, l));
+/** The lines a VOID slip names. */
+export const voidLines = (o: Order, ids: string[]) => [...(o.stopped ?? []), ...o.lines].filter((l, i, a) => ids.includes(l.id) && a.findIndex(x => x.id === l.id) === i);
 
 /** Lines of a kitchen ticket: these lines, else the fired ones (a reprint too: a held course was never sent). */
 export const ticketLines = (o: Order, lineIds?: string[]) => o.lines.filter(l => (lineIds ? lineIds.includes(l.id) : l.fired));

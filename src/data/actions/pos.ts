@@ -37,14 +37,14 @@ export function splitToNewBill(orderId: string, lineIds: string[], by: string) {
   const o = order(orderId)!;
   const moved = o.lines.filter(l => lineIds.includes(l.id));
   const id = newOrder(o.outletId, by, 'pos', { type: o.type, table: o.table, guests: 1, sessionId: o.sessionId, customerId: null });
-  patchOrder(id, { lines: moved, status: moved.some(l => l.fired) ? 'sent' : 'open' }, by);
+  patchOrder(id, { lines: moved.map(l => (l.fired ? { ...l, movedFrom: l.movedFrom ?? orderId } : l)), status: moved.some(l => l.fired) ? 'sent' : 'open' }, by); // printed on the old bill
   patchOrder(orderId, { lines: o.lines.filter(l => !lineIds.includes(l.id)) }, by);
   return id;
 }
 /** Merge another open bill into this one. The emptied bill is closed with a note (value 0, nothing voided). */
 export function mergeBills(targetId: string, sourceId: string, by: string) {
   const t = order(targetId)!, s = order(sourceId)!;
-  patchOrder(targetId, { lines: [...t.lines, ...s.lines], guests: t.guests + s.guests, status: t.status === 'open' && s.lines.some(l => l.fired) ? 'sent' : t.status }, by);
+  patchOrder(targetId, { lines: [...t.lines, ...s.lines.map(l => (l.fired ? { ...l, movedFrom: l.movedFrom ?? sourceId } : l))], guests: t.guests + s.guests, status: t.status === 'open' && s.lines.some(l => l.fired) ? 'sent' : t.status }, by);
   patchOrder(sourceId, { lines: [], status: 'voided', note: `Merged into ${t.no}` }, by);
 }
 

@@ -24,14 +24,16 @@ const lineAmt = (l: OrderLine) => lineTotal({ unitPrice: l.unitPrice, flashPrice
 export const isAllergy = (l: OrderLine) => /alerg|allerg/i.test(l.note + ' ' + l.mods.map(m => m.name).join(' '));
 export const receiptUrl = (orderId: string) => linkTo('/order/customer-links/digital-receipt?o=' + orderId);
 
-export interface ReceiptOpts { copy?: boolean; change?: number; footer?: string; url?: string; kick?: boolean; cut?: boolean }
+/** This bill's receipt was printed before: the next print says COPY. */
+export const printedBefore = (db: DB, o: Order) => !!o.printedAt || db.audit.some(a => a.action === 'print.receipt' && a.subject === o.no);
+export interface ReceiptOpts { /** the printer's roll width is set: it wins over the template */ paperFixed?: boolean; copy?: boolean; change?: number; footer?: string; url?: string; kick?: boolean; cut?: boolean }
 
 /** The customer receipt in the outlet's guest number format (Studios › Number & currency format per outlet). */
 export const receiptDoc = (db: DB, o: Order, paper: Paper, opts: ReceiptOpts = {}): Doc => withMoneyStyle(guestMoney(db, o.outletId), () => receipt(db, o, paper, opts));
 
 function receipt(db: DB, o: Order, paper0: Paper, opts: ReceiptOpts): Doc {
   const out = db.outlets.find(x => x.id === o.outletId);
-  const tpl = receiptFor(db, o.outletId), lg = legal(db), paper = tpl?.paper ?? paper0; // Studios › Receipt template per outlet, Legal pages
+  const tpl = receiptFor(db, o.outletId), lg = legal(db), paper = opts.paperFixed ? paper0 : tpl?.paper ?? paper0; // Studios › Receipt template per outlet (unless the printer says its width), Legal pages
   const cashier = db.employees.find(e => e.id === o.cashierId)?.name ?? '-';
   const cust = db.customers.find(c => c.id === o.customerId);
   const pays = db.payments.filter(p => p.orderId === o.id && p.status === 'settled' && p.ref !== 'ROUNDING');
@@ -73,6 +75,7 @@ function receipt(db: DB, o: Order, paper0: Paper, opts: ReceiptOpts): Doc {
     if (p.tip) ops.push({ t: 'text', s: `  incl. tip ${amt(p.tip)}` });
     if (p.method !== 'cash') ops.push({ t: 'text', s: '  ' + (p.method === 'card' && !p.ref.startsWith('REF-') ? p.ref : 'Ref ' + p.ref) });
   }
+  for (const r of db.refunds.filter(x => x.orderId === o.id)) ops.push({ t: 'lr', l: 'Refund ' + (NAME[db.payments.find(p => p.id === r.paymentId)?.method ?? ''] ?? ''), r: amt(-r.amount) });
   if (opts.change) ops.push({ t: 'lr', l: 'Change', r: amt(opts.change), bold: true });
   ops.push({ t: 'rule' });
   if (rc.qr !== 'none') ops.push({ t: 'qr', data: qrUrl }, { t: 'text', s: rc.qr === 'feedback' ? 'Scan to rate your visit' : rc.qr === 'member' && cust ? 'Scan for your member card' : 'Scan for your digital receipt', align: 'center' });

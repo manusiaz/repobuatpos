@@ -131,5 +131,17 @@ assert.equal((await doc('orders', 'gofood-S1')).status, 'paid');
 await act('rina', () => A.rejectOnline('gofood-S2', 'kehabisan', 'rina'));
 assert.equal((await doc('orders', 'gofood-S2')).status, 'voided');
 
+// printing: the receipt is marked printed on the server (COPY on any register); a voided fired item leaves its VOID slip
+await act('rina', () => A.markReceiptPrinted(oid, 'rina'));
+assert.ok((await doc('orders', oid)).printedAt, 'printed once, known to every device');
+const vo = await act('rina', () => A.newOrder('sen', 'rina', 'pos', { table: 'T-02' }));
+await act('rina', () => A.addLine(vo, 'p2', [], 1, '', 'rina'));
+await act('rina', () => A.sendToKitchen(vo, 'rina'));
+const vline = d.orders.find(o => o.id === vo).lines[0].id;
+const va = await act('rina', () => A.requestApproval({ type: 'void', title: 'Void latte', amount: 28000, requestedBy: 'rina', outletId: 'sen', subjectId: vo, note: 'salah', payload: { lineId: vline } }));
+await pin('maya');
+assert.equal(await act('maya', () => A.decide(va.id, 'maya', 'approved')), null);
+assert.deepEqual((await doc('orders', vo)).stopped?.map(l => l.id), [vline], 'the kitchen printer gets the VOID slip');
+
 console.log('staff actions hold');
 await db.end();

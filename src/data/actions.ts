@@ -14,6 +14,7 @@ import { closeCheck, type ClockShot } from '../domain/shift.ts';
 import { comboPrices } from '../domain/split.ts';
 import { idr, roundCash } from '../domain/money.ts';
 import { approvalAlert, decidedAlert } from './alerts/names.ts';
+import { thisDevice } from '../devices/routing.ts';
 import { escalationOn, payOn, photoRequired, type PayId } from '../system/settings.ts';
 import alertsCatalog from '../system/alerts.json' with { type: 'json' };
 import { perm } from '../system/perms.ts';
@@ -106,6 +107,7 @@ export function moveTable(orderId: string, to: string, by: string) {
 /** Void a line (or the whole bill when lineId is null). Food already in the kitchen and not served raises 'Item voided' so nobody cooks it. */
 function voidIn(d: DB, o: Order, lineId: string | null, why: string) {
   const stop = o.lines.filter(l => (!lineId || l.id === lineId) && l.fired && l.kds !== 'done');
+  if (lineId && stop.length) o.stopped = [...(o.stopped ?? []), ...stop.map(l => ({ ...l, stoppedAt: now() }))]; // the printer agent sends the VOID slip
   if (lineId) o.lines = o.lines.filter(l => l.id !== lineId); else Object.assign(o, { status: 'voided', ...(why ? { note: 'Voided: ' + why } : {}) });
   if (stop.length) notify(d, 'Item voided', 'high', ['kitchen', 'waiter'], o.outletId, `${o.no} · ${o.table ?? (o.type === 'dine' ? 'dine-in' : o.type === 'take' ? 'takeaway' : 'delivery')} · stop ${stop.map(l => `${l.qty}× ${l.name}`).join(', ')}`);
   recalc(d, o);
@@ -179,7 +181,7 @@ export function startPayment(orderId: string, method: Method, amount: number, by
     const drawer = d.sessions.find(s => s.outletId === o.outletId && s.cashierId === by && s.status === 'open')?.id ?? o.sessionId;
     const instant = method === 'cash' || method === 'card' || method === 'deposit' || method === 'kasbon';
     d.payments.push({ id, orderId, outletId: o.outletId, method, amount, tip, status: instant ? 'settled' : 'pending', ref: (method === 'qris' ? 'QRIS-' : 'REF-') + id.slice(-6).toUpperCase(),
-      at: now(), expiresAt: method === 'qris' ? now() + (Number(studioValue(d, 'qris-payment-page-on-customer-phone').timer) * 60e3 || QRIS_TTL_MS) : null, sessionId: drawer });
+      at: now(), expiresAt: method === 'qris' ? now() + (Number(studioValue(d, 'qris-payment-page-on-customer-phone').timer) * 60e3 || QRIS_TTL_MS) : null, sessionId: drawer, takenOn: thisDevice(d) });
     if (method === 'deposit' && o.customerId) { const c = d.customers.find(x => x.id === o.customerId)!; c.deposit -= amount; }
     if (method === 'kasbon' && o.customerId) { const c = d.customers.find(x => x.id === o.customerId)!; c.credit += amount; }
     if (instant) settleIfDone(d, o, by);
@@ -595,6 +597,11 @@ export function simulatePlatformOrder(outletId: string, source: Source = 'gofood
   commit('online.priced', source, d => { const o = findOrder(d, id); o.lines.forEach(l => { l.unitPrice = channelPrice(d, l.unitPrice, source); }); recalc(d, o); }, id);
   commit('online.received', source, d => notify(d, 'New online order', 'warn', ['cashier', 'pic'], outletId, `${source} order ${findOrder(d, id).no} waiting to be accepted`, '/pos/selling/ride-hailing-orders-inbox'));
   return id;
+}
+/** The first customer receipt of a bill was printed (on any device): every later print says COPY. */
+export function markReceiptPrinted(orderId: string, by: string) {
+  if (snapshot().orders.find(o => o.id === orderId)?.printedAt) return;
+  commit('receipt.printed', by, d => { const o = findOrder(d, orderId); o.printedAt ??= now(); }, orderId);
 }
 export function acceptOnline(orderId: string, by: string) { sendToKitchen(orderId, by); commit('online.accepted', by, d => { const o = findOrder(d, orderId); o.cashierId = by; }, orderId); }
 export function rejectOnline(orderId: string, reason: string, by: string) { commit('online.rejected', by, d => { const o = findOrder(d, orderId); o.status = 'voided'; o.note = 'Rejected: ' + reason; }, orderId); }

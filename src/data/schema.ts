@@ -23,7 +23,7 @@ export interface StockItem { id: string; name: string; unit: string; unitCost: I
 export interface Recipe { productId: string; stockItemId: string; qty: number }
 export interface Customer { id: string; name: string; phone: string; email: string; joinedAt: number; optIn: boolean; birthday?: string; credit: IDR; deposit: IDR }
 
-export interface OrderLine { id: string; productId: string; name: string; qty: number; unitPrice: IDR; flashPrice: IDR | null; mods: { name: string; price: IDR }[]; note: string; discountPct: number; station: Category['station']; kds: 'new' | 'cooking' | 'done'; fired: boolean; firedAt?: number; /** combo instance: its lines are priced, added and removed together */ combo?: string }
+export interface OrderLine { id: string; productId: string; name: string; qty: number; unitPrice: IDR; flashPrice: IDR | null; mods: { name: string; price: IDR }[]; note: string; discountPct: number; station: Category['station']; kds: 'new' | 'cooking' | 'done'; fired: boolean; firedAt?: number; /** combo instance: its lines are priced, added and removed together */ combo?: string; /** bill it was fired on before a merge / split (its ticket was printed there) */ movedFrom?: string }
 export interface Order {
   id: string; no: string; outletId: string; sessionId: string | null; source: Source; type: 'dine' | 'take' | 'delivery'; status: OrderStatus;
   table: string | null; customerId: string | null; lines: OrderLine[]; discountPct: number; promoIds: string[]; guests: number;
@@ -31,8 +31,10 @@ export interface Order {
   tier?: 'rush' | 'standard' | 'saver'; readyBy?: number; readyAt?: number; idemKey: string; note?: string; rating?: number;
   /** Studios A/B test: the theme version the guest saw when ordering */ ab?: 'A' | 'B';
   /** table the bill was on before staff moved it (the guest's phone and the kitchen follow it) */ movedFrom?: string | null;
+  /** fired lines voided while being made: the kitchen printer gets a VOID slip */ stopped?: (OrderLine & { stoppedAt: number })[];
+  /** first customer receipt printed (any device): later prints say COPY */ printedAt?: number;
 }
-export interface Payment { id: string; orderId: string; outletId: string; method: Method; amount: IDR; tip: IDR; status: PaymentStatus; ref: string; at: number; expiresAt: number | null; sessionId: string | null; /** set by the payment gateway */ provider?: string; qr?: string; va?: string; deeplink?: string }
+export interface Payment { id: string; orderId: string; outletId: string; method: Method; amount: IDR; tip: IDR; status: PaymentStatus; ref: string; at: number; expiresAt: number | null; sessionId: string | null; /** register that took it: its receipt prints there */ takenOn?: string | null; /** set by the payment gateway */ provider?: string; qr?: string; va?: string; deeplink?: string }
 export interface Refund { id: string; orderId: string; paymentId: string; amount: IDR; reason: string; approvalId: string | null; at: number; toStock: boolean; /** drawer the cash went out of (cash refunds) */ sessionId?: string | null; /** lines returned to stock by this refund */ lineIds?: string[] }
 export interface Approval { id: string; type: RequestType; title: string; subjectId: string | null; amount: IDR; pct: number; level: Level; status: 'waiting' | 'approved' | 'rejected' | 'recount'; requestedBy: string; countedBy?: string; outletId: string; note: string; at: number; decidedBy?: string; decidedAt?: number; decisionNote?: string; payload?: Record<string, unknown> }
 export interface Session { id: string; outletId: string; cashierId: string; openedAt: number; openingFloat: IDR; closedAt: number | null; counted: IDR | null; variance: IDR | null; status: 'open' | 'counting' | 'needs_approval' | 'closed'; note: string }

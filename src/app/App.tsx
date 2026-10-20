@@ -44,7 +44,7 @@ export default function App({ path }: { path: string }) {
   const db = useDB();
   const user = useSession(page.surface, page.role);
   const staff = ['pos', 'pic', 'kds', 'online', 'waiter'].includes(page.surface);
-  usePrintAgent(staff);
+  usePrintAgent(staff, page.surface === 'pos'); // only the register stands in for an unpaired outlet register
   useOffline(!!db, WARM);
   const staffDevice = !['selforder', 'kiosk', 'display', 'landing', 'public', 'auth'].includes(page.surface); // guests never run staff work
   useDispatcher(staffDevice);

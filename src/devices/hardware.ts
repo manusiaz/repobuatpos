@@ -3,8 +3,9 @@
 import type { DB, Integration, Order } from '../data/schema.ts';
 import { reportIntegration } from '../data/actions/integrations.ts';
 import { logDevice } from '../data/actions/pos.ts';
+import { markReceiptPrinted } from '../data/actions.ts';
 import { logDrawer, type DrawerReason } from '../data/actions/devices.ts';
-import { kickDoc, kitchenDoc, receiptDoc, type ReceiptOpts } from './receipt.ts';
+import { kickDoc, kitchenDoc, printedBefore, receiptDoc, type ReceiptOpts } from './receipt.ts';
 import { cupDoc } from './labels.ts';
 import { ticketLayout } from '../system/tools.ts';
 import { toEscPos } from './layout.ts';
@@ -25,9 +26,9 @@ const mineOn = (db: DB, deviceId: string | null, connector: string) => db.integr
 export function printReceipt(db: DB, o: Order, deviceId: string | null, by: string, opts: ReceiptOpts = {}): Promise<Result> {
   const p = receiptPrinter(db, o.outletId, deviceId);
   if (!p) return Promise.resolve({ ok: false, message: 'No receipt printer set up. Add one in Device › Printer & drawer.' });
-  const copy = opts.copy ?? db.audit.some(a => a.action === 'print.receipt' && a.subject === o.no);
-  return run(p, () => printDoc(p, receiptDoc(db, o, paperOf(p), { ...opts, copy }), copy ? 1 : copiesOf(p)), copy ? 'Copy printed' : 'Receipt printed')
-    .then(r => { if (r.ok) logDevice('print.receipt', o.no, by, o.outletId); return r; });
+  const copy = opts.copy ?? printedBefore(db, o), paperFixed = p.config.paper === '58' || p.config.paper === '80';
+  return run(p, () => printDoc(p, receiptDoc(db, o, paperOf(p), { ...opts, copy, paperFixed }), copy ? 1 : copiesOf(p)), copy ? 'Copy printed' : 'Receipt printed')
+    .then(r => { if (r.ok) { logDevice('print.receipt', o.no, by, o.outletId); markReceiptPrinted(o.id, by); } return r; });
 }
 
 /** Kitchen tickets for an order: fired lines (or all lines on a reprint) grouped by station printer. A banner marks a
