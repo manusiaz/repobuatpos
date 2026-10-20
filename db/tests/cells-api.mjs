@@ -17,7 +17,8 @@ let r = await api('rpc/bn_public_snapshot', { p_slug: 'kopibiru' });
 assert.ok(r.data.docs.some(d => d.id === 'p2'), 'menu after the move: ' + JSON.stringify(r.error));
 
 // the attendance machine finds its business in the shared copy, which refuses (BN050): the scan lands in the cell
-r = await rpc('bn_machine_clock', { p_sn: 'SN-MOVE-1', p_rows: [{ pin: '1', time: '2026-10-20 08:00:00', status: '0' }] });
+const yesterday = new Date(Date.now() + 7 * 3600e3 - 864e5).toISOString().slice(0, 10) + ' 08:00:00'; // WIB, inside the machine's sane window
+r = await rpc('bn_machine_clock', { p_sn: 'SN-MOVE-1', p_rows: [{ pin: '1', time: yesterday, status: '0' }] });
 assert.equal(r.saved, 1);
 assert.equal((await dst.query("select count(*)::int n from public.docs where coll = 'clock' and tenant_id = $1", [T])).rows[0].n, 1);
 

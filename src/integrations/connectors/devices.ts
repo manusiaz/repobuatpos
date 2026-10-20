@@ -60,7 +60,7 @@ export const CONNECTORS: Connector[] = [
   { id: 'attendance-zkteco', kind: 'attendance', name: 'Attendance machine · fingerprint / face', scope: 'outlet', runtime: 'server', ready: true,
     blurb: 'ZKTeco and other machines with ADMS cloud push (Solution, Magic, Revo …). Each scan becomes a clock-in or clock-out for the staff member linked to that machine user ID.',
     fields: [{ key: 'serial', label: 'Serial number (SN)', required: true, placeholder: 'CKJF203960123', help: 'On the sticker under the machine, or Menu › System info › Device info.' },
-      { key: 'tz', label: 'Machine time zone', type: 'select', options: [['+07:00', 'WIB (UTC+7)'], ['+08:00', 'WITA (UTC+8)'], ['+09:00', 'WIT (UTC+9)']] }] },
+      { key: 'tz', label: 'Machine time zone', type: 'select', options: [['+07:00', 'WIB (UTC+7)'], ['+08:00', 'WITA (UTC+8)'], ['+09:00', 'WIT (UTC+9)']] }, { key: 'ip', label: 'Outlet internet address (optional)', placeholder: '203.0.113.5', help: 'Only scans from this address are accepted: the serial is printed on the machine. Leave empty if the outlet address changes.' }] },
 
   { id: 'attendance-fingerspot', kind: 'attendance', name: 'Attendance machine · Fingerspot.io', scope: 'outlet', runtime: 'server', ready: true,
     blurb: 'Fingerspot machines on the Fingerspot.io cloud. Fingerspot sends every scan to BorNiz by webhook; each scan becomes a clock-in or clock-out for the linked staff member.',

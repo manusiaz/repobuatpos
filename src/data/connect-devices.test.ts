@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { drawerReady, machineUsers, SCREEN, setupFor, userConfig, VIAS } from '../devices/connect.ts';
-import { parseAttlog } from '../devices/zk.ts';
+import { options, parseAttlog } from '../devices/zk.ts';
 import { CONNECTORS } from '../integrations/connectors/devices.ts';
 import { seed } from './seed.ts';
 import { perm } from '../system/perms.ts';
@@ -54,4 +54,9 @@ test('label printer keeps its own station; the attendance machine needs its seri
 test('ATTLOG lines from the machine parse; junk lines are skipped', () => {
   assert.deepEqual(parseAttlog('3\t2026-10-13 07:58:02\t0\t1\t0\t0\r\n12\t2026-10-13 17:01:40\t1\t15\n\nOPLOG 4\tx\n'),
     [{ pin: '3', time: '2026-10-13 07:58:02', status: '0', verify: '1' }, { pin: '12', time: '2026-10-13 17:01:40', status: '1', verify: '15' }]);
+});
+
+test('the machine is told its outlet time zone at the handshake', () => {
+  assert.match(options('CKJF2039', '+08:00'), /^TimeZone=8$/m);
+  assert.match(options('CKJF2039'), /^TimeZone=7$/m);
 });
