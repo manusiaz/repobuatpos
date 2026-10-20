@@ -318,9 +318,9 @@ function Flags({ db }: { db: DB }) {
 function Audit({ db }: { db: DB }) {
   const [q, setQ] = useQuery({ a: '', who: 'all' });
   const [search, setSearch] = useState('');
-  const who = (id: string) => db.employees.find(e => e.id === id)?.name ?? (id === 'admin' ? 'BorNiz admin' : human(id));
-  const actors = [...new Set(db.audit.map(a => a.actor))];
-  const rows = db.audit.filter(a => (q.who === 'all' || a.actor === q.who) && (!search || (a.action + ' ' + a.subject + ' ' + who(a.actor)).toLowerCase().includes(search.toLowerCase())));
+  const who = (id: string) => db.employees.find(e => e.id === id)?.name ?? (id === 'admin' ? 'BorNiz admin' : id.includes('@') ? id : human(id)); // staff by their email
+  const log = db.audit.filter(a => a.action !== 'platform.loaded'), actors = [...new Set(log.map(a => a.actor))];
+  const rows = log.filter(a => (q.who === 'all' || a.actor === q.who) && (!search || (a.action + ' ' + a.subject + ' ' + who(a.actor)).toLowerCase().includes(search.toLowerCase())));
   const sel = db.audit.find(a => a.id === q.a);
   const exportCsv = () => {
     const csv = ['time,actor,action,subject,outlet', ...rows.map(a => [new Date(a.at).toISOString(), who(a.actor), a.action, a.subject, a.outletId ?? ''].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))].join('\n');
