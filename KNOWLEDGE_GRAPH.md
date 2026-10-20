@@ -77,7 +77,8 @@ npx tsc --noEmit && npm test && npm run -s links && npm run -s check:system && n
 | fn:moveTable | fn | src/data/actions.ts | Pindah meja: `movedFrom`, audit `order.table_moved`, alert 'Table moved' ke dapur + waiter bila makanan belum keluar |
 | fn:voidItem | fn | src/data/actions.ts | Void item/bill (langsung atau lewat approval `voidIn`); alert 'Item voided' ke dapur + waiter bila sudah di-fire dan belum selesai |
 | fn:printTickets | fn | src/devices/hardware.ts | Tiket dapur per station; `banner` untuk slip perubahan (MOVED FROM / VOID) |
-| fn:voidSlip | fn | src/screens/pos/shared.tsx | Cetak slip VOID untuk item yang sudah di dapur |
+| fn:voidSlip | fn | src/screens/pos/shared.tsx | Toast setelah void; slip VOID dicetak print agent |
+| fn:printAgent | fn | src/devices/agent.ts | Print agent: tiket, struk auto, slip VOID dari perangkat pemilik printer |
 | page:/pos/selling/move-table | page | src/screens/pos/OrderSheets.tsx | Pindah meja: pilih meja asal (semua pesanan hidup di meja itu) → meja kosong |
 | page:/kds | page | src/screens/kds.tsx | KDS: banner 'Item voided' / 'Table moved' + "Got it"; tiket menampilkan "T-09 (from T-03)" |
 | page:/order status | page | src/screens/selforder/order.tsx | Status pesanan tamu; banner "Table moved" lewat Notices |
@@ -121,13 +122,14 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | fn:saveFloor | reads | fn:holdsTable | src/data/actions/business.ts:24 |
 | page:/pos/selling/move-table | calls | fn:moveTable | src/screens/pos/OrderSheets.tsx:332 |
 | page:/pos/selling/move-table | calls | fn:printTickets | src/screens/pos/OrderSheets.tsx:334 |
-| fn:moveTable | writes | table:orders | src/data/actions.ts:52 (findOrder → d.orders; movedFrom di :102) |
-| fn:moveTable | calls | fn:notify | src/data/actions.ts:103 (notify 'Table moved') |
-| fn:notify | writes | table:notices | src/data/actions.ts:39 |
-| fn:voidItem | calls | fn:notify | src/data/actions.ts:110 (notify 'Item voided') |
+| fn:moveTable | writes | table:orders | src/data/actions.ts:53 (findOrder → d.orders; movedFrom di :103) |
+| fn:moveTable | calls | fn:notify | src/data/actions.ts:104 (notify 'Table moved') |
+| fn:notify | writes | table:notices | src/data/actions.ts:40 |
+| fn:voidItem | calls | fn:notify | src/data/actions.ts:112 (notify 'Item voided') |
+| fn:voidItem | writes | table:orders | src/data/actions.ts:53 (findOrder → d.orders; o.stopped di :110 = slip VOID print agent) |
 | page:/pos/selling/register-order | calls | fn:voidItem | src/screens/pos/Register.tsx:107 |
 | page:/pos/selling/register-order | calls | fn:voidSlip | src/screens/pos/Register.tsx:107 |
-| fn:voidSlip | calls | fn:printTickets | src/screens/pos/shared.tsx:186 |
+| fn:printAgent | calls | fn:printTickets | src/devices/agent.ts:33 (VOID slip from o.stopped / voided bill) |
 | page:/kds | reads | table:notices | src/screens/kds.tsx:72 |
 | page:/kds | reads | table:orders | src/screens/kitchen/model.ts:22 (activeTickets; tiket menampilkan movedFrom) |
 | page:/order status | reads | table:orders | src/screens/selforder/shared.tsx:44 (pesanan milik HP ini; movedFrom → ikut pindah) |
