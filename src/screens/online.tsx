@@ -5,6 +5,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import Link from '../ui/Link.tsx';
 import { useApp } from '../app/context.tsx';
+import { REMOTE } from '../data/remote.ts';
 import { studioValue } from '../system/studio.ts';
 import { IntegrationsPanel } from '../integrations/Panel.tsx';
 import { OutletPicker, DeviceChrome } from '../app/chrome.tsx';
@@ -67,6 +68,8 @@ const Head = ({ title, sub, right }: { title: string | null; sub: string; right?
 const inScope = (o: Order, scope: 'platform' | 'all') => scope === 'platform' ? isPlatform(o.source) : isPlatform(o.source) || o.source === 'web' || o.source === 'qr';
 
 function Demo({ c }: { c: Ctx }) {
+  const { user } = useApp();
+  if (REMOTE && user.role !== 'owner' && user.role !== 'manager') return null; // on the live database only they may try the simulator (BN062)
   const run = (ch: Channel, sched = false) => { const e = receiveDemoOrder(c.outletId, ch, sched, c.by); toast(e ? `${e}: the platform isn’t sending orders` : `New ${CHANNEL[ch].name} ${sched ? 'pre-order' : 'order'} received`); };
   return <div className="row wrap" style={{ gap: 6 }}>
     <span className="cap">Demo</span>

@@ -275,7 +275,7 @@ test('Resend: email request shape with idempotency key', async () => {
 });
 
 test('delivery relay: signed order → internal delivery order; wrong signature or native payload refused', () => {
-  const o = { externalId: 'GF-889', merchantId: 'M-SEN', tier: 'rush' as const, items: [{ sku: 'p2', name: 'Es Kopi Susu', qty: 2, price: 28_000, modifiers: [{ name: 'Less sugar', price: 0 }] }, { id: 'p5', name: 'Croissant', qty: 1, price: 30_000 }], discount: 5_000, customer: { name: 'Raka', phone: '0812' }, placedAt: 1_000 };
+  const o = { externalId: 'GF-889', merchantId: 'M-SEN', tier: 'rush' as const, items: [{ sku: 'p2', name: 'Es Kopi Susu', qty: 2, price: 28_000, modifiers: [{ name: 'Less sugar', price: 0 }] }, { id: 'p5', name: 'Croissant', qty: 1, price: 30_000 }], discount: 5_000, customer: { name: 'Raka', phone: '0812' }, placedAt: 1_760_000_000_000 };
   const raw = JSON.stringify(o);
   const got = parsePlatform('gofood', hdr({ 'x-borniz-signature': signOutgoing('wh', raw) }), raw, { webhookSecret: 'wh' });
   assert.deepEqual(got, o);
@@ -290,8 +290,17 @@ test('delivery relay: signed order → internal delivery order; wrong signature 
   assert.equal(n.subtotal, 86_000);
   assert.equal(n.total, 81_000);
   assert.deepEqual(n.lines.map(l => [l.productId, l.qty, l.fired, l.kds]), [['p2', 2, false, 'new'], ['p5', 1, false, 'new']]);
-  assert.equal(n.readyBy, 1_000 + 14 * 60e3);
+  assert.equal(n.readyBy, 1_760_000_000_000 + 14 * 60e3);
   assert.equal(normalizeOrder('gofood', { ...got!, status: 'cancelled' }, 'sen').status, 'voided');
+});
+
+test('delivery relay: the SKU reaches the server, platform ids never collide, a broken payload is refused', () => {
+  const base = { externalId: 'A-123', merchantId: 'M-SEN', items: [{ id: 'gf-item-889', sku: 'LATTE-ICE', name: 'Latte', qty: 1, price: 30_000 }], placedAt: 1_760_000_000_000 };
+  assert.equal(normalizeOrder('grabfood', base, 'sen').lines[0].sku, 'LATTE-ICE', 'bn_platform_order maps lines by SKU');
+  assert.notEqual(normalizeOrder('grabfood', { ...base, externalId: 'A-1.23' }, 'sen').id, normalizeOrder('grabfood', base, 'sen').id);
+  assert.throws(() => normalizeOrder('gofood', { ...base, items: [{ name: 'Latte', qty: 1, price: undefined as unknown as number }] }, 'sen'), /price/);
+  assert.throws(() => normalizeOrder('gofood', { ...base, items: [{ name: 'Latte', qty: 1, price: -5 }] }, 'sen'), /price/);
+  assert.equal(normalizeOrder('gofood', { ...base, placedAt: 1_760_000_000 }, 'sen').createdAt, 1_760_000_000_000, 'seconds read as seconds');
 });
 
 test('journal CSV: every day and outlet balances, built from the dashboard sales math', () => {

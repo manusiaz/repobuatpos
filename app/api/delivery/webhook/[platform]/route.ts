@@ -20,7 +20,9 @@ export const POST = handle(async (req: Request, { params }: { params: Promise<{ 
     let o;
     try { o = parsePlatform(platform, req.headers, raw, await secretsOf(tenant, i.id)); } catch (e) { throw (e as { status?: number }).status ? e : new HttpError(400, (e as Error).message); }
     if (!o || String(o.merchantId) !== String(i.config.merchantId) || !i.outletId) continue;
-    const r = await rpc<{ id: string; no: string; status: string }>('bn_platform_order', { p_tenant: tenant, p_order: normalizeOrder(platform, o, i.outletId) });
+    let order;
+    try { order = normalizeOrder(platform, o, i.outletId); } catch (e) { throw new HttpError(400, (e as Error).message); } // the platform resends a fixed one
+    const r = await rpc<{ id: string; no: string; status: string }>('bn_platform_order', { p_tenant: tenant, p_order: order });
     return json({ ok: true, orderId: r?.id, no: r?.no, status: r?.status });
   }
   throw new HttpError(401, 'Signature or merchant ID does not match any outlet connection');

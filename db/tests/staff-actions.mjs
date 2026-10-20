@@ -118,5 +118,18 @@ assert.equal(await act('andi', () => A.decide(rf.id, 'andi', 'approved')), null)
 assert.equal((await doc('orders', oid)).status, 'refunded');
 assert.equal(await beans(), 0, 'the refund went through and the balance stays at zero');
 
+// delivery apps: the platform sends two GoFood orders; Rina accepts one and hands it over, rejects the other
+await db.query("insert into private.secrets (name, value) values ('server', 'staff-test-secret') on conflict (name) do update set value = excluded.value");
+const platform = async id => {
+  await db.query("select public.bn_platform_order('staff-test-secret', $1, $2)", [T, JSON.stringify({ id, source: 'gofood', type: 'delivery', status: 'open', outletId: 'sen', lines: [{ id: 'l1', productId: 'p2', name: 'Es Kopi Susu', qty: 1, unitPrice: 28000, mods: [], note: '', discountPct: 0, station: 'bar', kds: 'new', fired: false }], subtotal: 28000, discount: 0, service: 0, tax: 0, total: 28000, promoIds: [], discountPct: 0, guests: 1, createdAt: Date.now(), paidAt: null, cashierId: null, sessionId: null, table: null, customerId: null, idemKey: id })]);
+  d.orders.push(await doc('orders', id));
+};
+await platform('gofood-S1'); await platform('gofood-S2');
+await act('rina', () => A.acceptOnline('gofood-S1', 'rina'));
+await act('rina', () => A.pickedUp('gofood-S1', 'rina'));
+assert.equal((await doc('orders', 'gofood-S1')).status, 'paid');
+await act('rina', () => A.rejectOnline('gofood-S2', 'kehabisan', 'rina'));
+assert.equal((await doc('orders', 'gofood-S2')).status, 'voided');
+
 console.log('staff actions hold');
 await db.end();

@@ -126,7 +126,7 @@ do $$ declare r jsonb; begin
   assert (select data->'lineIds' = '["l1"]' from public.docs where coll = 'refunds' and id = 'rf1');
 end $$;
 reset role; set local role authenticated; select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
-select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"orders","id":"gf-9","data":{"id":"gf-9","status":"open"}},{"op":"del","coll":"refunds","id":"rf1"}]', 'x', 'x') $$, 'BN001');
+select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"orders","id":"gf-9","data":{"id":"gf-9","source":"gofood","status":"open"}},{"op":"del","coll":"refunds","id":"rf1"}]', 'x', 'x') $$, 'BN001');
 reset role; set local role anon;
 
 -- Guest snapshot: live products without cost, no recipes, portions left per outlet
