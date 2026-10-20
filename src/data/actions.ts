@@ -7,7 +7,7 @@ import type { Approval, DB, Order, Product, Rec, Role } from './schema.ts';
 import { lineTotal, orderTotals, QRIS_TTL_MS, type Method, type Source } from '../domain/order.ts';
 import { canDecide, levelRequired, twoKey, TWO_KEY, type Level, type RequestType, type Signer, PIN_TRIES, PIN_LOCK_MS } from '../domain/approval.ts';
 import { approvalRule, approvalWa } from '../system/tools.ts';
-import { earn, reversal, tierOf, canRedeem } from '../domain/loyalty.ts';
+import { balance, earn, reversal, tierOf, canRedeem } from '../domain/loyalty.ts';
 import { deductForSale, level as stockLevel, levels, portionsLeft, missingPhotos, opnameApprover, postOpname, type OpnameLine } from '../domain/stock.ts';
 import { flashPrice, resolve } from '../domain/promo.ts';
 import { closeCheck, type ClockShot } from '../domain/shift.ts';
@@ -357,7 +357,7 @@ function applyDecision(d: DB, r: Approval) {
       for (const cid of new Set(d.ledger.filter(l => l.orderId === o.id && l.points > 0).map(l => l.customerId))) {
         const mine = d.ledger.filter(l => l.orderId === o.id && l.customerId === cid);
         const earned = mine.filter(l => l.points > 0).reduce((a, l) => a + l.points, 0), reversed = -mine.filter(l => l.points < 0).reduce((a, l) => a + l.points, 0);
-        const due = Math.round(earned * Math.min(1, refunded / (o.total || 1))) - reversed;
+        const due = Math.min(Math.round(earned * Math.min(1, refunded / (o.total || 1))) - reversed, balance(d.ledger, cid)); // beans already spent stay spent
         if (due > 0) d.ledger.push({ ...reversal({ customerId: cid, points: due, reason: '', orderId: o.id, at: now() }) });
       }
       // stock comes back for the refunded items only; an amount-only partial refund returns nothing
@@ -563,6 +563,7 @@ export function addCustomer(name: string, phone: string, by: string, optIn = tru
   return id;
 }
 export function redeem(customerId: string, cost: number, reward: string, by: string): string | null {
+  if (!Number.isInteger(cost) || cost <= 0) return 'A reward costs a whole number of beans';
   if (!canRedeem(snapshot().ledger, customerId, cost)) return 'Not enough beans';
   commit('points.redeemed', by, d => { d.ledger.push({ customerId, points: -cost, reason: 'Redeem · ' + reward, at: now() }); }, reward);
   return null;

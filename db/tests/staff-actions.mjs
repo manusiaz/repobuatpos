@@ -12,6 +12,9 @@ const { onServerDB } = await import('../../src/data/store.ts');
 const A = await import('../../src/data/actions.ts');
 const P = await import('../../src/data/actions/pic.ts');
 const { expectedCash } = await import('../../src/domain/shift.ts');
+const POS = await import('../../src/data/actions/pos.ts');
+const { balance } = await import('../../src/domain/loyalty.ts');
+const { roundCash } = await import('../../src/domain/money.ts');
 const db = new pg.Client({ connectionString: URL + '/bn_test' });
 await db.connect();
 const as = async (uid, sql, args = []) => {
@@ -99,6 +102,21 @@ assert.equal(await act('sari', () => A.decide(d.approvals.find(a => a.type === '
 assert.equal((await doc('sessions', tono)).status, 'counting');
 await act('maya', () => P.picCountDrawer(tono, tdue, '', 'maya'));
 assert.deepEqual(await doc('sessions', tono).then(s => [s.status, s.variance]), ['closed', 0]);
+
+// beans: Rina sells to a member, the member spends every bean, the bill is refunded in full (the manager signs)
+await act('rina', () => A.openSession('sen', 'rina', 100000)); // her drawer takes the cash
+const member = d.customers[0].id, beans = async () => Number((await db.query("select coalesce(sum((data->>'points')::numeric), 0) s from public.docs where tenant_id = $1 and coll = 'ledger' and data->>'customerId' = $2", [T, member])).rows[0].s);
+const oid = await act('rina', () => A.newOrder('sen', 'rina', 'pos', { customerId: member }));
+await act('rina', () => A.addLine(oid, 'p2', [], 3, '', 'rina'));
+const bill = d.orders.find(o => o.id === oid);
+await act('rina', () => POS.payCash(oid, roundCash(bill.total), bill.total, 'rina'));
+assert.ok(await beans() > 0 && await beans() === balance(d.ledger, member), 'earned on the paid bill');
+assert.equal(await act('rina', () => A.redeem(member, balance(d.ledger, member), 'Free latte', 'rina')), null);
+const rf = await act('rina', () => A.requestApproval({ type: 'refund', title: 'Refund ' + bill.no, amount: bill.total, requestedBy: 'rina', outletId: 'sen', subjectId: oid, note: 'dingin', payload: { toStock: false } }));
+await pin('andi');
+assert.equal(await act('andi', () => A.decide(rf.id, 'andi', 'approved')), null);
+assert.equal((await doc('orders', oid)).status, 'refunded');
+assert.equal(await beans(), 0, 'the refund went through and the balance stays at zero');
 
 console.log('staff actions hold');
 await db.end();

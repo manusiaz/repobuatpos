@@ -34,15 +34,15 @@ do $$ begin assert public.bn_check_login_pin((select id from t), 'tono', '1234')
 
 -- Approval ladder on the server
 select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"ap1","data":{"id":"ap1","type":"refund","title":"Refund #2033","amount":620000,"level":"owner","status":"waiting","requestedBy":"tono"}}]', 'approval.requested', 'tono');
-select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"ap1","data":{"id":"ap1","level":"owner","status":"approved","requestedBy":"tono","decidedBy":"andi"}}]', 'x', 'andi') $$, 'BN008');
+select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"ap1","data":{"id":"ap1","type":"refund","title":"Refund #2033","amount":620000,"level":"owner","status":"approved","requestedBy":"tono","decidedBy":"andi"}}]', 'x', 'andi') $$, 'BN008');
 do $$ begin assert public.bn_check_approval_pin((select id from t), 'andi', '246810') is null; end $$;
-select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"ap1","data":{"id":"ap1","level":"owner","status":"approved","requestedBy":"tono","decidedBy":"andi"}}]', 'x', 'andi') $$, 'BN009');
-select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"ap1","data":{"id":"ap1","level":"owner","status":"approved","requestedBy":"tono","decidedBy":"tono"}}]', 'x', 'tono') $$, 'BN007');
+select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"ap1","data":{"id":"ap1","type":"refund","title":"Refund #2033","amount":620000,"level":"owner","status":"approved","requestedBy":"tono","decidedBy":"andi"}}]', 'x', 'andi') $$, 'BN009');
+select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"ap1","data":{"id":"ap1","type":"refund","title":"Refund #2033","amount":620000,"level":"owner","status":"approved","requestedBy":"tono","decidedBy":"tono"}}]', 'x', 'tono') $$, 'BN007');
 do $$ begin assert public.bn_check_approval_pin((select id from t), 'budi', '000000') like 'Wrong PIN. 4 tries left.'; end $$;
-select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"ap1","data":{"id":"ap1","level":"owner","status":"approved","requestedBy":"tono","decidedBy":"budi"}}]', 'x', 'budi') $$, 'BN008');
+select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"ap1","data":{"id":"ap1","type":"refund","title":"Refund #2033","amount":620000,"level":"owner","status":"approved","requestedBy":"tono","decidedBy":"budi"}}]', 'x', 'budi') $$, 'BN008');
 do $$ begin assert public.bn_check_approval_pin((select id from t), 'budi', '246810') is null; end $$;
-select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"ap1","data":{"id":"ap1","level":"owner","status":"approved","requestedBy":"tono","decidedBy":"budi"}}]', 'approval.approved', 'budi');
-select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"ap1","data":{"id":"ap1","level":"owner","status":"rejected","requestedBy":"tono","decidedBy":"budi"}}]', 'x', 'budi') $$, 'BN006');
+select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"ap1","data":{"id":"ap1","type":"refund","title":"Refund #2033","amount":620000,"level":"owner","status":"approved","requestedBy":"tono","decidedBy":"budi"}}]', 'approval.approved', 'budi');
+select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"ap1","data":{"id":"ap1","type":"refund","title":"Refund #2033","amount":620000,"level":"owner","status":"rejected","requestedBy":"tono","decidedBy":"budi"}}]', 'x', 'budi') $$, 'BN006');
 select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"ap2","data":{"id":"ap2","level":"pic","status":"approved","requestedBy":"tono","decidedBy":"maya"}}]', 'x', 'tono') $$, 'BN005');
 -- 5 wrong approval PINs lock it and alert manager + owner
 do $$ declare i int; begin for i in 1..5 loop perform public.bn_check_approval_pin((select id from t), 'maya', '111111'); end loop;
