@@ -4,12 +4,12 @@
 // what was printed is remembered per device, so reloads and other tabs never print twice. Failures wait in the print queue.
 import { useEffect, useState } from 'react';
 import { snapshot, useDB } from '../data/store.ts';
-import { keysOf, pendingJobs, thisDevice, type Job } from './routing.ts';
+import { keysOf, pendingJobs, prune, thisDevice, type AgentState, type Job } from './routing.ts';
 import { printReceipt, printTickets, type Result } from './hardware.ts';
 import './testers.ts';
 
 export interface Failed { job: Job; no: string; at: number; error: string }
-interface State { since: number; done: Record<string, number>; failed: Failed[] }
+type State = AgentState & { failed: Failed[] };
 const KEY = (dev: string) => 'borniz-print-agent:' + dev;
 const listeners = new Set<() => void>();
 function load(dev: string): State {
@@ -17,8 +17,7 @@ function load(dev: string): State {
   const s = { since: Date.now(), done: {}, failed: [] }; save(dev, s); return s;
 }
 function save(dev: string, s: State) {
-  const cut = Date.now() - 2 * 864e5;
-  s.done = Object.fromEntries(Object.entries(s.done).filter(([, t]) => t > cut));
+  prune(s);
   try { localStorage.setItem(KEY(dev), JSON.stringify(s)); } catch { /* storage blocked: dedupe stays in memory for this tab */ }
   listeners.forEach(f => f());
 }

@@ -17,7 +17,7 @@ export function docToHtml(doc: Doc, copies = 1): string {
     if (op.t === 'text' || op.t === 'lr') {
       const cls = [op.bold && 'b', op.size === 'wide' && 'w', op.size === 'tall' && 't', op.t === 'text' && op.invert && 'i'].filter(Boolean).join(' ');
       const align = op.t === 'text' ? op.align ?? 'left' : 'left';
-      body.push(`<div class="${cls}" style="text-align:${align}">${linesOf(op, doc.paper).map(l => esc(op.t === 'lr' ? l : l.trim())).join('<br>')}</div>`);
+      body.push(`<div class="${cls}" style="text-align:${align}">${linesOf(op, doc.paper).map(l => esc(op.t === 'lr' ? l : l.trimEnd())).join('<br>')}</div>`);
     } else if (op.t === 'rule') body.push(`<div>${esc(linesOf(op, doc.paper)[0])}</div>`);
     else if (op.t === 'feed') body.push('<br>'.repeat(Math.min(op.n, 2)));
     else if (op.t === 'qr') body.push(`<div class="c">${qrSvg(op.data)}</div>`);

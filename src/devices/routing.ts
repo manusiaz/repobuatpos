@@ -41,10 +41,10 @@ export function pendingJobs(db: DB, deviceId: string | null, done: Record<string
   const mine = (i: Integration | undefined): i is Integration => !!i && ownerOf(db, i) === deviceId;
   const paper = outletId ? ticketsOnPaper(db, outletId) : false; // the KDS is the ticket; paper when no KDS is online or as the owner's backup
   for (const o of db.orders) {
-    if (o.outletId !== outletId || !paper) continue;
+    if (o.outletId !== outletId || !paper || o.status === 'voided') continue; // a voided bill is not cooked
     const groups = new Map<string, Job>();
     for (const l of o.lines) {
-      if (!l.fired || (l.firedAt ?? 0) < since || done[lineKey(o, l)]) continue;
+      if (!l.fired || l.kds === 'done' || (l.firedAt ?? 0) < since || done[lineKey(o, l)]) continue; // finished: already made
       const p = stationPrinter(db, outletId, l.station);
       if (!mine(p)) continue;
       const k = p.id + ':' + l.station;
@@ -61,3 +61,14 @@ export function pendingJobs(db: DB, deviceId: string | null, done: Record<string
 }
 /** The dedupe keys a job settles (every line of a ticket, or the receipt). */
 export const keysOf = (j: Job, o: Order) => j.kind === 'receipt' ? [receiptKey(o)] : o.lines.filter(l => j.lineIds!.includes(l.id)).map(l => lineKey(o, l));
+
+/** Lines of a kitchen ticket: these lines, else the fired ones (a reprint too: a held course was never sent). */
+export const ticketLines = (o: Order, lineIds?: string[]) => o.lines.filter(l => (lineIds ? lineIds.includes(l.id) : l.fired));
+/** What the agent remembers it printed, kept two days; it never looks back further than it remembers. */
+export interface AgentState { since: number; done: Record<string, number> }
+export function prune<S extends AgentState>(s: S, now = Date.now()): S {
+  const cut = now - 2 * 864e5;
+  s.done = Object.fromEntries(Object.entries(s.done).filter(([, t]) => t > cut));
+  s.since = Math.max(s.since, cut);
+  return s;
+}

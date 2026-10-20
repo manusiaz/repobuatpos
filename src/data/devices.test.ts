@@ -145,8 +145,8 @@ test('LAN bridge delivers the exact bytes to a printer socket (port 9100 stand-i
   const got: Buffer[] = [];
   const printer = net.createServer(s => s.on('data', (c: Buffer) => got.push(c)));
   await new Promise<void>(r => printer.listen(0, '127.0.0.1', () => r()));
-  const { startBridge } = await import(String(new URL('../devices/bridge.mjs', import.meta.url))) as { startBridge: (o: { port: number }) => Promise<net.Server> };
-  const bridge = await startBridge({ port: 0 });
+  const { startBridge } = await import(String(new URL('../devices/bridge.mjs', import.meta.url))) as { startBridge: (o: { port: number; ports?: number[] }) => Promise<net.Server> };
+  const bridge = await startBridge({ port: 0, ports: [(printer.address() as net.AddressInfo).port] });
   const bytes = toEscPos(receiptDoc(fixture().db, fixture().o, '58'));
   await bridgeSend(`http://127.0.0.1:${(bridge.address() as net.AddressInfo).port}`, '127.0.0.1', (printer.address() as net.AddressInfo).port, bytes);
   await new Promise(r => setTimeout(r, 50));

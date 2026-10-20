@@ -9,7 +9,7 @@ import { cupDoc } from './labels.ts';
 import { ticketLayout } from '../system/tools.ts';
 import { toEscPos } from './layout.ts';
 import { canKick, printDoc, sendBytes } from './printer.ts';
-import { copiesOf, outletOfDevice, ownerOf, paperOf, printersAt, receiptPrinter, stationOf, stationPrinter } from './routing.ts';
+import { copiesOf, outletOfDevice, ownerOf, paperOf, printersAt, receiptPrinter, stationOf, stationPrinter, ticketLines } from './routing.ts';
 import { serialSend } from './transports.ts';
 import { readScale } from './scale.ts';
 import { poleBytes } from './escpos.ts';
@@ -33,7 +33,7 @@ export function printReceipt(db: DB, o: Order, deviceId: string | null, by: stri
 /** Kitchen tickets for an order: fired lines (or all lines on a reprint) grouped by station printer. A banner marks a
  *  change slip (table moved, item voided). */
 export async function printTickets(db: DB, o: Order, by: string, reprint = false, lineIds?: string[], banner?: string): Promise<Result> {
-  const lines = o.lines.filter(l => (lineIds ? lineIds.includes(l.id) : reprint || l.fired));
+  const lines = ticketLines(o, lineIds);
   const st = [...new Set(lines.map(l => l.station))];
   const res: Result[] = [];
   for (const s of st) {
@@ -46,7 +46,7 @@ export async function printTickets(db: DB, o: Order, by: string, reprint = false
   if (pass) res.push(await run(pass, () => printDoc(pass, kitchenDoc(db, o, 'expo', lines, paperOf(pass), { reprint, expo: true, banner })), 'Expo copy printed'));
   const label = printersAt(db, o.outletId).find(i => stationOf(i) === 'label'), cups = label && !reprint && !banner && cupDoc(db, o, lines);
   if (label && cups) res.push(await run(label, () => printDoc(label, cups), 'Cup stickers printed'));
-  if (res.some(r => r.ok)) logDevice(reprint ? 'print.kitchen_reprint' : 'print.kitchen_ticket', o.no, by, o.outletId);
+  if (res.some(r => r.ok)) logDevice(banner ? 'print.kitchen_slip' : reprint ? 'print.kitchen_reprint' : 'print.kitchen_ticket', o.no, by, o.outletId); // a void / move slip is not a reprint
   return { ok: res.length > 0 && res.every(r => r.ok), message: res.map(r => r.message).join(' · ') || 'Nothing to print' };
 }
 

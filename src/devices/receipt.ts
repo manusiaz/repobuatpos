@@ -1,5 +1,6 @@
 // What BorNiz prints: the customer receipt, the kitchen ticket per station, the test page. Built from the order fields
 // (totals are never recomputed here), laid out once for 58 mm (32 cols) and 80 mm (48 cols).
+import { lineTotal } from '../domain/order.ts';
 import type { DB, Order, OrderLine } from '../data/schema.ts';
 import { idr, withMoneyStyle } from '../domain/money.ts';
 import { guestMoney, guestStamp, legal, receiptFor, whiteLabel } from '../system/tools.ts';
@@ -19,7 +20,7 @@ const NAME: Record<string, string> = { cash: 'Cash', qris: 'QRIS', card: 'Card',
 const SOURCE: Record<string, string> = { pos: 'Register', qr: 'QR order', kiosk: 'Kiosk', waiter: 'Waiter', web: 'Web', gofood: 'GoFood', grabfood: 'GrabFood', shopeefood: 'ShopeeFood' };
 export const where = (o: Order) => o.type === 'dine' ? (o.table ?? 'Dine-in') : o.type === 'take' ? 'Takeaway' : 'Delivery';
 export const unitOf = (l: OrderLine) => (l.flashPrice ?? l.unitPrice) + l.mods.reduce((a, m) => a + m.price, 0);
-const lineAmt = (l: OrderLine) => Math.round(unitOf(l) * l.qty * (1 - l.discountPct / 100));
+const lineAmt = (l: OrderLine) => lineTotal({ unitPrice: l.unitPrice, flashPrice: l.flashPrice, modifiers: l.mods.map(m => m.price), qty: l.qty, discountPct: l.discountPct }); // as charged
 export const isAllergy = (l: OrderLine) => /alerg|allerg/i.test(l.note + ' ' + l.mods.map(m => m.name).join(' '));
 export const receiptUrl = (orderId: string) => linkTo('/order/customer-links/digital-receipt?o=' + orderId);
 
@@ -62,8 +63,11 @@ function receipt(db: DB, o: Order, paper0: Paper, opts: ReceiptOpts): Doc {
   if (o.discount) ops.push({ t: 'lr', l: 'Discount', r: amt(-o.discount) });
   if (o.service) ops.push({ t: 'lr', l: `Service ${(out?.serviceBps ?? 0) / 100}%`, r: amt(o.service) });
   ops.push({ t: 'lr', l: `PB1 ${(out?.taxBps ?? 0) / 100}%${out?.taxInclusive ? ' (incl.)' : ''}`, r: amt(o.tax) });
-  if (rounding) ops.push({ t: 'lr', l: 'Cash rounding', r: amt(-rounding) });
-  ops.push({ t: 'lr', l: 'TOTAL', r: idr(o.total - rounding), bold: true, size: 'tall' }, { t: 'rule' });
+  // cash rounded down is a ROUNDING row; rounded up, the cash taken is above the bill
+  const up = pays.some(p => p.method === 'cash') ? Math.max(0, pays.reduce((a, p) => a + p.amount, 0) - (o.total - rounding)) : 0;
+  const round = up > 0 && up < 100 ? up : -rounding;
+  if (round) ops.push({ t: 'lr', l: 'Cash rounding', r: amt(round) });
+  ops.push({ t: 'lr', l: 'TOTAL', r: idr(o.total + round), bold: true, size: 'tall' }, { t: 'rule' });
   for (const p of pays) {
     ops.push({ t: 'lr', l: NAME[p.method] ?? p.method, r: amt(p.amount + p.tip) });
     if (p.tip) ops.push({ t: 'text', s: `  incl. tip ${amt(p.tip)}` });
@@ -94,7 +98,7 @@ export function kitchenDoc(db: DB, o: Order, station: string, lines: OrderLine[]
   const by = db.employees.find(e => e.id === o.cashierId)?.name;
   const at = Math.max(0, ...lines.map(l => l.firedAt ?? 0)) || o.createdAt;
   const ops: Op[] = [
-    { t: 'text', s: (opts.expo ? 'EXPO COPY' : station.toUpperCase()) + (opts.reprint ? ' - REPRINT' : ''), align: 'center', bold: true, invert: true },
+    { t: 'text', s: (opts.expo ? 'EXPO COPY' : station.toUpperCase()) + (opts.reprint && !opts.banner ? ' - REPRINT' : ''), align: 'center', bold: true, invert: true },
     ...(opts.banner ? [{ t: 'text', s: opts.banner.toUpperCase(), align: 'center', bold: true, invert: true, size: 'wide' } as Op] : []),
     { t: 'text', s: (o.type === 'dine' ? o.table ?? 'DINE-IN' : o.type === 'take' ? 'TAKEAWAY' : 'DELIVERY').toUpperCase(), align: 'center', bold: true, size: k.table },
     { t: 'text', s: o.no, align: 'center', bold: true, size: 'wide' },
@@ -126,7 +130,7 @@ export function testDoc(name: string, paper: Paper, extra: string[] = []): Doc {
     { t: 'text', s: 'Highlighted', invert: true }, { t: 'text', s: 'Right', align: 'right' },
     { t: 'text', s: 'Kopi Susu Aren · crème brûlée' },
     ...extra.map(s => ({ t: 'text', s } as Op)),
-    { t: 'qr', data: 'https://bornis.id' }, { t: 'barcode', data: 'KB-001' },
+    { t: 'qr', data: linkTo('/') }, { t: 'barcode', data: 'KB-001' },
     { t: 'feed', n: 3 }, { t: 'cut' },
   ] };
 }
