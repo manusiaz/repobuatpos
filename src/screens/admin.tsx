@@ -14,7 +14,7 @@ import { endSupportAccess, ensurePlatform, logAdmin, patchRecord, requestSupport
 import type { DB, Rec } from '../data/schema.ts';
 import { PLANS, STATUS_TONE, accessOf, churn, mrrHistory, planName, planPrice, priceKey, tenants, withTax, type Plan, type Tenant } from './admin/platform.ts';
 import { useQuery } from './insight/query.ts';
-import { cnameTarget, config as hostConfig, liveDomain } from '../system/hosts.ts';
+import { cnameTarget, config as hostConfig, domainRequests, liveDomain } from '../system/hosts.ts';
 
 const DETAIL = '/admin/tenant-detail-and-plan';
 const St = ({ s }: { s: string }) => <Badge tone={STATUS_TONE[s] ?? 'neutral'} dot>{human(s)}</Badge>;
@@ -225,7 +225,7 @@ function Plans({ db }: { db: DB }) {
 }
 
 // ── Invoices ──────────────────────────────────────────────────────────────────────────────
-const invNo = (r: Rec) => `INV-${r.b.slice(2).replace('-', '-')}-${r.a.slice(0, 4).toUpperCase()}`;
+const invNo = (r: Rec) => `INV-${r.b.slice(2)}-${r.a.slice(0, 4).toUpperCase()}`;
 function InvoiceTable({ db, rows, sel, onSel }: { db: DB; rows: Rec[]; sel?: string; onSel?: (id: string) => void }) {
   return <div className="scroll-x"><table className="table"><thead><tr><th>Invoice</th><th>Tenant</th><th>Period</th><th className="r">Amount</th><th>Method</th><th>Status</th></tr></thead>
     <tbody>{rows.map(r => <tr key={r.id} className={onSel ? 'click' : undefined} tabIndex={onSel ? 0 : undefined} style={{ background: sel === r.id ? 'var(--role-soft)' : undefined }} onClick={() => onSel?.(r.id)} onKeyDown={e => e.key === 'Enter' && onSel?.(r.id)}>
@@ -382,8 +382,9 @@ function Domains({ db }: { db: DB }) {
   const live = hostConfig().customDomains, ts = tenants(db), slug = (t: Tenant) => t.meta.slug ?? t.id;
   const pick = chosen || (ts[0] ? slug(ts[0]) : ''); // the select shows the first business until one is picked
   // live ones, then the ones a business asked for in Studios that are not switched on yet
-  const rows: [string, string, boolean][] = [...Object.entries(live).map(([h, t]) => [h, t, true] as [string, string, boolean]),
-    ...ts.filter(t => t.meta.domain && !live[t.meta.domain.toLowerCase()]).map(t => [t.meta.domain!.toLowerCase(), slug(t), false] as [string, string, boolean])];
+  const asked = domainRequests(ts.map(t => ({ slug: slug(t), domain: t.meta.domain })), live);
+  const rows: [string, string, boolean, string?][] = [...Object.entries(live).map(([h, t]) => [h, t, true] as [string, string, boolean]),
+    ...asked.map(a => [a.host, a.slug, false, a.problem] as [string, string, boolean, string?])];
   const sel = rows.find(([h]) => h === q.d);
   const check = async (h: string) => {
     setDns('Checking…');
@@ -397,13 +398,14 @@ function Domains({ db }: { db: DB }) {
   return <>
     <div className="row between"><span className="muted" style={{ fontSize: 14 }}>{rows.filter(r => r[2]).length} live · {rows.filter(r => !r[2]).length} asked for</span><button className="btn btn-primary" onClick={() => setAdd(true)}><Icon name="plus" size={18} />Switch on a domain</button></div>
     <Split table={rows.length === 0 ? <Empty icon="globe" title="No custom domains live" /> : <div className="scroll-x"><table className="table"><thead><tr><th>Domain</th><th>Business</th><th>Status</th></tr></thead>
-      <tbody>{rows.map(([h, t, on]) => <tr key={h} className="click" tabIndex={0} style={{ background: q.d === h ? 'var(--role-soft)' : undefined }} onClick={() => { setDns(''); setQ({ d: q.d === h ? null : h }); }} onKeyDown={e => e.key === 'Enter' && setQ({ d: h })}>
+      <tbody>{rows.map(([h, t, on]) => <tr key={h + '|' + t} className="click" tabIndex={0} style={{ background: q.d === h ? 'var(--role-soft)' : undefined }} onClick={() => { setDns(''); setQ({ d: q.d === h ? null : h }); }} onKeyDown={e => e.key === 'Enter' && setQ({ d: h })}>
         <td><Mono>{h}</Mono></td><td>{ts.find(x => slug(x) === t)?.name ?? t}</td><td>{on ? <Badge tone="success">Live</Badge> : <Badge tone="warning">Asked for</Badge>}</td></tr>)}</tbody></table></div>}
       detail={!sel ? <Empty icon="mouse-pointer-click" title="Select a domain">Its DNS record and a live check show here.</Empty> : <>
         <Mono>{sel[0]}</Mono>
         <div className="sunken stack sm" style={{ fontSize: 13 }}><span className="cap">CNAME</span><Mono>{sel[0]} → {cnameTarget()}</Mono></div>
         <button className="btn" onClick={() => check(sel[0])}>Check DNS now</button>{dns && <span className="muted" style={{ fontSize: 13 }}>{dns}</span>}
-        {!sel[2] && <><div className="sunken stack sm" style={{ fontSize: 13 }}><span className="cap">Switch it on, on the server</span><Mono>{cmd(sel[0], sel[1])}</Mono></div>
+        {sel[3] && <Badge tone="warning">{sel[3]}: ask them who owns it before switching it on</Badge>}
+        {!sel[2] && !sel[3] && <><div className="sunken stack sm" style={{ fontSize: 13 }}><span className="cap">Switch it on, on the server</span><Mono>{cmd(sel[0], sel[1])}</Mono></div>
           <button className="btn btn-ghost" onClick={() => navigator.clipboard?.writeText(cmd(sel[0], sel[1])).then(() => toast('Command copied'))}><Icon name="copy" size={18} />Copy command</button></>}
       </>} />
     <WhiteLabel db={db} />

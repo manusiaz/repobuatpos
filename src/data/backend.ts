@@ -69,7 +69,10 @@ export async function membership(): Promise<Membership | null> {
   const { data, error } = await sb().read<{ tenant_id: string; employee_id: string; role: Membership['role']; slug: string; name: string; plan: Membership['plan'] }[]>('members');
   if (error) throw error;
   const rows = (data ?? []).map(r => ({ tenantId: r.tenant_id, slug: r.slug, name: r.name, plan: r.plan ?? 'free', employeeId: r.employee_id, role: r.role }));
-  const { hostTenant } = await import('../system/hosts.ts');
+  const { hostTenant, resolve, config } = await import('../system/hosts.ts');
+  // the super admin console (admin. host or /admin) is no business: BorNiz staff who also belong to one still get it
+  const r = resolve(location.host, location.pathname, config());
+  if (/^\/admin(\/|$)/.test(r.type === 'rewrite' ? r.path : location.pathname)) return null;
   const here = hostTenant(); // on <slug>.bornis.id only that business opens: a member of another one is not signed in here
   if (here) return rows.find(r => r.slug === here) ?? null;
   let pick = ''; try { pick = localStorage.getItem(PICK) ?? ''; } catch { /* blocked */ }

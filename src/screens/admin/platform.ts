@@ -70,3 +70,4 @@ export function accessOf(db: DB, tenantId: string, now = Date.now()): { state: '
   if (rec) return { state: rec.d === 'ended' ? 'ended' : 'requested', id: rec.id, hours: Number(rec.b), at: rec.at };
   return { state: 'none' };
 }
+

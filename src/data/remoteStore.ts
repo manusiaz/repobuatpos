@@ -209,10 +209,11 @@ async function enterMember(m: Membership) {
   import('./remoteFinalize.ts').then(f => f.startFinalizer()).catch(() => {});
 }
 
-function guestBase(snap: Any, slug: string, prev: DB | null): DB {
+export function guestBase(snap: Any, slug: string, prev: DB | null): DB {
   const d = applyDocs(prev ?? emptyDB(shapeDB()), snap.docs ?? [], hint);
   const portions = (snap.portions ?? []) as { outletId: string; productId: string; n: number }[];
-  return { ...d, tenant: { ...d.tenant, id: slug, name: d.tenant.name || snap.tenant?.name || '' },
+  // the plan is the one BorNiz set (tenants.plan), never the merchant's own _meta document
+  return { ...d, tenant: { ...d.tenant, id: slug, name: d.tenant.name || snap.tenant?.name || '', plan: snap.tenant?.plan ?? 'free' },
     recipes: [...new Set(portions.map(p => p.productId))].map(p => ({ productId: p, stockItemId: SYNTHETIC + p, qty: 1 })),
     movements: portions.map(p => ({ outletId: p.outletId, stockItemId: SYNTHETIC + p.productId, qty: Number(p.n), type: 'adjust' as const, sourceId: SYNTHETIC + 'portions', by: 'system', at: 0 })) };
 }

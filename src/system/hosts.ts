@@ -164,3 +164,11 @@ export function routeQuery(): Record<string, string> {
   const r = resolve(location.host, location.pathname, config());
   return { ...(r.type === 'rewrite' ? r.query : {}), ...Object.fromEntries(new URLSearchParams(location.search)) };
 }
+
+/** Domains businesses asked for in Studios that are not live yet, as rows the console can turn into a root command: only a
+ *  host name, never a BorNiz host (admin., app., a business's own <slug>.), and flagged when two businesses ask for the same. */
+export function domainRequests(asks: { slug: string; domain?: string | null }[], live: Record<string, string>): { host: string; slug: string; problem?: string }[] {
+  const rows = asks.map(a => ({ host: (a.domain ?? '').trim().toLowerCase(), slug: a.slug }))
+    .filter(r => /^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(r.host) && !ownsHost(r.host) && !live[r.host]);
+  return rows.map(r => { const n = rows.filter(x => x.host === r.host).length; return n > 1 ? { ...r, problem: `asked by ${n} businesses` } : r; });
+}

@@ -32,6 +32,11 @@ function ownUrl(req: Request, wanted: unknown, fallback: string) {
 export async function POST(req: Request, { params }: { params: Promise<{ op: string[] }> }) {
   if (DEMO) return fail(new HttpError(404, 'No database: this deployment runs the demo in the browser'));
   const [kind, ...rest] = (await params).op, name = rest.join('/');
+  // only this deployment's own pages, as JSON (a browser always asks before sending that cross-origin): a form posted
+  // from another page, or another business's host, never acts with the session cookie of .bornis.id
+  const origin = req.headers.get('origin'), host = req.headers.get('host') ?? new URL(req.url).host;
+  if (!/^application\/json\b/.test(req.headers.get('content-type') ?? '') || (origin && origin !== 'null' && new URL(origin).host !== host))
+    return fail(new HttpError(403, 'This page may not call BorNiz'));
   let b: Record<string, any> = {};
   try { b = await req.json(); } catch { /* empty body */ }
   try {
