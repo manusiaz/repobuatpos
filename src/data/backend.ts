@@ -91,6 +91,12 @@ export const adminNote = (action: string, subject: string) => ok('bn_admin_note'
 export const adminAudit = () => ok<{ id: number; at: number; actor: string; action: string; subject: string; tenantId: string | null }[]>('bn_admin_audit');
 export const adminSetStatus = (tenant: string, status: 'active' | 'suspended', reason: string) => ok('bn_admin_set_status', { p_tenant: tenant, p_status: status, p_reason: reason });
 export const adminSetTrial = (tenant: string, until: number) => ok('bn_admin_set_trial', { p_tenant: tenant, p_until: until });
+/** Support access: asked here, granted by the business's owner with their approval PIN, read-only while it lasts. */
+export interface SupportState { state: 'none' | 'requested' | 'active' | 'denied' | 'expired' | 'ended'; id?: string; hours?: number; until?: number | null; at?: number }
+export const adminRequestAccess = (tenant: string, hours: number, reason: string, ticket?: string) => ok<string>('bn_admin_request_access', { p_tenant: tenant, p_hours: hours, p_reason: reason, p_ticket: ticket ?? null });
+export const adminSupportState = (tenant: string) => ok<SupportState>('bn_admin_support_state', { p_tenant: tenant });
+export const adminSupportDocs = (tenant: string) => ok<{ coll: string; id: string; data: Record<string, unknown> }[]>('bn_admin_support_docs', { p_tenant: tenant });
+export const adminSupportEnd = (tenant: string, id: string) => ok('bn_admin_support_end', { p_tenant: tenant, p_id: id });
 /** The owner starts the trial of a paid plan, once (sign-up). */
 export const startTrial = (tenant: string, plan: string) => ok<{ plan: string; trialUntil: number }>('bn_start_trial', { p_tenant: tenant, p_plan: plan });
 /** Shared register: owner / manager get a one-time code, the tablet re-signs in anonymously and joins with it (no owner rights). */

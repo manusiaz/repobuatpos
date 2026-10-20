@@ -138,6 +138,10 @@ export function logAdmin(action: string, subject: string, by = ADMIN) {
  *  the request waits on their side. */
 export function requestSupportAccess(tenantId: string, hours: number, reason: string, ticketId?: string) {
   const d0 = snapshot();
+  if (REMOTE) { // the request lands in the business; the owner grants it there with their approval PIN
+    void import('../backend.ts').then(s => s.adminRequestAccess(tenantId, hours, reason, ticketId)).then(() => loadSupport(tenantId)).catch(e => toast('Not sent: ' + (e as Error).message));
+    return '';
+  }
   if (tenantId === d0.tenant.id) {
     return requestApproval({ type: 'perm', title: `BorNiz support access · ${hours} h · ${reason}`, requestedBy: ADMIN, outletId: d0.outlets[0].id, note: ticketId ? `Ticket ${ticketId}` : reason, payload: { kind: 'support_access', tenantId, hours, ticketId } }).id;
   }
@@ -145,7 +149,17 @@ export function requestSupportAccess(tenantId: string, hours: number, reason: st
   commit('support_access.requested', ADMIN, d => { (d.records.access ??= []).unshift({ id, a: tenantId, b: String(hours), c: reason, d: 'requested', e: ticketId ?? '', at: Date.now() }); }, tenantId);
   return id;
 }
-export function endSupportAccess(approvalOrRecordId: string) {
+/** Live: where the latest request to this business stands (read from the business's own database). */
+export async function loadSupport(tenantId: string) {
+  const a = await (await import('../backend.ts')).adminSupportState(tenantId);
+  commit('support_access.checked', ADMIN, d => {
+    const l = (d.records.access ?? []).filter(r => r.a !== tenantId);
+    if (a.id) l.unshift({ id: a.id, a: tenantId, b: String(a.hours ?? ''), c: '', d: a.state, e: String(a.until ?? ''), at: a.at ?? Date.now() });
+    d.records.access = l;
+  }, tenantId);
+}
+export function endSupportAccess(approvalOrRecordId: string, tenantId?: string) {
+  if (REMOTE && tenantId) void import('../backend.ts').then(s => s.adminSupportEnd(tenantId, approvalOrRecordId)).then(() => loadSupport(tenantId)).catch(e => toast((e as Error).message));
   commit('support_access.ended', ADMIN, d => {
     const l = d.records.access ??= [];
     const r = l.find(x => x.id === approvalOrRecordId);

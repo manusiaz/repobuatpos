@@ -42,7 +42,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ op: str
   try {
     if (kind === 'rpc') {
       const host = (resolve(req.headers.get('host') ?? '', '/', config()) as { query?: { tenant?: string } }).query?.tenant ?? null;
-      const r = await call(name, b, (await auth.userOf(req))?.id ?? null, req.headers.get('x-borniz-tenant') || host);
+      const uid = (await auth.userOf(req))?.id ?? null;
+      // support access runs in the business's own database: BorNiz staff are checked here, on the platform, first
+      const SUPPORT: Record<string, [string, string]> = { bn_admin_support_state: ['bn_server_support_state', ''], bn_admin_support_docs: ['bn_server_support_docs', 'support.read'], bn_admin_support_end: ['bn_server_support_end', 'support.ended'] };
+      if (SUPPORT[name]) {
+        if (!(await call('bn_is_platform_admin', {}, uid))) throw new HttpError(403, 'BN070 BorNiz staff only');
+        if (!UUID.test(String(b.p_tenant))) throw new HttpError(400, 'Bad tenant id');
+        const [fn, logged] = SUPPORT[name], res = await rpc(fn, { p_tenant: b.p_tenant, ...(b.p_id ? { p_id: String(b.p_id) } : {}) });
+        if (logged) await call('bn_admin_note', { p_action: logged, p_subject: String(b.p_tenant) }, uid);
+        return out(res);
+      }
+      const r = await call(name, b, uid, req.headers.get('x-borniz-tenant') || host);
+      if (name === 'bn_admin_request_access' && typeof r === 'string' && await cellFor(String(b.p_tenant))) // a moved business: the request goes to its database
+        await rpc('bn_server_support_request', { p_tenant: b.p_tenant, p_id: r, p_hours: b.p_hours, p_reason: b.p_reason, p_ticket: b.p_ticket ?? null });
       // a moved business keeps its own copy of plan, status and trial: the registry changed here, the business's database next
       if (/^bn_(admin_set_(plan|status|trial)|start_trial)$/.test(name) && typeof b.p_tenant === 'string') {
         const row = await rpc<{ cell: string | null } & Record<string, unknown>>('bn_server_tenant_row', { p_tenant: b.p_tenant });

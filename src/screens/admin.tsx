@@ -9,10 +9,11 @@ import { Badge, Empty, Field, Icon, Kpi, Loading, Seg, Sheet, Toggle, ago, dateS
 import { LineChart } from '../ui/Chart.tsx';
 import { idr, idrShort } from '../domain/money.ts';
 import { uid } from '../data/store.ts';
-import { endSupportAccess, ensurePlatform, logAdmin, patchRecord, requestSupportAccess, saveAdminRecord, setPlatformSetting, setTenantPlan, type TenantMeta } from '../data/actions/admin.ts';
+import { endSupportAccess, ensurePlatform, loadSupport, logAdmin, patchRecord, requestSupportAccess, saveAdminRecord, setPlatformSetting, setTenantPlan, type TenantMeta } from '../data/actions/admin.ts';
 import type { DB, Rec } from '../data/schema.ts';
 import { PLANS, STATUS_TONE, accessOf, churn, mrrHistory, planName, planPrice, priceKey, tenants, withTax, type Plan, type Tenant } from './admin/platform.ts';
 import { useQuery } from './insight/query.ts';
+import { REMOTE } from '../data/remote.ts';
 import { cnameTarget, config as hostConfig, domainRequests, liveDomain } from '../system/hosts.ts';
 
 const DETAIL = '/admin/tenant-detail-and-plan';
@@ -185,12 +186,25 @@ function PlanSheet({ db, t, plan, onClose }: { db: DB; t: Tenant; plan: Plan; on
   </Sheet>;
 }
 function AccessState({ db, tenant }: { db: DB; tenant: Tenant }) {
-  const a = accessOf(db, tenant.id);
+  const a = accessOf(db, tenant.id), [view, setView] = useState(false);
+  useEffect(() => { if (REMOTE) void loadSupport(tenant.id).catch(() => undefined); }, [tenant.id]); // the business's database says where it stands
   if (a.state === 'none') return <p className="muted" style={{ fontSize: 14 }}>No access. Request it from a ticket or here; the tenant owner approves with their approval PIN.</p>;
   return <div className="stack sm">
     <div className="row"><St s={a.state === 'active' ? 'active' : a.state === 'requested' ? 'pending' : a.state === 'denied' ? 'rejected' : 'closed'} /><span style={{ fontSize: 14 }}>{a.state === 'active' ? `Until ${hhmm(a.until!)} · ${a.hours} h` : a.state === 'requested' ? `Waiting for ${tenant.meta.owner} · requested ${ago(a.at!)}` : a.state === 'expired' ? `Expired ${hhmm(a.until!)}` : human(a.state)}</span></div>
-    {a.state === 'active' && <button className="btn btn-danger" style={{ alignSelf: 'flex-start' }} onClick={() => { endSupportAccess(a.id!); toast('Access ended · logged'); }}>End access now</button>}
+    {a.state === 'active' && <button className="btn btn-danger" style={{ alignSelf: 'flex-start' }} onClick={() => { endSupportAccess(a.id!, tenant.id); toast('Access ended · logged'); }}>End access now</button>}
+    {a.state === 'active' && REMOTE && <button className="btn" style={{ alignSelf: 'flex-start' }} onClick={() => setView(true)}><Icon name="eye" size={18} />Open support view</button>}
+    {view && <SupportView tenant={tenant} onClose={() => setView(false)} />}
   </div>;
+}
+/** Read-only set-up of a business while its owner granted access: outlets, devices, integrations, settings. Each open is audited. */
+function SupportView({ tenant, onClose }: { tenant: Tenant; onClose: () => void }) {
+  const [docs, setDocs] = useState<{ coll: string; id: string; data: Record<string, unknown> }[] | null>(null), [err, setErr] = useState('');
+  useEffect(() => { void import('../data/backend.ts').then(s => s.adminSupportDocs(tenant.id)).then(setDocs, e => setErr((e as Error).message)); }, [tenant.id]);
+  const colls = [...new Set((docs ?? []).map(d => d.coll))];
+  return <Sheet open onClose={onClose} side="center" title={`Support view · ${tenant.name}`} sub="Read only, while the owner’s grant lasts. Opening it is in the audit log.">
+    {err ? <div className="banner b-danger">{err}</div> : !docs ? <Loading /> : <div className="stack">{colls.map(c => <section key={c} className="stack sm"><h3 style={{ textTransform: 'capitalize' }}>{human(c)} · {docs.filter(d => d.coll === c).length}</h3>
+      {docs.filter(d => d.coll === c).map(d => <details key={d.id} className="sunken"><summary className="mono" style={{ fontSize: 13 }}>{d.id}{typeof d.data.name === 'string' ? ' · ' + d.data.name : ''}</summary><pre className="mono" style={{ whiteSpace: 'pre-wrap', fontSize: 12, margin: 0 }}>{JSON.stringify(d.data, null, 2)}</pre></details>)}</section>)}</div>}
+  </Sheet>;
 }
 function AccessSheet({ t, ticketId, onClose }: { t: Tenant; ticketId?: string; onClose: () => void }) {
   const [hours, setHours] = useState('2'), [reason, setReason] = useState(ticketId ? `Ticket ${ticketId}` : '');

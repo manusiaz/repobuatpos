@@ -67,7 +67,10 @@ export function accessOf(db: DB, tenantId: string, now = Date.now()): { state: '
     const until = (ap.decidedAt ?? ap.at) + hours * 3600e3;
     return { state: until > now ? 'active' : 'expired', until, id: ap.id, hours, at: ap.at };
   }
-  if (rec) return { state: rec.d === 'ended' ? 'ended' : 'requested', id: rec.id, hours: Number(rec.b), at: rec.at };
+  if (rec) { // live: the state the business's database reports (support_access.checked)
+    const st = (['requested', 'active', 'denied', 'expired', 'ended'] as const).find(x => x === rec.d) ?? 'requested', until = Number(rec.e) || undefined;
+    return { state: st === 'active' && until && until <= now ? 'expired' : st, id: rec.id, hours: Number(rec.b), at: rec.at, until };
+  }
   return { state: 'none' };
 }
 
