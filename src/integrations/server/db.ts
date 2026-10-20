@@ -50,7 +50,7 @@ export const cellFor = (tenant: string) => (UUID.test(tenant) ? cellBy(tenant, n
 const cellForSlug = (slug: string) => cellBy('slug:' + slug, slug, null);
 
 /** Platform-only functions (accounts, registry, super admin) never go to a merchant's own database. */
-const PLATFORM = /^bn_(admin_|tenant_cell$|bootstrap$|server_tenants$|is_platform_admin$)/;
+const PLATFORM = /^bn_(admin_|tenant_cell$|bootstrap$|server_tenants$|is_platform_admin$|start_trial$|server_tenant_row$)/; // the registry lives on the platform
 /** The database a call belongs to: the business in p_tenant, or at p_slug, or the hint (an id, or the slug of the host asked). */
 async function cellOf(fn: string, args: Record<string, unknown>, hint?: string | null): Promise<string | null> {
   if (PLATFORM.test(fn)) return null;
@@ -129,8 +129,9 @@ export function serverSecret(cell?: string | null): string {
   return s;
 }
 /** Server-secret function call, in the database of p_tenant. Database errors come back as their BNxxx message, never with arguments. */
-export async function rpc<T = unknown>(fn: string, args: Record<string, unknown>): Promise<T> {
-  const cell = await cellOf(fn, args);
+/** to: run in this database (a cell id; null = the platform) instead of the one the arguments name. */
+export async function rpc<T = unknown>(fn: string, args: Record<string, unknown>, to?: string | null): Promise<T> {
+  const cell = to !== undefined ? to : await cellOf(fn, args);
   try { return await call(fn, { p_secret: serverSecret(cell), ...args }, null, null, cell) as T; }
   catch (e) {
     if (e instanceof HttpError) throw e;

@@ -19,6 +19,7 @@ import { Ctx, type AppCtx } from './context.tsx';
 import { BackOfficeShell, PublicShell } from './Shells.tsx';
 import { useOffline } from './offline.ts';
 import { Loading, Toaster, Icon } from '../ui/kit.tsx';
+import Link from '../ui/Link.tsx';
 
 const L = (f: () => Promise<{ default: ComponentType }>) => dynamic(f, { ssr: false, loading: () => <div style={{ padding: 24 }}><Loading /></div> });
 const SURFACES: Record<Surface, ComponentType> = {
@@ -67,13 +68,25 @@ export default function App({ path }: { path: string }) {
   const rt = roleTheme(ctx.db, ctx.user.role); // Studios: theme per role (accent, density, dark)
   const Surface = SURFACES[page.surface];
   const allowed = canOpen(ctx.user.role, page);
-  const body = allowed ? <Surface /> : <Denied />;
+  const body = <>{!GUEST[page.surface] && page.surface !== 'admin' && <PlatformBanner />}{allowed ? <Surface /> : <Denied />}</>;
   return <Ctx.Provider value={ctx}>
     <div data-theme={DARK[page.surface] || (rt?.dark && !GUEST[page.surface]) ? 'dark' : undefined} data-role={ctx.user.role} style={{ minHeight: '100dvh', background: 'var(--bg-canvas)', color: 'var(--fg-1)', ...(GUEST[page.surface] ? {} : rt?.style) }}>
       {page.shell === 'backoffice' || page.shell === 'admin' ? <BackOfficeShell>{body}</BackOfficeShell> : page.shell === 'public' ? <PublicShell>{body}</PublicShell> : body}
       <Toaster />
     </div>
   </Ctx.Provider>;
+}
+
+/** What BorNiz set for this business (super admin): paused, or a paid plan on trial. */
+function PlatformBanner() {
+  return <Ctx.Consumer>{c => {
+    const t = c?.db.tenant;
+    if (!c || !t) return null;
+    if (t.status === 'suspended') return <div className="banner b-danger" role="alert"><Icon name="circle-pause" size={18} />BorNiz paused this business: changes are not saved and the QR menu is off. Contact BorNiz support.</div>;
+    if (t.trialUntil && t.trialUntil > Date.now() && (c.user.role === 'owner' || c.user.role === 'manager'))
+      return <div className="banner b-info"><Icon name="calendar" size={18} />{t.plan[0].toUpperCase() + t.plan.slice(1)} trial until {new Date(t.trialUntil).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}. After that the business is on Free unless the plan is paid. <Link href="/owner/account/subscription-billing">Subscription</Link></div>;
+    return null;
+  }}</Ctx.Consumer>;
 }
 
 /** System state: Access denied (States gallery). Offers the sign-ins that may open this page. */

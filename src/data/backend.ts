@@ -60,15 +60,15 @@ if (typeof location !== 'undefined' && location.hash.startsWith('#bn_reset=')) {
   recovering = api('auth/recover', { token }).then(r => { recovering = null; if (!r.error) emit('PASSWORD_RECOVERY', null); return r; });
 }
 
-export interface Membership { tenantId: string; slug: string; name: string; plan?: 'free' | 'basic' | 'pro' | 'enterprise'; employeeId: string; role: 'owner' | 'manager' | 'device' | 'admin' }
+export interface Membership { tenantId: string; slug: string; name: string; plan?: 'free' | 'basic' | 'pro' | 'enterprise'; status?: 'active' | 'suspended'; trialUntil?: number | null; employeeId: string; role: 'owner' | 'manager' | 'device' | 'admin' }
 const PICK = 'borniz-tenant';
 /** The signed-in account's business (the last one picked on this browser when it belongs to several). */
 export async function membership(): Promise<Membership | null> {
   const { data: u, error: ue } = await sb().auth.getUser();
   if (!u.user) { if (isAuthRetryableFetchError(ue)) throw ue; return null; } // no internet is not "signed out"
-  const { data, error } = await sb().read<{ tenant_id: string; employee_id: string; role: Membership['role']; slug: string; name: string; plan: Membership['plan'] }[]>('members');
+  const { data, error } = await sb().read<{ tenant_id: string; employee_id: string; role: Membership['role']; slug: string; name: string; plan: Membership['plan']; status?: Membership['status']; trial_until?: number | null }[]>('members');
   if (error) throw error;
-  const rows = (data ?? []).map(r => ({ tenantId: r.tenant_id, slug: r.slug, name: r.name, plan: r.plan ?? 'free', employeeId: r.employee_id, role: r.role }));
+  const rows = (data ?? []).map(r => ({ tenantId: r.tenant_id, slug: r.slug, name: r.name, plan: r.plan ?? 'free', status: r.status ?? 'active', trialUntil: r.trial_until ?? null, employeeId: r.employee_id, role: r.role }));
   const { hostTenant, resolve, config } = await import('../system/hosts.ts');
   // the super admin console (admin. host or /admin) is no business: BorNiz staff who also belong to one still get it
   const r = resolve(location.host, location.pathname, config());
@@ -80,9 +80,19 @@ export async function membership(): Promise<Membership | null> {
 }
 /** BorNiz staff (private.platform_admins): the super admin console. Platform database only. */
 export async function isPlatformAdmin() { const { data } = await sb().rpc('bn_is_platform_admin'); return data === true; }
-export interface PlatformTenant { id: string; slug: string; name: string; plan: string; cell: string | null; createdAt: number; owner: string | null; city: string | null; outlets: number; orders30: number; lastActive: number | null; domain: string | null }
+export interface PlatformTenant { id: string; slug: string; name: string; plan: string; planNow?: string; status?: 'active' | 'suspended'; trialUntil?: number | null; cell: string | null; createdAt: number; owner: string | null; city: string | null; outlets: number; orders30: number; lastActive: number | null; domain: string | null }
 export async function adminTenants(): Promise<PlatformTenant[]> { const { data, error } = await sb().rpc('bn_admin_tenants'); if (error) throw error; return (data ?? []) as PlatformTenant[]; }
 export async function adminSetPlan(tenant: string, plan: string) { const { error } = await sb().rpc('bn_admin_set_plan', { p_tenant: tenant, p_plan: plan }); if (error) throw error; }
+/** The console's own records (invoices, tickets, flags, releases, platform settings, notes on a business) and its audit. */
+const ok = async <T = unknown>(fn: string, args: Record<string, unknown> = {}) => { const { data, error } = await sb().rpc<T>(fn, args); if (error) throw error; return data; };
+export const adminRecords = () => ok<{ kind: string; id: string; data: Record<string, unknown> }[]>('bn_admin_records');
+export const adminPut = (kind: string, id: string, data: unknown, action: string, subject?: string) => ok('bn_admin_put', { p_kind: kind, p_id: id, p_data: data, p_action: action, p_subject: subject ?? null });
+export const adminNote = (action: string, subject: string) => ok('bn_admin_note', { p_action: action, p_subject: subject });
+export const adminAudit = () => ok<{ id: number; at: number; actor: string; action: string; subject: string; tenantId: string | null }[]>('bn_admin_audit');
+export const adminSetStatus = (tenant: string, status: 'active' | 'suspended', reason: string) => ok('bn_admin_set_status', { p_tenant: tenant, p_status: status, p_reason: reason });
+export const adminSetTrial = (tenant: string, until: number) => ok('bn_admin_set_trial', { p_tenant: tenant, p_until: until });
+/** The owner starts the trial of a paid plan, once (sign-up). */
+export const startTrial = (tenant: string, plan: string) => ok<{ plan: string; trialUntil: number }>('bn_start_trial', { p_tenant: tenant, p_plan: plan });
 /** Shared register: owner / manager get a one-time code, the tablet re-signs in anonymously and joins with it (no owner rights). */
 export async function makeSharedRegister(tenant: string): Promise<string | null> {
   const c = await sb().rpc('bn_device_code', { p_tenant: tenant });

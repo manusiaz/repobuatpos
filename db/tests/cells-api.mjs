@@ -41,6 +41,14 @@ assert.equal(r.error, null, JSON.stringify(r.error));
 assert.equal((await src.query('select plan from public.tenants where id = $1', [T])).rows[0].plan, 'pro');
 assert.equal((await dst.query('select plan from public.tenants where id = $1', [T])).rows[0].plan, 'pro');
 
+// super admin pauses the moved business: the registry here and the business's own database there; writes stop there too
+r = await api('rpc/bn_admin_set_status', { p_tenant: T, p_status: 'suspended', p_reason: 'test' }, await newSession(a), 'admin.bornis.id');
+assert.equal(r.error, null, JSON.stringify(r.error));
+assert.equal((await dst.query('select status from public.tenants where id = $1', [T])).rows[0].status, 'suspended', 'paused in its own database');
+await assert.rejects(rpc('bn_server_write', { p_tenant: T, p_ops: [{ op: 'put', coll: 'products', id: 'p3', data: { id: 'p3' } }], p_action: 'test' }, 'kb').catch(e => { throw e; }), /BN073/);
+r = await api('rpc/bn_admin_set_status', { p_tenant: T, p_status: 'active', p_reason: 'test' }, await newSession(a), 'admin.bornis.id');
+assert.equal((await dst.query('select status from public.tenants where id = $1', [T])).rows[0].status, 'active');
+
 // the automation worker runs the moved business from its own database
 const list = await rpc('bn_server_tenants', {});
 assert.ok(list.some(t => t.slug === 'kopibiru' && t.cell === 'kb'));

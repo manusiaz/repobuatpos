@@ -4,6 +4,7 @@ import { RESERVED, isTenantSlug } from '../../system/hosts.ts';
 import { commit, snapshot, uid } from '../store.ts';
 import type { DB, Role } from '../schema.ts';
 import { REMOTE } from '../remote.ts';
+import { toast } from '../../ui/kit.tsx';
 import { seed } from '../seed.ts';
 import { verifyPin } from '../actions.ts';
 import { remoteInfo, remoteReady, remoteRestart } from '../remoteStore.ts';
@@ -12,7 +13,9 @@ import { allOps, emptyDB, humanError, pinChanges, wire } from '../remoteDocs.ts'
 export const PAIR_TTL_MS = 10 * 60e3;
 const pairKey = (deviceId: string) => 'pair:' + deviceId;
 
-export function setPlan(plan: DB['tenant']['plan'], by: string, note = '') {
+export function setPlan(plan: DB['tenant']['plan'], by: string, note = '', trial = false) {
+  // live: the plan is BorNiz's (tenants.plan); the owner may start the trial of a paid plan once, on the server
+  if (REMOTE && trial) void import('../backend.ts').then(async s => { const m = await s.membership(); if (m) await s.startTrial(m.tenantId, plan); }).then(() => remoteRestart()).catch(e => toast((e as Error).message));
   commit('plan.changed', by, d => {
     d.tenant.plan = plan;
     d.notices.unshift({ id: uid('n'), alert: 'Plan changed', level: 'info', to: ['owner'], outletId: null, text: `Plan is now ${plan[0].toUpperCase() + plan.slice(1)}${note ? ' · ' + note : ''}`, href: '/owner/account/subscription-billing', at: Date.now(), read: false });

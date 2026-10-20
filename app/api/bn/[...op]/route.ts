@@ -43,13 +43,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ op: str
     if (kind === 'rpc') {
       const host = (resolve(req.headers.get('host') ?? '', '/', config()) as { query?: { tenant?: string } }).query?.tenant ?? null;
       const r = await call(name, b, (await auth.userOf(req))?.id ?? null, req.headers.get('x-borniz-tenant') || host);
-      // a moved business keeps its own copy of the plan: the registry changed here, the business's database next
-      if (name === 'bn_admin_set_plan' && typeof b.p_tenant === 'string' && await cellFor(b.p_tenant)) await rpc('bn_server_set_plan', { p_tenant: b.p_tenant, p_plan: b.p_plan });
+      // a moved business keeps its own copy of plan, status and trial: the registry changed here, the business's database next
+      if (/^bn_(admin_set_(plan|status|trial)|start_trial)$/.test(name) && typeof b.p_tenant === 'string') {
+        const row = await rpc<{ cell: string | null } & Record<string, unknown>>('bn_server_tenant_row', { p_tenant: b.p_tenant });
+        if (row?.cell) await rpc('bn_server_tenant_sync', { p_tenant: b.p_tenant, p_row: row }, row.cell);
+      }
       return out(r);
     }
     if (kind === 'read') {
       const u = await auth.requireUser(req);
-      if (name === 'members') return out((await as(u.id, null, c => c.query(`select m.tenant_id, m.employee_id, m.role, t.slug, t.name, t.plan
+      if (name === 'members') return out((await as(u.id, null, c => c.query(`select m.tenant_id, m.employee_id, m.role, t.slug, t.name, public.bn_plan_now(t.plan, t.trial_until) plan, t.status,
+          (extract(epoch from t.trial_until) * 1000)::bigint trial_until
         from public.members m join public.tenants t on t.id = m.tenant_id where m.user_id = $1 order by t.created_at`, [u.id]))).rows);
       if (!UUID.test(String(b.tenant))) throw new HttpError(400, 'Bad tenant id');
       const cell = await cellFor(b.tenant);

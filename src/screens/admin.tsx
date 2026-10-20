@@ -8,9 +8,8 @@ import catalog from '../system/catalog.json' with { type: 'json' };
 import { Badge, Empty, Field, Icon, Kpi, Loading, Seg, Sheet, Toggle, ago, dateShort, hhmm, human, toast } from '../ui/kit.tsx';
 import { LineChart } from '../ui/Chart.tsx';
 import { idr, idrShort } from '../domain/money.ts';
-import { saveRecord, setSetting } from '../data/actions.ts';
 import { uid } from '../data/store.ts';
-import { endSupportAccess, ensurePlatform, logAdmin, patchRecord, requestSupportAccess, setTenantPlan, type TenantMeta } from '../data/actions/admin.ts';
+import { endSupportAccess, ensurePlatform, logAdmin, patchRecord, requestSupportAccess, saveAdminRecord, setPlatformSetting, setTenantPlan, type TenantMeta } from '../data/actions/admin.ts';
 import type { DB, Rec } from '../data/schema.ts';
 import { PLANS, STATUS_TONE, accessOf, churn, mrrHistory, planName, planPrice, priceKey, tenants, withTax, type Plan, type Tenant } from './admin/platform.ts';
 import { useQuery } from './insight/query.ts';
@@ -176,7 +175,7 @@ function PlanSheet({ db, t, plan, onClose }: { db: DB; t: Tenant; plan: Plan; on
   return <Sheet open onClose={onClose} side="center" title={`Change plan to ${planName(plan)}`} sub={`${t.name} · ${t.outlets} outlet${t.outlets > 1 ? 's' : ''}`}
     footer={<><button className="btn" onClick={onClose}>Cancel</button><button className="btn btn-primary" disabled={!!blocked || (plan === 'enterprise' && !next)} onClick={() => {
       if (plan === 'enterprise') patchRecord('tenant', t.id, { e: JSON.stringify({ ...t.meta, custom: next }) }, 'tenant.custom_price');
-      setTenantPlan(t.id, plan); toast(`${t.name} is now on ${planName(plan)}`); onClose(); }}>Change plan</button></>}>
+      void setTenantPlan(t.id, plan).then(ok => ok && toast(`${t.name} is now on ${planName(plan)}`)); onClose(); }}>Change plan</button></>}>
     <div className="stack">
       {blocked && <div className="banner b-danger"><Icon name="circle-alert" size={18} />{blocked}</div>}
       {plan === 'enterprise' && <Field label="Monthly price (excl. PPN)"><input className="input" inputMode="numeric" value={custom} onChange={e => setCustom(e.target.value.replace(/\D/g, ''))} /></Field>}
@@ -218,7 +217,7 @@ function Plans({ db }: { db: DB }) {
         <td className="r">{p.id !== 'enterprise' && p.id !== 'free' && <button className="btn btn-sm" onClick={() => { setEdit(p.id); setPrice(String(planPrice(db, p.id))); }}>Edit price</button>}</td></tr>; })}</tbody></table></div></section>
     <p className="faint" style={{ fontSize: 13 }}>Prices exclude PPN 11%. Payment MDR share on QRIS and VA is billed by the gateway, not here.</p>
     <Sheet open={!!edit} onClose={() => setEdit(null)} side="center" title={`Edit ${planName(edit ?? '')} price`} sub="Applies from the next invoice for every tenant on this plan. Tenants get 30 days’ notice by email."
-      footer={<><button className="btn" onClick={() => setEdit(null)}>Cancel</button><button className="btn btn-primary" disabled={!(Number(price) > 0)} onClick={() => { setSetting(priceKey(edit!), Number(price), user.id); toast(`${planName(edit!)} is now ${idr(Number(price))} / outlet`); setEdit(null); }}>Save price</button></>}>
+      footer={<><button className="btn" onClick={() => setEdit(null)}>Cancel</button><button className="btn btn-primary" disabled={!(Number(price) > 0)} onClick={() => { setPlatformSetting(priceKey(edit!), Number(price), user.id); toast(`${planName(edit!)} is now ${idr(Number(price))} / outlet`); setEdit(null); }}>Save price</button></>}>
       <Field label="Price per outlet per month (IDR)"><input className="input" inputMode="numeric" value={price} onChange={e => setPrice(e.target.value.replace(/\D/g, ''))} /></Field>
     </Sheet>
   </>;
@@ -302,15 +301,15 @@ function Flags({ db }: { db: DB }) {
       <tbody>{flags.map(f => <tr key={f.id} className="click" tabIndex={0} style={{ background: q.g === f.id ? 'var(--role-soft)' : undefined }} onClick={() => setQ({ g: q.g === f.id ? null : f.id })} onKeyDown={e => e.key === 'Enter' && setQ({ g: f.id })}>
         <td><Mono>{f.a}</Mono></td><td className="r num">{f.d === 'on' ? f.b + '%' : '—'}</td><td className="r num">{f.d === 'on' ? Math.round((live * Number(f.b)) / 100) : 0}</td><td>{f.c}</td><td><St s={f.d} /></td></tr>)}</tbody></table></div>}
       detail={!sel ? <Empty icon="flag" title="Select a flag">Change rollout or switch it off. Saved changes reach devices within a minute.</Empty> : <>
-        <div className="row between"><Mono>{sel.a}</Mono><Toggle on={sel.d === 'on'} label="Flag on" onChange={on => { saveRecord('flag', { ...sel, d: on ? 'on' : 'off' }, user.id); toast(`${sel.a} ${on ? 'on' : 'off'} · logged`); }} /></div>
+        <div className="row between"><Mono>{sel.a}</Mono><Toggle on={sel.d === 'on'} label="Flag on" onChange={on => { saveAdminRecord('flag', { ...sel, d: on ? 'on' : 'off' }, user.id); toast(`${sel.a} ${on ? 'on' : 'off'} · logged`); }} /></div>
         <p className="muted" style={{ fontSize: 14 }}>{sel.e}</p>
         <Field label={`Rollout · ${pct}% of tenants`} hint={`≈ ${Math.round((live * pct) / 100)} of ${live}`}><input type="range" min={0} max={100} step={5} value={pct} onChange={e => setPct(Number(e.target.value))} disabled={sel.d !== 'on'} style={{ width: '100%', accentColor: 'var(--role)', height: 44 }} /></Field>
-        <button className="btn btn-primary" disabled={sel.d !== 'on' || String(pct) === sel.b} onClick={() => { saveRecord('flag', { ...sel, b: String(pct) }, user.id); toast(`${sel.a} ${sel.b}% → ${pct}% · logged`); }}>Save rollout</button>
+        <button className="btn btn-primary" disabled={sel.d !== 'on' || String(pct) === sel.b} onClick={() => { saveAdminRecord('flag', { ...sel, b: String(pct) }, user.id); toast(`${sel.a} ${sel.b}% → ${pct}% · logged`); }}>Save rollout</button>
       </>} />
     <section className="card flat"><div className="row between" style={{ padding: '16px 20px' }}><h3>Releases</h3></div>
       <div className="scroll-x"><table className="table"><thead><tr><th>Version</th><th>Notes</th><th>Date</th><th className="r">Rollout</th><th>Status</th><th /></tr></thead>
         <tbody>{releases.map(r => <tr key={r.id}><td><Mono>{r.a}</Mono></td><td>{r.c}</td><td>{dateShort(r.at)}</td><td className="r num">{r.d}%</td><td><St s={r.b} /></td>
-          <td className="r">{r.b === 'rolling' && <button className="btn btn-sm" onClick={() => { const n = Math.min(100, Number(r.d) + 20); saveRecord('release', { ...r, d: String(n), b: n >= 100 ? 'shipped' : 'rolling' }, user.id); toast(`${r.a} at ${n}%`); }}>Roll out to {Math.min(100, Number(r.d) + 20)}%</button>}</td></tr>)}</tbody></table></div>
+          <td className="r">{r.b === 'rolling' && <button className="btn btn-sm" onClick={() => { const n = Math.min(100, Number(r.d) + 20); saveAdminRecord('release', { ...r, d: String(n), b: n >= 100 ? 'shipped' : 'rolling' }, user.id); toast(`${r.a} at ${n}%`); }}>Roll out to {Math.min(100, Number(r.d) + 20)}%</button>}</td></tr>)}</tbody></table></div>
     </section>
   </>;
 }
@@ -362,7 +361,7 @@ function Themes({ db }: { db: DB }) {
       </div>
       <div className="row">{[t.p, t.acc, t.ink, t.paper].map(c => <span key={c} title={c} style={{ width: 22, height: 22, borderRadius: 99, background: c, border: '1px solid var(--border)' }} />)}<span className="faint mono grow" style={{ textAlign: 'right' }}>{t.font}</span></div>
       <span className="muted" style={{ fontSize: 13 }}>Used by {used} tenant{used === 1 ? '' : 's'}</span>
-      {def === name ? <Badge tone="violet">Default for new tenants</Badge> : <button className="btn btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => { setSetting('/admin/theme-presets-library:default', name, user.id); toast(`${name} is the default for new tenants`); }}>Make default</button>}
+      {def === name ? <Badge tone="violet">Default for new tenants</Badge> : <button className="btn btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => { setPlatformSetting('/admin/theme-presets-library:default', name, user.id); toast(`${name} is the default for new tenants`); }}>Make default</button>}
     </section>; })}</div>
     <WhiteLabel db={db} />
   </>;

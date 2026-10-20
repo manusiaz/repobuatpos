@@ -375,7 +375,7 @@ function ChoosePlan() {
   const start = (trial: boolean) => {
     setFlow({ plan: sel, yearly, trial });
     if (sel === 'enterprise') return go('/contact-sales-book-a-demo');
-    if (sel === 'free' || trial) { setPlan(sel, owner, trial ? `${TRIAL_DAYS}-day trial` : ''); return go(A + 'plan-activated'); }
+    if (sel === 'free' || trial) { setPlan(sel, owner, trial ? `${TRIAL_DAYS}-day trial` : '', trial); return go(A + 'plan-activated'); }
     go(A + 'checkout-and-payment');
   };
   return <div className="stack">

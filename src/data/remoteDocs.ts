@@ -238,10 +238,10 @@ export function blankDB(): DB {
 }
 /** A business as a signed-in device (remoteStore) and the automation worker see it: its documents inside the history
  *  window, plus stock and beans from before it as opening rows. */
-export function memberDB(docs: Doc[], opening: { stock?: Any[]; beans?: Any[] }, since: number, hint: Hint, t: { slug: string; name?: string; plan?: string }): DB {
+export function memberDB(docs: Doc[], opening: { stock?: Any[]; beans?: Any[] }, since: number, hint: Hint, t: { slug: string; name?: string; plan?: string; status?: string; trialUntil?: number | null }): DB {
   const d = fromDocs(blankDB(), docs, hint) as unknown as Any;
   d.movements = [...(opening.stock ?? []).map(s => ({ outletId: s.outletId, stockItemId: s.stockItemId, qty: Number(s.qty), type: 'adjust', sourceId: SYNTHETIC + 'opening', by: 'system', at: since - 1 })), ...d.movements];
   d.ledger = [...(opening.beans ?? []).map(b => ({ customerId: b.customerId, points: Number(b.points), reason: 'Opening balance', orderId: SYNTHETIC + 'opening', at: since - 1 })), ...d.ledger];
-  d.tenant = { ...d.tenant, id: t.slug, name: d.tenant.name || t.name || '', plan: t.plan ?? 'free' }; // plan is set by BorNiz (tenants.plan)
+  d.tenant = { ...d.tenant, id: t.slug, name: d.tenant.name || t.name || '', plan: t.plan ?? 'free', status: t.status ?? 'active', trialUntil: t.trialUntil ?? null }; // plan, status, trial are set by BorNiz (tenants)
   return d as DB;
 }

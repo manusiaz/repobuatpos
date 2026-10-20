@@ -60,24 +60,42 @@ export function ensurePlatform() {
   commit('platform.seeded', 'system', d => { Object.assign(d.records, { tenant: tenants, invoice: invoices, ticket: tickets, flag: flags, release: releases, domain: domains }); });
 }
 
-/** Live: the real businesses from the platform registry (BorNiz staff only). Billing, tickets, flags, releases and
- *  domains have no server tables yet, so they start empty instead of showing demo rows. Kept on this browser only. */
+/** Live: the real businesses from the platform registry, the console's own records (invoices, tickets, flags, releases,
+ *  platform settings, notes on a business) and its audit, all from the server (BorNiz staff only). */
 let loading = false;
 async function loadPlatform() {
   if (loading) return; loading = true;
   try {
-    const { adminTenants } = await import('../backend.ts');
-    const rows = (await adminTenants()).map((t): Rec => ({ id: t.id, a: t.name, b: t.plan, c: String(t.outlets), d: 'active',
-      e: JSON.stringify({ owner: t.owner ?? '', email: t.owner ?? '', city: t.city ?? '', slug: t.slug, domain: t.domain ?? '' } satisfies TenantMeta), at: t.createdAt }));
-    commit('platform.loaded', ADMIN, d => { Object.assign(d.records, { tenant: rows, invoice: [], ticket: [], flag: [], release: [], domain: [] }); });
+    const s = await import('../backend.ts');
+    const [ts, recs, audit] = await Promise.all([s.adminTenants(), s.adminRecords(), s.adminAudit()]);
+    const notes = new Map(recs.filter(r => r.kind === 'tenant').map(r => [r.id, r.data as Partial<TenantMeta>]));
+    const rows = ts.map((t): Rec => ({ id: t.id, a: t.name, b: t.plan, c: String(t.outlets),
+      d: t.status === 'suspended' ? 'suspended' : t.trialUntil && t.trialUntil > Date.now() ? 'trial' : 'active',
+      e: JSON.stringify({ ...notes.get(t.id), owner: t.owner ?? '', email: t.owner ?? '', city: t.city ?? '', slug: t.slug, domain: t.domain ?? '', ...(t.trialUntil ? { trialEnds: t.trialUntil } : {}) } satisfies TenantMeta), at: t.createdAt }));
+    const of = (k: string) => recs.filter(r => r.kind === k).map(r => r.data as unknown as Rec);
+    commit('platform.loaded', ADMIN, d => {
+      Object.assign(d.records, { tenant: rows, invoice: of('invoice'), ticket: of('ticket'), flag: of('flag'), release: of('release'), domain: [] });
+      for (const r of recs) if (r.kind === 'setting') d.settings[r.id] = (r.data as { value: string | number | boolean }).value;
+      d.audit = audit.map(a => ({ id: 'pa' + a.id, actor: a.actor, action: a.action, subject: a.subject ?? '', at: a.at }));
+    });
   } catch (e) { toast((e as Error).message); }
   finally { loading = false; }
 }
+/** Live: the change goes to the server too; a refusal there is shown and the console reloads what the server holds. */
+function remote(job: (s: typeof import('../backend.ts')) => Promise<unknown>) {
+  if (!REMOTE) return;
+  void import('../backend.ts').then(job).catch(e => { toast('Not saved: ' + (e as Error).message); void loadPlatform(); });
+}
+const PLATFORM_KINDS = ['invoice', 'ticket', 'flag', 'release'];
 
 /** Plan change. For the real tenant it changes the tenant's plan everywhere in the product. */
-export function setTenantPlan(tenantId: string, plan: DB['tenant']['plan'], by = ADMIN) {
-  if (REMOTE) return void import('../backend.ts').then(s => s.adminSetPlan(tenantId, plan)).then(() => setLocalPlan(tenantId, plan, by)).catch(e => toast('Plan not saved: ' + (e as Error).message));
+/** Resolves true once the plan is saved (live: on the server first). */
+export async function setTenantPlan(tenantId: string, plan: DB['tenant']['plan'], by = ADMIN): Promise<boolean> {
+  if (REMOTE) {
+    try { await (await import('../backend.ts')).adminSetPlan(tenantId, plan); } catch (e) { toast('Plan not saved: ' + (e as Error).message); return false; }
+  }
   setLocalPlan(tenantId, plan, by);
+  return true;
 }
 function setLocalPlan(tenantId: string, plan: DB['tenant']['plan'], by: string) {
   commit('tenant.plan_changed', by, d => {
@@ -86,10 +104,35 @@ function setLocalPlan(tenantId: string, plan: DB['tenant']['plan'], by: string) 
   }, `${tenantId} → ${plan}`);
 }
 export function patchRecord(object: string, id: string, patch: Partial<Rec>, action: string, by = ADMIN) {
+  const before = snapshot().records[object]?.find(x => x.id === id);
   commit(action, by, d => { const r = d.records[object]?.find(x => x.id === id); if (r) Object.assign(r, patch); }, id);
+  const after = snapshot().records[object]?.find(x => x.id === id);
+  if (!after) return;
+  if (object === 'tenant') { // a business: status and trial in the registry, the rest as notes on it
+    if (patch.d && patch.d !== before?.d) remote(s => s.adminSetStatus(id, patch.d === 'suspended' ? 'suspended' : 'active', action));
+    if (patch.e) {
+      const was = JSON.parse(before?.e || '{}') as TenantMeta, now = JSON.parse(after.e || '{}') as TenantMeta;
+      if (now.trialEnds && now.trialEnds !== was.trialEnds) remote(s => s.adminSetTrial(id, now.trialEnds!));
+      const { custom, wl, appName, theme, churnedAt, source } = now;
+      remote(s => s.adminPut('tenant', id, { custom, wl, appName, theme, churnedAt, source }, action, after.a));
+    }
+  } else if (PLATFORM_KINDS.includes(object)) remote(s => s.adminPut(object, id, after, action, after.a));
+}
+/** A whole platform record (a flag, a release) saved from the console. */
+export function saveAdminRecord(object: string, row: Rec, by: string) {
+  commit(object + '.saved', by, d => { const l = d.records[object] ?? (d.records[object] = []); const i = l.findIndex(x => x.id === row.id); if (i >= 0) l[i] = row; else l.unshift(row); }, row.a);
+  if (PLATFORM_KINDS.includes(object)) remote(s => s.adminPut(object, row.id, row, object + '.saved', row.a));
+}
+/** A platform setting (plan prices, the default theme for new businesses). */
+export function setPlatformSetting(key: string, value: string | number | boolean, by: string) {
+  commit('setting.changed', by, d => { d.settings[key] = value; }, key);
+  remote(s => s.adminPut('setting', key, { value }, 'setting.changed', `${key} = ${value}`));
 }
 /** Actions that change nothing in this store but must be in the audit log (reminders sent, exports). */
-export const logAdmin = (action: string, subject: string, by = ADMIN) => commit(action, by, () => {}, subject);
+export function logAdmin(action: string, subject: string, by = ADMIN) {
+  commit(action, by, () => {}, subject);
+  remote(s => s.adminNote(action, subject));
+}
 
 /** Time-boxed support access. The tenant's owner approves it with their approval PIN; for tenants outside this store
  *  the request waits on their side. */
