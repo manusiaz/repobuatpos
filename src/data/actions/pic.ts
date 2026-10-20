@@ -2,12 +2,10 @@
 // PIC (shift lead) services: blind opname with photo proof + recount, drawer count by the PIC, handover, pass PIC, incidents.
 // Kept outside actions.ts (shared file); every write still goes through commit().
 import { commit, snapshot, uid } from '../store.ts';
-import { requestApproval } from '../actions.ts';
+import { closeSession, requestApproval } from '../actions.ts';
 import type { DB, Rec } from '../schema.ts';
 import { idr } from '../../domain/money.ts';
 import { opnameApprover, opnameVariance, type OpnameLine } from '../../domain/stock.ts';
-import { closeCheck } from '../../domain/shift.ts';
-import { sessionCash } from '../actions.ts';
 
 const now = () => Date.now();
 /** One alert engine: recipients from the alert catalog (actions.ts notify). */
@@ -67,19 +65,8 @@ export function resendCount(opnameId: string, by: string) {
 }
 
 // ── Drawer count by the PIC ─────────────────────────────────────────────────────────────
-/** Like closeSession, but the PIC counts someone else's drawer: no clock-out for the PIC. */
-export function picCountDrawer(sessionId: string, counted: number, note: string, by: string) {
-  const d0 = snapshot(), s = d0.sessions.find(x => x.id === sessionId)!;
-  const chk = closeCheck(sessionCash(d0, sessionId), counted, note);
-  const up = chk.level && chk.level !== 'pic';
-  commit('drawer.counted', by, d => {
-    const x = d.sessions.find(y => y.id === sessionId)!;
-    Object.assign(x, { counted, variance: chk.variance, note, status: up ? 'needs_approval' : 'closed', closedAt: up ? null : now() });
-    if (chk.variance) notice(d, 'Cash variance', up ? 'warn' : 'info', ['pic', 'manager'], x.outletId, `${sessionId} counted by ${name(d, by)} · variance ${idr(chk.variance)}`);
-  }, sessionId, s.outletId);
-  if (chk.level) requestApproval({ type: 'variance', title: `Drawer variance ${idr(chk.variance)} · ${sessionId}`, amount: Math.abs(chk.variance), requestedBy: by, countedBy: by, outletId: s.outletId, subjectId: sessionId, note });
-  return chk;
-}
+/** The PIC counts someone else's drawer: the same close (no clock-out for the PIC, who counted is kept). */
+export const picCountDrawer = (sessionId: string, counted: number, note: string, by: string) => closeSession(sessionId, counted, note, by);
 
 // ── Handover, PIC pass, incidents ───────────────────────────────────────────────────────
 /** Handover record per outlet + date + shift: c = ticked items (JSON), d = notes, e = who closed the shift. */

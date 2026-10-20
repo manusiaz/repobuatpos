@@ -326,7 +326,7 @@ function rejectEffects(d: DB, r: Approval) {
   if (r.type === 'opname' && r.subjectId) { const op = d.opnames.find(x => x.id === r.subjectId); if (op) op.status = 'rejected'; }
   if (r.type === 'po' && r.subjectId) { const po = d.pos.find(x => x.id === r.subjectId); if (po && po.status === 'waiting') po.status = 'cancelled'; }
   if (r.type === 'variance' && r.subjectId) { const s = d.sessions.find(x => x.id === r.subjectId); if (s) s.status = 'counting'; }
-  if (r.type === 'cash_out') { const c = d.cashMoves.find(x => x.id === r.subjectId); if (c) { c.status = 'done'; c.amount = 0; } }
+  if (r.type === 'cash_out') { const c = d.cashMoves.find(x => x.id === r.subjectId); if (c) c.status = 'rejected'; } // kept as asked, no cash moved
 }
 function applyDecision(d: DB, r: Approval) {
   const pl = (r.payload ?? {}) as Record<string, any>;
@@ -460,12 +460,17 @@ export function cashMove(sessionId: string, kind: 'in' | 'out' | 'drop', amount:
 export function closeSession(sessionId: string, counted: number, note: string, by: string, shot: ClockShot = {}) {
   const d0 = snapshot(), s = d0.sessions.find(x => x.id === sessionId)!;
   const chk = closeCheck(sessionCash(d0, sessionId), counted, note);
+  const countable = (x: { status: string }) => x.status === 'open' || x.status === 'counting'; // counted once: a replay or second close changes nothing
+  if (chk.needsNote || !countable(s)) return chk; // a variance always has its reason
+  const up = chk.level && chk.level !== 'pic';
   commit('drawer.counted', by, d => {
     const x = d.sessions.find(y => y.id === sessionId)!;
-    Object.assign(x, { counted, variance: chk.variance, note, status: chk.level && chk.level !== 'pic' ? 'needs_approval' : 'closed', closedAt: chk.level && chk.level !== 'pic' ? null : now() });
+    if (!countable(x)) return;
+    Object.assign(x, { counted, variance: chk.variance, note, status: up ? 'needs_approval' : 'closed', closedAt: up ? null : now() });
     if (by === x.cashierId && (shot.photo || !photoRequired(d))) d.clock.push({ id: uid('ck'), employeeId: by, outletId: x.outletId, kind: 'out', at: now(), ...withShot(shot) }); // a PIC counting someone else's drawer stays clocked in
   }, sessionId, s.outletId);
-  if (chk.level) requestApproval({ type: 'variance', title: `Drawer variance ${idr(chk.variance)} · ${sessionId}`, amount: Math.abs(chk.variance), requestedBy: by, outletId: s.outletId, subjectId: sessionId, note });
+  // neither who ran the drawer nor who counted it signs the variance
+  if (chk.level) requestApproval({ type: 'variance', title: `Drawer variance ${idr(chk.variance)} · ${sessionId}`, amount: Math.abs(chk.variance), requestedBy: s.cashierId, countedBy: by, outletId: s.outletId, subjectId: sessionId, note });
   return chk;
 }
 const withShot = (s: ClockShot): ClockShot => (s.photo ? { photo: s.photo } : { noPhoto: s.noPhoto ?? 'No photo' });

@@ -1,6 +1,7 @@
-// The app's own stock actions against the server's stock rules (migration stock_rules): what the PIC, cashier and
-// manager screens send (src/data/actions.ts, actions/pic.ts) goes through bn_write with their PIN sessions on a
-// shared register, exactly as a device writes it. Opname, waste and a purchase order each move stock once.
+// The app's own stock and drawer actions against the server's rules (migrations stock_rules, cash_rules): what the PIC,
+// cashier and manager screens send (src/data/actions.ts, actions/pic.ts) goes through bn_write with their PIN sessions
+// on a shared register, exactly as a device writes it. Opname, waste and a purchase order each move stock once; cash
+// outs, a drawer short beyond the PIC's limit and a PIC count with a recount close the way the screens promise.
 import assert from 'node:assert/strict';
 import pg from 'pg';
 
@@ -10,6 +11,7 @@ const { allOps, diff, wire } = await import('../../src/data/remoteDocs.ts');
 const { onServerDB } = await import('../../src/data/store.ts');
 const A = await import('../../src/data/actions.ts');
 const P = await import('../../src/data/actions/pic.ts');
+const { expectedCash } = await import('../../src/domain/shift.ts');
 const db = new pg.Client({ connectionString: URL + '/bn_test' });
 await db.connect();
 const as = async (uid, sql, args = []) => {
@@ -70,5 +72,33 @@ await act('andi', () => A.receivePO(poId, { beans: 2 }, 'andi'));
 assert.equal(d.pos.find(p => p.id === poId).status, 'received');
 assert.equal(await stock('beans'), Math.round((beans0 - 0.1 + 2) * 1000) / 1000);
 
-console.log('stock actions hold');
+// cash: Rina's 40k cash out is signed by Maya, a 90k one rejected and kept as asked
+const doc = async (coll, id) => (await db.query('select data from public.docs where tenant_id = $1 and coll = $2 and id = $3', [T, coll, id])).rows[0]?.data;
+const sid = await act('rina', () => A.openSession('sen', 'rina', 300000));
+const out = async (amount, decision) => {
+  const cm = await act('rina', () => A.cashMove(sid, 'out', amount, 'es batu', 'rina'));
+  await pin('maya');
+  assert.equal(await act('maya', () => A.decide(d.approvals.find(a => a.subjectId === cm).id, 'maya', decision)), null);
+  return doc('cashMoves', cm);
+};
+assert.deepEqual(await out(40000, 'approved').then(m => [m.status, m.amount]), ['done', 40000]);
+assert.deepEqual(await out(90000, 'rejected').then(m => [m.status, m.amount]), ['rejected', 90000]);
+// Rina is 200k short, over the PIC's limit: the manager signs, then the drawer is closed
+const due = () => expectedCash(A.sessionCash(d, sid));
+assert.equal(due(), 260000);
+await act('rina', () => A.closeSession(sid, due() - 200000, 'uang hilang', 'rina'));
+assert.equal((await doc('sessions', sid)).status, 'needs_approval');
+await pin('andi');
+assert.equal(await act('andi', () => A.decide(d.approvals.find(a => a.type === 'variance' && a.subjectId === sid).id, 'andi', 'approved')), null);
+assert.equal((await doc('sessions', sid)).status, 'closed');
+// Maya counts Tono's drawer 20k short, Sari asks for a recount, Maya recounts it right
+const tono = d.sessions.find(s => s.cashierId === 'tono' && s.status === 'open').id, tdue = expectedCash(A.sessionCash(d, tono));
+await act('maya', () => P.picCountDrawer(tono, tdue - 20000, 'kurang', 'maya'));
+await pin('sari');
+assert.equal(await act('sari', () => A.decide(d.approvals.find(a => a.type === 'variance' && a.subjectId === tono).id, 'sari', 'rejected')), null);
+assert.equal((await doc('sessions', tono)).status, 'counting');
+await act('maya', () => P.picCountDrawer(tono, tdue, '', 'maya'));
+assert.deepEqual(await doc('sessions', tono).then(s => [s.status, s.variance]), ['closed', 0]);
+
+console.log('staff actions hold');
 await db.end();

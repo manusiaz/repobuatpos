@@ -104,7 +104,7 @@ export function CashMoves({ c }: { c: PicCtx }) {
       {canMove && <section className="card stack">
         <h3>Record cash in or out</h3>
         {open.length === 0 ? <p className="muted">No drawer open. Cash moves need an open session.</p> : <>
-          <Field label="Drawer"><select className="input" value={session} onChange={e => setSid(e.target.value)}>{open.map(s => <option key={s.id} value={s.id}>{s.id} · {nameOf(db, s.cashierId)} · expected {idr(expectedCash(sessionCash(db, s.id)))}</option>)}</select></Field>
+          <Field label="Drawer"><select className="input" value={session} onChange={e => setSid(e.target.value)}>{open.map(s => <option key={s.id} value={s.id}>{s.id} · {nameOf(db, s.cashierId)}</option>)}</select></Field>
           <Seg value={kind} onChange={setKind} options={[['in', 'Cash in'], ['out', 'Cash out'], ['drop', 'Safe drop']] as const} label="Kind" />
           <Field label="Amount (IDR)"><input className="input" inputMode="numeric" value={amt ? Number(amt.replace(/\D/g, '') || 0).toLocaleString('en-US') : ''} onChange={e => setAmt(e.target.value)} placeholder="0" /></Field>
           <Field label="Reason"><input className="input" value={why} onChange={e => setWhy(e.target.value)} placeholder={kind === 'in' ? 'Change from bank' : kind === 'out' ? 'Ice delivery paid at the door' : 'Drop to safe'} /></Field>
@@ -117,7 +117,7 @@ export function CashMoves({ c }: { c: PicCtx }) {
         {moves.length === 0 ? <p className="muted">No cash in or out today.</p> : moves.map(m => <div key={m.id} className="row" style={{ fontSize: 14 }}>
           <Badge tone={m.kind === 'in' ? 'success' : m.kind === 'out' ? 'danger' : 'info'}>{m.kind === 'in' ? 'In' : m.kind === 'out' ? 'Out' : 'Drop'}</Badge>
           <span className="grow">{m.reason}<br /><span className="faint">{nameOf(db, m.by)} · {hhmm(m.at)} · <span className="mono">{m.sessionId}</span></span></span>
-          <span className="stack" style={{ gap: 2, alignItems: 'flex-end' }}><b className="num">{idr(m.amount)}</b>{m.status === 'waiting' && <Badge tone="warning">Waiting</Badge>}</span></div>)}
+          <span className="stack" style={{ gap: 2, alignItems: 'flex-end' }}><b className="num">{idr(m.amount)}</b>{m.status === 'waiting' && <Badge tone="warning">Waiting</Badge>}{m.status === 'rejected' && <Status s="rejected" />}</span></div>)}
       </section>
     </div>
   </div>;

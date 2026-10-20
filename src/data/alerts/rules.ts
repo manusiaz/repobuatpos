@@ -581,7 +581,7 @@ export const SERVICE: Record<string, string> = {
   'Local menu item waiting': 'src/data/actions.ts:requestApproval',
   'Publish waiting': 'src/data/actions.ts:requestApproval',
   'Approval not answered': 'src/data/actions.ts:escalateDue',
-  'Cash variance': 'src/data/actions/pic.ts:picCountDrawer',
+  'Cash variance': 'src/data/actions.ts:closeSession',
   'Swap request': 'src/data/actions/shifts.ts:requestSwap',
   'Day closed': 'src/data/actions/manager.ts:closeDay',
   'New order': 'src/data/actions.ts:sendToKitchen',
