@@ -15,6 +15,7 @@ import { PLANS, STATUS_TONE, accessOf, churn, mrrHistory, planName, planPrice, p
 import { useQuery } from './insight/query.ts';
 import { REMOTE } from '../data/remote.ts';
 import { cnameTarget, config as hostConfig, domainRequests, liveDomain } from '../system/hosts.ts';
+import { TwoFactor } from '../templates/settingsPages.tsx';
 
 const DETAIL = '/admin/tenant-detail-and-plan';
 const St = ({ s }: { s: string }) => <Badge tone={STATUS_TONE[s] ?? 'neutral'} dot>{human(s)}</Badge>;
@@ -22,7 +23,13 @@ const Mono = ({ children }: { children: ReactNode }) => <span className="mono">{
 
 export default function Screen() {
   const { page, db } = useApp();
-  useEffect(() => { ensurePlatform(); }, []);
+  // live: the server takes console calls only from a sign-in with the authenticator code (BN077)
+  const [mfa, setMfa] = useState<boolean | null>(REMOTE ? null : true);
+  useEffect(() => { if (REMOTE) void import('../data/backend.ts').then(s => s.sb().auth.getUser()).then(r => setMfa(!!r.data.user?.mfa)); }, []);
+  useEffect(() => { if (mfa) ensurePlatform(); }, [mfa]);
+  if (mfa === false) return <section className="card stack" style={{ maxWidth: 560 }}><h2>Turn on two-step sign-in</h2>
+    <span className="muted" style={{ fontSize: 14 }}>BorNiz staff open the console only from a sign-in with an authenticator code. Turn it on here and the console opens. Already on? Sign out and sign in again with the code.</span>
+    <TwoFactor onOn={() => setMfa(true)} /></section>;
   if (!db.records.tenant) return <Loading />;
   const v = page.slug === 'admin' ? 'platform-overview' : page.slug;
   return <div className="stack lg">

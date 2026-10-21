@@ -42,7 +42,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ op: str
   try {
     if (kind === 'rpc') {
       const host = (resolve(req.headers.get('host') ?? '', '/', config()) as { query?: { tenant?: string } }).query?.tenant ?? null;
-      const uid = (await auth.userOf(req))?.id ?? null;
+      const me = await auth.userOf(req), uid = me?.id ?? null;
+      // the super admin console needs a sign-in with the authenticator code, checked here for every console call
+      if (/^bn_admin_/.test(name) && !me?.mfa) throw new HttpError(403, 'BN077 BorNiz staff sign in with an authenticator code. Turn on two-step sign-in, then sign in again.');
       // support access runs in the business's own database: BorNiz staff are checked here, on the platform, first
       const SUPPORT: Record<string, [string, string]> = { bn_admin_support_state: ['bn_server_support_state', ''], bn_admin_support_docs: ['bn_server_support_docs', 'support.read'], bn_admin_support_end: ['bn_server_support_end', 'support.ended'] };
       if (SUPPORT[name]) {
@@ -81,9 +83,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ op: str
         case 'signin': {
           const key = ip(req) + '|' + String(b.email ?? '').toLowerCase();
           auth.guard(key);
-          const u = await auth.signIn(String(b.email ?? ''), String(b.password ?? ''), b.code ? String(b.code) : undefined);
+          const { mfa, ...u } = await auth.signIn(String(b.email ?? ''), String(b.password ?? ''), b.code ? String(b.code) : undefined);
           auth.cleared(key);
-          return withSession(req, { user: u }, await auth.newSession(u.id));
+          return withSession(req, { user: u }, await auth.newSession(u.id, mfa));
         }
         case 'anonymous': { auth.guard(ip(req) + '|anonymous'); const u = await auth.anonymousUser(); await auth.endSession(req); return withSession(req, { user: u }, await auth.newSession(u.id)); }
         case 'signout': await auth.endSession(req); return withSession(req, null, null);
@@ -98,7 +100,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ op: str
         case 'recover': { const uid = await auth.useReset(String(b.token ?? '')); return withSession(req, {}, await auth.newSession(uid)); }
         case 'mfa/list': return out({ totp: await auth.mfaList((await auth.requireUser(req)).id) });
         case 'mfa/enroll': return out(await auth.mfaEnroll(await auth.requireUser(req)));
-        case 'mfa/verify': await auth.mfaVerify((await auth.requireUser(req)).id, String(b.factorId ?? ''), String(b.code ?? '')); return out({});
+        case 'mfa/verify': await auth.mfaVerify(req, (await auth.requireUser(req)).id, String(b.factorId ?? ''), String(b.code ?? '')); return out({});
         case 'mfa/unenroll': await auth.mfaRemove((await auth.requireUser(req)).id, String(b.factorId ?? ''), String(b.code ?? '')); return out({});
       }
       throw new HttpError(404, 'Unknown auth action ' + name);

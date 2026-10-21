@@ -4,7 +4,7 @@
 // Same shape as the calls the app always made (rpc, auth.*), so screens and actions did not change.
 export interface BnError { message: string; code?: string; status?: number }
 type R<T = any> = { data: T; error: BnError | null };
-export interface User { id: string; email: string | null; is_anonymous: boolean; user_metadata: Record<string, unknown> }
+export interface User { id: string; email: string | null; is_anonymous: boolean; user_metadata: Record<string, unknown>; /** this sign-in passed the authenticator code */ mfa?: boolean }
 
 let recovering: Promise<unknown> | null = null;
 /** tenant: which business the call is for when its arguments don't name it (the API finds that business's database). */

@@ -18,8 +18,8 @@ export async function passwordOk(pw: string, stored: string | null) {
   return got.length === want.length && timingSafeEqual(got, want);
 }
 
-export interface User { id: string; email: string | null; is_anonymous: boolean; user_metadata: Record<string, unknown> }
-const userRow = (r: Record<string, unknown>): User => ({ id: r.id as string, email: (r.email as string) ?? null, is_anonymous: !!r.is_anonymous, user_metadata: (r.meta as Record<string, unknown>) ?? {} });
+export interface User { id: string; email: string | null; is_anonymous: boolean; user_metadata: Record<string, unknown>; /** this session passed the authenticator code */ mfa?: boolean }
+const userRow = (r: Record<string, unknown>): User => ({ id: r.id as string, email: (r.email as string) ?? null, is_anonymous: !!r.is_anonymous, user_metadata: (r.meta as Record<string, unknown>) ?? {}, ...(r.mfa ? { mfa: true } : {}) });
 export const db = () => pool(null);
 
 /** The session token of this request: the cookie (browsers) or a bearer token (devices, scripts). */
@@ -32,7 +32,7 @@ export function tokenOf(req: Request): string | null {
 export async function userOf(req: Request): Promise<User | null> {
   const t = tokenOf(req);
   if (!t) return null;
-  const r = await db().query(`select u.id, u.email, u.is_anonymous, u.meta from auth.sessions s join auth.users u on u.id = s.user_id
+  const r = await db().query(`select u.id, u.email, u.is_anonymous, u.meta, s.mfa from auth.sessions s join auth.users u on u.id = s.user_id
     where s.token_hash = $1 and s.expires_at > now()`, [sha(t)]);
   return r.rows[0] ? userRow(r.rows[0]) : null;
 }
@@ -46,9 +46,9 @@ export function cookie(req: Request, token: string | null): string {
   const domain = root && (host === root || host.endsWith('.' + root)) ? `; Domain=.${root}` : '';
   return `${COOKIE}=${token ?? ''}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${token ? DAYS * 86400 : 0}${domain}${https ? '; Secure' : ''}`;
 }
-export async function newSession(userId: string): Promise<string> {
+export async function newSession(userId: string, mfa = false): Promise<string> {
   const token = randomBytes(32).toString('base64url');
-  await db().query(`insert into auth.sessions (token_hash, user_id, expires_at) values ($1, $2, now() + make_interval(days => ${DAYS}))`, [sha(token), userId]);
+  await db().query(`insert into auth.sessions (token_hash, user_id, expires_at, mfa) values ($1, $2, now() + make_interval(days => ${DAYS}), $3)`, [sha(token), userId, mfa]);
   await db().query('delete from auth.sessions where user_id = $1 and expires_at < now()', [userId]);
   return token;
 }
@@ -84,7 +84,7 @@ export async function signIn(email: string, password: string, code?: string): Pr
     if (!code) throw Object.assign(new HttpError(401, 'Enter the 6-digit code from your authenticator app.'), { code: 'mfa_required' });
     if (!f.rows.some(x => totpOk(x.secret, code))) throw Object.assign(new HttpError(401, 'That code is not right. Try the newest one.'), { code: 'mfa_required' });
   }
-  return userRow(u);
+  return userRow({ ...u, mfa: !!f.rowCount });
 }
 export async function anonymousUser(): Promise<User> {
   const r = await db().query("insert into auth.users (is_anonymous) values (true) returning id, email, is_anonymous, meta");
@@ -136,10 +136,11 @@ export async function mfaEnroll(user: User) {
   const uri = `otpauth://totp/BorNiz:${encodeURIComponent(user.email ?? user.id)}?secret=${secret}&issuer=BorNiz`;
   return { id: r.rows[0].id as string, totp: { secret, uri } };
 }
-export async function mfaVerify(userId: string, factorId: string, code: string) {
+export async function mfaVerify(req: Request, userId: string, factorId: string, code: string) {
   const r = await db().query('select secret from auth.mfa_factors where id = $1 and user_id = $2', [factorId, userId]);
   if (!r.rowCount || !totpOk(r.rows[0].secret, code)) throw new HttpError(400, 'That code is not right. Try the newest one.');
   await db().query('update auth.mfa_factors set verified = true where id = $1', [factorId]);
+  await db().query('update auth.sessions set mfa = true where token_hash = $1 and user_id = $2', [sha(tokenOf(req) ?? ''), userId]); // this session just proved the code
 }
 export const mfaList = async (userId: string) => (await db().query('select id, verified from auth.mfa_factors where user_id = $1 order by created_at', [userId])).rows
   .map(r => ({ id: r.id as string, status: r.verified ? 'verified' : 'unverified' }));
@@ -148,5 +149,6 @@ export async function mfaRemove(userId: string, factorId: string, code: string) 
   const r = await db().query('select secret, verified from auth.mfa_factors where id = $1 and user_id = $2', [factorId, userId]);
   if (r.rows[0]?.verified && !totpOk(r.rows[0].secret, code)) throw new HttpError(400, 'Enter the current 6-digit code to turn it off.');
   await db().query('delete from auth.mfa_factors where id = $1 and user_id = $2', [factorId, userId]);
+  await db().query('update auth.sessions set mfa = false where user_id = $1 and not exists (select 1 from auth.mfa_factors where user_id = $1 and verified)', [userId]);
 }
 

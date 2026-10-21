@@ -18,6 +18,7 @@ create table if not exists auth.sessions (
   expires_at timestamptz not null
 );
 create index if not exists sessions_user on auth.sessions (user_id);
+alter table auth.sessions add column if not exists mfa boolean not null default false; -- opened with the authenticator code (BorNiz staff need it)
 alter table auth.users add column if not exists meta jsonb not null default '{}';   -- name and phone given at sign-up
 create table if not exists auth.one_time (      -- password-reset links (sha256 of the token)
   token_hash text primary key,

@@ -70,13 +70,14 @@ export function ProfileSecurity() {
     {pin.sheet}
   </div>;
 }
-function TwoFactor() {
+/** Authenticator-app second factor for this account (owner / manager settings, and BorNiz staff before the console opens). */
+export function TwoFactor({ onOn }: { onOn?: () => void }) {
   const [factors, setFactors] = useState<{ id: string; status: string }[] | null>(null), [enroll, setEnroll] = useState<{ id: string; qr: string; secret: string } | null>(null), [code, setCode] = useState('');
   const sb = async () => (await import('../data/backend.ts')).sb();
   const load = async () => { const { data } = await (await sb()).auth.mfa.listFactors(); setFactors((data?.totp ?? []).map(f => ({ id: f.id, status: f.status }))); };
   useEffect(() => { load().catch(() => setFactors([])); }, []);
   const start = async () => { const { data, error } = await (await sb()).auth.mfa.enroll({ factorType: 'totp' }); if (error) return toast(error.message); setEnroll({ id: data.id, qr: data.totp.uri, secret: data.totp.secret }); };
-  const verify = async () => { const { error } = await (await sb()).auth.mfa.challengeAndVerify({ factorId: enroll!.id, code }); if (error) return toast(error.message); setEnroll(null); setCode(''); toast('Two-factor sign-in is on'); load(); };
+  const verify = async () => { const { error } = await (await sb()).auth.mfa.challengeAndVerify({ factorId: enroll!.id, code }); if (error) return toast(error.message); setEnroll(null); setCode(''); toast('Two-factor sign-in is on'); load(); onOn?.(); };
   const on = factors?.some(f => f.status === 'verified');
   if (factors === null) return <span className="muted">Checking…</span>;
   return <div className="stack">

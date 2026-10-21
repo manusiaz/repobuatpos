@@ -112,7 +112,7 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | page:/owner/outlets/table-qr-generator | reads | fn:tableNames | src/screens/menu.tsx:328 |
 | page:/order (QR menu) | calls | fn:findTable | src/screens/selforder/shared.tsx:42 (QR lama → meja yang di-rename; tak dikenal → tidak bisa pesan) |
 | page:/order (QR menu) | calls | fn:tableParam | src/screens/selforder/shared.tsx:42 |
-| page:/owner/outlets/outlets | routes-to | page:/owner/outlets/tables-and-floor-plan | src/templates/settingsPages.tsx:186 |
+| page:/owner/outlets/outlets | routes-to | page:/owner/outlets/tables-and-floor-plan | src/templates/settingsPages.tsx:187 |
 | table:outlets | guarded-by | policy:staff_rules | db/migrations/20261016000000_borniz_staff_sessions.sql (BN054 list) |
 | page:/owner/outlets/tables-and-floor-plan | renders | comp:Field | src/screens/floor.tsx (Name / Seats / Area) |
 | page:/pos/selling/table-picker | reads | fn:holdsTable | src/screens/pos/OrderSheets.tsx:95 |
@@ -238,7 +238,7 @@ graph LR
 | 2026-10-20 | fn:bn_start_trial | Trial 14 hari yang dipilih owner saat daftar hanya ditulis ke dokumen bisnis → di mode database tidak pernah aktif | fixed (bn_start_trial sekali, berakhir ke Free bila belum dibayar) |
 | 2026-10-21 | page:/admin/plans-and-pricing | Harga yang diubah staf BorNiz tidak terlihat calon pelanggan: halaman harga, pilih plan & checkout memakai harga tetap di kode (dua daftar harga: PLANS dan PLAN_PRICE) | fixed (bn_public_prices → usePlans; satu daftar default; tes platform_console.sql + plan-limits.test.ts) |
 | 2026-10-20 | page:/admin/plans-and-pricing | Tema default tersimpan di server tapi belum dibaca; flag & rilis belum dibaca fitur mana pun; invoice belum dibuat oleh billing; tiket belum bisa dikirim merchant | open |
-| 2026-10-20 | fn:bn_is_platform_admin | Staf BorNiz tanpa 2FA tetap bisa memakai konsol walau label "2FA"; ganti plan merchant yang pindah cell tidak atomik & tanpa jejak admin | open (keputusan owner: wajib 2FA untuk staf?) |
+| 2026-10-20 | fn:bn_is_platform_admin | Staf BorNiz tanpa 2FA tetap bisa memakai konsol walau label "2FA" (password bocor = konsol terbuka) | fixed 2026-10-21 (sesi mencatat kode authenticator `auth.sessions.mfa`; API menolak bn_admin_* tanpa itu BN077; konsol menawarkan set-up dulu; tes cells-api.mjs) |
 | 2026-10-21 | policy:plan_rules | Batas plan hanya tampilan: Free bisa menambah outlet ke-2, register ke-2, KDS, customer display lewat API (dan layar pun tidak menolak tambah outlet); layar register menghitung register semua outlet, bukan per outlet; outlet sisa trial membawa register sendiri | fixed (BN076 `docs_plan_rules` + `planBlock` di plans.ts dipakai aksi & layar; yang sudah ada tetap jalan setelah turun plan; tes plan_rules.sql + plan-limits.test.ts) |
 | 2026-10-20 | fn:bn_machine_clock | Satu baris scan rusak (tanggal mustahil) menggagalkan seluruh batch → mesin mengirim ulang batch yang sama selamanya, semua scan sesudahnya tertahan | fixed (baris rusak dilewati; tes attendance.sql gagal tanpa fix) |
 | 2026-10-20 | fn:bn_machine_clock | Label Fingerspot ("Scan Keluar") di-cast ke angka → setiap scan Fingerspot ditolak; jam mesin salah (2019 / 2099) dan karyawan yang sudah keluar tetap tercatat absen | fixed (label dibaca, scan di luar 35 hari / >10 menit ke depan dilewati + pesan "atur tanggal mesin", karyawan nonaktif dilewati) |

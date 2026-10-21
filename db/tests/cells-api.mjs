@@ -36,17 +36,21 @@ assert.equal(r.error, null, 'device joins the moved business: ' + JSON.stringify
 // super admin changes the plan: the registry here and the business's own copy there, no BN050
 const a = '00000000-0000-0000-0000-00000000000a';
 await src.query('insert into private.platform_admins (user_id) values ($1) on conflict do nothing', [a]);
+// BorNiz staff use the console only from a sign-in that passed the authenticator code (a stolen password is not enough)
 r = await api('rpc/bn_admin_set_plan', { p_tenant: T, p_plan: 'pro' }, await newSession(a), 'admin.bornis.id');
+assert.match(r.error?.message ?? '', /^BN077/, 'no console without 2FA');
+assert.equal((await src.query('select plan from public.tenants where id = $1', [T])).rows[0].plan === 'pro', false);
+r = await api('rpc/bn_admin_set_plan', { p_tenant: T, p_plan: 'pro' }, await newSession(a, true), 'admin.bornis.id');
 assert.equal(r.error, null, JSON.stringify(r.error));
 assert.equal((await src.query('select plan from public.tenants where id = $1', [T])).rows[0].plan, 'pro');
 assert.equal((await dst.query('select plan from public.tenants where id = $1', [T])).rows[0].plan, 'pro');
 
 // super admin pauses the moved business: the registry here and the business's own database there; writes stop there too
-r = await api('rpc/bn_admin_set_status', { p_tenant: T, p_status: 'suspended', p_reason: 'test' }, await newSession(a), 'admin.bornis.id');
+r = await api('rpc/bn_admin_set_status', { p_tenant: T, p_status: 'suspended', p_reason: 'test' }, await newSession(a, true), 'admin.bornis.id');
 assert.equal(r.error, null, JSON.stringify(r.error));
 assert.equal((await dst.query('select status from public.tenants where id = $1', [T])).rows[0].status, 'suspended', 'paused in its own database');
 await assert.rejects(rpc('bn_server_write', { p_tenant: T, p_ops: [{ op: 'put', coll: 'products', id: 'p3', data: { id: 'p3' } }], p_action: 'test' }, 'kb').catch(e => { throw e; }), /BN073/);
-r = await api('rpc/bn_admin_set_status', { p_tenant: T, p_status: 'active', p_reason: 'test' }, await newSession(a), 'admin.bornis.id');
+r = await api('rpc/bn_admin_set_status', { p_tenant: T, p_status: 'active', p_reason: 'test' }, await newSession(a, true), 'admin.bornis.id');
 assert.equal((await dst.query('select status from public.tenants where id = $1', [T])).rows[0].status, 'active');
 
 // the automation worker runs the moved business from its own database
