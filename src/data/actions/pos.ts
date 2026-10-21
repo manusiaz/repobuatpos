@@ -4,6 +4,7 @@
 import { commit, snapshot, uid } from '../store.ts';
 import { CLOSED, gatewayWebhook, newOrder, patchOrder, startPayment } from '../actions.ts';
 import type { Approval, Device, OrderLine } from '../schema.ts';
+import { planBlock } from '../../screens/public/plans.ts';
 
 const now = () => Date.now();
 const order = (id: string) => snapshot().orders.find(o => o.id === id);
@@ -89,6 +90,7 @@ export function setDeviceStatus(deviceId: string, status: Device['status'], by: 
   commit('device.' + status, by, d => { const x = d.devices.find(y => y.id === deviceId); if (x) { x.status = status; if (status === 'online') x.lastSeen = now(); } }, deviceId);
 }
 export function addDevice(outletId: string, kind: Device['kind'], name: string, by: string) {
+  if (planBlock(snapshot(), kind, outletId)) return null;
   const id = uid('d');
   commit('device.added', by, d => { d.devices.push({ id, outletId, kind, name, lastSeen: now(), pairCode: null, status: 'online' }); }, name, outletId);
   return id;

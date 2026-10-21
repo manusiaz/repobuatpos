@@ -1,7 +1,7 @@
 // One day at Kopi Biru (Senayan, Kemang, BSD), driven through the same services the screens call.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { snapshot } from './store.ts';
+import { commit, snapshot } from './store.ts';
 import { addLine, bumpDone, decide, gatewayWebhook, newOrder, patchOrder, patchOutlet, publish, rateOrder, sellable, simulatePlatformOrder, sendToKitchen, setSetting, startPayment, stockEntry, verifyPin, watchKitchen } from './actions.ts';
 import { addOutlet, saveBusiness } from './actions/business.ts';
 import { menuDesign } from './actions/studio.ts';
@@ -124,7 +124,10 @@ test('One system: business profile and outlet details print on the receipt; a ne
   const lines = toText(receiptDoc(snapshot(), paid, '80'));
   assert.ok(lines.some(l => l.includes('PT Biru Sejahtera')) && lines.some(l => l.includes('Jl. Asia Afrika 8')) && lines.some(l => l.includes('NPWPD P2-123456')));
 
-  const id = addOutlet({ name: 'Bintaro', city: 'Tangerang Selatan', serviceBps: 500, taxBps: 1000, taxInclusive: false, opens: '08:00', closes: '22:00', tables: 8, online: true }, 'budi');
+  const bintaro = { name: 'Bintaro', city: 'Tangerang Selatan', serviceBps: 500, taxBps: 1000, taxInclusive: false, opens: '08:00', closes: '22:00', tables: 8, online: true };
+  assert.equal(addOutlet(bintaro, 'budi'), null, 'Pro holds 3 outlets');
+  commit('plan.changed', 'budi', d => { d.tenant.plan = 'enterprise'; });
+  const id = addOutlet(bintaro, 'budi')!;
   const globals = snapshot().products.filter(p => p.scope === 'global').length;
   assert.equal(snapshot().outletProducts.filter(x => x.outletId === id).length, globals, 'new outlet carries the global menu');
 

@@ -27,3 +27,14 @@ export const FEATURE_PLAN: [string, PlanId][] = [
 ];
 const RANK: Record<PlanId, number> = { free: 0, basic: 1, pro: 2, enterprise: 3 };
 export const includes = (have: PlanId, need: PlanId) => RANK[have] >= RANK[need];
+
+/** Room left on the plan for one more outlet or device: null, or why not (the server refuses the same with BN076,
+ *  db/migrations/20261021000000_borniz_plan_rules.sql). What a business already has keeps working after a downgrade. */
+export function planBlock(db: Pick<DB, 'tenant' | 'outlets' | 'devices'>, what: 'outlets' | DB['devices'][0]['kind'], outletId?: string): string | null {
+  const p = planOf(db.tenant.plan), need: Partial<Record<string, PlanId>> = { display: 'basic', kds: 'pro', kiosk: 'pro' }, s = (n: number) => n > 1 ? 's' : '';
+  const pos = db.devices.filter(d => d.kind === 'pos');
+  if (need[what] && !includes(p.id, need[what]!)) return `${p.name}: no ${what === 'kds' ? 'kitchen display' : what === 'kiosk' ? 'kiosk' : 'customer display'}. Upgrade to add more.`;
+  if (what === 'outlets' && db.outlets.length >= p.outlets) return `${p.name}: up to ${p.outlets} outlet${s(p.outlets)}. Upgrade to add more.`;
+  if (what === 'pos' && (pos.filter(d => d.outletId === outletId).length >= p.registers || pos.length >= p.registers * p.outlets)) return `${p.name}: up to ${p.registers} register${s(p.registers)} per outlet. Upgrade to add more.`;
+  return null;
+}

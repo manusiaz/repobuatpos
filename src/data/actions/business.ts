@@ -5,6 +5,7 @@ import type { BusinessProfile, Outlet } from '../schema.ts';
 import { checkFloor, holdsTable, tableNames, type FloorTable } from '../../domain/tables.ts';
 import { referral } from '../../system/settings.ts';
 import { referrerOf } from '../../system/studio.ts';
+import { planBlock } from '../../screens/public/plans.ts';
 
 const now = () => Date.now();
 
@@ -28,7 +29,8 @@ export function saveFloor(outletId: string, floor: FloorTable[], by: string): st
   commit('outlet.floor_saved', by, d => { const o = d.outlets.find(x => x.id === outletId)!; o.floor = plan; o.tables = plan.length; }, `${out.name} · ${plan.length} tables`, outletId);
   return null;
 }
-export function addOutlet(o: Omit<Outlet, 'id'>, by: string): string {
+export function addOutlet(o: Omit<Outlet, 'id'>, by: string): string | null {
+  if (planBlock(snapshot(), 'outlets')) return null;
   const id = uid('ol');
   commit('outlet.created', by, d => {
     d.outlets.push({ ...o, id });

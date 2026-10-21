@@ -10,6 +10,7 @@ import { usePin } from '../ui/PinSheet.tsx';
 import { idr } from '../domain/money.ts';
 import { patchOutlet, saveEmployee, setSetting } from '../data/actions.ts';
 import { addOutlet, saveBusiness } from '../data/actions/business.ts';
+import { planBlock } from '../screens/public/plans.ts';
 import type { Employee, Outlet, Role } from '../data/schema.ts';
 import { REFERRAL_PAGE, referral } from '../system/settings.ts';
 import { linkTo } from '../system/hosts.ts';
@@ -168,14 +169,14 @@ function OutletSheet({ o, onClose }: { o: Outlet | null; onClose: () => void }) 
   return <Sheet open onClose={onClose} title={o ? o.name : 'New outlet'}><OutletForm o={o} done={onClose} /></Sheet>;
 }
 function OutletForm({ o, done }: { o: Outlet | null; done?: () => void }) {
-  const { user } = useApp();
+  const { user, db } = useApp();
   const [f, setF] = useState<Omit<Outlet, 'id'>>(o ?? BLANK);
   const can = user.role === 'owner' || user.role === 'manager';
   const T = (k: keyof Omit<Outlet, 'id'>, label: string, extra: Record<string, unknown> = {}) => <Field label={label}><input className="input" disabled={!can} value={String(f[k] ?? '')} {...extra} onChange={e => setF({ ...f, [k]: e.target.value })} /></Field>;
   const N = (k: 'serviceBps' | 'taxBps' | 'tables', label: string, div = 1) => <Field label={label}><input className="input num" disabled={!can} inputMode="decimal" value={f[k] / div} onChange={e => setF({ ...f, [k]: Math.round((Number(e.target.value.replace(',', '.')) || 0) * div) })} /></Field>;
   const save = () => {
     if (!f.name.trim()) return toast('Name the outlet');
-    if (o) { patchOutlet(o.id, f, user.id); toast('Saved · every screen at this outlet updates'); } else { addOutlet(f, user.id); toast('Outlet added with the whole menu'); }
+    if (o) { patchOutlet(o.id, f, user.id); toast('Saved · every screen at this outlet updates'); } else { const no = planBlock(db, 'outlets'); if (no) return toast(no); addOutlet(f, user.id); toast('Outlet added with the whole menu'); }
     done?.();
   };
   return <div className="stack">

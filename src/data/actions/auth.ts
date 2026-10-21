@@ -7,6 +7,7 @@ import { REMOTE } from '../remote.ts';
 import { toast } from '../../ui/kit.tsx';
 import { seed } from '../seed.ts';
 import { verifyPin } from '../actions.ts';
+import { planBlock } from '../../screens/public/plans.ts';
 import { remoteInfo, remoteReady, remoteRestart } from '../remoteStore.ts';
 import { allOps, emptyDB, humanError, pinChanges, wire } from '../remoteDocs.ts';
 
@@ -33,6 +34,7 @@ export function inviteEmployee(p: { name: string; phone: string; role: Role; out
 }
 
 export function addRegister(outletId: string, by: string) {
+  if (planBlock(snapshot(), 'pos', outletId)) return null;
   const id = uid('d');
   commit('device.added', by, d => {
     const n = d.devices.filter(x => x.outletId === outletId && x.kind === 'pos').length + 1;

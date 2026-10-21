@@ -16,7 +16,7 @@ import { level as stockLevel } from '../../domain/stock.ts';
 import { idr } from '../../domain/money.ts';
 import { usePin } from '../../ui/PinSheet.tsx';
 import { Avatar, Badge, copy, Icon, Numpad, Skeleton, Status, ago, hhmm, toast, useNow, type Tone } from '../../ui/kit.tsx';
-import { FEATURE_PLAN, PLANS, includes, planOf } from './plans.ts';
+import { FEATURE_PLAN, PLANS, includes, planBlock, planOf } from './plans.ts';
 export { ProductImporter, SAMPLE_CSV } from './importer.tsx';
 
 export type Kind = 'Empty' | 'Loading' | 'Error' | 'Blocked' | 'Success' | 'Offline';
@@ -279,7 +279,7 @@ export function PairDevice({ outletId, onPaired }: { outletId: string; onPaired?
   const dev = regs.find(r => r.id === sel);
   const owner = me?.id ?? db.employees.find(e => e.role === 'owner')!.id;
   const left = dev ? pairExpiry(db, dev.id) - now : 0;
-  const plan = planOf(db.tenant.plan), atLimit = db.devices.filter(d => d.kind === 'pos').length >= plan.registers;
+  const atLimit = planBlock(db, 'pos', outletId);
   useEffect(() => { setCode(''); setErr(''); }, [sel]);
   const key = (k: string) => {
     if (k === 'del') return setCode(c => c.slice(0, -1));
@@ -290,7 +290,7 @@ export function PairDevice({ outletId, onPaired }: { outletId: string; onPaired?
   if (!dev) return <div className="stack">
     {regs.map(r => <button key={r.id} className="card tight row" style={{ cursor: 'pointer', textAlign: 'left' }} onClick={() => setSel(r.id)}>
       <Icon name="monitor-smartphone" /><span className="grow"><b>{r.name}</b><br /><span className="faint" style={{ fontSize: 13 }}>{db.device.paired.pos === r.id ? 'Paired to this tablet' : r.lastSeen ? 'Last seen ' + ago(r.lastSeen) : 'Never paired'}</span></span><Status s={r.status} /><Icon name="chevron-right" /></button>)}
-    {atLimit ? <div className="banner" style={{ background: 'var(--warning-soft)', color: 'var(--warning-fg)' }}><Icon name="sparkles" /><span className="grow">{plan.name} includes {plan.registers} {plan.registers === 1 ? 'register' : 'registers'}. <Link href="/account/choose-plan">Upgrade</Link> to add more.</span></div>
+    {atLimit ? <div className="banner" style={{ background: 'var(--warning-soft)', color: 'var(--warning-fg)' }}><Icon name="sparkles" /><span className="grow">{atLimit} <Link href="/account/choose-plan">Upgrade</Link></span></div>
       : <button className="btn" onClick={() => setSel(addRegister(outletId, owner))}><Icon name="plus" size={18} />Add a register</button>}
   </div>;
   return <div className="stack" onKeyDown={e => key(e.key === 'Backspace' ? 'del' : e.key)} tabIndex={-1}>

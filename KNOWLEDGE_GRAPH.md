@@ -98,8 +98,8 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | page:/owner/outlets/tables-and-floor-plan | reads | fn:tablesOf | src/screens/floor.tsx:26 |
 | page:/owner/outlets/tables-and-floor-plan | renders | comp:FloorGrid | src/screens/floor.tsx:64 |
 | page:/owner/outlets/tables-and-floor-plan | routes-to | page:/owner/outlets/table-qr-generator | src/screens/floor.tsx (Link "Print table QR codes") |
-| fn:saveFloor | writes | table:outlets | src/data/actions/business.ts:28 |
-| fn:saveFloor | reads | fn:tableNames | src/data/actions/business.ts:26 |
+| fn:saveFloor | writes | table:outlets | src/data/actions/business.ts:29 |
+| fn:saveFloor | reads | fn:tableNames | src/data/actions/business.ts:27 |
 | fn:tableNames | reads | fn:tablesOf | src/domain/tables.ts:15 |
 | fn:tablesOf | reads | table:outlets | src/domain/tables.ts (floor / tables) |
 | page:/pos/selling/table-picker | reads | fn:tablesOf | src/screens/pos/OrderSheets.tsx:95 |
@@ -112,14 +112,14 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | page:/owner/outlets/table-qr-generator | reads | fn:tableNames | src/screens/menu.tsx:328 |
 | page:/order (QR menu) | calls | fn:findTable | src/screens/selforder/shared.tsx:42 (QR lama → meja yang di-rename; tak dikenal → tidak bisa pesan) |
 | page:/order (QR menu) | calls | fn:tableParam | src/screens/selforder/shared.tsx:42 |
-| page:/owner/outlets/outlets | routes-to | page:/owner/outlets/tables-and-floor-plan | src/templates/settingsPages.tsx:185 |
+| page:/owner/outlets/outlets | routes-to | page:/owner/outlets/tables-and-floor-plan | src/templates/settingsPages.tsx:186 |
 | table:outlets | guarded-by | policy:staff_rules | db/migrations/20261016000000_borniz_staff_sessions.sql (BN054 list) |
 | page:/owner/outlets/tables-and-floor-plan | renders | comp:Field | src/screens/floor.tsx (Name / Seats / Area) |
 | page:/pos/selling/table-picker | reads | fn:holdsTable | src/screens/pos/OrderSheets.tsx:95 |
 | page:/waiter | reads | fn:holdsTable | src/screens/waiter.tsx:42 |
 | page:/manager | reads | fn:holdsTable | src/screens/manager.tsx:209 |
 | page:/owner/outlets/tables-and-floor-plan | reads | fn:holdsTable | src/screens/floor.tsx:36 |
-| fn:saveFloor | reads | fn:holdsTable | src/data/actions/business.ts:24 |
+| fn:saveFloor | reads | fn:holdsTable | src/data/actions/business.ts:25 |
 | page:/pos/selling/move-table | calls | fn:moveTable | src/screens/pos/OrderSheets.tsx:332 |
 | page:/pos/selling/move-table | calls | fn:printTickets | src/screens/pos/OrderSheets.tsx:334 |
 | fn:moveTable | writes | table:orders | src/data/actions.ts:53 (findOrder → d.orders; movedFrom di :103) |
@@ -237,7 +237,8 @@ graph LR
 | 2026-10-20 | src/data/actions/admin.ts | Mode database: hampir semua aksi konsol admin (suspend, perpanjang trial, invoice, tiket, flag, harga plan, tema default, akses support) hanya tersimpan di memori browser; tidak ada yang membaca suspend/flag; akses support palsu | fixed (keputusan owner "ya": platform_records + platform_audit; suspend menghentikan tulisan/QR/worker; trial di server; akses support disetujui owner dengan PIN, baca set-up saja; tes platform_console.sql, support_access.sql, e2e browser) |
 | 2026-10-20 | fn:bn_start_trial | Trial 14 hari yang dipilih owner saat daftar hanya ditulis ke dokumen bisnis → di mode database tidak pernah aktif | fixed (bn_start_trial sekali, berakhir ke Free bila belum dibayar) |
 | 2026-10-20 | page:/admin/plans-and-pricing | Harga plan & tema default tersimpan di server tapi halaman harga publik / pendaftaran masih memakai harga tetap di kode; flag & rilis belum dibaca fitur mana pun; invoice belum dibuat oleh billing; tiket belum bisa dikirim merchant | open |
-| 2026-10-20 | fn:bn_is_platform_admin | Staf BorNiz tanpa 2FA tetap bisa memakai konsol walau label "2FA"; plan tidak ditegakkan di server; ganti plan merchant yang pindah cell tidak atomik & tanpa jejak admin | open (keputusan owner: wajib 2FA untuk staf?) |
+| 2026-10-20 | fn:bn_is_platform_admin | Staf BorNiz tanpa 2FA tetap bisa memakai konsol walau label "2FA"; ganti plan merchant yang pindah cell tidak atomik & tanpa jejak admin | open (keputusan owner: wajib 2FA untuk staf?) |
+| 2026-10-21 | policy:plan_rules | Batas plan hanya tampilan: Free bisa menambah outlet ke-2, register ke-2, KDS, customer display lewat API (dan layar pun tidak menolak tambah outlet); layar register menghitung register semua outlet, bukan per outlet; outlet sisa trial membawa register sendiri | fixed (BN076 `docs_plan_rules` + `planBlock` di plans.ts dipakai aksi & layar; yang sudah ada tetap jalan setelah turun plan; tes plan_rules.sql + plan-limits.test.ts) |
 | 2026-10-20 | fn:bn_machine_clock | Satu baris scan rusak (tanggal mustahil) menggagalkan seluruh batch → mesin mengirim ulang batch yang sama selamanya, semua scan sesudahnya tertahan | fixed (baris rusak dilewati; tes attendance.sql gagal tanpa fix) |
 | 2026-10-20 | fn:bn_machine_clock | Label Fingerspot ("Scan Keluar") di-cast ke angka → setiap scan Fingerspot ditolak; jam mesin salah (2019 / 2099) dan karyawan yang sudah keluar tetap tercatat absen | fixed (label dibaca, scan di luar 35 hari / >10 menit ke depan dilewati + pesan "atur tanggal mesin", karyawan nonaktif dilewati) |
 | 2026-10-20 | src/devices/zk.ts | Handshake tidak mengirim TimeZone → mesin bisa mencap jam di zona pabrik; getrequest tidak menandai mesin online; port 80 tanpa client_max_body_size (backlog >1 MB = 413 selamanya); pencarian serial memindai semua dokumen | fixed (TimeZone dari config.tz, getrequest = seen maks 1×/menit, 10m, index serial) |
