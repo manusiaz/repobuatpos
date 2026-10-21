@@ -8,15 +8,15 @@ import { uid } from '../../data/store.ts';
 import { idr } from '../../domain/money.ts';
 import { Field, Icon, Seg } from '../../ui/kit.tsx';
 import { FEATURE_PLAN, PLANS, includes, perMonth } from './plans.ts';
-import { Cards, PageHead, Wrap } from './landing-ui.tsx';
+import { Cards, PageHead, Wrap, usePlans } from './landing-ui.tsx';
 
 export function Pricing() {
-  const [yearly, setYearly] = useState(false);
+  const [yearly, setYearly] = useState(false), { plans } = usePlans();
   return <Wrap><div className="stack lg">
     <PageHead center kicker="Pricing" title="Simple pricing" sub="Per outlet, billed monthly or yearly (2 months free). Prices exclude PPN.">
       <Seg value={yearly ? 'y' : 'm'} onChange={v => setYearly(v === 'y')} label="Billing" options={[['m', 'Monthly'], ['y', 'Yearly · save 17%']]} />
     </PageHead>
-    <div className="grid" style={{ ['--min' as string]: '240px', gap: 12 }}>{PLANS.map(p => {
+    <div className="grid" style={{ ['--min' as string]: '240px', gap: 12 }}>{plans.map(p => {
       const pop = !!p.popular, price = perMonth(p, yearly);
       return <div key={p.id} className="card stack" data-theme={pop ? 'dark' : undefined} style={{ borderRadius: 24, background: pop ? 'var(--ink-950)' : 'var(--bg-surface)', borderColor: pop ? 'var(--ink-950)' : undefined, color: 'var(--fg-1)' }}>
         <div className="row between"><b style={{ fontSize: 20 }}>{p.name}</b>{pop && <span className="badge" style={{ background: 'var(--ember-500)', color: 'var(--ink-0)' }}>Most popular</span>}</div>

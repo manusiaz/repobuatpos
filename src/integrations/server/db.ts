@@ -50,7 +50,7 @@ export const cellFor = (tenant: string) => (UUID.test(tenant) ? cellBy(tenant, n
 const cellForSlug = (slug: string) => cellBy('slug:' + slug, slug, null);
 
 /** Platform-only functions (accounts, registry, super admin) never go to a merchant's own database. */
-const PLATFORM = /^bn_(admin_|tenant_cell$|bootstrap$|server_tenants$|is_platform_admin$|start_trial$|server_tenant_row$)/; // the registry lives on the platform
+const PLATFORM = /^bn_(admin_|tenant_cell$|bootstrap$|server_tenants$|is_platform_admin$|start_trial$|server_tenant_row$|public_prices$)/; // the registry lives on the platform
 /** The database a call belongs to: the business in p_tenant, or at p_slug, or the hint (an id, or the slug of the host asked). */
 async function cellOf(fn: string, args: Record<string, unknown>, hint?: string | null): Promise<string | null> {
   if (PLATFORM.test(fn)) return null;

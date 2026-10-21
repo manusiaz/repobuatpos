@@ -19,3 +19,8 @@ test('adding beyond the plan is refused; what a business kept from a trial does 
   assert.match(planBlock(db('free', ['sen', 'kmg', 'bsd'], [['sen', 'pos']]), 'pos', 'bsd')!, /Free: up to 1 register/, 'trial outlets bring no register');
   assert.equal(planBlock(db('enterprise', ['a', 'b', 'c', 'd'], [['a', 'pos'], ['a', 'pos']]), 'pos', 'a'), null);
 });
+
+test('the price BorNiz set in the console is the one sign-up and pricing show; Free and Enterprise stay as they are', async () => {
+  const { priced } = await import('../screens/public/plans.ts');
+  assert.deepEqual(priced({ pro: 399000, basic: 'x', free: 5, enterprise: 9 }).map(p => p.monthly), [0, 149_000, 399_000, null]);
+});

@@ -137,7 +137,7 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | page:/display | calls | fn:tableNo | src/screens/display.tsx:185 |
 | page:/owner/outlets/table-qr-generator | calls | fn:publicUrl | src/system/hosts.ts:139 (linkTo → publicUrl, dipanggil tableUrl) |
 | test:tables | tests | fn:findTable | src/domain/tables.test.ts |
-| page:/account (sign-in, create business) | calls | fn:onBusinessHost | src/screens/auth.tsx:515 (enterBusiness) |
+| page:/account (sign-in, create business) | calls | fn:onBusinessHost | src/screens/auth.tsx:516 (enterBusiness) |
 | fn:publicUrl | reads | fn:isTenantSlug | src/system/hosts.ts:98 (resolve: label host → tenant) |
 | policy:tenants_slug_not_reserved | documents | fn:isTenantSlug | db/migrations/20261018000000_borniz_tenant_hosts.sql (daftar sama dengan RESERVED, isTenantSlug di hosts.ts) |
 | api:/api/bn | calls | fn:dbCall | app/api/bn/[...op]/route.ts:7 (import call from db.ts) |
@@ -236,7 +236,8 @@ graph LR
 | 2026-10-20 | src/data/remoteStore.ts | Layar tamu mengambil plan dari dokumen _meta milik merchant → merchant bisa menaikkan plan sendiri, turun plan dari admin tidak berlaku di QR menu/kiosk | fixed (plan dari tenants.plan) |
 | 2026-10-20 | src/data/actions/admin.ts | Mode database: hampir semua aksi konsol admin (suspend, perpanjang trial, invoice, tiket, flag, harga plan, tema default, akses support) hanya tersimpan di memori browser; tidak ada yang membaca suspend/flag; akses support palsu | fixed (keputusan owner "ya": platform_records + platform_audit; suspend menghentikan tulisan/QR/worker; trial di server; akses support disetujui owner dengan PIN, baca set-up saja; tes platform_console.sql, support_access.sql, e2e browser) |
 | 2026-10-20 | fn:bn_start_trial | Trial 14 hari yang dipilih owner saat daftar hanya ditulis ke dokumen bisnis → di mode database tidak pernah aktif | fixed (bn_start_trial sekali, berakhir ke Free bila belum dibayar) |
-| 2026-10-20 | page:/admin/plans-and-pricing | Harga plan & tema default tersimpan di server tapi halaman harga publik / pendaftaran masih memakai harga tetap di kode; flag & rilis belum dibaca fitur mana pun; invoice belum dibuat oleh billing; tiket belum bisa dikirim merchant | open |
+| 2026-10-21 | page:/admin/plans-and-pricing | Harga yang diubah staf BorNiz tidak terlihat calon pelanggan: halaman harga, pilih plan & checkout memakai harga tetap di kode (dua daftar harga: PLANS dan PLAN_PRICE) | fixed (bn_public_prices → usePlans; satu daftar default; tes platform_console.sql + plan-limits.test.ts) |
+| 2026-10-20 | page:/admin/plans-and-pricing | Tema default tersimpan di server tapi belum dibaca; flag & rilis belum dibaca fitur mana pun; invoice belum dibuat oleh billing; tiket belum bisa dikirim merchant | open |
 | 2026-10-20 | fn:bn_is_platform_admin | Staf BorNiz tanpa 2FA tetap bisa memakai konsol walau label "2FA"; ganti plan merchant yang pindah cell tidak atomik & tanpa jejak admin | open (keputusan owner: wajib 2FA untuk staf?) |
 | 2026-10-21 | policy:plan_rules | Batas plan hanya tampilan: Free bisa menambah outlet ke-2, register ke-2, KDS, customer display lewat API (dan layar pun tidak menolak tambah outlet); layar register menghitung register semua outlet, bukan per outlet; outlet sisa trial membawa register sendiri | fixed (BN076 `docs_plan_rules` + `planBlock` di plans.ts dipakai aksi & layar; yang sudah ada tetap jalan setelah turun plan; tes plan_rules.sql + plan-limits.test.ts) |
 | 2026-10-20 | fn:bn_machine_clock | Satu baris scan rusak (tanggal mustahil) menggagalkan seluruh batch → mesin mengirim ulang batch yang sama selamanya, semua scan sesudahnya tertahan | fixed (baris rusak dilewati; tes attendance.sql gagal tanpa fix) |

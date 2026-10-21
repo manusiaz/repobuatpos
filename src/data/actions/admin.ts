@@ -6,6 +6,7 @@ import { commit, snapshot, uid } from '../store.ts';
 import type { DB, Rec } from '../schema.ts';
 import { requestApproval } from '../actions.ts';
 import { REMOTE } from '../remote.ts';
+import { PLANS } from '../../screens/public/plans.ts';
 import { toast } from '../../ui/kit.tsx';
 
 const DAY = 864e5, ADMIN = 'admin';
@@ -14,7 +15,7 @@ const ym = (t: number) => { const d = new Date(t); return `${d.getFullYear()}-${
 
 /** Tenant row: a name · b plan · c outlets · d status · e JSON meta · at signed up. */
 export interface TenantMeta { owner: string; email: string; city: string; custom?: number; wl?: boolean; appName?: string; theme?: string; churnedAt?: number; trialEnds?: number; source?: string; slug?: string; domain?: string }
-export const PLAN_PRICE: Record<string, number> = { free: 0, basic: 149_000, pro: 349_000, enterprise: 0 };
+export const PLAN_PRICE: Record<string, number> = Object.fromEntries(PLANS.map(p => [p.id, p.monthly ?? 0]));
 export const PPN_BPS = 1100;
 
 /** First open of the console: seed the demo platform around the real tenant in one commit. */

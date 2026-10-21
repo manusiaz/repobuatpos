@@ -11,6 +11,10 @@ export const PLANS: Plan[] = [
   { id: 'enterprise', name: 'Enterprise', monthly: null, blurb: 'Unlimited, franchise lock, API', features: ['Unlimited outlets', 'Franchise brand lock', 'API, webhooks, SSO', 'Dedicated success manager'], outlets: Infinity, registers: Infinity, cta: 'Contact sales' },
 ];
 export const planOf = (id: PlanId) => PLANS.find(p => p.id === id)!;
+/** The console's price for a plan (Super admin › Plans & pricing; bn_public_prices on the server). */
+export const priceKey = (plan: string) => `/admin/plans-and-pricing:price-${plan}`;
+/** The plans at the prices BorNiz set; PLANS holds the defaults. */
+export const priced = (over: Record<string, unknown>): Plan[] => PLANS.map(p => p.monthly && Number(over[p.id]) > 0 ? { ...p, monthly: Number(over[p.id]) } : p);
 export const TRIAL_DAYS = 14;
 export const PPN_BPS = 1100;
 

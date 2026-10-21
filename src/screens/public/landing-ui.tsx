@@ -1,8 +1,20 @@
 'use client';
 // Marketing building blocks (spec/BorNiz Landing): 1200px container, fluid display type, ink bands, 20–24px card radius.
-import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import Link from '../../ui/Link.tsx';
 import { Icon } from '../../ui/kit.tsx';
+import { useApp } from '../../app/context.tsx';
+import { REMOTE } from '../../data/remote.ts';
+import { priceKey, priced, type PlanId } from './plans.ts';
+
+/** The plans at the prices BorNiz set in the console: the server's (bn_public_prices), or this browser's console in demo mode. */
+export function usePlans() {
+  const { db } = useApp();
+  const [live, setLive] = useState<Record<string, unknown> | null>(null);
+  useEffect(() => { if (REMOTE) void import('../../data/backend.ts').then(s => s.sb().rpc('bn_public_prices')).then(r => setLive(r.data ?? {})); }, []);
+  const plans = priced(live ?? { basic: db.settings[priceKey('basic')], pro: db.settings[priceKey('pro')] });
+  return { plans, of: (id: PlanId) => plans.find(p => p.id === id)! };
+}
 
 export const Wrap = ({ children, style, as: Tag = 'section' }: { children: ReactNode; style?: CSSProperties; as?: 'section' | 'div' | 'article' }) =>
   <Tag style={{ maxWidth: 1200, width: '100%', margin: '0 auto', padding: 'clamp(40px,6vw,72px) var(--margin)', ...style }}>{children}</Tag>;

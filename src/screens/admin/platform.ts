@@ -2,6 +2,8 @@
 import type { Approval, DB, Rec } from '../../data/schema.ts';
 import { PLAN_PRICE, PPN_BPS, type TenantMeta } from '../../data/actions/admin.ts';
 import { toolValue, whiteLabel } from '../../system/tools.ts';
+import { priceKey } from '../public/plans.ts';
+export { priceKey };
 
 export type Plan = DB['tenant']['plan'];
 /** Plans from spec/bn-pm.js: SaaS per outlet. Price overrides are platform settings. */
@@ -9,7 +11,6 @@ export const PLANS: { id: Plan; name: string; limits: string }[] = [
   { id: 'free', name: 'Free', limits: '1 outlet · 1 register' }, { id: 'basic', name: 'Basic', limits: '3 registers per outlet' },
   { id: 'pro', name: 'Pro', limits: 'Multi-outlet · KDS · studios' }, { id: 'enterprise', name: 'Enterprise', limits: 'Unlimited · API · SSO · white-label' },
 ];
-export const priceKey = (plan: string) => `/admin/plans-and-pricing:price-${plan}`;
 export const planPrice = (db: DB, plan: string) => { const v = Number(db.settings[priceKey(plan)]); return v > 0 || db.settings[priceKey(plan)] === 0 ? v : PLAN_PRICE[plan] ?? 0; };
 export const planName = (plan: string) => PLANS.find(p => p.id === plan)?.name ?? plan;
 

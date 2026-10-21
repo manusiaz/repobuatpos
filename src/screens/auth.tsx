@@ -16,8 +16,9 @@ import type { Employee, Role } from '../data/schema.ts';
 import { humanError } from '../data/remoteDocs.ts';
 import { bps, idr } from '../domain/money.ts';
 import { Avatar, Badge, Field, Icon, Numpad, Seg, Status, dateShort, toast, useNow } from '../ui/kit.tsx';
-import { PLANS, PPN_BPS, TRIAL_DAYS, billed, perMonth, planOf, type PlanId } from './public/plans.ts';
+import { PPN_BPS, TRIAL_DAYS, billed, perMonth, planOf, type PlanId } from './public/plans.ts';
 import { PairDevice, ProductImporter } from './public/states-kit.tsx';
+import { usePlans } from './public/landing-ui.tsx';
 
 const A = '/account/';
 const OB = ['onboarding-business-profile', 'onboarding-outlet-and-tax', 'onboarding-import-products', 'onboarding-invite-team', 'choose-plan'];
@@ -369,8 +370,8 @@ function Team() {
 function ChoosePlan() {
   const { db, go } = useApp();
   const [flow, setFlow] = useFlow();
-  const [sel, setSel] = useState<PlanId>(flow.plan ?? 'pro'), [yearly, setYearly] = useState(!!flow.yearly);
-  const p = planOf(sel), end = Date.now() + TRIAL_DAYS * 864e5;
+  const [sel, setSel] = useState<PlanId>(flow.plan ?? 'pro'), [yearly, setYearly] = useState(!!flow.yearly), { plans, of } = usePlans();
+  const p = of(sel), end = Date.now() + TRIAL_DAYS * 864e5;
   const owner = db.employees.find(e => e.role === 'owner')!.id;
   const start = (trial: boolean) => {
     setFlow({ plan: sel, yearly, trial });
@@ -381,7 +382,7 @@ function ChoosePlan() {
   return <div className="stack">
     <Head h="Choose a plan" sub="All plans include QRIS, cash and card. Change or cancel anytime." />
     <Seg value={yearly ? 'y' : 'm'} onChange={v => setYearly(v === 'y')} label="Billing" options={[['m', 'Monthly'], ['y', 'Yearly · save 17%']]} />
-    <Choices value={sel} onChange={setSel} items={PLANS.map(x => [x.id, x.name + (x.popular ? ' · popular' : ''), x.blurb, x.monthly == null ? 'Contact sales' : x.monthly === 0 ? 'IDR 0' : idr(perMonth(x, yearly)!) + '/mo'] as [PlanId, string, string, string])} />
+    <Choices value={sel} onChange={setSel} items={plans.map(x => [x.id, x.name + (x.popular ? ' · popular' : ''), x.blurb, x.monthly == null ? 'Contact sales' : x.monthly === 0 ? 'IDR 0' : idr(perMonth(x, yearly)!) + '/mo'] as [PlanId, string, string, string])} />
     {sel !== 'free' && sel !== 'enterprise' && <Note><Icon name="calendar" /><span>Trial ends {dateShort(end)}. We’ll remind you 3 days before. Pay by QRIS, VA or card, no card needed now.</span></Note>}
     <button className="btn btn-primary btn-lg" onClick={() => start(sel !== 'free')}>{sel === 'free' ? 'Start free' : sel === 'enterprise' ? 'Contact sales' : `Start ${TRIAL_DAYS}-day ${p.name} trial`}</button>
     {sel !== 'free' && sel !== 'enterprise' && <button className="btn btn-lg" onClick={() => start(false)}>Pay now instead</button>}
@@ -394,7 +395,7 @@ function Checkout() {
   const [flow] = useFlow();
   const [method, setMethod] = useState<'qris' | 'va' | 'card'>('qris'), [state, setState] = useState<'idle' | 'pending' | 'failed'>('idle');
   const now = useNow(1000), [startAt, setStartAt] = useState(0);
-  const p = planOf(flow.plan ?? 'pro'), yearly = !!flow.yearly;
+  const p = usePlans().of(flow.plan ?? 'pro'), yearly = !!flow.yearly;
   const owner = db.employees.find(e => e.role === 'owner')!.id;
   const qty = Math.max(1, Math.min(db.outlets.length, p.outlets));
   const free = p.monthly === 0 || flow.trial;

@@ -36,6 +36,11 @@ do $$ declare r jsonb := public.bn_admin_records(); a jsonb := public.bn_admin_a
   assert a->0->>'actor' = 'staff@bornis.id' and a->0->>'action' = 'plan.price_changed', 'audited with the staff member: ' || a::text;
 end $$;
 
+-- the price BorNiz set is the one the public pricing and sign-up show, to anyone
+set local role anon;
+do $$ begin assert public.bn_public_prices() = '{"pro": 399000}'::jsonb, 'public prices: ' || public.bn_public_prices()::text; end $$;
+set local role authenticated;
+
 -- 4. the trial is extended, and when it ends unpaid the business is on Free; a plan set by BorNiz ends the trial
 select public.bn_admin_set_trial((select id from t), (extract(epoch from now() - interval '1 day') * 1000)::bigint);
 reset role;
