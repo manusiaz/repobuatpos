@@ -9,6 +9,7 @@ import type { DB, ModifierGroup, Order, Outlet, Product, Theme } from '../../dat
 import { priceAt, sellable } from '../../data/actions.ts';
 import { flashPrice } from '../../domain/promo.ts';
 import { Empty, Icon } from '../../ui/kit.tsx';
+import { contrast } from '../studio/theme.ts';
 
 // ── Brand ───────────────────────────────────────────────────────────────────────────────
 const FONTS: Record<string, string> = { space: "'Space Grotesk',sans-serif", bricolage: "'Space Grotesk',sans-serif", serif: "Georgia,'Times New Roman',serif", system: "'Instrument Sans',sans-serif" };
@@ -20,13 +21,15 @@ const BANNERS: Record<string, string> = {
 };
 export const MUTED = 'color-mix(in srgb,var(--bn-ink) 64%,transparent)';
 export const LINE = 'color-mix(in srgb,var(--bn-ink) 13%,transparent)';
-export const TINT = 'color-mix(in srgb,var(--bn-p) 12%,var(--ink-0))';
-export const SURFACE = 'var(--ink-0)';
+export const TINT = 'color-mix(in srgb,var(--bn-p) 12%,var(--bn-surface))';
+/** Cards and sheets: white on a light paper, the paper lifted toward the ink on a dark one (a dark theme never gets light text on white). */
+export const SURFACE = 'var(--bn-surface)';
 
 /** Merchant theme → CSS variables. Kit classes (btn-primary, input, chip, sheet) pick them up through the remapped tokens. */
 export function brandVars(t: Theme): CSSProperties {
   return {
     '--bn-p': t.p, '--bn-acc': t.acc, '--bn-ink': t.ink, '--bn-paper': t.paper, '--bn-font': FONTS[t.font] ?? FONTS.space,
+    '--bn-surface': contrast(t.paper, '#FFFFFF') < contrast(t.paper, '#000000') ? 'var(--ink-0)' : 'color-mix(in srgb,var(--bn-ink) 9%,var(--bn-paper))',
     '--bn-banner': t.img ? `url(${t.img}) center/cover no-repeat` : BANNERS[t.banner] ?? BANNERS.g1,
     '--font-display': 'var(--bn-font)', '--role': 'var(--bn-p)', '--accent': 'var(--bn-p)', '--accent-fg': 'var(--bn-p)', '--accent-soft': TINT,
     '--focus-ring': 'color-mix(in srgb,var(--bn-p) 30%,transparent)', '--bg-canvas': 'var(--bn-paper)', '--bg-surface': SURFACE, '--bg-raised': SURFACE,

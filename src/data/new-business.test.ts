@@ -24,3 +24,13 @@ test('the demo keeps its own words', () => {
   assert.equal(d.copy.insta.en, '@kopibiru.id');
   assert.equal(d.rc.wifiOn, true);
 });
+
+test('a dark theme never puts its light text on white cards', async () => {
+  const { themeVars, contrast } = await import('../screens/studio/theme.ts');
+  const db = seed() as DB;
+  db.theme = { ...db.theme, paper: '#14161C', ink: '#F5F2EE' };
+  const d = menuDesign(db), surface = (themeVars(d) as Record<string, string>)['--bn-surface'];
+  assert.notEqual(surface.toUpperCase(), '#FFFFFF');
+  assert.ok(contrast(d.ink, surface) >= 4.5, `${d.ink} on ${surface}`);
+  assert.equal((themeVars(menuDesign(seed() as DB)) as Record<string, string>)['--bn-surface'], '#FFFFFF', 'light themes keep white cards');
+});

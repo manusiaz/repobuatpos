@@ -49,7 +49,7 @@ export function bannerOf(d: Pick<MenuDesign, 'p' | 'acc' | 'ink' | 'banner' | 'i
 export function themeVars(d: MenuDesign): CSSProperties {
   const r = Number(d.layout.radius ?? 16);
   return {
-    '--bn-p': d.p, '--bn-acc': d.acc, '--bn-ink': d.ink, '--bn-paper': d.paper, '--bn-surface': d.surface, '--bn-on-p': onColor(d.p), '--bn-on-acc': onColor(d.acc),
+    '--bn-p': d.p, '--bn-acc': d.acc, '--bn-ink': d.ink, '--bn-paper': d.paper, '--bn-surface': contrast(d.ink, d.surface) >= MIN_RATIO ? d.surface : mix(d.paper, d.ink, 0.09), // never light text on a white card '--bn-on-p': onColor(d.p), '--bn-on-acc': onColor(d.acc),
     '--bn-font': fontCss(d.font), '--bn-body': fontCss(d.body), '--bn-price': fontCss(d.priceFont === 'head' ? d.font : d.priceFont === 'body' ? d.body : 'system'),
     '--bn-banner': bannerOf(d), '--bn-r': r + 'px', '--bn-r-sm': Math.round(r * 0.6) + 'px', '--bn-line': mix(d.paper, d.ink, 0.12), '--bn-soft': mix(d.paper, d.ink, 0.06),
     '--bn-p-text': contrast(d.p, d.paper) >= MIN_RATIO ? d.p : mix(d.p, contrast(WHITE, d.paper) > 2 ? WHITE : INK, 0.35),
