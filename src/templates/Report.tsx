@@ -79,7 +79,7 @@ function Analytic() {
     <div className="row wrap">
       {outlets.length > 1 ? <Seg value={scope} onChange={setScope} options={outlets} label="Outlet" /> : null}
       <Seg value={p} onChange={setP} options={[['today', 'Today'], ['7d', '7 days'], ['30d', '30 days'], ['12m', '12 months']] as const} label="Period" />
-      <span className="faint" style={{ fontSize: 13 }}>Compared with {spec.compareLabel.toLowerCase()}</span>
+      <span className="faint" style={{ fontSize: 13 }}>Compared with {spec.compareLabel.replace(/^./, c => c.toLowerCase())}</span>
     </div>
     <div className="grid" style={{ ['--min' as string]: '190px' }}>
       <Kpi label="Revenue" value={idrShort(cur.revenue)} delta={pct(delta(cur.revenue, prev.revenue)) + ' vs comparison'} tone={cur.revenue >= prev.revenue ? 'up' : 'down'} />

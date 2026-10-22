@@ -81,7 +81,7 @@ function Live({ db, outlet, now, queue }: { db: DB; outlet: string; now: number;
     <Card pad={20}><div className="stack sm">
       <span className="muted" style={{ fontSize: 13 }}>Revenue today</span>
       <b className="num" style={{ fontSize: 34, letterSpacing: '-.02em', lineHeight: 1.05 }}>{idrShort(cur.revenue)}</b>
-      <span style={{ fontSize: 13 }}><span className={d == null ? 'muted' : d >= 0 ? 'up' : 'down'} style={{ fontWeight: 600 }}>{d == null ? 'No comparison yet' : `${pct(d)} vs ${spec.compareLabel.toLowerCase()}`}</span><span className="muted"> · {Math.round(ofT * 100)}% of target</span></span>
+      <span style={{ fontSize: 13 }}><span className={d == null ? 'muted' : d >= 0 ? 'up' : 'down'} style={{ fontWeight: 600 }}>{d == null ? 'No comparison yet' : `${pct(d)} vs ${spec.compareLabel.replace(/^./, c => c.toLowerCase())}`}</span><span className="muted"> · {Math.round(ofT * 100)}% of target</span></span>
       <Bar v={ofT} tone={ofT >= 1 ? 'success' : 'accent'} />
       {cur.orders === 0 ? <p className="faint" style={{ fontSize: 13 }}>No sales yet today.</p> : <LineChart labels={chart.labels} series={chart.series} height={140} format={idrShort} />}
     </div></Card>

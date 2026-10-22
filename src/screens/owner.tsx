@@ -60,7 +60,7 @@ export default function Screen() {
     {!live && <Setup db={db} by={user.id} />}
 
     {show('w_rev') && <section className="grid" style={{ ['--min' as string]: '190px' }} aria-label="Key numbers">
-      <Kpi label="Revenue" value={idrShort(cur.revenue)} delta={dRev == null ? 'No comparison yet' : `${pct(dRev)} vs ${spec.compareLabel.toLowerCase()}`} tone={dRev == null ? undefined : dRev >= 0 ? 'up' : 'down'} />
+      <Kpi label="Revenue" value={idrShort(cur.revenue)} delta={dRev == null ? 'No comparison yet' : `${pct(dRev)} vs ${spec.compareLabel.replace(/^./, c => c.toLowerCase())}`} tone={dRev == null ? undefined : dRev >= 0 ? 'up' : 'down'} />
       <Kpi label="Orders" value={cur.orders.toLocaleString('en-US')} delta={`Avg ticket ${idrShort(cur.avgTicket)}`} />
       <Kpi label="Gross margin" value={gm == null ? '—' : Math.round(gm * 100) + '%'} delta={gm == null || gmPrev == null ? 'From product cost' : `${gm >= gmPrev ? '+' : '−'}${Math.abs(Math.round((gm - gmPrev) * 100))} pt`} tone={gm != null && gmPrev != null ? (gm >= gmPrev ? 'up' : 'down') : undefined} />
       <Kpi label="Open orders" value={open.length} delta={late.length ? `${late.length} over 12 min` : 'None over 12 min'} tone={late.length ? 'warn' : undefined} />
@@ -132,7 +132,7 @@ function Trend({ db, outlet, per, gran, spec, now, live, setGran }: { db: DB; ou
     <div className="row wrap between">
       <div className="stack" style={{ gap: 2 }}>
         <h3>{today ? { hour: 'Revenue per hour · today', '15m': 'Revenue per 15 minutes · today', min: 'Revenue per minute · last 60 minutes' }[gran] : 'Revenue trend'}</h3>
-        <span className="muted" style={{ fontSize: 13 }}>{today && nowIdx >= 0 && gran !== 'min' ? <><b style={{ color: 'var(--danger-fg)' }}>Now {hhmm(now)}</b> · {spec.buckets[nowIdx].label} bucket. </> : today && gran === 'min' ? `Updates every 5 seconds · ${hhmm(now)}. ` : ''}Dashed = {spec.compareLabel.toLowerCase()}{today ? ', same hours' : ''}.</span>
+        <span className="muted" style={{ fontSize: 13 }}>{today && nowIdx >= 0 && gran !== 'min' ? <><b style={{ color: 'var(--danger-fg)' }}>Now {hhmm(now)}</b> · {spec.buckets[nowIdx].label} bucket. </> : today && gran === 'min' ? `Updates every 5 seconds · ${hhmm(now)}. ` : ''}Dashed = {spec.compareLabel.replace(/^./, c => c.toLowerCase())}{today ? ', same hours' : ''}.</span>
       </div>
       {today && <Seg label="Granularity" value={gran} onChange={setGran} options={GRANS} />}
     </div>

@@ -8,12 +8,14 @@ import { canReach } from '../system/access.ts';
 import { Icon } from '../ui/kit.tsx';
 import { useApp } from './context.tsx';
 import { staffBrand } from '../data/actions/studio.ts';
+import { REMOTE } from '../data/remote.ts';
+import { planOf } from '../screens/public/plans.ts';
 import { moduleLabel } from '../system/tools.ts';
 import { Bell, Help, Launcher, OutletPicker, UserSwitch } from './chrome.tsx';
 
 export function BackOfficeShell({ children }: { children: ReactNode }) {
   const { page, user, db, me } = useApp();
-  const sb = staffBrand(db); // Brand Studio: workspace name, logo and owner accent on staff tools
+  const sb = staffBrand(db), ws = sb.workspace || db.tenant.name; // Brand Studio: workspace name, logo and owner accent on staff tools
   const role = user.role === 'manager' ? 'manager' : user.role === 'admin' ? 'admin' : 'owner';
   // staff roles (PIC, cashier, kitchen, waiter) reach a few back-office pages: show only what they can open
   const groups = useMemo(() => realNav(role).map(([m, l]) => [m, l.filter(r => canReach(user.role, r.path))] as [string, RealPage[]]).filter(([, l]) => l.length), [role, user.role]);
@@ -24,11 +26,11 @@ export function BackOfficeShell({ children }: { children: ReactNode }) {
   return <div className="bo" data-role={role} data-theme={role === 'admin' ? 'dark' : undefined} style={role === 'owner' ? { ['--role' as string]: sb.c.primary, ['--role-soft' as string]: `color-mix(in srgb, ${sb.c.primary} 10%, var(--bg-surface))`, ['--role-fg' as string]: `color-mix(in srgb, ${sb.c.primary} 75%, var(--fg-1))` } : undefined}>
     <aside className={'bo-side' + (side ? ' open' : '')} aria-label="Navigation">
       <Link href={home} className="row" style={{ padding: '4px 6px 12px', textDecoration: 'none', color: 'var(--fg-1)' }}>
-        <span style={{ width: 36, height: 36, borderRadius: 11, background: role !== 'admin' && sb.logo ? `center / cover url("${sb.logo}")` : 'var(--role)', color: '#fff', display: 'grid', placeItems: 'center', fontFamily: 'var(--font-display)', fontWeight: 700 }}>{role !== 'admin' && sb.logo ? '' : (role === 'admin' ? 'B' : sb.workspace.slice(0, 1))}</span>
-        <span className="stack" style={{ gap: 0 }}><b>{role === 'admin' ? 'BorNiz' : sb.workspace}</b><span className="faint" style={{ fontSize: 12 }}>{role === 'admin' ? 'BorNiz HQ' : user.role === 'owner' ? 'Owner · 3 outlets · Pro' : `${me?.name ?? user.role} · ${user.role}`}</span></span>
+        <span style={{ width: 36, height: 36, borderRadius: 11, background: role !== 'admin' && sb.logo ? `center / cover url("${sb.logo}")` : 'var(--role)', color: 'var(--ink-0)', display: 'grid', placeItems: 'center', fontFamily: 'var(--font-display)', fontWeight: 700 }}>{role !== 'admin' && sb.logo ? '' : (role === 'admin' ? 'B' : ws.slice(0, 1))}</span>
+        <span className="stack" style={{ gap: 0 }}><b>{role === 'admin' ? 'BorNiz' : ws}</b><span className="faint" style={{ fontSize: 12 }}>{role === 'admin' ? 'BorNiz HQ' : user.role === 'owner' ? `Owner · ${db.outlets.length} ${db.outlets.length === 1 ? 'outlet' : 'outlets'} · ${planOf(db.tenant.plan).name}` : `${me?.name ?? user.role} · ${user.role}`}</span></span>
       </Link>
-      <input className="search" placeholder={`Search ${FEATURES.size} features`} value={q} onChange={e => setQ(e.target.value)} aria-label="Search pages and features" />
-      {role !== 'admin' && <Link className="nav-i" href="/graph"><Icon name="waypoints" size={18} />Knowledge graph</Link>}
+      <input className="search" placeholder="Search pages and settings" value={q} onChange={e => setQ(e.target.value)} aria-label="Search pages and features" />
+      {!REMOTE && role !== 'admin' && <Link className="nav-i" href="/graph"><Icon name="waypoints" size={18} />Knowledge graph</Link>}
       {ql ? <div className="stack sm">{[...FEATURES.values()].filter(f => (f.name + ' ' + f.page.title).toLowerCase().includes(ql) && canReach(user.role, f.path)).slice(0, 40).map(f =>
         <Link key={f.path} href={f.path} className="nav-i" onClick={() => setSide(false)}><span className="grow">{f.name}<br /><span className="faint" style={{ fontSize: 12 }}>{f.page.title} · {f.kind}</span></span></Link>)}</div>
       : groups.map(([mod, pages]) => {
@@ -37,7 +39,7 @@ export function BackOfficeShell({ children }: { children: ReactNode }) {
           <button className="nav-m" onClick={() => setOpen(o => ({ ...o, [mod]: !isOpen }))} aria-expanded={isOpen} aria-current={!isOpen && pages.some(rp => rp.id === here?.id) ? 'true' : undefined}>
             <Icon name={MOD_ICON[mod] ?? 'circle'} size={18} /><span className="grow">{moduleLabel(db, mod)}</span><Icon name={isOpen ? 'chevron-down' : 'chevron-right'} size={16} /></button>
           {isOpen && pages.map(rp => <Link key={rp.id} href={rp.path} className="nav-i" aria-current={here?.id === rp.id ? 'page' : undefined} onClick={() => setSide(false)}>
-            <span className="grow">{rp.title}</span>{rp.release !== 'MVP' && <ReleaseTag r={rp.release} />}</Link>)}
+            <span className="grow">{rp.title}</span>{!REMOTE && rp.release !== 'MVP' && <ReleaseTag r={rp.release} />}</Link>)}
         </div>;
       })}
     </aside>
