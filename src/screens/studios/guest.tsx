@@ -74,17 +74,17 @@ function Ready({ v, x }: PP) {
 
 const auto: [string, string] = ['auto', 'Live'];
 export const GUEST: Tool[] = [
-  { id: 'wait', group: 'CUSTOMER SCREENS', name: 'Waiting screen', icon: 'hourglass', plan: 'free', desc: 'What guests see on their phone while the order is being prepared. Fill the wait with hospitality, not a spinner.', Preview: Waiting,
+  { id: 'wait', group: 'CUSTOMER SCREENS', name: 'Waiting screen', icon: 'hourglass', desc: 'What guests see on their phone while the order is being prepared. Fill the wait with hospitality, not a spinner.', Preview: Waiting,
     def: { ...TOOL_DEFAULTS.wait },
     fields: () => [F.seg('Show step', 'step', [auto, ['0', 'Received'], ['1', 'Preparing'], ['2', 'Almost']]), F.seg('Progress style', 'prog', [['steps', 'Steps'], ['bar', 'Bar'], ['ring', 'Ring']]), F.toggle('Show estimated time', 'eta'), F.text('Greeting', 'greet'), F.head('PLACEMENTS WHILE WAITING'), F.toggle('Add-on suggestion', 'p_upsell'), F.toggle('Points progress', 'p_loyal'), F.toggle('Wi-Fi card', 'p_wifi'), F.toggle('Now playing in store', 'p_music'), F.toggle('Mini game', 'p_game'), F.toggle('Brand story', 'p_story'), F.toggle('Promo for next visit', 'p_promo'), F.toggle('Follow on Instagram', 'p_ig'), F.toggle('Sponsored partner placement', 'p_ad'), F.text('Partner name', 'adby')] },
-  { id: 'ready', group: 'CUSTOMER SCREENS', name: 'Order ready & enjoy', icon: 'party-popper', plan: 'free', desc: 'The moment the order is ready: notification, ready screen and the after-meal follow-up.', Preview: Ready,
+  { id: 'ready', group: 'CUSTOMER SCREENS', name: 'Order ready & enjoy', icon: 'party-popper', desc: 'The moment the order is ready: notification, ready screen and the after-meal follow-up.', Preview: Ready,
     def: { ...TOOL_DEFAULTS.ready },
     pairs: (_, x) => [[onColor(x.db.theme.p, x.db.theme.ink), x.db.theme.p, 'Button label on primary']],
     fields: () => [F.text('Headline', 'head'), F.text('Subtext', 'sub'), F.seg('Order is', 'where', [['pickup', 'Pickup'], ['table', 'Served'], ['delivery', 'Delivered']]), F.head('NOTIFY THROUGH'), F.toggle('Ready screen on phone', 'c_page'), F.toggle('Push notification', 'c_push'), F.toggle('WhatsApp (WABA)', 'c_wa'), F.toggle('Queue / customer display', 'c_disp'), F.toggle('Sound + vibrate on phone', 'c_vibe'), F.head('AFTER'), F.seg('Main action', 'cta', [['rate', 'Rate'], ['reorder', 'Reorder'], ['share', 'Share']]), F.toggle('Confetti', 'confetti'), F.text('Message 1 hour later', 'later')] },
-  { id: 'board', group: 'CUSTOMER SCREENS', name: 'Menu board (TV)', icon: 'tv', plan: 'pro', desc: 'Digital menu boards for TVs above the counter. Prices and sold-out items update live.', ...same('menu-board-tv-digital-signage') },
-  { id: 'queue', group: 'CUSTOMER SCREENS', name: 'Queue & pickup screen', icon: 'list-ordered', plan: 'free', desc: 'Shows preparing and ready numbers on a TV near the pickup counter.', ...same('queue-pickup-screen') },
-  { id: 'qrpay', group: 'CUSTOMER SCREENS', name: 'QRIS payment on phone', icon: 'qr-code', plan: 'free', desc: 'The payment page guests see after checking out from the QR menu.', ...same('qris-payment-page-on-customer-phone') },
-  { id: 'split', group: 'CUSTOMER SCREENS', name: 'Split bill from phone', icon: 'split', plan: 'pro', desc: 'Each guest at the table scans and pays their own items or share.', ...same('split-bill-and-pay-together-from-phones') },
-  { id: 'track', group: 'CUSTOMER SCREENS', name: 'Delivery tracking', icon: 'bike', plan: 'free', desc: 'Live tracking page sent by WhatsApp for delivery orders.', ...same('delivery-tracking-page') },
-  { id: 'closed', group: 'CUSTOMER SCREENS', name: 'Closed, paused & sold out', icon: 'store', plan: 'free', desc: 'What guests see when the store is closed, ordering is paused or an item runs out.', ...same('store-closed-offline-sold-out-pages') },
+  { id: 'board', group: 'CUSTOMER SCREENS', name: 'Menu board (TV)', icon: 'tv', desc: 'Digital menu boards for TVs above the counter. Prices and sold-out items update live.', ...same('menu-board-tv-digital-signage') },
+  { id: 'queue', group: 'CUSTOMER SCREENS', name: 'Queue & pickup screen', icon: 'list-ordered', desc: 'Shows preparing and ready numbers on a TV near the pickup counter.', ...same('queue-pickup-screen') },
+  { id: 'qrpay', group: 'CUSTOMER SCREENS', name: 'QRIS payment on phone', icon: 'qr-code', desc: 'The payment page guests see after checking out from the QR menu.', ...same('qris-payment-page-on-customer-phone') },
+  { id: 'split', group: 'CUSTOMER SCREENS', name: 'Split bill from phone', icon: 'split', desc: 'Each guest at the table scans and pays their own items or share.', ...same('split-bill-and-pay-together-from-phones') },
+  { id: 'track', group: 'CUSTOMER SCREENS', name: 'Delivery tracking', icon: 'bike', desc: 'Live tracking page sent by WhatsApp for delivery orders.', ...same('delivery-tracking-page') },
+  { id: 'closed', group: 'CUSTOMER SCREENS', name: 'Closed, paused & sold out', icon: 'store', desc: 'What guests see when the store is closed, ordering is paused or an item runs out.', ...same('store-closed-offline-sold-out-pages') },
 ];

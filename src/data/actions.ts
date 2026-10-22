@@ -256,8 +256,6 @@ export function settleIfDone(d: DB, o: Order, by: string) {
       if (r.referrer > 0) d.ledger.push({ customerId: ref.b, points: r.referrer, reason: 'Referral · ' + (friend?.name ?? 'friend'), orderId: o.id, at: now() });
       ref.e = 'rewarded'; ref.c = o.id;
     }
-    const c = d.customers.find(x => x.id === o.customerId);
-    if (c?.optIn) d.messages.unshift({ id: uid('ms'), channel: 'wa', template: 'thanks_visit', to: c.phone, status: 'queued', at: now() + 60 * 60e3, customerId: c.id });
   }
 }
 export function cancelPayment(paymentId: string, by: string) {

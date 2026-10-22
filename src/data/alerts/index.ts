@@ -5,6 +5,7 @@ import { commit, snapshot } from '../store.ts';
 import type { DB, Message, Notice, Role } from '../schema.ts';
 import { RULES, SERVICE, index, type Fire, type Level, type Rule } from './rules.ts';
 import { staffWhatsApp } from './staff.ts';
+import { AUTOMATIONS, automationMessages } from './automations.ts';
 
 export { RULES, SERVICE };
 type Row = [string, string, Record<string, number>, string, string, ...string[]];
@@ -67,5 +68,8 @@ export function sweepAlerts(at = Date.now()) {
   // alerts that also go to staff on WhatsApp (Settings › Notifications › WhatsApp to staff)
   const wa = staffWhatsApp(snapshot(), at, (notice, employee) => noticeId('staff-wa', notice + '|' + employee));
   if (wa.length) commit('alerts.staff_whatsapp', 'system', d => { const have = new Set(d.messages.map(m => m.id)); d.messages.unshift(...wa.filter(m => !have.has(m.id))); }, `${wa.length} messages`);
+  const db = snapshot(), auto = automationMessages(db, at, k => noticeId('auto', k), AUTOMATIONS.filter(a => a !== 'a_thanks' || alertOn(db, 'Thank you after visit')))
+    .filter(m => !db.messages.some(x => x.id === m.id));
+  if (auto.length) commit('automation.sent', 'system', d => { const have = new Set(d.messages.map(m => m.id)); d.messages.unshift(...auto.filter(m => !have.has(m.id))); }, `${auto.length} messages`);
   return n;
 }

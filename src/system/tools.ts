@@ -9,9 +9,18 @@ type Plan = DB['tenant']['plan'];
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type V = Record<string, any>;
 const RANK: Record<Plan, number> = { free: 0, basic: 1, pro: 2, enterprise: 3 };
+/** The plan each studio tool needs (the rest are on every plan). The studios lock it and every reader of its published
+ *  values ignores them below it, so a downgrade or a write past the screen changes nothing on the live surfaces. */
+export const TOOL_PLAN: Record<string, Plan> = { a_bday: 'pro', a_feedback: 'pro', a_thanks: 'pro', a_winback: 'pro', credits: 'basic', log: 'basic', pixels: 'basic', templates: 'basic', waba: 'basic', ab: 'pro', board: 'pro', builder: 'pro', coupon: 'pro', emaild: 'pro', embed: 'pro', fields: 'pro', flows: 'pro', fonts: 'pro', gift: 'pro', lock: 'pro', market: 'pro', perf: 'pro', referral: 'pro', roleth: 'pro', sounds: 'pro', split: 'pro', domain: 'enterprise', hooks: 'enterprise', push: 'enterprise', white: 'enterprise' };
+export const toolPlan = (id: string): Plan => TOOL_PLAN[id] ?? 'free';
 const DAY = 864e5;
 
 export const TOOL_DEFAULTS = {
+  // automations (Studios › Messaging & automation), run by src/data/alerts/automations.ts
+  a_thanks: { on: true, delay: 1, cond: 'all', ch: 'wa', tpl: 'thanks_visit', fallback: true, cap: true },
+  a_feedback: { on: true, delay: 2, cond: 'member', ch: 'wa', tpl: 'feedback_request', min: 4, link: '', recover: true, fallback: false, cap: true },
+  a_winback: { on: false, days: 30, cond: 'member', ch: 'wa', tpl: 'winback_30d', fallback: true, cap: true },
+  a_bday: { on: true, days: 7, expiry: 14, cond: 'all', ch: 'wa', tpl: 'birthday', fallback: true, cap: true },
   wait: { step: 'auto', prog: 'steps', eta: true, greet: 'Sit back, {name}. We’re brewing.', p_upsell: true, p_loyal: true, p_wifi: true, p_music: true, p_game: false, p_story: true, p_promo: true, p_ig: false, p_ad: false, adby: 'Susu Segar Lembang' },
   ready: { head: 'Selamat menikmati, {name}!', sub: 'Pesanan {order} siap di counter.', where: 'pickup', c_page: true, c_push: true, c_wa: true, c_disp: true, c_vibe: true, cta: 'rate', confetti: true, later: 'Terima kasih sudah mampir. Sampai jumpa lagi!' },
   push: { title: 'Your order is ready', body: 'Pick it up at the counter. Selamat menikmati!', img: false, link: 'order', when: 'now' },
@@ -32,7 +41,7 @@ export type ToolId = keyof typeof TOOL_DEFAULTS;
 type Widen<T> = { -readonly [K in keyof T]: T[K] extends number ? number : T[K] extends boolean ? boolean : string };
 
 /** The latest published version of a studio tool (approved publishes count), if the tenant's plan still includes it. */
-export function toolVersion(db: DB, id: string, plan: Plan = 'free') {
+export function toolVersion(db: DB, id: string, plan: Plan = toolPlan(id)) {
   if (RANK[db.tenant.plan] < RANK[plan]) return undefined;
   return db.versions.find(v => v.kind === 'page' && v.status === 'published' && (v.data as V)?.tool === id);
 }
@@ -41,7 +50,7 @@ export const toolPublished = (db: DB, id: string) => toolVersion(db, id);
  *  (translations `tr:<product>:<lang>`) pass through. */
 export function toolValue<K extends ToolId>(db: DB, id: K, plan?: Plan): Widen<(typeof TOOL_DEFAULTS)[K]> & Record<string, unknown>;
 export function toolValue(db: DB, id: string, plan?: Plan): V;
-export function toolValue(db: DB, id: string, plan: Plan = 'free'): V {
+export function toolValue(db: DB, id: string, plan: Plan = toolPlan(id)): V {
   return { ...((TOOL_DEFAULTS as Record<string, object>)[id] ?? {}), ...((toolVersion(db, id, plan)?.data as V)?.values ?? {}) };
 }
 

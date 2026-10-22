@@ -10,6 +10,7 @@ import { Badge, Empty, Icon, Kpi, Seg, Status, Toggle, ago, dateShort, hhmm, toa
 import { LineChart } from '../../ui/Chart.tsx';
 import { IntegrationsPanel } from '../../integrations/Panel.tsx';
 import { toolValue, TOOL_DEFAULTS } from '../../system/tools.ts';
+import { lastVisit } from '../../data/alerts/automations.ts';
 import { BASE, fromRec, templates, VARS, type Cat, type Tpl } from '../../domain/messages.ts';
 export { templates, VARS, type Tpl } from '../../domain/messages.ts';
 import { Caption, CopyRow, F, fillVars, orderVars, outletName, pct, Phone, Stage, type Ctx, type PP, type Tool, type V } from './core.tsx';
@@ -138,7 +139,6 @@ function WabaPreview({ x }: PP) {
 
 // ── Automations ──────────────────────────────────────────────────────────────────────────
 const DAY = 864e5;
-function lastVisit(db: DB, customerId: string) { return db.orders.filter(o => o.customerId === customerId && o.status === 'paid').reduce((a, o) => Math.max(a, o.paidAt ?? o.createdAt), 0); }
 function inQuiet(t: number, from: string, to: string) { const d = new Date(t), m = d.getHours() * 60 + d.getMinutes(); const f = +from.slice(0, 2) * 60 + +from.slice(3), e = +to.slice(0, 2) * 60 + +to.slice(3); return f > e ? m >= f || m < e : m >= f && m < e; }
 function nextOpen(to: string) { const d = new Date(); d.setHours(+to.slice(0, 2), +to.slice(3), 0, 0); if (d.getTime() < Date.now()) d.setDate(d.getDate() + 1); return d.getTime(); }
 /** Live consent rules = the published Opt-in & consent version (drafts don't change sending). */
@@ -151,12 +151,7 @@ export const AUTOS: Auto[] = [
   { id: 'a_winback', name: 'Win-back', icon: 'rotate-ccw', tpl: 'winback_30d', trigger: 'No visit in N days', desc: 'Invites regulars back when they haven’t visited for a while, with a voucher.', audience: (db, v) => db.customers.filter(c => { const t = lastVisit(db, c.id); return t > 0 && Date.now() - t > Number(v.days) * DAY; }) },
   { id: 'a_bday', name: 'Birthday & points expiry', icon: 'cake', tpl: 'birthday', trigger: 'Birthday window or points expiring', desc: 'Birthday treat before the birthday, and a nudge before beans expire.', audience: (db, v) => db.customers.filter(c => { if (!c.birthday) return false; const b = new Date(c.birthday), n = new Date(); b.setFullYear(n.getFullYear()); const d = (b.getTime() - n.getTime()) / DAY; return d >= 0 && d <= Number(v.days); }) },
 ];
-const AUTO_DEF: Record<string, V> = {
-  a_thanks: { on: true, delay: 1, cond: 'all', ch: 'wa', tpl: 'thanks_visit', fallback: true, cap: true },
-  a_feedback: { on: true, delay: 2, cond: 'member', ch: 'wa', tpl: 'feedback_request', min: 4, link: 'https://g.page/r/kopibiru/review', recover: true, fallback: false, cap: true },
-  a_winback: { on: false, days: 30, cond: 'member', ch: 'wa', tpl: 'winback_30d', fallback: true, cap: true },
-  a_bday: { on: true, days: 7, expiry: 14, cond: 'all', ch: 'wa', tpl: 'birthday', fallback: true, cap: true },
-};
+const AUTO_DEF = TOOL_DEFAULTS as unknown as Record<string, V>;
 function autoStats(db: DB, tpl: string, windowDays = 7) {
   const ms = db.messages.filter(m => m.template === tpl && Date.now() - m.at < 30 * DAY && m.at <= Date.now());
   const back = ms.map(m => db.orders.filter(o => o.customerId && o.customerId === m.customerId && o.status === 'paid' && (o.paidAt ?? o.createdAt) > m.at && (o.paidAt ?? o.createdAt) - m.at < windowDays * DAY));
@@ -196,9 +191,9 @@ function runNow(a: Auto, v: V, x: Ctx) {
   queueMessages(aud.map(c => ({ channel: v.ch === 'email' ? 'email' as const : 'wa' as const, template: t.id, to: v.ch === 'email' ? c.email : c.phone, customerId: c.id, at: hold ? nextOpen(q.to) : undefined })), x.by, !hold);
   toast(hold ? `${aud.length} queued for ${q.to} (quiet hours)` : `${aud.length} message${aud.length > 1 ? 's' : ''} sent`);
 }
-function autoTool(a: Auto, plan: Tool['plan']): Tool {
+function autoTool(a: Auto): Tool {
   const tplOpts = (x: Ctx) => templates(x.db).map(t => [t.id, t.name] as [string, string]);
-  return { id: a.id, group: 'MESSAGING & AUTOMATION', name: 'Automation: ' + a.name.toLowerCase().replace(/^./, c => c.toUpperCase()), icon: a.icon, plan, desc: a.desc, def: AUTO_DEF[a.id],
+  return { id: a.id, group: 'MESSAGING & AUTOMATION', name: 'Automation: ' + a.name.toLowerCase().replace(/^./, c => c.toUpperCase()), icon: a.icon, desc: a.desc, def: AUTO_DEF[a.id],
     Preview: p => <AutoPreview {...p} a={a} />,
     fields: (v, x) => [F.toggle('Automation on', 'on'),
       ...(a.id === 'a_thanks' ? [F.range('Wait after payment', 'delay', 0, 48, 1, ' h')] : a.id === 'a_feedback' ? [F.range('Wait after visit', 'delay', 0, 24, 1, ' h'), F.seg('Send review link from', 'min', [[4, '4★'], [5, '5★ only']]), F.text('Review link', 'link'), F.toggle('1–2★ alerts the manager instead', 'recover')] : a.id === 'a_winback' ? [F.range('Not visited for', 'days', 14, 90, 1, ' days')] : [F.range('Birthday message', 'days', 0, 14, 1, ' days before'), F.range('Points expiry nudge', 'expiry', 3, 30, 1, ' days before')]),
@@ -373,19 +368,19 @@ function PerfPreview({ v, x }: PP) {
 }
 
 export const MESSAGING: Tool[] = [
-  { id: 'waba', group: 'MESSAGING & AUTOMATION', name: 'WhatsApp Business connection', icon: 'message-circle', plan: 'basic', desc: 'Connect and verify the WhatsApp Business (WABA) number your receipts, order-ready messages and automations send from.', Panel: WabaPanel, Preview: WabaPreview },
-  { id: 'templates', group: 'MESSAGING & AUTOMATION', name: 'Message templates', icon: 'files', plan: 'basic', desc: 'Every WhatsApp template with its Meta approval status. Templates must be approved before they can send.', Panel: TemplatesPanel, Preview: TemplatesList },
-  { id: 'msg', group: 'MESSAGING & AUTOMATION', name: 'WA, email & SMS template editor', icon: 'message-square-text', plan: 'free', desc: 'Write once, send on WhatsApp Business, email or SMS. WhatsApp templates are submitted to Meta for approval.', Panel: EditorPanel, Preview: EditorPreview },
-  { id: 'flows', group: 'MESSAGING & AUTOMATION', name: 'Automations', icon: 'workflow', plan: 'pro', desc: 'Sends the right message after the right moment, like a thank-you on WhatsApp after a guest pays.', Preview: FlowsOverview },
-  ...AUTOS.map(a => autoTool(a, 'pro')),
-  { id: 'builder', group: 'MESSAGING & AUTOMATION', name: 'Automation flow builder', icon: 'git-branch-plus', plan: 'pro', desc: 'Build your own flow: trigger → wait → condition → send.', Panel: BuilderPanel, Preview: BuilderPreview },
-  { id: 'optin', group: 'MESSAGING & AUTOMATION', name: 'Opt-in & consent', icon: 'shield-check', plan: 'free', desc: 'Who may receive promos, quiet hours for marketing, and how guests unsubscribe.', def: { ...TOOL_DEFAULTS.optin }, Preview: ConsentPreview,
+  { id: 'waba', group: 'MESSAGING & AUTOMATION', name: 'WhatsApp Business connection', icon: 'message-circle', desc: 'Connect and verify the WhatsApp Business (WABA) number your receipts, order-ready messages and automations send from.', Panel: WabaPanel, Preview: WabaPreview },
+  { id: 'templates', group: 'MESSAGING & AUTOMATION', name: 'Message templates', icon: 'files', desc: 'Every WhatsApp template with its Meta approval status. Templates must be approved before they can send.', Panel: TemplatesPanel, Preview: TemplatesList },
+  { id: 'msg', group: 'MESSAGING & AUTOMATION', name: 'WA, email & SMS template editor', icon: 'message-square-text', desc: 'Write once, send on WhatsApp Business, email or SMS. WhatsApp templates are submitted to Meta for approval.', Panel: EditorPanel, Preview: EditorPreview },
+  { id: 'flows', group: 'MESSAGING & AUTOMATION', name: 'Automations', icon: 'workflow', desc: 'Sends the right message after the right moment, like a thank-you on WhatsApp after a guest pays.', Preview: FlowsOverview },
+  ...AUTOS.map(autoTool),
+  { id: 'builder', group: 'MESSAGING & AUTOMATION', name: 'Automation flow builder', icon: 'git-branch-plus', desc: 'Build your own flow: trigger → wait → condition → send.', Panel: BuilderPanel, Preview: BuilderPreview },
+  { id: 'optin', group: 'MESSAGING & AUTOMATION', name: 'Opt-in & consent', icon: 'shield-check', desc: 'Who may receive promos, quiet hours for marketing, and how guests unsubscribe.', def: { ...TOOL_DEFAULTS.optin }, Preview: ConsentPreview,
     fields: () => [F.toggle('Quiet hours for marketing', 'quiet'), F.text('From', 'from', '21:00'), F.text('Until', 'to', '08:00'), F.text('Opt-out keyword', 'stop'), F.toggle('Ask for opt-in at checkout (unticked by default)', 'checkout'), F.toggle('Unsubscribe link in every email', 'footer'), F.note('Transactional messages (receipt, order ready, booking) send any time and never need opt-in.')] },
-  { id: 'log', group: 'MESSAGING & AUTOMATION', name: 'Message log & delivery status', icon: 'scroll-text', plan: 'basic', desc: 'Every message sent: queued, sent, delivered, read or failed. Retry failed ones.', Preview: LogPreview,
+  { id: 'log', group: 'MESSAGING & AUTOMATION', name: 'Message log & delivery status', icon: 'scroll-text', desc: 'Every message sent: queued, sent, delivered, read or failed. Retry failed ones.', Preview: LogPreview,
     Panel: ({ v, set }) => <div className="stack"><div className="field"><label>Channel</label><Seg value={v.ch ?? 'all'} options={[['all', 'All'], ['wa', 'WA'], ['email', 'Email'], ['sms', 'SMS']] as const} onChange={c => set('ch', c)} /></div>
       <div className="field"><label>Status</label><select className="input" value={v.st ?? 'all'} onChange={e => set('st', e.target.value)}>{['all', 'queued', 'sent', 'delivered', 'read', 'failed'].map(s => <option key={s} value={s}>{s === 'all' ? 'All statuses' : s}</option>)}</select></div></div> },
-  { id: 'credits', group: 'MESSAGING & AUTOMATION', name: 'Messaging credits & cost', icon: 'wallet', plan: 'basic', desc: 'Prepaid credit for WhatsApp, SMS and email, and what each conversation costs.', Panel: CreditsPanel, Preview: CreditsPreview },
-  { id: 'emaild', group: 'MESSAGING & AUTOMATION', name: 'Email sender domain', icon: 'at-sign', plan: 'pro', desc: 'Send receipts and campaigns from your own address instead of no-reply@bornis.id.', def: { ...TOOL_DEFAULTS.emaild }, Panel: EmailDomainPanel, Preview: EmailDomainPreview },
-  { id: 'perf', group: 'MESSAGING & AUTOMATION', name: 'Automation performance', icon: 'trending-up', plan: 'pro', desc: 'Return visits and revenue from guests after they got a message.', Preview: PerfPreview,
+  { id: 'credits', group: 'MESSAGING & AUTOMATION', name: 'Messaging credits & cost', icon: 'wallet', desc: 'Prepaid credit for WhatsApp, SMS and email, and what each conversation costs.', Panel: CreditsPanel, Preview: CreditsPreview },
+  { id: 'emaild', group: 'MESSAGING & AUTOMATION', name: 'Email sender domain', icon: 'at-sign', desc: 'Send receipts and campaigns from your own address instead of no-reply@bornis.id.', def: { ...TOOL_DEFAULTS.emaild }, Panel: EmailDomainPanel, Preview: EmailDomainPreview },
+  { id: 'perf', group: 'MESSAGING & AUTOMATION', name: 'Automation performance', icon: 'trending-up', desc: 'Return visits and revenue from guests after they got a message.', Preview: PerfPreview,
     Panel: ({ v, set }) => <div className="field"><label>Attribution window</label><Seg value={String(v.win ?? 7)} options={[['3', '3 days'], ['7', '7 days'], ['14', '14 days']] as const} onChange={w => set('win', Number(w))} /></div> },
 ];

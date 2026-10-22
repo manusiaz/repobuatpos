@@ -41,7 +41,7 @@ export const F = {
 
 export type Group = 'PRINT' | 'MARKETING' | 'MESSAGING & AUTOMATION' | 'PLATFORM' | 'WORKSPACE' | 'GOVERNANCE' | 'CUSTOMER SCREENS' | 'TEMPLATES' | 'RULES' | 'STUDIOS';
 export interface Tool {
-  id: string; group: Group; name: string; icon: string; plan: Plan; desc: string;
+  id: string; group: Group; name: string; icon: string; desc: string;
   /** Studio settings (draft → publish). Tools without defaults are management pages with their own panel. */
   def?: V;
   fields?: (v: V, x: Ctx) => Field[];

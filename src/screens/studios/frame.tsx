@@ -8,6 +8,7 @@ import type { Version } from '../../data/schema.ts';
 import { publishVerb } from '../../domain/menu.ts';
 import { Badge, Icon, Sheet, ago, dateShort, hhmm, toast } from '../../ui/kit.tsx';
 import { contrast, Fields, planLocked, PLAN_LABEL, type Ctx, type Tool, type V } from './core.tsx';
+import { toolPlan } from '../../system/tools.ts';
 
 const CSS = `
 .sx-grid{display:grid;grid-template-columns:232px 320px minmax(0,1fr);gap:16px;align-items:start}
@@ -64,14 +65,14 @@ export function StudioFrame({ tool, tools, x, preset, pathOf }: { tool: Tool; to
   const d = useDraft(tool, x, preset);
   const [sheet, setSheet] = useState(false), [hist, setHist] = useState(false);
   const studio = !!tool.def;
-  const locked = planLocked(tool.plan, x.db);
+  const locked = planLocked(toolPlan(tool.id), x.db);
   const fails = (tool.pairs?.(d.v, x) ?? []).map(([fg, bg, where]) => ({ where, r: contrast(fg, bg) })).filter(p => p.r < 4.5);
   const state: DraftState = locked ? 'locked' : fails.length ? 'contrast' : d.saving ? 'saving' : d.waiting ? 'waiting' : d.isLive ? 'published' : 'draft';
   const groups = useMemo(() => tools.reduce<Record<string, Tool[]>>((a, t) => ((a[t.group] ??= []).push(t), a), {}), [tools]);
   const verb = publishVerb(x.user.role);
 
   const doPublish = () => {
-    if (locked) return toast(`${tool.name} needs the ${PLAN_LABEL[tool.plan]} plan`);
+    if (locked) return toast(`${tool.name} needs the ${PLAN_LABEL[toolPlan(tool.id)]} plan`);
     if (fails.length) return toast('Fix contrast before publishing');
     const done = publish('page', { tool: tool.id, values: d.v }, x.by, tool.name);
     if (JSON.stringify(d.v) !== JSON.stringify(d.stored)) d.setAll(d.v);
@@ -80,9 +81,9 @@ export function StudioFrame({ tool, tools, x, preset, pathOf }: { tool: Tool; to
 
   const settings = <div className="stack">
     {locked && <div className="card tight stack sm" style={{ background: 'var(--info-soft)', borderColor: 'transparent' }}>
-      <div className="row"><Icon name="lock" size={18} /><b>{PLAN_LABEL[tool.plan]} plan feature</b></div>
+      <div className="row"><Icon name="lock" size={18} /><b>{PLAN_LABEL[toolPlan(tool.id)]} plan feature</b></div>
       <p style={{ fontSize: 13 }}>You’re on {PLAN_LABEL[x.db.tenant.plan]}. Everything stays visible so you can try it; publishing unlocks after you upgrade.</p>
-      <Link href="/owner/account/subscription-billing" className="btn btn-primary btn-sm">Upgrade to {PLAN_LABEL[tool.plan]}</Link>
+      <Link href="/owner/account/subscription-billing" className="btn btn-primary btn-sm">Upgrade to {PLAN_LABEL[toolPlan(tool.id)]}</Link>
     </div>}
     {fails.length > 0 && <div className="banner" style={{ background: 'var(--danger-soft)', color: 'var(--danger-fg)' }} role="alert"><Icon name="contrast" size={18} />
       <div className="stack sm" style={{ gap: 2 }}><b>Contrast below 4.5:1 · publish blocked</b>{fails.map(f => <span key={f.where} style={{ fontSize: 13 }}>{f.where}: {f.r.toFixed(1)}:1</span>)}</div></div>}
@@ -104,7 +105,7 @@ export function StudioFrame({ tool, tools, x, preset, pathOf }: { tool: Tool; to
     <style>{CSS}</style>
     <header className="row wrap between" style={{ gap: 12, alignItems: 'flex-end' }}>
       <div className="stack sm" style={{ gap: 4, minWidth: 0, flex: '1 1 320px' }}>
-        <span className="cap" style={{ color: 'var(--accent-fg)' }}>{tool.group} STUDIO{tool.plan !== 'free' && ` · ${PLAN_LABEL[tool.plan]}`}</span>
+        <span className="cap" style={{ color: 'var(--accent-fg)' }}>{tool.group} STUDIO{toolPlan(tool.id) !== 'free' && ` · ${PLAN_LABEL[toolPlan(tool.id)]}`}</span>
         <h1 style={{ fontSize: 'clamp(22px,1.2vw + 16px,28px)' }}>{tool.name}</h1>
         <p className="muted" style={{ maxWidth: 680, fontSize: 14 }}>{tool.desc}</p>
       </div>
@@ -117,7 +118,7 @@ export function StudioFrame({ tool, tools, x, preset, pathOf }: { tool: Tool; to
     </header>
     <div className="sx-pick">
       <select className="input" aria-label="Studio tool" value={tool.id} onChange={e => x.go(pathOf(e.target.value))}>
-        {Object.entries(groups).map(([g, ts]) => <optgroup key={g} label={g}>{ts.map(t => <option key={t.id} value={t.id}>{t.name}{planLocked(t.plan, x.db) ? ` · ${PLAN_LABEL[t.plan]}` : ''}</option>)}</optgroup>)}
+        {Object.entries(groups).map(([g, ts]) => <optgroup key={g} label={g}>{ts.map(t => <option key={t.id} value={t.id}>{t.name}{planLocked(toolPlan(t.id), x.db) ? ` · ${PLAN_LABEL[toolPlan(t.id)]}` : ''}</option>)}</optgroup>)}
       </select>
     </div>
     <div className="sx-grid">
@@ -126,7 +127,7 @@ export function StudioFrame({ tool, tools, x, preset, pathOf }: { tool: Tool; to
           <span className="cap row between" style={{ padding: '6px 10px', color: 'var(--fg-3)' }}><span>{g}</span><span>{ts.length}</span></span>
           {ts.map(t => <Link key={t.id} href={pathOf(t.id)} className="sx-tool" aria-current={t.id === tool.id ? 'page' : undefined}>
             <Icon name={t.icon} size={16} /><span className="n">{t.name}</span>
-            {t.plan !== 'free' && <Badge tone={planLocked(t.plan, x.db) ? 'info' : 'accent'}>{t.plan === 'enterprise' ? 'ENT' : t.plan.toUpperCase()}</Badge>}
+            {toolPlan(t.id) !== 'free' && <Badge tone={planLocked(toolPlan(t.id), x.db) ? 'info' : 'accent'}>{toolPlan(t.id) === 'enterprise' ? 'ENT' : toolPlan(t.id).toUpperCase()}</Badge>}
           </Link>)}
         </div>)}
       </nav>

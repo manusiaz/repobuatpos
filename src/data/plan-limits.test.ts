@@ -24,3 +24,12 @@ test('the price BorNiz set in the console is the one sign-up and pricing show; F
   const { priced } = await import('../screens/public/plans.ts');
   assert.deepEqual(priced({ pro: 399000, basic: 'x', free: 5, enterprise: 9 }).map(p => p.monthly), [0, 149_000, 399_000, null]);
 });
+
+test('a studio tool published above the plan is ignored by every reader, without each reader naming the plan', async () => {
+  const { toolValue, toolPublished } = await import('../system/tools.ts');
+  const ver = (tool: string, values: object) => ({ id: 'v' + tool, kind: 'page', status: 'published', data: { tool, values } });
+  const at = (plan: string) => ({ tenant: { plan }, versions: [ver('coupon', { offer: 'Gratis kopi' }), ver('fonts', { head: 'Comic' })] }) as unknown as Parameters<typeof toolValue>[0];
+  assert.equal(toolValue(at('free'), 'coupon').offer, '15% off your next coffee', 'Free prints the default, not the Pro coupon');
+  assert.equal(toolPublished(at('basic'), 'fonts'), undefined);
+  assert.equal(toolValue(at('pro'), 'coupon').offer, 'Gratis kopi');
+});

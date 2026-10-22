@@ -396,9 +396,6 @@ export const RULES: Rule[] = [
   R('Digital receipt', 'state', '/owner/messaging-and-automation/message-log-and-delivery-status', (db, now, ix) => db.orders.filter(o => o.customerId && o.paidAt && now - o.paidAt < 15 * MIN && o.paidAt <= now
     && !hasMsg(db, 'e_receipt', m => m.orderId === o.id || (!m.orderId && m.customerId === o.customerId && m.at >= o.paidAt! - MIN)))
     .flatMap(o => { const msg = guest(ix.cust.get(o.customerId!), 'e_receipt', o.id); return msg ? [{ key: o.id, outletId: o.outletId, text: `Receipt ${o.no}`, msg }] : []; })),
-  R('Thank you after visit', 'state', '/owner/messaging-and-automation/message-log-and-delivery-status', (db, now, ix) => db.orders.filter(o => o.customerId && o.paidAt && now >= o.paidAt + HOUR && now - o.paidAt < HOUR + 15 * MIN && ix.cust.get(o.customerId)?.optIn
-    && !hasMsg(db, 'thanks_visit', m => m.customerId === o.customerId && m.at >= o.paidAt!))
-    .flatMap(o => { const msg = guest(ix.cust.get(o.customerId!), 'thanks_visit', o.id); return msg ? [{ key: o.id, outletId: o.outletId, text: `Thank you ${o.no}`, msg }] : []; })),
   R('Reservation reminder', 'state', '/owner/messaging-and-automation/message-log-and-delivery-status', (db, now) => db.reservations.filter(r => r.status === 'booked' && r.table && r.phone && r.at > now && r.at - now <= 3 * HOUR)
     .map(r => { const c = db.customers.find(x => x.phone.replace(/\D/g, '') === r.phone.replace(/\D/g, '')); return { key: r.id, outletId: r.outletId, text: `Reminder ${r.name} ${hhmm(r.at)}`, msg: { template: 'reservation_reminder', to: r.phone, customerId: c?.id ?? null } }; })),
   R('Refund done', 'state', '/owner/messaging-and-automation/message-log-and-delivery-status', (db, now, ix) => db.refunds.filter(r => now - r.at < DAY).flatMap(r => {
@@ -567,6 +564,7 @@ export const RULES: Rule[] = [
 
 /** Catalog alerts raised at the moment of the event by service code (file:function). No sweep rule. */
 export const SERVICE: Record<string, string> = {
+  'Thank you after visit': 'src/data/alerts/automations.ts:automationMessages', // its settings are the a_thanks automation
   'Low stock': 'src/data/actions.ts:settleIfDone',
   'Out of stock': 'src/data/actions.ts:settleIfDone',
   'Opname waiting to sign': 'src/data/actions.ts:requestApproval',

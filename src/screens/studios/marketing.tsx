@@ -33,11 +33,11 @@ function Pixels({ v, x }: PP) {
 }
 
 export const MARKETING: Tool[] = [
-  { id: 'voucher', group: 'MARKETING', name: 'Voucher & promo design', icon: 'ticket', plan: 'free', desc: 'Design how vouchers look in the self-order app, on e-receipts and in WhatsApp.', ...same('voucher-and-promo-visuals') },
-  { id: 'gift', group: 'MARKETING', name: 'Gift card design', icon: 'gift', plan: 'pro', desc: 'Digital and printed gift cards customers can buy and send.', ...same('gift-card-designer') },
-  { id: 'push', group: 'MARKETING', name: 'Push notifications', icon: 'bell-ring', plan: 'enterprise', desc: 'Notifications for the member app: promos, points and order status.', def: { ...TOOL_DEFAULTS.push }, Preview: Push,
+  { id: 'voucher', group: 'MARKETING', name: 'Voucher & promo design', icon: 'ticket', desc: 'Design how vouchers look in the self-order app, on e-receipts and in WhatsApp.', ...same('voucher-and-promo-visuals') },
+  { id: 'gift', group: 'MARKETING', name: 'Gift card design', icon: 'gift', desc: 'Digital and printed gift cards customers can buy and send.', ...same('gift-card-designer') },
+  { id: 'push', group: 'MARKETING', name: 'Push notifications', icon: 'bell-ring', desc: 'Notifications for the member app: promos, points and order status.', def: { ...TOOL_DEFAULTS.push }, Preview: Push,
     fields: () => [F.text('Title', 'title'), F.area('Body', 'body'), F.toggle('Image', 'img'), F.seg('Opens', 'link', [['order', 'Order'], ['promo', 'Promo'], ['menu', 'Menu'], ['points', 'Points']]), F.seg('Send', 'when', [['now', 'Now'], ['sched', 'Schedule'], ['auto', 'Automation']])] },
-  { id: 'referral', group: 'MARKETING', name: 'Referral program page', icon: 'users-round', plan: 'pro', desc: 'Members share a link. Both people get a reward after the friend’s first purchase.', ...same('referral-page') },
-  { id: 'pixels', group: 'MARKETING', name: 'Ad pixels & SEO per page', icon: 'scan-search', plan: 'basic', desc: 'Meta, TikTok and Google Analytics tags, plus the title and description search engines show for each page.', def: { ...TOOL_DEFAULTS.pixels }, Preview: Pixels,
+  { id: 'referral', group: 'MARKETING', name: 'Referral program page', icon: 'users-round', desc: 'Members share a link. Both people get a reward after the friend’s first purchase.', ...same('referral-page') },
+  { id: 'pixels', group: 'MARKETING', name: 'Ad pixels & SEO per page', icon: 'scan-search', desc: 'Meta, TikTok and Google Analytics tags, plus the title and description search engines show for each page.', def: { ...TOOL_DEFAULTS.pixels }, Preview: Pixels,
     fields: v => [F.text('Meta pixel ID', 'meta', '1234567890'), F.text('TikTok pixel ID', 'tiktok', 'C4XXXX'), F.text('GA4 measurement ID', 'ga', 'G-XXXXXXX'), F.head('SEO'), F.seg('Page', 'page', [['home', 'Home'], ['menu', 'Menu'], ['promo', 'Promos']]), F.text('Title', 't_' + v.page, 'Page · Brand', `${String(v['t_' + v.page] ?? '').length}/60`), F.area('Description', 'd_' + v.page)] },
 ];

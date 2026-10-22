@@ -9,7 +9,7 @@ import { level as stockLevel } from '../../domain/stock.ts';
 import { Badge, Empty, Icon, Kpi, Seg, Status, Toggle, ago, dateShort, toast } from '../../ui/kit.tsx';
 import { LineChart } from '../../ui/Chart.tsx';
 import { usePin } from '../../ui/PinSheet.tsx';
-import { approvalRule, variantOf, WIDGETS_DEFAULT } from '../../system/tools.ts';
+import { approvalRule, toolPlan, variantOf, WIDGETS_DEFAULT } from '../../system/tools.ts';
 import { Caption, contrast, copy, CopyRow, F, outletName, pct, Phone, PLAN_LABEL, PLAN_RANK, planLocked, Stage, themePairs, type Ctx, type Plan, type PP, type Tool, type V } from './core.tsx';
 
 const DAY = 864e5;
@@ -301,36 +301,36 @@ function ContrastCheck({ v, set, x }: PP & { tools?: Tool[] }) {
 }
 function Plans({ x, tools }: PP & { tools: Tool[] }) {
   const plans: Plan[] = ['free', 'basic', 'pro', 'enterprise'], cur = x.db.tenant.plan;
-  const locked = tools.filter(t => planLocked(t.plan, x.db));
+  const locked = tools.filter(t => planLocked(toolPlan(t.id), x.db));
   return <div className="stack" style={{ width: '100%' }}>
-    {locked.length > 0 && <div className="card row wrap" style={{ background: 'var(--info-soft)', borderColor: 'transparent' }}><div className="grow stack sm" style={{ minWidth: 220 }}><b>{locked.length} tools need {PLAN_LABEL[locked[0].plan]}</b><span style={{ fontSize: 13 }}>You’re on {PLAN_LABEL[cur]}. Locked tools stay visible with a live preview; publishing unlocks after upgrading.</span></div><a className="btn btn-primary" href="/owner/account/subscription-billing">Upgrade</a></div>}
+    {locked.length > 0 && <div className="card row wrap" style={{ background: 'var(--info-soft)', borderColor: 'transparent' }}><div className="grow stack sm" style={{ minWidth: 220 }}><b>{locked.length} tools need {PLAN_LABEL[toolPlan(locked[0].id)]}</b><span style={{ fontSize: 13 }}>You’re on {PLAN_LABEL[cur]}. Locked tools stay visible with a live preview; publishing unlocks after upgrading.</span></div><a className="btn btn-primary" href="/owner/account/subscription-billing">Upgrade</a></div>}
     <div className="card flat"><div className="scroll-x"><table className="table"><thead><tr><th>Tool</th>{plans.map(p => <th key={p} style={{ color: p === cur ? 'var(--role-fg)' : undefined }}>{PLAN_LABEL[p]}{p === cur && ' · you'}</th>)}</tr></thead>
-      <tbody>{tools.filter(t => t.group !== 'STUDIOS' && t.group !== 'RULES').map(t => <tr key={t.id}><td>{t.name}</td>{plans.map(p => <td key={p}>{PLAN_RANK[p] >= PLAN_RANK[t.plan] ? <Icon name="check" size={16} style={{ color: 'var(--success-fg)' }} /> : <span className="faint">—</span>}</td>)}</tr>)}</tbody></table></div></div>
+      <tbody>{tools.filter(t => t.group !== 'STUDIOS' && t.group !== 'RULES').map(t => <tr key={t.id}><td>{t.name}</td>{plans.map(p => <td key={p}>{PLAN_RANK[p] >= PLAN_RANK[toolPlan(t.id)] ? <Icon name="check" size={16} style={{ color: 'var(--success-fg)' }} /> : <span className="faint">—</span>}</td>)}</tr>)}</tbody></table></div></div>
   </div>;
 }
 
 export function workspaceTools(all: () => Tool[]): Tool[] {
   return [
-    { id: 'widgets', group: 'WORKSPACE', name: 'Dashboard widgets per role', icon: 'layout-dashboard', plan: 'free', desc: 'Choose and order the widgets each role sees on its home dashboard.', def: { role: 'owner', cols: 3 }, Preview: Widgets, Panel: WidgetsPanel, wide: true },
-    { id: 'terms', group: 'WORKSPACE', name: 'Terminology', icon: 'whole-word', plan: 'free', desc: 'Rename modules to match how your business talks. Changes apply across the dashboard, POS and reports.', def: { outlet: 'Cabang', table: 'Meja', customer: 'Pelanggan', member: 'Sahabat Biru', shift: 'Shift', product: 'Menu' }, Preview: Terms,
+    { id: 'widgets', group: 'WORKSPACE', name: 'Dashboard widgets per role', icon: 'layout-dashboard', desc: 'Choose and order the widgets each role sees on its home dashboard.', def: { role: 'owner', cols: 3 }, Preview: Widgets, Panel: WidgetsPanel, wide: true },
+    { id: 'terms', group: 'WORKSPACE', name: 'Terminology', icon: 'whole-word', desc: 'Rename modules to match how your business talks. Changes apply across the dashboard, POS and reports.', def: { outlet: 'Cabang', table: 'Meja', customer: 'Pelanggan', member: 'Sahabat Biru', shift: 'Shift', product: 'Menu' }, Preview: Terms,
       fields: () => [F.text('Outlet', 'outlet'), F.text('Table', 'table'), F.text('Customer', 'customer'), F.text('Member', 'member'), F.text('Shift', 'shift'), F.text('Product', 'product')] },
-    { id: 'fields', group: 'WORKSPACE', name: 'Custom fields', icon: 'list-plus', plan: 'pro', desc: 'Add your own fields to products and customers. They show on forms, filters and exports.', Preview: CustomFields, Panel: FieldsPanel },
-    { id: 'roleth', group: 'WORKSPACE', name: 'Theme per role', icon: 'user-cog', plan: 'pro', desc: 'Give each role its own accent and density so devices are easy to tell apart.', def: { role: 'cashier', 'accent:cashier': 'ember', 'density:cashier': 'touch', 'accent:manager': 'blue', 'density:manager': 'comfy', 'accent:kitchen': 'green', 'dark:kitchen': true }, Preview: RoleTheme,
+    { id: 'fields', group: 'WORKSPACE', name: 'Custom fields', icon: 'list-plus', desc: 'Add your own fields to products and customers. They show on forms, filters and exports.', Preview: CustomFields, Panel: FieldsPanel },
+    { id: 'roleth', group: 'WORKSPACE', name: 'Theme per role', icon: 'user-cog', desc: 'Give each role its own accent and density so devices are easy to tell apart.', def: { role: 'cashier', 'accent:cashier': 'ember', 'density:cashier': 'touch', 'accent:manager': 'blue', 'density:manager': 'comfy', 'accent:kitchen': 'green', 'dark:kitchen': true }, Preview: RoleTheme,
       fields: v => [F.seg('Role', 'role', [['owner', 'Owner'], ['manager', 'Manager'], ['pic', 'PIC'], ['cashier', 'Cashier'], ['kitchen', 'Kitchen']]), F.swatch('Accent', 'accent:' + v.role, ACCENTS), F.seg('Density', 'density:' + v.role, [['touch', 'Touch'], ['comfy', 'Comfy'], ['dense', 'Dense']]), F.toggle('Dark mode', 'dark:' + v.role)] },
-    { id: 'lock', group: 'GOVERNANCE', name: 'Franchise brand lock', icon: 'lock', plan: 'pro', desc: 'Head office locks brand elements. Outlets can only change what is unlocked.', Preview: Lock, Panel: LockPanel },
-    { id: 'approve', group: 'GOVERNANCE', name: 'Change approvals', icon: 'badge-check', plan: 'free', desc: 'Managers edit every studio like the owner; price changes and publishing wait for the owner’s OK.', def: { rule: 'owner', notify: true }, Preview: Approvals,
+    { id: 'lock', group: 'GOVERNANCE', name: 'Franchise brand lock', icon: 'lock', desc: 'Head office locks brand elements. Outlets can only change what is unlocked.', Preview: Lock, Panel: LockPanel },
+    { id: 'approve', group: 'GOVERNANCE', name: 'Change approvals', icon: 'badge-check', desc: 'Managers edit every studio like the owner; price changes and publishing wait for the owner’s OK.', def: { rule: 'owner', notify: true }, Preview: Approvals,
       fields: () => [F.seg('Who approves', 'rule', [['owner', 'Owner'], ['two', 'Owner + one admin']]), F.toggle('Notify the owner on WhatsApp', 'notify'), F.note('Price changes and publishing always need the owner, with the approval PIN.')] },
-    { id: 'requests', group: 'GOVERNANCE', name: 'Publish requests & status', icon: 'send', plan: 'free', desc: 'Every “Send to owner” with its status: waiting, approved or rejected.', Preview: p => <Approvals {...p} mine /> },
-    { id: 'staging', group: 'GOVERNANCE', name: 'Staging & preview link', icon: 'link-2', plan: 'free', desc: 'Share an unpublished version with your team or a designer before it goes live.', Preview: Staging, Panel: p => <StagingPanel {...p} v={{ exp: '7', pass: true, banner: true, ...p.v }} /> },
-    { id: 'ab', group: 'GOVERNANCE', name: 'A/B testing', icon: 'split', plan: 'pro', desc: 'Show two themes to guests and keep the one that sells more.', def: { split: 50, metric: 'aov', dur: '14', start: 0 }, Preview: AB,
+    { id: 'requests', group: 'GOVERNANCE', name: 'Publish requests & status', icon: 'send', desc: 'Every “Send to owner” with its status: waiting, approved or rejected.', Preview: p => <Approvals {...p} mine /> },
+    { id: 'staging', group: 'GOVERNANCE', name: 'Staging & preview link', icon: 'link-2', desc: 'Share an unpublished version with your team or a designer before it goes live.', Preview: Staging, Panel: p => <StagingPanel {...p} v={{ exp: '7', pass: true, banner: true, ...p.v }} /> },
+    { id: 'ab', group: 'GOVERNANCE', name: 'A/B testing', icon: 'split', desc: 'Show two themes to guests and keep the one that sells more.', def: { split: 50, metric: 'aov', dur: '14', start: 0 }, Preview: AB,
       fields: () => [F.range('Traffic to B', 'split', 10, 90, 5, '%'), F.seg('Winner by', 'metric', [['aov', 'Avg order'], ['items', 'Items/order'], ['rev', 'Revenue']]), F.seg('Run for', 'dur', [['7', '7 days'], ['14', '14 days'], ['30', '30 days']])] },
-    { id: 'stats', group: 'GOVERNANCE', name: 'Menu analytics', icon: 'chart-no-axes-column', plan: 'free', desc: 'Which items sell, how often they’re ordered and how much comes from self-order.', Preview: Stats,
+    { id: 'stats', group: 'GOVERNANCE', name: 'Menu analytics', icon: 'chart-no-axes-column', desc: 'Which items sell, how often they’re ordered and how much comes from self-order.', Preview: Stats,
       Panel: ({ v, set }) => <div className="stack"><div className="field"><label>Period</label><Seg value={v.per ?? '7d'} options={[['today', 'Today'], ['7d', '7 days'], ['14d', '14 days']] as const} onChange={p => set('per', p)} /></div><div className="field"><label>Outlets</label><Seg value={v.scope ?? 'one'} options={[['one', 'This outlet'], ['all', 'All']] as const} onChange={s => set('scope', s)} /></div></div> },
-    { id: 'hooks', group: 'GOVERNANCE', name: 'Webhooks & API', icon: 'webhook', plan: 'enterprise', desc: 'Notify your own systems when themes, menus or orders change.', def: { url: 'https://hooks.kopibiru.id/bornis', 'theme.published': true, 'menu.updated': true, 'price.changed': false, 'order.paid': true, secret: '' }, Preview: Hooks, Panel: HooksPanel },
-    { id: 'industry', group: 'TEMPLATES', name: 'Industry templates', icon: 'layout-template', plan: 'free', desc: 'Starter setups per business type: pages, sections, POS layout and receipt. Publishing applies the template.', def: { pick: 'fnb' }, Preview: Industry,
+    { id: 'hooks', group: 'GOVERNANCE', name: 'Webhooks & API', icon: 'webhook', desc: 'Notify your own systems when themes, menus or orders change.', def: { url: 'https://hooks.kopibiru.id/bornis', 'theme.published': true, 'menu.updated': true, 'price.changed': false, 'order.paid': true, secret: '' }, Preview: Hooks, Panel: HooksPanel },
+    { id: 'industry', group: 'TEMPLATES', name: 'Industry templates', icon: 'layout-template', desc: 'Starter setups per business type: pages, sections, POS layout and receipt. Publishing applies the template.', def: { pick: 'fnb' }, Preview: Industry,
       fields: () => [F.seg('Business type', 'pick', [['fnb', 'F&B'], ['retail', 'Retail'], ['salon', 'Salon'], ['laundry', 'Laundry'], ['court', 'Food court']]), F.note('Applying keeps your products, customers and history.')] },
-    { id: 'locked', group: 'RULES', name: 'Locked elements', icon: 'shield', plan: 'free', desc: 'What no studio can change: status colors, KDS timers, payment marks, error screens and legal lines.', Preview: Locked },
-    { id: 'contrast', group: 'RULES', name: 'Contrast check & publish blocking', icon: 'contrast', plan: 'free', desc: 'Text on color must reach 4.5:1. Below that, publish is blocked.', Preview: ContrastCheck },
-    { id: 'plans', group: 'RULES', name: 'Plan gating', icon: 'gem', plan: 'free', desc: 'Which tools come with Free, Basic, Pro and Enterprise. Nothing is hidden.', Preview: p => <Plans {...p} tools={all()} /> },
+    { id: 'locked', group: 'RULES', name: 'Locked elements', icon: 'shield', desc: 'What no studio can change: status colors, KDS timers, payment marks, error screens and legal lines.', Preview: Locked },
+    { id: 'contrast', group: 'RULES', name: 'Contrast check & publish blocking', icon: 'contrast', desc: 'Text on color must reach 4.5:1. Below that, publish is blocked.', Preview: ContrastCheck },
+    { id: 'plans', group: 'RULES', name: 'Plan gating', icon: 'gem', desc: 'Which tools come with Free, Basic, Pro and Enterprise. Nothing is hidden.', Preview: p => <Plans {...p} tools={all()} /> },
   ];
 }

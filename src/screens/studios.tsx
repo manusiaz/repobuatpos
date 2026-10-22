@@ -16,6 +16,7 @@ import { MARKETING } from './studios/marketing.tsx';
 import { MESSAGING, setAutoPath, setEditorPath } from './studios/messaging.tsx';
 import { PLATFORM } from './studios/platform.tsx';
 import { workspaceTools } from './studios/workspace.tsx';
+import { toolPlan } from '../system/tools.ts';
 
 /** Route → [tool, preset]. The first route listed for a tool is its canonical link in the tools list. */
 const R: Record<string, [string, V?]> = {
@@ -80,7 +81,7 @@ const CANON: Record<string, string> = {};
 for (const [p, [id, pre]] of Object.entries(R)) if (!pre && !CANON[id]) CANON[id] = p;
 
 function toolState(db: DB, t: Tool) {
-  if (planLocked(t.plan, db)) return ['Locked by plan', 'info'] as const;
+  if (planLocked(toolPlan(t.id), db)) return ['Locked by plan', 'info'] as const;
   const vs = db.versions.filter(v => v.kind === 'page' && (v.data as V)?.tool === t.id);
   if (vs.some(v => v.status === 'pending_owner' && db.approvals.find(a => a.subjectId === v.id)?.status === 'waiting')) return ['Waiting for owner', 'warning'] as const;
   if (vs.some(v => v.status === 'published')) return ['Published', 'success'] as const;
@@ -90,14 +91,14 @@ function toolState(db: DB, t: Tool) {
 
 let ALL: Tool[] = [];
 const HOME: Tool = {
-  id: 'home', group: 'STUDIOS', name: 'Customization studios', icon: 'layout-grid', plan: 'free', desc: 'Make every customer page, printout and message your own. Managers edit everything; publishing goes to the owner.',
+  id: 'home', group: 'STUDIOS', name: 'Customization studios', icon: 'layout-grid', desc: 'Make every customer page, printout and message your own. Managers edit everything; publishing goes to the owner.',
   Panel: ({ x }: PP) => { const waiting = x.db.approvals.filter(a => a.type === 'publish' && a.status === 'waiting').length;
-    return <div className="stack"><Kpi label="Plan" value={PLAN_LABEL[x.db.tenant.plan]} delta={`${ALL.filter(t => planLocked(t.plan, x.db)).length} tools need an upgrade`} /><Kpi label="Waiting for owner" value={waiting} tone={waiting ? 'warn' : undefined} />
+    return <div className="stack"><Kpi label="Plan" value={PLAN_LABEL[x.db.tenant.plan]} delta={`${ALL.filter(t => planLocked(toolPlan(t.id), x.db)).length} tools need an upgrade`} /><Kpi label="Waiting for owner" value={waiting} tone={waiting ? 'warn' : undefined} />
       <Link className="btn" href="/owner/menu-studio-customer-facing/menu-studio-brand-and-all-colors">Menu Studio (guest theme)</Link><Link className="btn" href="/owner/brand-studio-team-workspace/brand-studio-colors">Brand Studio (staff tools)</Link></div>; },
   Preview: ({ x }: PP) => { const groups = ALL.filter(t => t.id !== 'home').reduce<Record<string, Tool[]>>((a, t) => ((a[t.group] ??= []).push(t), a), {});
     return <div className="stack lg" style={{ width: '100%' }}>{Object.entries(groups).map(([g, ts]) => <section key={g} className="stack sm"><span className="cap">{g} · {ts.length}</span>
       <div className="grid" style={{ ['--min' as string]: '220px' }}>{ts.map(t => { const s = toolState(x.db, t); return <Link key={t.id} href={CANON[t.id]} className="card tight stack sm" style={{ color: 'var(--fg-1)', textDecoration: 'none' }}>
-        <div className="row between"><Icon name={t.icon} />{s ? <Badge tone={s[1]} dot>{s[0]}</Badge> : t.plan !== 'free' && <Badge>{PLAN_LABEL[t.plan]}</Badge>}</div><b style={{ fontSize: 14 }}>{t.name}</b>
+        <div className="row between"><Icon name={t.icon} />{s ? <Badge tone={s[1]} dot>{s[0]}</Badge> : toolPlan(t.id) !== 'free' && <Badge>{PLAN_LABEL[toolPlan(t.id)]}</Badge>}</div><b style={{ fontSize: 14 }}>{t.name}</b>
         <span className="muted" style={{ fontSize: 12, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.desc}</span></Link>; })}</div></section>)}</div>; },
 };
 ALL = [HOME, ...PRINT, ...MARKETING, ...MESSAGING, ...PLATFORM, ...workspaceTools(() => ALL), ...GUEST];
