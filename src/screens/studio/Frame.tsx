@@ -134,7 +134,7 @@ export function ImageSlot({ label, value, onChange, ratio = '16/9', maxW = 1200,
       {!value && <span className="row"><Icon name="image-plus" size={18} />{label}</span>}
       {!disabled && <input type="file" accept="image/*" aria-label={'Upload ' + label} onChange={e => { readImage(e.target.files?.[0], maxW).then(onChange, () => toast('That file is not an image')); e.target.value = ''; }} />}
     </label>
-    {value && !disabled && <button type="button" className="btn btn-ghost btn-sm" onClick={() => onChange('')}><Icon name="trash-2" size={14} />Remove {label.toLowerCase()}</button>}
+    {value && !disabled && <button type="button" className="btn btn-ghost btn-sm" onClick={() => onChange('')}><Icon name="trash" size={14} />Remove {label.toLowerCase()}</button>}
   </div>;
 }
 export function ToggleRow({ label, sub, on, onChange, locked }: { label: string; sub?: string; on: boolean; onChange: (v: boolean) => void; locked?: string }) {

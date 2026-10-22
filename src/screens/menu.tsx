@@ -42,14 +42,14 @@ const T: Record<string, [string, string, string, string, string]> = {
   'menu-studio-member-card-and-tiers': ['member', 'Member card & tiers', 'credit-card', 'Screens & print', 'Loyalty card design, program name, points name and tier names.'],
   'menu-studio-publish-schedule-seasonal-theme': ['publish', 'Publish & schedule', 'send', 'Publish', 'Publish now, schedule a change or run a seasonal theme that reverts on its own.'],
   'menu-studio-per-outlet-overrides': ['overrides', 'Per-outlet overrides', 'store', 'Publish', 'What each outlet may change, and local prices within ±10%.'],
-  'menu-studio-version-history-and-restore': ['versions', 'Version history', 'history', 'Publish', 'Every publish is kept. Preview any version and restore it into your draft.'],
+  'menu-studio-version-history-and-restore': ['versions', 'Version history', 'rotate-ccw-clock', 'Publish', 'Every publish is kept. Preview any version and restore it into your draft.'],
   'menu-studio-advanced': ['advanced', 'Advanced', 'code', 'Publish', 'Display options, custom CSS, domain and SEO.'],
   'menu-studio-send-to-owner': ['submit', 'Send to owner', 'user-check', 'Publish', 'Managers send changes to the owner; the owner approves with the approval PIN.'],
   'menu-studio-draft-and-submit-to-owner': ['submit', 'Draft & submit', 'user-check', 'Publish', 'Your draft is saved as you work. Send it to the owner when it’s ready.'],
   'menu-studio-pages-page-list': ['pages', 'Pages', 'files', 'Pages', 'Home, menu, about, location, reservations, gift cards, closed and any page you add.'],
   'menu-studio-pages-section-library': ['library', 'Section library', 'library', 'Pages', 'Hero, text, gallery, products, categories, buttons, hours & map, testimonials, FAQ, promo countdown, spacer.'],
   'menu-studio-pages-section-settings-content-style-visibility': ['section', 'Section settings', 'sliders-horizontal', 'Pages', 'Content, style and visibility for each section.'],
-  'menu-studio-pages-visibility-rules': ['rules', 'Visibility rules', 'filter', 'Pages', 'Show a section to an audience, at a time of day, at one outlet or on one device.'],
+  'menu-studio-pages-visibility-rules': ['rules', 'Visibility rules', 'funnel', 'Pages', 'Show a section to an audience, at a time of day, at one outlet or on one device.'],
   'menu-studio-pages-preview-as': ['previewas', 'Preview as', 'eye', 'Pages', 'See the page as a member, a guest or a new visitor, at any time of day.'],
   'menu-studio-pages-devices': ['devices', 'Devices', 'monitor-smartphone', 'Pages', 'Phone, tablet and desktop. Limit a section to one device.'],
   'menu-studio-pages-draft-and-submit': ['psubmit', 'Pages · submit', 'user-check', 'Pages', 'Your page drafts are saved as you work. Send them to the owner when they’re ready.'],
@@ -249,7 +249,7 @@ function Studio() {
   }
   function versionsPanel() {
     const vs = db.versions.filter(v => v.status !== 'draft');
-    if (!vs.length) return <Empty icon="history" title="No versions yet">Your first publish becomes version 1. Drafts save as you work.</Empty>;
+    if (!vs.length) return <Empty icon="rotate-ccw-clock" title="No versions yet">Your first publish becomes version 1. Drafts save as you work.</Empty>;
     return <div className="stack sm">{vs.map((v, i) => { const ap = approvalFor(db, v.id), st = v.status === 'pending_owner' ? (ap?.status === 'rejected' ? 'rejected' : 'waiting') : 'published';
       return <div key={v.id} className="card tight stack sm" style={{ borderColor: peek?.data === v.data ? 'var(--role)' : undefined }}>
         <div className="row between"><b style={{ fontSize: 14 }}>v{vs.length - i} · {v.kind === 'page' ? 'Pages' : v.kind === 'brand' ? 'Staff brand' : 'Menu'}</b><Badge tone={st === 'published' ? 'success' : st === 'waiting' ? 'warning' : 'danger'} dot>{st === 'waiting' ? 'Waiting for owner' : st === 'rejected' ? 'Rejected' : 'Published'}</Badge></div>

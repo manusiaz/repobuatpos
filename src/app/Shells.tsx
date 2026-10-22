@@ -63,7 +63,7 @@ export function realNav(role: 'owner' | 'manager' | 'admin'): [string, RealPage[
   const mine = REAL.filter(r => !r.hidden && (role === 'admin' ? r.app === 'admin' : r.app === 'backoffice' && (role === 'manager' ? r.id !== 'bo.dashboard' : !r.managerOnly)));
   return MODULES.map(m => [m, mine.filter(r => r.module === m)] as [string, RealPage[]]).filter(([, l]) => l.length);
 }
-export const ReleaseTag = ({ r }: { r: Release }) => <span className="badge" style={{ height: 18, padding: '0 6px', fontSize: 10, fontFamily: 'var(--font-mono)' }} title={'Planned for ' + r}>{r}</span>;
+export const ReleaseTag = ({ r }: { r: Release }) => <span className="badge" style={{ height: 18, padding: '0 6px', fontSize: 12, fontFamily: 'var(--font-mono)' }} title={'Planned for ' + r}>{r}</span>;
 
 /** Features of the current page as tabs (page, tab, setting). Sheets and steps open from inside the page. */
 function PageTabs() {

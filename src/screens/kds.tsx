@@ -89,7 +89,7 @@ export default function Screen() {
         <span style={{ order: 99, marginLeft: 'auto' }}><DeviceChrome dark /></span>
         <div className="row" role="group" aria-label="Station" style={{ gap: 4, padding: 4, borderRadius: 12, background: 'var(--bg-sunken)', overflowX: 'auto', maxWidth: '100%' }}>
           {STATIONS.map(([s, l]) => <button key={s} type="button" aria-pressed={st === s} onClick={() => setSt(s)} style={{ height: 44, padding: '0 14px', border: 0, borderRadius: 9, cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 700, fontSize: fs(15),
-            background: st === s ? 'var(--accent)' : 'transparent', color: st === s ? '#fff' : 'var(--fg-2)' }}>{l} <span style={{ opacity: .75 }}>{count(s)}</span></button>)}
+            background: st === s ? 'var(--accent)' : 'transparent', color: st === s ? 'var(--ink-0)' : 'var(--fg-2)' }}>{l} <span style={{ opacity: .75 }}>{count(s)}</span></button>)}
         </div>
         <span className="grow" />
         {!db.device.online && <span style={{ fontSize: fs(15), fontWeight: 800, color: 'var(--danger-fg)' }}>Disconnected</span>}
@@ -102,9 +102,9 @@ export default function Screen() {
         <button type="button" className="btn" style={{ height: 48, fontSize: fs(15), flex: 'none' }} onClick={() => setMore(true)}><Icon name="ellipsis" />More</button>
       </nav>
     </header>
-    {!db.device.online && <div role="alert" style={{ padding: '12px 16px', background: 'var(--danger)', color: '#fff', fontWeight: 700, fontSize: fs(16) }}>
+    {!db.device.online && <div role="alert" style={{ padding: '12px 16px', background: 'var(--danger)', color: 'var(--ink-0)', fontWeight: 700, fontSize: fs(16) }}>
       Disconnected. Showing the last tickets this screen received. Bumps are kept here and sync when the connection is back; ask the cashier for new orders.</div>}
-    {changes.map(n => <div key={n.id} role="alert" className="row" style={{ padding: '8px 16px', gap: 12, background: n.alert === 'Item voided' ? 'var(--danger)' : 'var(--info)', color: '#fff', fontWeight: 700, fontSize: fs(17) }}>
+    {changes.map(n => <div key={n.id} role="alert" className="row" style={{ padding: '8px 16px', gap: 12, background: n.alert === 'Item voided' ? 'var(--danger)' : 'var(--info)', color: 'var(--ink-0)', fontWeight: 700, fontSize: fs(17) }}>
       <Icon name={n.alert === 'Item voided' ? 'ban' : 'move'} /><span className="grow">{n.alert} · {n.text}</span>
       <button type="button" className="btn" style={{ height: 48, fontSize: fs(15) }} onClick={() => markRead(n.id, by)}>Got it</button></div>)}
     <main style={{ flex: 1, minHeight: 0, padding: '12px 12px 96px' }}>
@@ -161,7 +161,7 @@ function Lanes({ k, split: forceSplit, forced }: { k: Kctx; split?: boolean; for
   return <div className="stack">
     <div className="row wrap" style={{ gap: 10 }}>
       {!forced && <div className="row" role="group" aria-label="Lanes" style={{ gap: 3, padding: 3, borderRadius: 12, background: 'var(--bg-sunken)' }}>
-        {([['split', 'Split lanes'], ['one', 'One queue']] as const).map(([m, l]) => <button key={m} type="button" aria-pressed={mode === m} onClick={() => setMode(m)} style={{ height: 44, padding: '0 14px', border: 0, borderRadius: 9, fontWeight: 700, fontSize: fs(15), cursor: 'pointer', background: mode === m ? 'var(--accent)' : 'transparent', color: mode === m ? '#fff' : 'var(--fg-2)' }}>{l}</button>)}
+        {([['split', 'Split lanes'], ['one', 'One queue']] as const).map(([m, l]) => <button key={m} type="button" aria-pressed={mode === m} onClick={() => setMode(m)} style={{ height: 44, padding: '0 14px', border: 0, borderRadius: 9, fontWeight: 700, fontSize: fs(15), cursor: 'pointer', background: mode === m ? 'var(--accent)' : 'transparent', color: mode === m ? 'var(--ink-0)' : 'var(--fg-2)' }}>{l}</button>)}
       </div>}
       <span style={{ fontSize: fs(15), color: 'var(--fg-2)' }}>{split ? 'Delivery sorted by tier, then ready-by. Tables keep their own pace.' : 'Quiet hours: everything by ready-by time.'}</span>
     </div>

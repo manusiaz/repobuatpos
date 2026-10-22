@@ -59,7 +59,7 @@ function SlidesEditor({ s, a }: { s: Section; a: SiteApi }) {
   const set = (i: number, patch: Partial<Slide>) => a.mut(site => { const x = findSec(site, s.id); if (x) Object.assign(x.items[i], patch); });
   return <Block title={s.type === 'tiles' ? 'Tiles' : 'Slides'} right={<button className="btn btn-sm" onClick={() => a.mut(site => { findSec(site, s.id)?.items.push({ title: 'New slide', sub: '', img: '', badge: '' }); })}><Icon name="plus" size={14} />Add</button>}>
     {s.items.map((x, i) => <div key={i} className="sunken stack sm">
-      <div className="row between"><b style={{ fontSize: 13 }}>{i + 1}. {x.title || 'Untitled'}</b><button className="btn btn-ghost btn-sm" aria-label="Remove" onClick={() => a.mut(site => { findSec(site, s.id)?.items.splice(i, 1); })}><Icon name="trash-2" size={14} /></button></div>
+      <div className="row between"><b style={{ fontSize: 13 }}>{i + 1}. {x.title || 'Untitled'}</b><button className="btn btn-ghost btn-sm" aria-label="Remove" onClick={() => a.mut(site => { findSec(site, s.id)?.items.splice(i, 1); })}><Icon name="trash" size={14} /></button></div>
       <input className="input" value={x.title} onChange={e => set(i, { title: e.target.value })} aria-label="Title" placeholder="Title" />
       <input className="input" value={x.sub} onChange={e => set(i, { sub: e.target.value })} aria-label="Subtext" placeholder="Subtext" />
       <input className="input" value={x.badge} onChange={e => set(i, { badge: e.target.value })} aria-label="Badge" placeholder="Badge (optional)" />
@@ -120,14 +120,14 @@ function Layers({ a, onPick, extra }: { a: SiteApi; onPick?: (s: Section) => voi
     const sel = a.sel === s.id, rules = ruleText(s.vis, a.ctx.db.outlets);
     return <div key={s.id} role="listitem" className="row" style={{ padding: '6px 8px', borderRadius: 12, border: '1px solid ' + (sel ? 'var(--role)' : 'var(--border)'), background: sel ? 'var(--role-soft)' : 'var(--bg-surface)', opacity: s.hidden ? .55 : 1 }}>
       <button type="button" className="grow row" style={{ minHeight: 40, border: 0, background: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }} onClick={() => { a.setSel(s.id); onPick?.(s); }}>
-        <Icon name={SECTION_LIB[s.type][1]} size={16} /><span className="stack" style={{ gap: 0, minWidth: 0 }}><b style={{ fontSize: 13 }}>{SECTION_LIB[s.type][0]}{s.props.title ? ' · ' + s.props.title : ''}</b>{rules && <span className="faint" style={{ fontSize: 11 }}><Icon name="filter" size={10} /> {rules}</span>}</span>
+        <Icon name={SECTION_LIB[s.type][1]} size={16} /><span className="stack" style={{ gap: 0, minWidth: 0 }}><b style={{ fontSize: 13 }}>{SECTION_LIB[s.type][0]}{s.props.title ? ' · ' + s.props.title : ''}</b>{rules && <span className="faint" style={{ fontSize: 11 }}><Icon name="funnel" size={10} /> {rules}</span>}</span>
       </button>
       {extra?.(s)}
       <button className="btn btn-ghost btn-sm" aria-label="Move up" disabled={i === 0} onClick={() => act(s.id, 'up')}><Icon name="arrow-up" size={14} /></button>
       <button className="btn btn-ghost btn-sm" aria-label="Move down" disabled={i === pg.sections.length - 1} onClick={() => act(s.id, 'down')}><Icon name="arrow-down" size={14} /></button>
       <button className="btn btn-ghost btn-sm" aria-label={s.hidden ? 'Show' : 'Hide'} onClick={() => act(s.id, 'hide')}><Icon name={s.hidden ? 'eye-off' : 'eye'} size={14} /></button>
       <button className="btn btn-ghost btn-sm hide-sm" aria-label="Duplicate" onClick={() => act(s.id, 'dup')}><Icon name="copy" size={14} /></button>
-      <button className="btn btn-ghost btn-sm" aria-label="Delete" onClick={() => { act(s.id, 'del'); if (sel) a.setSel(null); }}><Icon name="trash-2" size={14} /></button>
+      <button className="btn btn-ghost btn-sm" aria-label="Delete" onClick={() => { act(s.id, 'del'); if (sel) a.setSel(null); }}><Icon name="trash" size={14} /></button>
     </div>;
   })}</div>;
 }
@@ -156,7 +156,7 @@ export function PagesPanel({ view, a }: { view: string; a: SiteApi }) {
       <button key={l as string} className="btn btn-sm" onClick={() => { const id = 'pg' + Date.now().toString(36); a.mut(site => { site.push({ id, name: l as string, slug: '/' + (l as string).toLowerCase().replace(/\s+/g, '-'), icon: 'file', nav: false, sched: 'always', seo: l as string, sections: (types as (string | [string, Record<string, Val>])[]).map(t => Array.isArray(t) ? newSection(t[0], t[1]) : newSection(t)) }); }); a.setPageId(id); }}><Icon name="plus" size={14} />{l as string}</button>)}</div>
     <Block title={'Page · ' + pg.name}>
       <Fields g={pg as unknown as Record<string, Val>} set={(k, v) => setPage(k as keyof SitePage, v)} fs={[f.text('name', 'Name'), f.text('slug', 'Address', linkTo('/order').replace(/^https?:\/\//, '') + pg.slug), f.tog('nav', 'Show in menu bar'), f.seg('sched', 'Live', 'always:Always|season:Seasonal|hidden:Hidden'), f.text('seo', 'SEO title')]} />
-      {!['home', 'menu'].includes(pg.id) && <button className="btn btn-danger" onClick={() => { a.mut(site => { site.splice(site.findIndex(p => p.id === pg.id), 1); }); a.setPageId('home'); }}><Icon name="trash-2" size={16} />Delete page</button>}
+      {!['home', 'menu'].includes(pg.id) && <button className="btn btn-danger" onClick={() => { a.mut(site => { site.splice(site.findIndex(p => p.id === pg.id), 1); }); a.setPageId('home'); }}><Icon name="trash" size={16} />Delete page</button>}
     </Block>
   </>;
 

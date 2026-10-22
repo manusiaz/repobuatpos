@@ -272,7 +272,7 @@ function Adjust({ db, beans }: { db: DB; beans: string }) {
     </section>
     <section className="card flat" aria-label="Adjustment history">
       <div className="row between" style={{ padding: '16px 20px' }}><h3>Adjustment history</h3><span className="faint" style={{ fontSize: 13 }}>Ledger rows · never edited</span></div>
-      {history.length === 0 ? <Empty icon="history" title="No adjustments yet" /> : <div className="scroll-x"><table className="table">
+      {history.length === 0 ? <Empty icon="rotate-ccw-clock" title="No adjustments yet" /> : <div className="scroll-x"><table className="table">
         <thead><tr><th>When</th><th>Member</th><th>Reason</th><th className="r">{beans}</th></tr></thead>
         <tbody>{history.map((r, i) => <tr key={i}><td>{dateShort(r.at)} · {ago(r.at)}</td><td>{db.customers.find(x => x.id === r.customerId)?.name}</td><td>{r.reason.replace(/^Adjustment · /, '')}</td><td className="r num" style={{ color: r.points > 0 ? 'var(--success-fg)' : 'var(--danger-fg)' }}>{r.points > 0 ? '+' : ''}{r.points.toLocaleString('en-US')}</td></tr>)}</tbody></table></div>}
     </section>

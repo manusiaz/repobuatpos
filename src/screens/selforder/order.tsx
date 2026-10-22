@@ -239,7 +239,7 @@ export function Cart({ g }: { g: G }) {
         <span className="stack grow" style={{ gap: 2 }}><b style={{ fontSize: 15 }}>{l.name}</b>{(l.mods.length > 0 || l.note) && <span style={{ fontSize: 13, color: MUTED }}>{modsText(l.mods, l.note)}</span>}
           <b style={{ fontSize: 14 }}>{idr(((l.flashPrice ?? l.unitPrice) + l.mods.reduce((a, m) => a + m.price, 0)) * l.qty)}</b></span>
         <div className="row" style={{ gap: 2, background: 'var(--bg-sunken)', borderRadius: 14, padding: 2 }}>
-          <button className="btn btn-ghost icon-btn" disabled={cart.status === 'paying'} aria-label={l.combo ? `Remove ${l.note}` : `Fewer ${l.name}`} onClick={() => setQty(cart.id, l.id, l.qty - 1, 'guest')}><Icon name={l.qty > 1 && !l.combo ? 'minus' : 'trash-2'} size={18} /></button>
+          <button className="btn btn-ghost icon-btn" disabled={cart.status === 'paying'} aria-label={l.combo ? `Remove ${l.note}` : `Fewer ${l.name}`} onClick={() => setQty(cart.id, l.id, l.qty - 1, 'guest')}><Icon name={l.qty > 1 && !l.combo ? 'minus' : 'trash'} size={18} /></button>
           <b style={{ minWidth: 20, textAlign: 'center' }}>{l.qty}</b>
           <button className="btn btn-ghost icon-btn" disabled={cart.status === 'paying' || !!l.combo} aria-label={`More ${l.name}`} onClick={() => setQty(cart.id, l.id, l.qty + 1, 'guest')}><Icon name="plus" size={18} /></button>
         </div>
@@ -471,7 +471,7 @@ export function Closed({ g }: { g: G }) {
     </div>
     <div className="stack" style={{ padding: 16, gap: 14 }}>
       <div style={card} className="stack sm">
-        <div className="row" style={{ gap: 10 }}><Icon name={hrs.paused ? 'pause-circle' : 'clock'} style={{ color: 'var(--bn-p)' }} /><b>{hrs.paused ? 'The kitchen paused QR orders for a moment' : hrs.open ? `Open now until ${out.closes}` : hrs.text}</b></div>
+        <div className="row" style={{ gap: 10 }}><Icon name={hrs.paused ? 'circle-pause' : 'clock'} style={{ color: 'var(--bn-p)' }} /><b>{hrs.paused ? 'The kitchen paused QR orders for a moment' : hrs.open ? `Open now until ${out.closes}` : hrs.text}</b></div>
         <span style={{ fontSize: 14, color: MUTED }}>Opening hours: every day {out.opens}–{out.closes} · {out.city}</span>
         <span style={{ fontSize: 14, color: MUTED }}>{hrs.paused ? 'Please order at the counter, or try again in a few minutes.' : offline ? sc.offlineSub : sc.closedSub}</span>
       </div>

@@ -27,9 +27,9 @@ function order(db: DB): Order {
 
 test('toolValue: defaults until published; only the published version counts, extra keys pass through', () => {
   const db = seed(T);
-  assert.equal(toolValue(db, 'coupon').code, 'BIRU15');
+  assert.equal(toolValue(db, 'coupon').code, 'BACK15');
   pub(db, 'coupon', { code: 'DRAFT' }, 'pending_owner');
-  assert.equal(toolValue(db, 'coupon').code, 'BIRU15', 'waiting for the owner is not live');
+  assert.equal(toolValue(db, 'coupon').code, 'BACK15', 'waiting for the owner is not live');
   pub(db, 'coupon', { code: 'BALIK', exp: 3 });
   assert.equal(toolValue(db, 'coupon').code, 'BALIK');
   assert.equal(toolValue(db, 'coupon').head, 'Come back this week', 'unset keys keep the default');
@@ -98,12 +98,12 @@ test('kitchen ticket layout follows the published studio: item size, table size,
 
 test('coupon prints under the receipt only once published and when its rule matches', () => {
   const db = seed(T), o = order(db);
-  assert.ok(!toText(receiptDoc(db, o, '80')).join('\n').includes('BIRU15'));
+  assert.ok(!toText(receiptDoc(db, o, '80')).join('\n').includes('BACK15'));
   pub(db, 'coupon', { rule: 'member', exp: 7 });
   const text = toText(receiptDoc(db, o, '80')).join('\n');
-  assert.ok(text.includes('Code BIRU15-2050') && text.includes('Valid until 18/10/2026') && text.includes('||| BIRU15-2050 |||'));
+  assert.ok(text.includes('Code BACK15-2050') && text.includes('Valid until 18/10/2026') && text.includes('||| BACK15-2050 |||'));
   o.customerId = null;
-  assert.ok(!toText(receiptDoc(db, o, '80')).join('\n').includes('BIRU15'), 'members only');
+  assert.ok(!toText(receiptDoc(db, o, '80')).join('\n').includes('BACK15'), 'members only');
 });
 
 test('cup stickers: one per cup, fields and footer as published', () => {

@@ -70,7 +70,7 @@ function Side({ slug, ob }: { slug: string; ob: number }) {
     </div>
     {ob < 0 && !done && <div className="stack" style={{ gap: 12 }}>{POINTS.map(([ic, t]) => <span key={t} className="row" style={{ gap: 12, fontSize: 16, fontWeight: 600 }}><span style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--accent)', display: 'grid', placeItems: 'center' }}><Icon name={ic} size={18} /></span>{t}</span>)}</div>}
     {(ob >= 0 || done) && <nav className="stack" style={{ gap: 4 }} aria-label="Steps">{STEPS.map(([s, l], i) => <Link key={s} href={A + s} className="row" style={{ height: 34, padding: '0 10px', borderRadius: 9, background: s === slug ? 'var(--ink-800)' : 'transparent', color: s === slug ? 'var(--ink-0)' : 'var(--ink-400)', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
-      <span style={{ width: 20, height: 20, borderRadius: 99, background: at > i ? 'var(--success)' : s === slug ? 'var(--accent)' : 'var(--ink-700)', color: 'var(--ink-0)', display: 'grid', placeItems: 'center', fontSize: 10, fontWeight: 800 }}>{at > i ? <Icon name="check" size={12} /> : i + 1}</span>{l}</Link>)}</nav>}
+      <span style={{ width: 20, height: 20, borderRadius: 99, background: at > i ? 'var(--success)' : s === slug ? 'var(--accent)' : 'var(--ink-700)', color: 'var(--ink-0)', display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 800 }}>{at > i ? <Icon name="check" size={12} /> : i + 1}</span>{l}</Link>)}</nav>}
   </aside>;
 }
 

@@ -83,7 +83,7 @@ export default function Screen() {
       <div style={{ maxWidth: 520, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)' }}>
         {TABS.map(([k, l, ic, b]) => { const on = tab === k || (k === 'tables' && tab === 'table');
           return <button key={k} type="button" onClick={() => setTab(k)} aria-current={on ? 'page' : undefined} style={{ position: 'relative', height: 64, border: 0, background: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, color: on ? 'var(--accent-fg)' : 'var(--fg-3)', fontSize: 12, fontWeight: 700 }}>
-            <Icon name={ic} size={22} />{l}{b > 0 && <span className="badge b-danger" style={{ position: 'absolute', top: 6, left: 'calc(50% + 6px)', height: 18, padding: '0 6px', fontSize: 11 }}>{b}</span>}</button>; })}
+            <Icon name={ic} size={22} />{l}{b > 0 && <span className="badge b-danger" style={{ position: 'absolute', top: 6, left: 'calc(50% + 6px)', height: 18, padding: '0 6px', fontSize: 12 }}>{b}</span>}</button>; })}
       </div>
     </nav>
   </div>;
@@ -96,7 +96,7 @@ function Tables({ db, open, billed, now, tables, ready, outletId, sel, onReady, 
   if (!tables.length) return <Empty icon="armchair" title="No tables at this outlet">The owner or manager draws them in Tables & floor plan.</Empty>;
   const many = areasOf(tables).length > 1;
   return <>
-    {ready > 0 && <div className="row between" style={{ padding: '12px 14px', borderRadius: 16, background: 'var(--success)', color: '#fff' }}><span style={{ fontSize: 14 }}><b>{ready} {ready === 1 ? 'order' : 'orders'} ready</b> at the pass</span><button type="button" className="btn btn-sm" style={{ background: '#fff', color: 'var(--success-fg)', borderColor: 'transparent' }} onClick={onReady}>Pick up</button></div>}
+    {ready > 0 && <div className="row between" style={{ padding: '12px 14px', borderRadius: 16, background: 'var(--success)', color: 'var(--ink-0)' }}><span style={{ fontSize: 14 }}><b>{ready} {ready === 1 ? 'order' : 'orders'} ready</b> at the pass</span><button type="button" className="btn btn-sm" style={{ background: 'var(--ink-0)', color: 'var(--success-fg)', borderColor: 'transparent' }} onClick={onReady}>Pick up</button></div>}
     {(() => {
       const all = tables.map(ft => { const t = ft.name, o = open.find(x => x.table === t); return { t, ft, o, st: tableState(db, o, billed, now, resv.find(r => r.table === t)) }; });
       const of = (k: Filter) => all.filter(x => k === 'all' || (k === 'free' ? !x.o : k === 'busy' ? !!x.o : ['danger', 'success', 'violet'].includes(x.st.tone) && !!x.o));

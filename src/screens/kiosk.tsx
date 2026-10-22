@@ -225,7 +225,7 @@ function Pay({ L, order, back, reset }: { L: LangT; order: Order | null; back: (
     <div style={{ flex: '0 1 auto', minHeight: 0, overflow: 'auto', padding: '4cqw', borderRadius: '5cqw', background: 'var(--ink-0)', display: 'flex', flexDirection: 'column', gap: '2.4cqw', fontSize: '3.8cqw' }}>
       {order.lines.map(l => <div key={l.id} style={{ display: 'flex', alignItems: 'center', gap: '2cqw' }}>
         <span style={{ flex: 1, minWidth: 0 }}>{l.name}{(l.mods.length > 0 || l.combo) && <span style={{ display: 'block', fontSize: '3cqw', color: MUTED }}>{modsText(l.mods, l.combo ? l.note : undefined)}</span>}</span>
-        <button aria-label={`Fewer ${l.name}`} onClick={() => setQty(order.id, l.id, l.qty - 1, 'kiosk')} style={{ ...CARD, width: 'max(48px,10cqw)', height: 'max(48px,10cqw)', borderRadius: '3cqw', display: 'grid', placeItems: 'center' }}><Icon name={l.qty > 1 && !l.combo ? 'minus' : 'trash-2'} size={20} /></button>
+        <button aria-label={`Fewer ${l.name}`} onClick={() => setQty(order.id, l.id, l.qty - 1, 'kiosk')} style={{ ...CARD, width: 'max(48px,10cqw)', height: 'max(48px,10cqw)', borderRadius: '3cqw', display: 'grid', placeItems: 'center' }}><Icon name={l.qty > 1 && !l.combo ? 'minus' : 'trash'} size={20} /></button>
         <b style={{ minWidth: '5cqw', textAlign: 'center' }}>{l.qty}</b>
         <button aria-label={`More ${l.name}`} disabled={!!l.combo} onClick={() => setQty(order.id, l.id, l.qty + 1, 'kiosk')} style={{ ...CARD, width: 'max(48px,10cqw)', height: 'max(48px,10cqw)', borderRadius: '3cqw', display: 'grid', placeItems: 'center' }}><Icon name="plus" size={20} /></button>
       </div>)}

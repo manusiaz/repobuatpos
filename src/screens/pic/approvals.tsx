@@ -60,6 +60,6 @@ export function ApprovalHistory({ c }: { c: PicCtx }) {
     .sort((a, b) => (b.decidedAt ?? 0) - (a.decidedAt ?? 0));
   return <div className="stack">
     <div className="row between wrap"><span className="muted">{done.length} decided this shift · nothing is deleted</span><Seg value={f} onChange={setF} options={[['all', 'Everyone'], ['mine', 'By me']] as const} label="Filter" /></div>
-    {done.length === 0 ? <div className="card"><Empty icon="history" title="No decisions yet this shift" /></div> : done.map(a => <ApprovalCard key={a.id} a={a} />)}
+    {done.length === 0 ? <div className="card"><Empty icon="rotate-ccw-clock" title="No decisions yet this shift" /></div> : done.map(a => <ApprovalCard key={a.id} a={a} />)}
   </div>;
 }

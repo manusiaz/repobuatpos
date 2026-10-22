@@ -59,7 +59,7 @@ export default function Screen() {
 }
 
 // ── shared bits ─────────────────────────────────────────────────────────────────────────
-const ChPill = ({ s }: { s: Source }) => <span style={{ display: 'inline-grid', placeItems: 'center', height: 24, padding: '0 8px', borderRadius: 7, background: CHANNEL[s].color, color: '#fff', font: '800 11px/1 var(--font-display)' }}>{CHANNEL[s].short}</span>;
+const ChPill = ({ s }: { s: Source }) => <span style={{ display: 'inline-grid', placeItems: 'center', height: 24, padding: '0 8px', borderRadius: 7, background: CHANNEL[s].color, color: 'var(--ink-0)', font: '800 12px/1 var(--font-display)' }}>{CHANNEL[s].short}</span>;
 const TierBadge = ({ o }: { o: Order }) => isScheduled(o) ? <Badge tone="warning">Scheduled</Badge> : o.tier ? <Badge tone={TIER[o.tier].tone === 'danger' ? 'danger' : TIER[o.tier].tone === 'info' ? 'info' : 'neutral'}>{TIER[o.tier].l}</Badge> : null;
 const items = (o: Order) => o.lines.map(l => <span key={l.id} style={{ fontSize: 14, fontWeight: 600 }}>{l.qty}× {l.name}{l.mods.length > 0 && <span className="muted" style={{ fontWeight: 400 }}> — {lineMods(l)}</span>}{l.note && <span style={{ color: 'var(--danger-fg)' }}> · {l.note}</span>}</span>);
 const dueColor = (o: Order, now: number) => !o.readyBy ? undefined : minsLeft(o.readyBy, now) < 0 ? 'var(--danger-fg)' : minsLeft(o.readyBy, now) < 4 ? 'var(--warning-fg)' : undefined;
@@ -183,7 +183,7 @@ function Shelf({ c }: { c: Ctx }) {
   return <>
     <div className="grid" style={{ ['--min' as string]: '240px' }}>{CHANNELS.map(ch => { const mine = bags.filter(o => o.source === ch);
       return <section key={ch} className="card flat" style={{ display: 'flex', flexDirection: 'column' }}>
-        <div className="row between" style={{ padding: '12px 14px', background: CHANNEL[ch].color, color: '#fff' }}><b>{CHANNEL[ch].name} shelf</b><span style={{ fontSize: 12, fontWeight: 700 }}>{mine.length} bags</span></div>
+        <div className="row between" style={{ padding: '12px 14px', background: CHANNEL[ch].color, color: 'var(--ink-0)' }}><b>{CHANNEL[ch].name} shelf</b><span style={{ fontSize: 12, fontWeight: 700 }}>{mine.length} bags</span></div>
         <div className="stack sm" style={{ padding: 12 }}>{!mine.length && <span className="faint" style={{ padding: 14, borderRadius: 12, border: '1px dashed var(--border)', textAlign: 'center', fontSize: 13 }}>Empty</span>}
           {mine.map(o => { const w = Math.max(0, Math.round((c.now - (bt.get(o.id) ?? o.createdAt)) / 60e3));
             return <div key={o.id} className="sunken stack sm" style={{ padding: 12 }}>

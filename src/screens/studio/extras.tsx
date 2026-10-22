@@ -42,7 +42,7 @@ export const EXTRAS: Extra[] = [
       <span style={{ fontSize: 12, opacity: .7 }}><Icon name={night ? 'moon' : 'sun'} size={14} /> {night ? `From ${g.dark}` : `From ${g.light}`}</span><H ctx={ctx}>{ctx.d.name}</H><p style={{ fontSize: 14 }}>{ctx.d.tagline}</p>
       {guestProducts(ctx.db, ctx.outletId).slice(0, 3).map(x => <div key={x.p.id} style={{ display: 'flex', gap: 10, alignItems: 'center' }}><span style={{ width: 44, height: 44, borderRadius: 10, background: photoOf(x.p) }} /><span style={{ flex: 1, fontSize: 14 }}>{x.p.name}</span><b>{idr(x.price)}</b></div>)}<GBtn d={ctx.d}>See the menu</GBtn></Guest>)}</div> },
 
-  { key: 'upsell-and-goes-well-with-rules', label: 'Upsell & goes well with', icon: 'sparkles', device: 'phone', defaults: STUDIO_DEFAULTS['upsell-and-goes-well-with-rules'],
+  { key: 'upsell-and-goes-well-with-rules', label: 'Upsell & goes well with', icon: 'circle-plus', device: 'phone', defaults: STUDIO_DEFAULTS['upsell-and-goes-well-with-rules'],
     fields: ctx => [f.seg('trigger', 'When a guest opens', ctx.db.products.filter(p => p.status === 'live').slice(0, 8).map(p => `${p.id}:${p.name}`).join('|'), 2), f.text('title', 'Heading'), f.range('max', 'Suggestions', 1, 4, 1), f.tog('cart', 'Also suggest in the cart')],
     extra: (g, set, ctx) => <Picker label="Suggest" value={g.suggest} set={v => set('suggest', v)} ctx={ctx} />,
     preview: (g, ctx) => { const all = guestProducts(ctx.db, ctx.outletId), t = all.find(x => x.p.id === g.trigger), s = ids(g.suggest).map(id => all.find(x => x.p.id === id)).filter(Boolean).slice(0, Number(g.max));

@@ -20,8 +20,6 @@ export const SURFACES = [
   { t: 'Owner dashboard', d: 'Every outlet, every shift, live on your phone.', icon: 'activity', href: '/owner' },
   { t: 'Online orders', d: 'GoFood, GrabFood and ShopeeFood in one inbox, cooked in their own lane.', icon: 'bike', href: '/online' },
 ];
-const QUOTES = [['We went from 3 tablets and a notebook to one system. Closing the day takes 5 minutes now.', 'Rina S.', 'Owner, Kopi Biru · 3 outlets'], ['QR ordering cut our queue in half on weekends.', 'Hendra W.', 'Bara Grill, Bandung'], ['The loyalty program paid for itself in the first month.', 'Sinta L.', 'Sakura Bakery, Surabaya']];
-
 // ── Home ────────────────────────────────────────────────────────────────────────────────
 export function Home() {
   return <>
@@ -38,9 +36,6 @@ export function Home() {
     <Ink><Wrap style={{ paddingTop: 56, paddingBottom: 56 }}>
       <div className="stack lg"><H2 kicker="One system">Every screen, one live order</H2><Cards items={SURFACES} min={220} /></div>
     </Wrap></Ink>
-    <Wrap>
-      <div className="grid" style={{ ['--min' as string]: '260px', gap: 12 }}>{QUOTES.map(([t, n, b]) => <figure key={n} className="card stack" style={{ margin: 0 }}><blockquote style={{ margin: 0, fontSize: 16, lineHeight: 1.55 }}>“{t}”</blockquote><figcaption className="muted" style={{ fontSize: 13 }}><b style={{ color: 'var(--fg-1)' }}>{n}</b> · {b}</figcaption></figure>)}</div>
-    </Wrap>
     <Cta />
   </>;
 }
@@ -155,7 +150,7 @@ export function CaseStudies() {
     return { orders: paid.length, perDay: Math.round(paid.length / days), guestShare: Math.round((guest / (paid.length || 1)) * 100), avg: Math.round(rev / (paid.length || 1)), memberShare: Math.round((members / (paid.length || 1)) * 100), days };
   }, [db.orders]);
   return <><Wrap><div className="stack lg">
-    <PageHead kicker="Case studies" title="Outlets that run on BorNiz" sub="Real numbers from the live Kopi Biru demo store, updated as orders come in." />
+    <PageHead kicker="Case studies" title="The demo store, live" sub="Kopi Biru is BorNiz’s demo business, not a customer. These numbers come from the orders placed in it, updated as they come in." />
     <div className="card stack">
       <div className="row between wrap"><div className="stack sm" style={{ gap: 2 }}><b style={{ fontSize: 22 }}>Kopi Biru</b><span className="muted">{db.outlets.length} outlets · {db.outlets.map(o => o.name).join(', ')}</span></div><Status s="live" /></div>
       <div className="grid" style={{ ['--min' as string]: '180px' }}>
@@ -164,9 +159,7 @@ export function CaseStudies() {
         <Kpi label="Average ticket" value={idr(s.avg)} />
         <Kpi label="Orders with a member" value={s.memberShare + '%'} />
       </div>
-      <blockquote style={{ margin: 0, fontSize: 17 }}>“{QUOTES[0][0]}” <span className="muted">· {QUOTES[0][1]}</span></blockquote>
       <Link href="/owner" className="btn btn-sm" style={{ alignSelf: 'flex-start' }}>See their live dashboard<Icon name="arrow-right" size={16} /></Link>
     </div>
-    <div className="grid" style={{ ['--min' as string]: '300px' }}>{QUOTES.slice(1).map(([t, n, b]) => <figure key={n} className="card stack" style={{ margin: 0 }}><span className="cap">{b}</span><blockquote style={{ margin: 0, fontSize: 17 }}>“{t}”</blockquote><figcaption className="muted">{n}</figcaption></figure>)}</div>
-  </div></Wrap><Cta title="Be the next one" /></>;
+  </div></Wrap><Cta /></>;
 }

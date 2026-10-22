@@ -84,7 +84,7 @@ export function DisplayPreview({ ctx, view }: { ctx: GuestCtx; view: 'idle' | 'c
     <div style={{ flex: 1, padding: 32, display: 'flex', flexDirection: 'column', gap: 10, overflow: 'hidden' }}>
       <b style={{ ...gh(d), fontSize: 28 }}>{d.name}</b>
       {o ? o.lines.map(l => <div key={l.id} style={{ display: 'flex', gap: 14, alignItems: 'center', fontSize: 20 }}><span style={{ width: 52, height: 52, borderRadius: 12, background: photoOf(db.products.find(p => p.id === l.productId) ?? db.products[0]), flex: 'none' }} /><span style={{ flex: 1 }}>{l.qty}× {l.name}</span><b>{idr((l.flashPrice ?? l.unitPrice) * l.qty)}</b></div>) : <p style={{ fontSize: 20 }}>{String(dc.welcome)}</p>}
-      {dc.promo && <div style={{ marginTop: 'auto', padding: '10px 14px', borderRadius: 12, background: 'var(--bn-acc)', color: 'var(--bn-on-acc)', fontWeight: 700 }}>{d.copy.announce?.en}</div>}
+      {dc.promo && d.copy.announce?.en && <div style={{ marginTop: 'auto', padding: '10px 14px', borderRadius: 12, background: 'var(--bn-acc)', color: 'var(--bn-on-acc)', fontWeight: 700 }}>{d.copy.announce?.en}</div>}
     </div>
     <div style={{ width: right ? '36%' : 'auto', padding: 32, display: 'flex', flexDirection: right ? 'column' : 'row', justifyContent: right ? 'flex-end' : 'space-between', alignItems: right ? 'stretch' : 'center', gap: 14, background: 'color-mix(in srgb,currentColor 7%,transparent)' }}>
       {dc.points && cust && <span style={{ fontSize: 16 }}>{cust.name} · {balance(db.ledger, cust.id).toLocaleString('en-US')} {String(d.mc.pts)}</span>}

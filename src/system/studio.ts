@@ -25,7 +25,7 @@ export const STUDIO_DEFAULTS = {
   'checkout-flow-fields': { name: 'required', phone: 'required', notes: true, tips: false, pickup: true, member: true },
   'menu-and-price-per-channel': { dine: 0, take: 0, gofood: 20, grab: 20, shopee: 15, round: 500 },
   'voucher-and-promo-visuals': { shape: 'ticket', fill: 'outline', code: true, expiry: true },
-  'multi-page-online-store-link-in-bio': { handle: '@kopibiru.id', order: true, book: true, gift: true, wa: true, maps: true, store: 'kopibiru' },
+  'multi-page-online-store-link-in-bio': { handle: '', order: true, book: true, gift: true, wa: true, maps: true, store: '' },
 } as const satisfies Record<string, Record<string, string | number | boolean>>;
 export type StudioKey = keyof typeof STUDIO_DEFAULTS;
 

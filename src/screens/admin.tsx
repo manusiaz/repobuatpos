@@ -116,7 +116,7 @@ function TenantList({ db }: { db: DB }) {
   return <>
     <div className="row wrap between"><Seg label="Status" value={q.f} onChange={f => setQ({ f })} options={[['all', 'All'], ['active', 'Active'], ['trial', 'Trial'], ['past_due', 'Past due'], ['churn_risk', 'Churn risk'], ['churned', 'Churned']]} />
       <input className="search" style={{ maxWidth: 280 }} placeholder="Search tenants" value={search} onChange={e => setSearch(e.target.value)} aria-label="Search tenants" /></div>
-    <Split table={ts.length ? <TenantTable ts={ts} sel={q.t} onSel={t => setQ({ t: q.t === t ? null : t })} /> : <Empty icon="building-2" title="No tenants match" />}
+    <Split table={ts.length ? <TenantTable ts={ts} sel={q.t} onSel={t => setQ({ t: q.t === t ? null : t })} /> : <Empty icon="building" title="No tenants match" />}
       detail={sel ? <TenantSummary db={db} t={sel} /> : <Empty icon="mouse-pointer-click" title="Select a tenant">Plan, billing health and support access show here.</Empty>} />
   </>;
 }
@@ -133,7 +133,7 @@ function TenantDetailPage({ db }: { db: DB }) {
   const [q, setQ] = useQuery({ t: db.tenant.id });
   const all = tenants(db), t = all.find(x => x.id === q.t);
   const [plan, setPlan] = useState<Plan | null>(null), [access, setAccess] = useState(false), [confirm, setConfirm] = useState<null | 'suspend' | 'reactivate'>(null);
-  if (!t) return <Empty icon="building-2" title="Tenant not found" action={<button className="btn" onClick={() => setQ({ t: null })}>Open {db.tenant.name}</button>} />;
+  if (!t) return <Empty icon="building" title="Tenant not found" action={<button className="btn" onClick={() => setQ({ t: null })}>Open {db.tenant.name}</button>} />;
   const inv = (db.records.invoice ?? []).filter(i => i.a === t.id).sort((a, b) => b.at - a.at), tks = (db.records.ticket ?? []).filter(k => k.b === t.id);
   const devs = t.real ? db.devices : [], acc = accessOf(db, t.id);
   const meta = (patch: Partial<TenantMeta>) => JSON.stringify({ ...t.meta, ...patch });

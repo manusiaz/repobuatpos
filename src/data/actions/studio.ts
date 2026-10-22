@@ -30,31 +30,33 @@ export const HOME_SECTIONS: [string, string, string][] = [
 export const COPY_KEYS: [string, string, Bilingual][] = [
   ['welcome', 'Welcome message', { en: 'Order from your table, we bring it to you. Pay by QRIS or at the cashier.', id: 'Pesan dari mejamu, kami antar. Bayar pakai QRIS atau di kasir.' }],
   ['ctaMenu', 'Landing button', { en: 'See the menu', id: 'Lihat menu' }],
-  ['announce', 'Announcement', { en: 'Payday week: 20% off all coffee until Sunday', id: 'Minggu gajian: diskon 20% semua kopi sampai Minggu' }],
+  ['announce', 'Announcement', { en: '', id: '' }],
   ['bestTitle', 'Best sellers title', { en: 'Most loved', id: 'Paling disukai' }],
   ['addLabel', 'Add button', { en: 'Add to order', id: 'Tambah ke pesanan' }],
   ['ctaCart', 'Cart button', { en: 'View cart', id: 'Lihat keranjang' }],
   ['ctaOrder', 'Order button', { en: 'Place order', id: 'Pesan sekarang' }],
   ['aboutTitle', 'Story title', { en: 'Our story', id: 'Cerita kami' }],
-  ['about', 'Story text', { en: 'We roast beans from Gayo and Kintamani every Tuesday and brew them slow. Stay as long as you like.', id: 'Kami sangrai biji Gayo dan Kintamani tiap Selasa dan seduh pelan-pelan. Santai saja di sini.' }],
+  ['about', 'Story text', { en: '', id: '' }],
   ['hoursTitle', 'Hours title', { en: 'Visit us', id: 'Kunjungi kami' }],
-  ['insta', 'Instagram', { en: '@kopibiru.id', id: '@kopibiru.id' }],
+  ['insta', 'Instagram', { en: '', id: '' }],
 ];
 
+/** What every business starts from: nothing in it belongs to one business (the demo's own words are in seed.ts), and
+ *  the sections that need the owner's words (announcement, story, Instagram) stay off until they are written. */
 export function defaultDesign(theme: Theme): MenuDesign {
   return {
-    ...theme, tagline: 'Coffee & slow mornings', surface: '#FFFFFF', body: theme.font === 'serif' ? 'lora' : 'jakarta', priceFont: 'head', hcase: 'none', header: 'surface',
+    ...theme, tagline: '', surface: '#FFFFFF', body: theme.font === 'serif' ? 'lora' : 'jakarta', priceFont: 'head', hcase: 'none', header: 'surface',
     layout: { hero: 'cover', menu: 'grid', cat: 'pills', ratio: '1/1', radius: 16, btn: 'filled', cart: 'bar' },
-    sections: HOME_SECTIONS.map(([k]) => ({ k, on: k !== 'reviews' })),
+    sections: HOME_SECTIONS.map(([k]) => ({ k, on: !['reviews', 'announce', 'about', 'social'].includes(k) })),
     media: { logo: '', covers: ['', '', ''], about: '', tex: '' },
     copy: Object.fromEntries(COPY_KEYS.map(([k, , v]) => [k, v])),
-    rc: { paper: '80', qr: 'feedback', ch: 'wa', h1: 'Jl. Asia Afrika 8, Senayan, Jakarta', f1: 'Terima kasih sudah mampir!', f2: 'Kritik & saran: 0812-3456-7890', wifi: 'KOPIBIRU-GUEST · senayan8', thanks: 'Thanks for visiting!', logo: true, points: true, social: true, wifiOn: true },
-    dc: { idle: 'slides', cart: 'right', bg: 'dark', idleHead: 'Payday week: 20% off all coffee', welcome: 'Your order will appear here.', points: true, promo: true, qris: true },
+    rc: { paper: '80', qr: 'feedback', ch: 'wa', h1: '', f1: 'Terima kasih sudah mampir!', f2: '', wifi: '', thanks: 'Thanks for visiting!', logo: true, points: true, social: true, wifiOn: false },
+    dc: { idle: 'slides', cart: 'right', bg: 'dark', idleHead: 'Welcome to ' + theme.name, welcome: 'Your order will appear here.', points: true, promo: true, qris: true },
     ki: { bg: 'split', step: 'ask', head: 'Order here, skip the line', cta: 'Tap to start', timeout: 60, lang: true },
     qr: { layout: 'tent', color: 'brand', head: 'Scan to order', sub: 'No app needed. Pay with QRIS or at the cashier.', from: 1, to: 0, // to 0 = every table on the floor plan
     wifi: true, logo: true, qris: true },
-    mc: { style: 'brand', prog: 'Biru Rewards', pts: 'beans', t0: 'Silver', t1: 'Gold', t2: 'Platinum', barcode: true, progress: true },
-    pub: { when: 'now', at: '', from: '', to: '', season: 'Ramadan', ov_sen: false, ov_kem: true, ov_bsd: false },
+    mc: { style: 'brand', prog: theme.name + ' Rewards', pts: 'beans', t0: 'Silver', t1: 'Gold', t2: 'Platinum', barcode: true, progress: true },
+    pub: { when: 'now', at: '', from: '', to: '', season: 'Ramadan' },
     opts: { prices: true, desc: true, sold: true, lang: true, powered: true, tex: false },
     adv: { css: '', seoTitle: theme.name + ' · Order online', seoDesc: 'Order ahead or dine in.' },
     x: {},
@@ -145,7 +147,7 @@ export const SECTION_LIB: Record<string, [label: string, icon: string, props: Gr
   buttons: ['Buttons', 'mouse-pointer-click', { b1: 'Order now', b2: 'Reserve a table', b3: 'WhatsApp us', align: 'center' }],
   hours: ['Hours & map', 'map-pin', { title: 'Visit us', map: true }],
   reviews: ['Testimonials', 'star', { title: 'What guests say', min: 4 }],
-  faq: ['FAQ', 'circle-help', { title: 'Questions', q1: 'Do you take reservations?', a1: 'Yes, up to 12 guests. Book from the Reservations page.', q2: 'Is there Wi-Fi?', a2: 'Free Wi-Fi at every outlet. Password is on your receipt.', q3: 'Can I pay with QRIS?', a3: 'Yes, any bank or e-wallet.' }],
+  faq: ['FAQ', 'circle-question-mark', { title: 'Questions', q1: 'Do you take reservations?', a1: 'Yes, up to 12 guests. Book from the Reservations page.', q2: 'Is there Wi-Fi?', a2: 'Free Wi-Fi at every outlet. Password is on your receipt.', q3: 'Can I pay with QRIS?', a3: 'Yes, any bank or e-wallet.' }],
   countdown: ['Promo countdown', 'timer', { title: 'Payday ends in', endsIn: 300, cta: 'See promos' }],
   spacer: ['Spacer', 'move-vertical', { h: 32, line: false }],
   announce: ['Announcement', 'megaphone', { text: 'Payday week: 20% off all coffee until Sunday' }],
@@ -168,7 +170,7 @@ export function newSection(type: string, props: Group = {}, id = uid('s')): Sect
   return { id, type, hidden: false, props: { ...SECTION_LIB[type][2], ...props }, items: structuredClone(SLIDES[type] ?? []), vis: { ...ALL_VIS }, style: { bg: 'page', pad: 'm' } };
 }
 const pg = (id: string, name: string, slug: string, icon: string, nav: boolean, types: (string | [string, Group])[], sched = 'always'): SitePage =>
-  ({ id, name, slug, icon, nav, sched, seo: name + ' · Kopi Biru', sections: types.map((t, i) => (Array.isArray(t) ? newSection(t[0], t[1], `${id}-${i}`) : newSection(t, {}, `${id}-${i}`))) });
+  ({ id, name, slug, icon, nav, sched, seo: name, sections: types.map((t, i) => (Array.isArray(t) ? newSection(t[0], t[1], `${id}-${i}`) : newSection(t, {}, `${id}-${i}`))) });
 export const promosTemplate = () => ['carousel', 'flash', 'vouchers', 'tiles', 'bundle', ['banner', { layout: 'split', title: 'Bring a friend, both get 10%', sub: 'Share your code from the member app', badge: 'Referral', cta: 'Get my code' }], 'popup'] as (string | [string, Group])[];
 /** Deterministic ids, so the default site always equals itself (no phantom draft before the first publish). */
 export function defaultSite(): Site {

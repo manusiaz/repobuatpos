@@ -143,7 +143,7 @@ export function Cart({ compact }: { compact?: boolean }) {
               <div className="stack" style={{ alignItems: 'flex-end', gap: 4 }}>
                 <b className="num">{idr(t)}</b>
                 <div className="row" style={{ gap: 4 }}>
-                  <button className="btn icon-btn" style={{ width: 40, height: 40, ...warnStyle(l.fired ? can('Void item') : 'y') }} aria-label={l.fired ? 'Void item' : 'Less'} onClick={() => l.qty > 1 && !l.fired ? setQty(cur!.id, l.id, l.qty - 1, me.id) : remove(cur!, l)}><Icon name={l.qty > 1 && !l.fired ? 'minus' : 'trash-2'} size={18} /></button>
+                  <button className="btn icon-btn" style={{ width: 40, height: 40, ...warnStyle(l.fired ? can('Void item') : 'y') }} aria-label={l.fired ? 'Void item' : 'Less'} onClick={() => l.qty > 1 && !l.fired ? setQty(cur!.id, l.id, l.qty - 1, me.id) : remove(cur!, l)}><Icon name={l.qty > 1 && !l.fired ? 'minus' : 'trash'} size={18} /></button>
                   <b className="num" style={{ minWidth: 22, textAlign: 'center' }}>{l.qty}</b>
                   <button className="btn icon-btn" style={{ width: 40, height: 40 }} aria-label="More" disabled={l.fired} onClick={() => setQty(cur!.id, l.id, l.qty + 1, me.id)}><Icon name="plus" size={18} /></button>
                 </div>
@@ -153,7 +153,7 @@ export function Cart({ compact }: { compact?: boolean }) {
               <button className="btn btn-sm" onClick={() => go(P('item-note-and-kitchen-note', { line: l.id }))}><Icon name="notebook-pen" size={16} />Note</button>
               <button className="btn btn-sm" style={warnStyle(can('Apply discount'))} onClick={() => go(P('item-discount', { line: l.id }))}><Icon name="percent" size={16} />Discount</button>
               <button className="btn btn-sm" onClick={() => go(P('change-price', { line: l.id }))}><Icon name="tag" size={16} />Price</button>
-              <button className="btn btn-sm btn-danger" style={warnStyle(l.fired ? can('Void item') : 'y')} onClick={() => remove(cur!, l)}><Icon name="trash-2" size={16} />{l.fired ? 'Void' : 'Remove'}</button>
+              <button className="btn btn-sm btn-danger" style={warnStyle(l.fired ? can('Void item') : 'y')} onClick={() => remove(cur!, l)}><Icon name="trash" size={16} />{l.fired ? 'Void' : 'Remove'}</button>
             </div>}
           </div>;
         })}

@@ -12,6 +12,19 @@ export function rng(seed: number) {
 const P = (id: string, name: string, price: number, cat: string, hue: number, mods: string[] = [], cost = 0.32): Product =>
   ({ id, name, categoryId: cat, basePrice: price, scope: 'global', ownerOutletId: null, status: 'live', hue, sku: 'KB-' + id.slice(1).padStart(3, '0'), desc: '', modifierGroupIds: mods, cost: Math.round(price * cost) });
 
+/** The demo's own Menu Studio words (a new business starts from defaultDesign, which has none of them). */
+const KOPI_BIRU_DESIGN = {
+  tagline: 'Coffee & slow mornings',
+  sections: [['announce', true], ['promo', true], ['best', true], ['menu', true], ['about', true], ['hours', true], ['social', true], ['reviews', false]].map(([k, on]) => ({ k, on })),
+  copy: {
+    announce: { en: 'Payday week: 20% off all coffee until Sunday', id: 'Minggu gajian: diskon 20% semua kopi sampai Minggu' },
+    about: { en: 'We roast beans from Gayo and Kintamani every Tuesday and brew them slow. Stay as long as you like.', id: 'Kami sangrai biji Gayo dan Kintamani tiap Selasa dan seduh pelan-pelan. Santai saja di sini.' },
+    insta: { en: '@kopibiru.id', id: '@kopibiru.id' },
+  },
+  rc: { h1: 'Jl. Asia Afrika 8, Senayan, Jakarta', f2: 'Kritik & saran: 0812-3456-7890', wifi: 'KOPIBIRU-GUEST · senayan8', wifiOn: true },
+  dc: { idleHead: 'Payday week: 20% off all coffee' },
+  mc: { prog: 'Biru Rewards' },
+};
 export function seed(now = Date.now()): DB {
   const today = new Date(now); today.setHours(0, 0, 0, 0);
   const t0 = today.getTime();
@@ -138,7 +151,7 @@ export function seed(now = Date.now()): DB {
       { id: 'n1', alert: 'Low stock', level: 'warn', to: ['pic', 'manager'], outletId: 'kem', text: 'Oat milk below par at Kemang', href: '/owner/inventory/low-stock-alerts-and-reorder-rules', at: now - 34 * 60e3, read: false },
       { id: 'n2', alert: 'Printer offline', level: 'warn', to: ['pic', 'cashier'], outletId: 'sen', text: 'Epson TM-m30 at Senayan offline for 9 min', href: '/owner/account/devices', at: now - 9 * 60e3, read: false },
     ],
-    theme: { name: 'Kopi Biru', p: '#1F4FD8', acc: '#F2B544', ink: '#14213D', paper: '#F7F4EE', font: 'space', banner: 'g1', img: '' },
+    theme: { name: 'Kopi Biru', p: '#1F4FD8', acc: '#F2B544', ink: '#14213D', paper: '#F7F4EE', font: 'space', banner: 'g1', img: '', ...KOPI_BIRU_DESIGN },
     staffBrand: { accent: '#FF6A00', logo: '', workspace: 'Kopi Biru', density: 'comfy' },
     versions: [], perms: {}, records: {}, settings: {}, counters: { order: 2049, po: 149 },
     device: { outletId: 'sen', online: true, queue: [], paired: {} },

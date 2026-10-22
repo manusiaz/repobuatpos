@@ -29,7 +29,7 @@ export function Launcher() {
         <input className="search" autoFocus placeholder="Search pages: opname, QRIS, payroll…" value={q} onChange={e => setQ(e.target.value)} />
         {hits.length > 0 ? <div className="stack sm">{hits.map(p => <Link key={p.path} href={p.path} onClick={() => setOpen(false)} className="nav-i"><span className="grow">{p.name}<br /><span className="faint" style={{ fontSize: 12 }}>{p.role} · {p.group}</span></span><Badge>{homeOf(p.path)?.title ?? p.prototype}</Badge></Link>)}</div>
           : <div className="grid" style={{ ['--min' as string]: '200px' }}>{apps.map(a => <button key={a.name} className="card tight row" style={{ cursor: 'pointer', textAlign: 'left' }} onClick={() => { setOpen(false); go(surfaceHome(SURFACE_OF[a.screen])); }}>
-            <span style={{ width: 40, height: 40, borderRadius: 12, background: a.color, display: 'grid', placeItems: 'center', color: '#fff', flex: 'none' }}><Icon name={a.icon} /></span>
+            <span style={{ width: 40, height: 40, borderRadius: 12, background: a.color, display: 'grid', placeItems: 'center', color: 'var(--ink-0)', flex: 'none' }}><Icon name={a.icon} /></span>
             <span className="stack" style={{ gap: 0 }}><b style={{ fontSize: 14 }}>{a.name}</b><span className="muted" style={{ fontSize: 12 }}>{a.job}</span></span></button>)}</div>}
       </div>
     </Sheet>
@@ -42,7 +42,7 @@ export function Bell() {
   const mine = db.notices.filter(n => (n.to.includes(user.role) || user.role === 'owner') && (!n.outletId || user.role === 'owner' || n.outletId === outletId));
   const unread = mine.filter(n => !n.read).length;
   return <>
-    <button className="btn btn-ghost btn-sm" onClick={() => setOpen(true)} aria-label={`Alerts, ${unread} unread`} style={{ position: 'relative' }}><Icon name="bell" size={18} />{unread > 0 && <span className="badge b-accent" style={{ position: 'absolute', top: -4, right: -6, height: 18, padding: '0 6px', fontSize: 11 }}>{unread}</span>}</button>
+    <button className="btn btn-ghost btn-sm" onClick={() => setOpen(true)} aria-label={`Alerts, ${unread} unread`} style={{ position: 'relative' }}><Icon name="bell" size={18} />{unread > 0 && <span className="badge b-accent" style={{ position: 'absolute', top: -4, right: -6, height: 18, padding: '0 6px', fontSize: 12 }}>{unread}</span>}</button>
     <Sheet open={open} onClose={() => setOpen(false)} title="Alerts" sub="Routed by the alert engine to your role and outlet." footer={<button className="btn" onClick={() => markRead('all', user.id)}>Mark all read</button>}>
       <div className="stack">{mine.length === 0 && <p className="muted">Nothing needs you right now.</p>}
         {mine.slice(0, 60).map(n => <div key={n.id} className="row" style={{ alignItems: 'flex-start', opacity: n.read ? .6 : 1 }}>
@@ -87,7 +87,7 @@ export function Help() {
   const tasks = (catalog.help as unknown as Record<string, [string, string, [string, string][]][]>)[user.role] ?? [];
   const m = page.mode;
   return <>
-    <button className="btn btn-ghost btn-sm" onClick={() => setOpen(true)} aria-label="Help"><Icon name="circle-help" size={18} /><span className="hide-sm">Help</span></button>
+    <button className="btn btn-ghost btn-sm" onClick={() => setOpen(true)} aria-label="Help"><Icon name="circle-question-mark" size={18} /><span className="hide-sm">Help</span></button>
     <Sheet open={open} onClose={() => setOpen(false)} title="Help" sub={`${page.title} · ${m === 'record' ? 'created at the POS, read only here' : m === 'incoming' ? 'incoming: accept, update or reply' : m === 'approve' ? 'approve or reject with your approval PIN' : 'what you do here, step by step'}`}>
       <div className="stack lg">
         {tasks.length === 0 && <p className="muted">Guests and BorNiz staff don’t have a task list. Ask your manager.</p>}

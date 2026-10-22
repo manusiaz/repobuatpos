@@ -145,7 +145,7 @@ function StaffPreview({ b, view, compact }: { b: StaffBrand; view: string; compa
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const paid = db.orders.filter(o => o.status === 'paid' && (o.paidAt ?? 0) >= today.getTime());
   const revenue = paid.reduce((a, o) => a + o.total, 0);
-  const powered = b.powered && <span style={{ fontSize: 11, opacity: .6 }}>Powered by BorNiz</span>;
+  const powered = b.powered && <span style={{ fontSize: 12, opacity: .6 }}>Powered by BorNiz</span>;
 
   if (view === 'login') return <div style={{ ...root, display: 'grid', placeItems: 'center', background: b.loginImg ? `url(${b.loginImg}) center/cover` : `linear-gradient(135deg,${C.loginTint},${mix(C.loginTint, '#000000', .45)})`, padding: 20 }}>
     <div style={{ ...card, width: 'min(360px,100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: 24 }}>

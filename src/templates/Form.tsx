@@ -29,8 +29,8 @@ export default function Form() {
 function useLeaveGuard(dirty: boolean) { useEffect(() => { if (!dirty) return; const f = (e: BeforeUnloadEvent) => e.preventDefault(); addEventListener('beforeunload', f); return () => removeEventListener('beforeunload', f); }, [dirty]); }
 function SaveBar({ dirty, label, onSave, onCancel }: { dirty: boolean; label: string; onSave: () => void; onCancel: () => void }) {
   if (!dirty) return null;
-  return <div className="row between" style={{ position: 'sticky', bottom: 12, zIndex: 5, padding: 12, borderRadius: 16, background: 'var(--ink-950)', color: '#fff', boxShadow: 'var(--shadow-e2)', maxWidth: 640 }}>
-    <span>Unsaved changes</span><span className="row"><button className="btn btn-ghost btn-sm" style={{ color: '#fff' }} onClick={onCancel}>Discard</button><button className="btn btn-primary btn-sm" onClick={onSave}>{label}</button></span></div>;
+  return <div className="row between" style={{ position: 'sticky', bottom: 12, zIndex: 5, padding: 12, borderRadius: 16, background: 'var(--ink-950)', color: 'var(--ink-0)', boxShadow: 'var(--shadow-e2)', maxWidth: 640 }}>
+    <span>Unsaved changes</span><span className="row"><button className="btn btn-ghost btn-sm" style={{ color: 'var(--ink-0)' }} onClick={onCancel}>Discard</button><button className="btn btn-primary btn-sm" onClick={onSave}>{label}</button></span></div>;
 }
 
 function Generic({ spec }: { spec: { key: string; fields: FieldDef[] } }) {

@@ -35,7 +35,7 @@ export const TOOL_DEFAULTS = {
   anim: { level: 'subtle', reduce: true },
   cup: { size: '50x30', name: true, mods: true, queue: true, logo: true, foot: 'Enjoy, {name}!' },
   kticket: { station: 'bar', fs: 'l', table: true, notes: true, cut: true, dup: false },
-  coupon: { head: 'Come back this week', offer: '15% off your next coffee', code: 'BIRU15', exp: 7, min: 'Min. spend IDR 50,000', bar: true, rule: 'every' },
+  coupon: { head: 'Come back this week', offer: '15% off your next coffee', code: 'BACK15', exp: 7, min: 'Min. spend IDR 50,000', bar: true, rule: 'every' },
 } as const satisfies Record<string, Record<string, string | number | boolean>>;
 export type ToolId = keyof typeof TOOL_DEFAULTS;
 type Widen<T> = { -readonly [K in keyof T]: T[K] extends number ? number : T[K] extends boolean ? boolean : string };

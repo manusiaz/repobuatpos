@@ -57,7 +57,7 @@ export default function Screen() {
       <nav aria-label="Owner mobile" className="row" style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: 'min(520px,100%)', zIndex: 30, background: 'var(--bg-surface)', borderTop: '1px solid var(--border)', padding: '6px 6px calc(6px + env(safe-area-inset-bottom))', gap: 0 }}>
         {TABS.map(([k, l, ic]) => { const on = tabOf === k, b = k === 'approvals' ? queue.length : k === 'alerts' ? unread : 0;
           return <Link key={k} href={PATH[k]} aria-current={on ? 'page' : undefined} className="stack" style={{ flex: 1, alignItems: 'center', gap: 2, minHeight: 52, justifyContent: 'center', textDecoration: 'none', color: on ? 'var(--role-fg)' : 'var(--fg-3)', fontSize: 12, fontWeight: 600, position: 'relative' }}>
-            <Icon name={ic} size={22} />{l}{b > 0 && <span className="badge b-accent" style={{ position: 'absolute', top: 2, left: '55%', height: 18, padding: '0 6px', fontSize: 11 }}>{b}</span>}
+            <Icon name={ic} size={22} />{l}{b > 0 && <span className="badge b-accent" style={{ position: 'absolute', top: 2, left: '55%', height: 18, padding: '0 6px', fontSize: 12 }}>{b}</span>}
           </Link>; })}
       </nav>
     </div>

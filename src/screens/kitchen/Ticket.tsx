@@ -14,7 +14,7 @@ export const ageTone = (ms: number, c: KdsCfg) => ms > c.late * 60e3 ? 'late' : 
 /** KDS button: never smaller than the 64px kitchen hit size for the main action, 48px for secondary ones. */
 export function KBtn({ children, onClick, tone = 'neutral', big, disabled, style, label }: { children: ReactNode; onClick?: () => void; tone?: 'neutral' | 'go' | 'accent' | 'danger' | 'ghost'; big?: boolean; disabled?: boolean; style?: CSSProperties; label?: string }) {
   const bg = { neutral: 'var(--bg-raised)', go: 'var(--success)', accent: 'var(--accent)', danger: 'var(--danger)', ghost: 'transparent' }[tone];
-  return <button type="button" aria-label={label} disabled={disabled} onClick={onClick} className="btn" style={{ height: big ? 'var(--hit-kds)' : 48, borderRadius: big ? 16 : 12, background: bg, color: tone === 'neutral' || tone === 'ghost' ? 'var(--fg-1)' : '#fff',
+  return <button type="button" aria-label={label} disabled={disabled} onClick={onClick} className="btn" style={{ height: big ? 'var(--hit-kds)' : 48, borderRadius: big ? 16 : 12, background: bg, color: tone === 'neutral' || tone === 'ghost' ? 'var(--fg-1)' : 'var(--ink-0)',
     borderColor: tone === 'neutral' || tone === 'ghost' ? 'var(--border)' : 'transparent', fontSize: fs(big ? 18 : 15), fontWeight: 800, fontFamily: 'var(--font-display)', padding: '0 16px', ...style }}>{children}</button>;
 }
 export const Pill = ({ children, bg = 'var(--bg-sunken)', fg = 'var(--fg-1)' }: { children: ReactNode; bg?: string; fg?: string }) =>
@@ -22,7 +22,7 @@ export const Pill = ({ children, bg = 'var(--bg-sunken)', fg = 'var(--fg-1)' }: 
 
 export function ChannelPill({ o }: { o: Order }) {
   const c = CHANNEL[o.source];
-  return <Pill bg={c.color} fg="#fff">{c.short}</Pill>;
+  return <Pill bg={c.color} fg="var(--ink-0)">{c.short}</Pill>;
 }
 export function TierPill({ o }: { o: Order }) {
   if (!o.tier) return null;
@@ -44,13 +44,13 @@ export function Ticket({ o, st, now, cfg, meta, recalled, action, onItem, onOpen
   const border = tone === 'late' ? 'var(--danger)' : tone === 'warn' ? 'var(--warning)' : o.tier === 'rush' ? 'var(--danger-fg)' : 'var(--border)';
   const head: CSSProperties = cfg.colors === 'channel'
     ? { background: 'var(--bg-raised)', color: 'var(--fg-1)', boxShadow: `inset 8px 0 0 ${CHANNEL[o.source].color}` }
-    : tone === 'late' ? { background: 'var(--danger)', color: '#fff' } : tone === 'warn' ? { background: 'var(--warning-soft)', color: 'var(--warning-fg)' } : { background: 'var(--bg-raised)', color: 'var(--fg-1)' };
+    : tone === 'late' ? { background: 'var(--danger)', color: 'var(--ink-0)' } : tone === 'warn' ? { background: 'var(--warning-soft)', color: 'var(--warning-fg)' } : { background: 'var(--bg-raised)', color: 'var(--fg-1)' };
   const timerColor = cfg.colors === 'channel' ? (tone === 'late' ? 'var(--danger-fg)' : tone === 'warn' ? 'var(--warning-fg)' : 'inherit') : 'inherit';
   return <article style={{ borderRadius: 16, background: 'var(--bg-surface)', border: `${tone === 'ok' && o.tier !== 'rush' ? 1 : 2}px solid ${border}`, overflow: 'hidden', display: 'flex', flexDirection: 'column', animation: 'fade 220ms var(--ease-out)', minWidth: 0 }}>
     <button type="button" onClick={onOpen} style={{ ...head, border: 0, textAlign: 'left', cursor: onOpen ? 'pointer' : 'default', padding: '12px 14px', display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', font: 'inherit' }}
       aria-label={`Open ${ticketLabel(o)} detail`}>
       <span className="row" style={{ gap: 10, minWidth: 0, alignItems: 'center' }}>
-        <span aria-hidden style={{ flex: 'none', width: 40, height: 40, borderRadius: 12, display: 'grid', placeItems: 'center', color: '#fff', font: `800 ${fs(13)}/1 var(--font-display)`,
+        <span aria-hidden style={{ flex: 'none', width: 40, height: 40, borderRadius: 12, display: 'grid', placeItems: 'center', color: 'var(--ink-0)', font: `800 ${fs(13)}/1 var(--font-display)`,
           background: online || o.source !== 'pos' ? CHANNEL[o.source].color : tone === 'late' ? 'rgba(255,255,255,.2)' : 'var(--accent)' }}>
           {online ? CHANNEL[o.source].short : <Icon name={o.type === 'take' ? 'shopping-bag' : o.type === 'delivery' ? 'bike' : 'utensils'} size={20} />}</span>
         <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
@@ -64,10 +64,10 @@ export function Ticket({ o, st, now, cfg, meta, recalled, action, onItem, onOpen
       </span>
     </button>
     {(o.tier || isNew || recalled || (online && o.readyBy)) && <div className="row wrap" style={{ gap: 6, padding: '0 14px 10px', ...head, boxShadow: 'none' }}>
-      <TierPill o={o} />{isNew && <Pill bg="var(--accent)" fg="#fff">New</Pill>}{recalled && <Pill bg="var(--info-soft)" fg="var(--info-fg)">Recalled</Pill>}
-      {online && o.readyBy && <span style={{ fontSize: fs(14), fontWeight: 800, whiteSpace: 'nowrap', color: tone === 'late' && cfg.colors === 'timer' ? '#fff' : minsLeft(o.readyBy, now) < 0 ? 'var(--danger-fg)' : minsLeft(o.readyBy, now) < 4 ? 'var(--warning-fg)' : 'inherit' }}>Ready by {hhmm(o.readyBy)} · {dueText(o.readyBy, now)}</span>}
+      <TierPill o={o} />{isNew && <Pill bg="var(--accent)" fg="var(--ink-0)">New</Pill>}{recalled && <Pill bg="var(--info-soft)" fg="var(--info-fg)">Recalled</Pill>}
+      {online && o.readyBy && <span style={{ fontSize: fs(14), fontWeight: 800, whiteSpace: 'nowrap', color: tone === 'late' && cfg.colors === 'timer' ? 'var(--ink-0)' : minsLeft(o.readyBy, now) < 0 ? 'var(--danger-fg)' : minsLeft(o.readyBy, now) < 4 ? 'var(--warning-fg)' : 'inherit' }}>Ready by {hhmm(o.readyBy)} · {dueText(o.readyBy, now)}</span>}
     </div>}
-    {(o.tier === 'rush' || notes.length > 0) && <div style={{ padding: '8px 14px', background: 'var(--danger)', color: '#fff', fontSize: fs(15), fontWeight: 800, lineHeight: 1.35 }}>
+    {(o.tier === 'rush' || notes.length > 0) && <div style={{ padding: '8px 14px', background: 'var(--danger)', color: 'var(--ink-0)', fontSize: fs(15), fontWeight: 800, lineHeight: 1.35 }}>
       {[o.tier === 'rush' && 'RUSH', allergy && 'ALLERGY', !allergy && notes.length && 'NOTE'].filter(Boolean).join(' · ')}{notes.length > 0 && <>: {notes.join(' · ')}</>}</div>}
     <div style={{ padding: '4px 14px', display: 'flex', flexDirection: 'column' }}>
       {lines.map(l => <button key={l.id} type="button" onClick={onItem ? () => onItem(l.id) : undefined} disabled={!onItem}

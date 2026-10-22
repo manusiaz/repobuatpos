@@ -46,7 +46,7 @@ function StationPick({ k }: { k: Kctx }) {
     <H sub="Pick what this screen cooks. Each screen keeps its own station; tickets split by the station set on each menu category.">Station filter</H>
     <Grid min={220}>{STATIONS.map(([s, l]) => { const t = k.tickets.filter(o => openLinesAt(o, s).length), items = t.reduce((a, o) => a + openLinesAt(o, s).reduce((b, x) => b + x.qty, 0), 0);
       return <button key={s} type="button" aria-pressed={k.st === s} onClick={() => { k.setSt(s); k.go(kdsPath('tickets')); }} style={{ minHeight: 140, borderRadius: 18, border: `3px solid ${k.st === s ? 'var(--accent)' : 'var(--border)'}`, background: 'var(--bg-surface)', color: 'var(--fg-1)', cursor: 'pointer', textAlign: 'left', padding: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <b style={{ fontSize: fs(26) }}>{l}</b><span style={{ fontSize: fs(16), color: 'var(--fg-2)' }}>{t.length} tickets · {items} items open</span>{k.st === s && <Pill bg="var(--accent)" fg="#fff">This screen</Pill>}</button>; })}</Grid>
+        <b style={{ fontSize: fs(26) }}>{l}</b><span style={{ fontSize: fs(16), color: 'var(--fg-2)' }}>{t.length} tickets · {items} items open</span>{k.st === s && <Pill bg="var(--accent)" fg="var(--ink-0)">This screen</Pill>}</button>; })}</Grid>
   </div>;
 }
 
@@ -205,9 +205,9 @@ function Recipes({ k }: { k: Kctx }) {
   return <div>
     <H sub="What goes into each item, per serving, and what is on hand at this outlet. Recipes are set in the back office.">Recipes & prep guide</H>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,300px),1fr))', gap: 12, alignItems: 'start' }}>
-      <div className="stack sm">{prods.map(x => <KBtn key={x.id} onClick={() => setSel(x.id)} style={{ justifyContent: 'flex-start', background: x.id === p.id ? 'var(--accent)' : undefined, color: x.id === p.id ? '#fff' : undefined }}>{x.name}</KBtn>)}</div>
+      <div className="stack sm">{prods.map(x => <KBtn key={x.id} onClick={() => setSel(x.id)} style={{ justifyContent: 'flex-start', background: x.id === p.id ? 'var(--accent)' : undefined, color: x.id === p.id ? 'var(--ink-0)' : undefined }}>{x.name}</KBtn>)}</div>
       <div className="stack">
-        <Box><div className="row between wrap"><b style={{ fontSize: fs(24) }}>{p.name}</b><span className="row">{op?.is86 && <Pill bg="var(--danger)" fg="#fff">Sold out</Pill>}<Pill>{st}</Pill></span></div>
+        <Box><div className="row between wrap"><b style={{ fontSize: fs(24) }}>{p.name}</b><span className="row">{op?.is86 && <Pill bg="var(--danger)" fg="var(--ink-0)">Sold out</Pill>}<Pill>{st}</Pill></span></div>
           <p style={{ fontSize: fs(15), color: 'var(--fg-2)', marginTop: 6 }}>{p.desc || `Target ${Number(k.db.settings[TGT('target.' + st)] ?? DEF_TARGET[st])} min from ticket to pass.`}</p></Box>
         <Box><b style={{ fontSize: fs(17) }}>Per serving</b>
           <div className="stack sm" style={{ marginTop: 8 }}>{!rec.length && <span style={{ fontSize: fs(15), color: 'var(--fg-3)' }}>No recipe on file. Ask the manager to add one in Inventory.</span>}

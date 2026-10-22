@@ -125,7 +125,7 @@ export function Totals({ db, o, tip = 0, me }: { db: DB; o: Order; tip?: number;
 /** Closed / paused / offline notices shown above the menu. */
 export function Notices({ g }: { g: G }) {
   const n: [string, string, ReactNode][] = [];
-  if (g.hrs.paused) n.push(['pause-circle', 'Ordering is paused right now', 'Ask the staff, or browse the menu.']);
+  if (g.hrs.paused) n.push(['circle-pause', 'Ordering is paused right now', 'Ask the staff, or browse the menu.']);
   else if (!g.hrs.open) n.push(['moon', `Closed · ${g.hrs.text}`, <a key="b" href={so('online-booking')} onClick={e => { e.preventDefault(); g.go(so('online-booking')); }}>Book a table</a>]);
   if (!g.onPlan) n.push(['circle-alert', `${g.t('Table')} ${tableNo(g.table)} ${g.t('is not on this outlet’s floor plan')}`, g.t('Ask a staff member for the right table QR code.')]);
   if (!g.online) n.push(['wifi-off', 'You’re offline', 'Your cart is kept. QRIS needs internet.']);
