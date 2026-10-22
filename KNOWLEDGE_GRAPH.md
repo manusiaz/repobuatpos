@@ -5,7 +5,7 @@
 > Graph halaman otomatis (617 halaman, generator `npm run graph`) ada di `KNOWLEDGE_GRAPH.json` dan viewer `/graph`;
 > file ini mencatat node kode + data yang dipetakan per task.
 
-Last verified: c5106d2 — 2026-10-18
+Last verified: b4a7115 — 2026-10-22
 
 ## Stack
 
@@ -27,7 +27,7 @@ Tidak ada CI di repo (`.github/workflows` kosong). Urutan murah → mahal:
 npx tsc --noEmit && npm test && npm run -s links && npm run -s check:system && npm run -s check:deploy && npm run -s test:db && npx next build
 ```
 
-`test:db` butuh Postgres lokal di `localhost:5433` (`/tmp/bnpg`); memasang database lewat `scripts/db-migrate.mjs` (sama dengan produksi) di atas `db/platform.sql`. Verifikasi UI: Playwright (Chromium di `/opt/pw-browsers`) terhadap `npx next start`.
+`test:db` butuh Postgres lokal di `localhost:5433` (`/tmp/bnpg`; setelah container restart: `rm -f /tmp/bnpg/data/postmaster.pid; runuser -u postgres -- /usr/lib/postgresql/16/bin/pg_ctl -D /tmp/bnpg/data -l /tmp/bnpg/log -o "-p 5433 -k /tmp" start` dan `pg_ctlcluster 16 main start` untuk server uji); memasang database lewat `scripts/db-migrate.mjs` (sama dengan produksi) di atas `db/platform.sql`. Verifikasi UI: Playwright (Chromium di `/opt/pw-browsers`) terhadap `npx next start`. Prototipe spec (`spec/*.dc.html`) memuat React 18.3.1 + lucide-static 0.452.0 dari unpkg, yang diblok jaringan sandbox: render dengan file dari `npm pack` yang dilayani lewat `page.route` (TLS tetap diverifikasi).
 
 ## Nodes
 
@@ -239,6 +239,7 @@ graph LR
 | 2026-10-21 | page:/admin/plans-and-pricing | Harga yang diubah staf BorNiz tidak terlihat calon pelanggan: halaman harga, pilih plan & checkout memakai harga tetap di kode (dua daftar harga: PLANS dan PLAN_PRICE) | fixed (bn_public_prices → usePlans; satu daftar default; tes platform_console.sql + plan-limits.test.ts) |
 | 2026-10-20 | page:/admin/plans-and-pricing | Tema default tersimpan di server tapi belum dibaca; flag & rilis belum dibaca fitur mana pun; invoice belum dibuat oleh billing; tiket belum bisa dikirim merchant | open |
 | 2026-10-20 | fn:bn_is_platform_admin | Staf BorNiz tanpa 2FA tetap bisa memakai konsol walau label "2FA" (password bocor = konsol terbuka) | fixed 2026-10-21 (sesi mencatat kode authenticator `auth.sessions.mfa`; API menolak bn_admin_* tanpa itu BN077; konsol menawarkan set-up dulu; tes cells-api.mjs) |
+| 2026-10-22 | doc:spec | Produk diubah (testimoni palsu dihapus, ikon generik diganti, aturan ukuran teks) tanpa mengubah halaman spec → spec masih menampilkan testimoni & ikon lama dan `npm run spec` bisa mengembalikannya | fixed (Landing, States Gallery, Studios, Loyalty, Design Notes + entri CHANGES di Connections; render diuji tanpa error) |
 | 2026-10-22 | src/screens/guest/kit.tsx | Merchant dengan tema gelap (paper gelap, ink terang): semua kartu, tombol & sheet tamu tetap putih (`SURFACE = --ink-0`, `--bn-surface` tidak pernah di-set) → teks terang di atas putih, tak terbaca (link-in-bio, menu, checkout); ikon tren KPI naik saat angka turun | fixed (surface dari paper tema; studio menolak surface yang kontrasnya < 4.5:1; tes new-business.test.ts gagal tanpa fix) |
 | 2026-10-22 | src/app/Shells.tsx | Sidebar setiap owner tertulis tetap "Owner · 3 outlets · Pro" (teks prototipe; bisnis Free 1 outlet pun begitu); nama & inisial bisnis kosong bila Brand Studio belum diisi; merchant melihat "Knowledge graph" (alat dev), tag rilis "v1.0" dan "Search 603 features"; "vs last thursday" huruf kecil | fixed (jumlah outlet & plan nyata, nama bisnis sebagai cadangan, alat dev & tag rilis hanya di mode demo) |
 | 2026-10-22 | config:deploy | Next.js 16.4.0 terkena RCE tanpa login (GHSA-2464-fhr4-w9xw, Image Optimization + SVG), RCE `use cache` (GHSA-673q-mjm6-r5xr), DoS Server Actions (GHSA-p3m5-59mp-jv5r); `next build` kini menolak build → setiap deploy gagal | fixed (next 16.4.2, npm audit 0) |
@@ -321,6 +322,8 @@ graph LR
 
 | Tanggal | Keputusan | Alasan | Node terdampak |
 |---|---|---|---|
+| 2026-10-22 | Teks staf minimal 12px (token caption), bukan 13px | Design Notes menulis 13px, tapi token DS `--text-caption` (spec/tokens/typography.css) dan prototipe sendiri memakai 12px; Design Notes diselaraskan ke token | doc:spec, app/globals.css |
+| 2026-10-22 | Fitur di tabel harga (loyalty, inventory, self-order, shift) belum dikunci | Spec hanya menegakkan outlet / register / KDS (bn-alerts.js "Plan limit reached"); mematikan fitur yang sedang dipakai merchant Free = keputusan harga owner | policy:plan_rules |
 | 2026-10-19 | Domain merchant diaktifkan operator (deploy/add-domain.sh), bukan routing dinamis dari DB | Halaman statis (618) + env yang di-bake saat build; satu VPS, merchant enterprise jarang: script lebih sederhana dan benar daripada cookie/edge config | fn:publicUrl, config:deploy |
 | 2026-10-19 | Worker otomasi = proses Node terpisah (systemd), bukan di dalam Next | Next mengompilasi instrumentation sebagai Server Component yang menolak modul ber-hook; proses terpisah memakai kode yang sama tanpa build | fn:dbMigrate, config:deploy |
 | 2026-10-18 | Satu VPS = dua salinan: live `/srv/borniz` + DB `borniz`, dev `/srv/borniz-dev` + DB `borniz_dev` (PostgreSQL yang sama), user `borniz`; dev lewat SSH tunnel :3001 | Owner mau develop langsung di VPS; develop di folder/DB live = setiap edit langsung kena pelanggan dan migrasi setengah jadi merusak data asli | config:deploy, fn:dbMigrate |
