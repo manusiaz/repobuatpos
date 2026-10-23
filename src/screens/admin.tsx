@@ -24,8 +24,8 @@ const Mono = ({ children }: { children: ReactNode }) => <span className="mono">{
 export default function Screen() {
   const { page, db } = useApp();
   // live: the server takes console calls only from a sign-in with the authenticator code (BN077)
-  const [mfa, setMfa] = useState<boolean | null>(REMOTE ? null : true);
-  useEffect(() => { if (REMOTE) void import('../data/backend.ts').then(s => s.sb().auth.getUser()).then(r => setMfa(!!r.data.user?.mfa)); }, []);
+  const [mfa, setMfa] = useState<boolean | null>(REMOTE ? null : true), [email, setEmail] = useState(REMOTE ? '' : 'admin@bornis.id (demo)');
+  useEffect(() => { if (REMOTE) void import('../data/backend.ts').then(s => s.sb().auth.getUser()).then(r => { setMfa(!!r.data.user?.mfa); setEmail(r.data.user?.email ?? ''); }); }, []);
   useEffect(() => { if (mfa) ensurePlatform(); }, [mfa]);
   if (mfa === false) return <section className="card stack" style={{ maxWidth: 560 }}><h2>Turn on two-step sign-in</h2>
     <span className="muted" style={{ fontSize: 14 }}>BorNiz staff open the console only from a sign-in with an authenticator code. Turn it on here and the console opens. Already on? Sign out and sign in again with the code.</span>
@@ -42,7 +42,7 @@ export default function Screen() {
     {v === 'tenant-detail-and-plan' && <TenantDetailPage db={db} />}
     {v === 'plans-and-pricing' && <Plans db={db} />}
     {v === 'tenant-invoices-and-payments' && <Invoices db={db} />}
-    {v === 'support-tickets' && <Tickets db={db} />}
+    {v === 'support-tickets' && <Tickets db={db} me={email} />}
     {v === 'feature-flags-and-releases' && <Flags db={db} />}
     {v === 'audit-log' && <Audit db={db} />}
     {v === 'theme-presets-library' && <Themes db={db} />}
@@ -278,20 +278,14 @@ function Invoices({ db }: { db: DB }) {
   </>;
 }
 
-/** The signed-in BorNiz staff member's email (tickets are assigned to them). */
-function useStaffEmail() {
-  const [email, setEmail] = useState(REMOTE ? '' : 'admin@bornis.id (demo)');
-  useEffect(() => { if (REMOTE) void import('../data/backend.ts').then(s => s.sb().auth.getUser()).then(r => setEmail(r.data.user?.email ?? '')); }, []);
-  return email;
-}
 // ── Support ───────────────────────────────────────────────────────────────────────────────
-function Tickets({ db }: { db: DB }) {
+function Tickets({ db, me: ME }: { db: DB; me: string }) {
   const [q, setQ] = useQuery({ k: '', f: 'open' });
   const [access, setAccess] = useState(false);
   const RANK: Record<string, number> = { urgent: 0, high: 1, normal: 2, low: 3 };
   const all = (db.records.ticket ?? []).slice().sort((a, b) => RANK[a.c] - RANK[b.c] || b.at - a.at), rows = all.filter(k => q.f === 'all' || (q.f === 'open' ? k.d !== 'solved' : k.d === q.f));
   const sel = all.find(k => k.id === q.k), t = sel && tenants(db).find(x => x.id === sel.b);
-  const ME = useStaffEmail(), msg = sel as (Rec & { m?: string; by?: string }) | undefined;
+  const msg = sel as (Rec & { m?: string; by?: string }) | undefined;
   return <>
     <Seg label="Status" value={q.f} onChange={f => setQ({ f })} options={[['open', 'Open'], ['waiting', 'Waiting on tenant'], ['solved', 'Solved'], ['all', 'All']]} />
     <Split table={rows.length ? <div className="scroll-x"><table className="table"><thead><tr><th>Ticket</th><th>Subject</th><th>Tenant</th><th>Priority</th><th>Status</th><th>Age</th></tr></thead>

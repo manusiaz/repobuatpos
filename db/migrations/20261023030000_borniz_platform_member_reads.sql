@@ -1,7 +1,8 @@
 -- Tickets and invoices live on the platform, but a moved business keeps its members in its own database (a manager
 -- invited after the move exists only there). So the API checks the caller's role in the business's database
 -- (bn_member_role, routed by p_tenant) and then calls these server functions on the platform; the earlier
--- bn_open_ticket / bn_my_tickets / bn_my_invoices checked the platform's member rows and are dropped.
+-- bn_open_ticket / bn_my_tickets / bn_my_invoices (a first version some databases ran) checked the platform's member
+-- rows and are dropped.
 drop function if exists public.bn_open_ticket(uuid, text, text, text);
 drop function if exists public.bn_my_tickets(uuid);
 drop function if exists public.bn_my_invoices(uuid);

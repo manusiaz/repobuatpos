@@ -49,12 +49,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ op: str
       // business adds its members there)
       const MINE: Record<string, [string[], string]> = { bn_open_ticket: [['owner', 'manager'], 'ticket'], bn_my_tickets: [['owner', 'manager'], 'ticket'], bn_my_invoices: [['owner'], 'invoice'] };
       if (MINE[name]) {
+        if (!uid) throw new HttpError(401, 'Sign in first');
         if (!UUID.test(String(b.p_tenant))) throw new HttpError(400, 'Bad tenant id');
-        const [roles, kind] = MINE[name], role = await call('bn_member_role', { p_tenant: b.p_tenant }, uid);
-        if (!roles.includes(String(role))) throw new HttpError(403, kind === 'invoice' ? 'BN078 Only the owner sees BorNiz invoices' : 'BN080 Owner or manager only');
+        const [roles, recordKind] = MINE[name], role = await call('bn_member_role', { p_tenant: b.p_tenant }, uid);
+        if (!roles.includes(String(role))) throw new HttpError(403, recordKind === 'invoice' ? 'BN078 Only the owner sees BorNiz invoices' : 'BN080 Owner or manager only');
         return out(name === 'bn_open_ticket'
           ? await rpc('bn_server_open_ticket', { p_tenant: b.p_tenant, p_user: uid, p_subject: String(b.p_subject ?? ''), p_body: String(b.p_body ?? ''), p_priority: String(b.p_priority ?? 'normal') }, null)
-          : await rpc('bn_server_records_of', { p_tenant: b.p_tenant, p_kind: kind }, null));
+          : await rpc('bn_server_records_of', { p_tenant: b.p_tenant, p_kind: recordKind }, null));
       }
       // support access runs in the business's own database: BorNiz staff are checked here, on the platform, first
       const SUPPORT: Record<string, [string, string]> = { bn_admin_support_state: ['bn_server_support_state', ''], bn_admin_support_docs: ['bn_server_support_docs', 'support.read'], bn_admin_support_end: ['bn_server_support_end', 'support.ended'] };

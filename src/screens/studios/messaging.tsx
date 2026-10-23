@@ -10,7 +10,7 @@ import { Badge, Empty, Icon, Kpi, Seg, Status, Toggle, ago, dateShort, hhmm, toa
 import { LineChart } from '../../ui/Chart.tsx';
 import { IntegrationsPanel } from '../../integrations/Panel.tsx';
 import { toolValue, TOOL_DEFAULTS } from '../../system/tools.ts';
-import { lastVisit } from '../../data/alerts/automations.ts';
+import { lastVisit, nextBirthday, WINBACK_MAX_DAYS } from '../../data/alerts/automations.ts';
 import { BASE, fromRec, templates, VARS, type Cat, type Tpl } from '../../domain/messages.ts';
 export { templates, VARS, type Tpl } from '../../domain/messages.ts';
 import { Caption, CopyRow, F, fillVars, orderVars, outletName, pct, Phone, Stage, type Ctx, type PP, type Tool, type V } from './core.tsx';
@@ -149,7 +149,7 @@ export const AUTOS: Auto[] = [
   { id: 'a_thanks', name: 'Post-visit thank-you', icon: 'heart-handshake', tpl: 'thanks_visit', trigger: 'Payment completed', desc: 'Thanks the guest on WhatsApp (or email) a set time after they pay.', audience: (db, v) => db.customers.filter(c => { const t = lastVisit(db, c.id); return t && Date.now() - t < (Number(v.delay) + 24) * 3600e3; }) },
   { id: 'a_feedback', name: 'Feedback request & review link', icon: 'star', tpl: 'feedback_request', trigger: 'Rating received', desc: 'Thanks guests who rated you well and asks them for a review. Low ratings already alert the manager (Bad review).', audience: (db, v) => db.customers.filter(c => db.reviews.some(r => r.customerId === c.id && r.stars >= Number(v.min))) },
   { id: 'a_winback', name: 'Win-back', icon: 'rotate-ccw', tpl: 'winback_30d', trigger: 'No visit in N days', desc: 'Invites regulars back when they haven’t visited for a while, with a voucher.', audience: (db, v) => db.customers.filter(c => { const t = lastVisit(db, c.id); return t > 0 && Date.now() - t > Number(v.days) * DAY; }) },
-  { id: 'a_bday', name: 'Birthday & points expiry', icon: 'cake', tpl: 'birthday', trigger: 'Birthday window', desc: 'Birthday treat before the birthday. The beans-expiry nudge goes out 14 days before expiry (Points expiring alert).', audience: (db, v) => db.customers.filter(c => { if (!c.birthday) return false; const b = new Date(c.birthday), n = new Date(); b.setFullYear(n.getFullYear()); const d = (b.getTime() - n.getTime()) / DAY; return d >= 0 && d <= Number(v.days); }) },
+  { id: 'a_bday', name: 'Birthday & points expiry', icon: 'cake', tpl: 'birthday', trigger: 'Birthday window', desc: 'Birthday treat before the birthday. The beans-expiry nudge goes out 14 days before expiry (Points expiring alert).', audience: (db, v) => db.customers.filter(c => { if (!c.birthday) return false; const d = (nextBirthday(c.birthday, Date.now()) - Date.now()) / DAY; return d >= 0 && d <= Number(v.days); }) },
 ];
 const AUTO_DEF = TOOL_DEFAULTS as unknown as Record<string, V>;
 function autoStats(db: DB, tpl: string, windowDays = 7) {
@@ -194,7 +194,7 @@ function autoTool(a: Auto): Tool {
   return { id: a.id, group: 'MESSAGING & AUTOMATION', name: 'Automation: ' + a.name.toLowerCase().replace(/^./, c => c.toUpperCase()), icon: a.icon, desc: a.desc, def: AUTO_DEF[a.id],
     Preview: p => <AutoPreview {...p} a={a} />,
     fields: (v, x) => [F.toggle('Automation on', 'on'),
-      ...(a.id === 'a_thanks' ? [F.range('Wait after payment', 'delay', 0, 48, 1, ' h')] : a.id === 'a_feedback' ? [F.range('Wait after visit', 'delay', 0, 24, 1, ' h'), F.seg('Send review link from', 'min', [[4, '4★'], [5, '5★ only']])] : a.id === 'a_winback' ? [F.range('Not visited for', 'days', 14, 30, 1, ' days')] : [F.range('Birthday message', 'days', 0, 14, 1, ' days before')]),
+      ...(a.id === 'a_thanks' ? [F.range('Wait after payment', 'delay', 0, 48, 1, ' h')] : a.id === 'a_feedback' ? [F.range('Wait after visit', 'delay', 0, 24, 1, ' h'), F.seg('Send review link from', 'min', [[4, '4★'], [5, '5★ only']])] : a.id === 'a_winback' ? [F.range('Not visited for', 'days', 14, WINBACK_MAX_DAYS, 1, ' days')] : [F.range('Birthday message', 'days', 0, 14, 1, ' days before')]),
       F.seg('Only if', 'cond', [['all', 'Everyone'], ['member', 'Members'], ['first', 'First visit'], ['phone', 'Has phone']]), F.seg('Send via', 'ch', [['wa', 'WhatsApp'], ['email', 'Email'], ['both', 'Both']]), F.select('Template', 'tpl', tplOpts(x)), F.toggle('Max 1 message per guest per day', 'cap'),
       F.node(<button className="btn btn-block" onClick={() => runNow(a, v, x)}><Icon name="play" size={18} />Run now for matching guests</button>),
       F.note('WABA charges per conversation. Utility messages within 24 h of a visit cost less than marketing.', 'warn')] };

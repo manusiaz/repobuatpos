@@ -41,3 +41,7 @@ test('a birthday early in January is sent in late December', () => {
   const db = shop('pro'); db.customers[0].birthday = '1990-01-03';
   assert.deepEqual(send(db, Date.UTC(2026, 11, 27, 5)).filter(s => s.startsWith('birthday')), ['birthday>c1@wa']);
 });
+test('a win-back published above what the data window sees still fires at the longest wait that does', () => {
+  const db = shop('pro', { a_winback: { on: true, days: 60, cond: 'all', ch: 'wa', tpl: 'winback_30d', cap: true } });
+  assert.deepEqual(send(db, T0 + 30 * D + H), ['winback_30d>c1@wa']);
+});

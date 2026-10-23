@@ -1,6 +1,6 @@
 -- BorNiz billing (spec bn-authority: "BorNiz billing (plan × outlets)", automatic, nobody creates or edits it by hand):
 --   the worker issues one invoice per business on a paid plan per month (src/data/billing.ts invoiceFor); the same id
---   twice adds nothing; a trial is not billed; the owner reads them (bn_my_invoices); BorNiz staff mark them paid in
+--   twice adds nothing; a trial is not billed; the owner reads them through the API (20261023030000); BorNiz staff mark them paid in
 --   the console (bn_admin_put, audited). Invoices live on the platform, also for a business on its own database.
 create or replace function public.bn_server_tenants(p_secret text) returns jsonb
 language plpgsql stable security definer set search_path = public, private as $$
@@ -22,12 +22,5 @@ begin
   return true;
 end $$;
 
-create or replace function public.bn_my_invoices(p_tenant uuid) returns jsonb
-language plpgsql stable security definer set search_path = public, private as $$
-begin
-  if public.bn_member_role(p_tenant) is distinct from 'owner' then raise exception 'BN078 Only the owner sees BorNiz invoices'; end if;
-  return coalesce((select jsonb_agg(data order by (data->>'at')::bigint desc) from private.platform_records where kind = 'invoice' and data->>'a' = p_tenant::text), '[]');
-end $$;
-revoke execute on function public.bn_server_invoice(text, uuid, text, jsonb), public.bn_my_invoices(uuid) from public;
+revoke execute on function public.bn_server_invoice(text, uuid, text, jsonb) from public;
 grant execute on function public.bn_server_invoice(text, uuid, text, jsonb) to anon, authenticated;
-grant execute on function public.bn_my_invoices(uuid) to authenticated;
