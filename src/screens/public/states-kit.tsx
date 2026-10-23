@@ -17,7 +17,8 @@ import { level as stockLevel } from '../../domain/stock.ts';
 import { idr } from '../../domain/money.ts';
 import { usePin } from '../../ui/PinSheet.tsx';
 import { Avatar, Badge, copy, Icon, Numpad, Skeleton, Status, ago, hhmm, toast, useNow, type Tone } from '../../ui/kit.tsx';
-import { FEATURE_PLAN, PLANS, includes, planBlock, planOf } from './plans.ts';
+import { FEATURE_PLAN, PLANS, canTrial, includes, planBlock, planOf } from './plans.ts';
+import { usePlans } from './landing-ui.tsx';
 export { ProductImporter, SAMPLE_CSV } from './importer.tsx';
 
 export type Kind = 'Empty' | 'Loading' | 'Error' | 'Blocked' | 'Success' | 'Offline';
@@ -322,18 +323,18 @@ export function DeviceNotPaired() {
 }
 
 export function UpgradeWall({ need }: { need?: string }) {
-  const { db, user } = useApp();
+  const { db, user } = useApp(), { of } = usePlans();
   const have = db.tenant.plan, plan = planOf(have);
   const locked = FEATURE_PLAN.filter(([, p]) => !includes(have, p));
   const feature = (need && FEATURE_PLAN.find(([f]) => f === need)) || locked[0];
   const regs = db.devices.filter(d => d.kind === 'pos').length;
   const usage: [string, number, number][] = [['Outlets', db.outlets.length, plan.outlets], ['Registers', regs, plan.registers]];
-  const next = feature ? planOf(feature[1]) : null;
+  const next = feature ? planOf(feature[1]) : null, price = next ? of(next.id).monthly : null;
   return <div className="stack" style={{ maxWidth: 720, width: '100%', margin: '0 auto' }}>
     {next ? <StatePanel kind="Blocked" icon="lock" kicker={`You’re on ${plan.name}`} title={`${feature![0]} is on ${next.name}`}
-      actions={<>{user.role !== 'owner' ? <button className="btn btn-primary btn-lg" onClick={() => { askForPlan(feature![0], user.id); toast('The owner is told'); }}>Ask the owner</button> : next.id === 'enterprise' ? <Link className="btn btn-primary btn-lg" href="/contact-sales-book-a-demo">Contact sales</Link> : <Link className="btn btn-primary btn-lg" href="/account/choose-plan">Try {next.name} free for 14 days</Link>}<Link className="btn btn-lg" href="/pricing">Compare plans</Link></>}
-      meta="No card needed for the trial. Your data stays if you go back.">
-      Here’s what you’d get with {next.name}:
+      actions={<>{user.role !== 'owner' ? <button className="btn btn-primary btn-lg" onClick={() => { askForPlan(feature![0], user.id); toast('The owner is told'); }}>Ask the owner</button> : next.id === 'enterprise' ? <Link className="btn btn-primary btn-lg" href="/contact-sales-book-a-demo">Contact sales</Link> : <Link className="btn btn-primary btn-lg" href="/account/choose-plan">{canTrial(db.tenant) ? `Try ${next.name} free for 14 days` : `Upgrade to ${next.name}`}</Link>}<Link className="btn btn-lg" href="/pricing">Compare plans</Link></>}
+      meta={canTrial(db.tenant) ? 'No card needed for the trial. Your data stays if you go back.' : 'Your data stays if you go back.'}>
+      Here’s what you’d get with {next.name}{price ? ` (${idr(price)} per outlet a month)` : ''}:
     </StatePanel> : <StatePanel kind="Success" icon="crown" title={`You’re on ${plan.name}`}>Every feature is included. Talk to your success manager for more outlets.</StatePanel>}
     {next && <div className="grid" style={{ ['--min' as string]: '220px' }}>{FEATURE_PLAN.filter(([, p]) => p === next.id).map(([f]) => <div key={f} className="card tight row"><Icon name="check" style={{ color: 'var(--success)' }} /><span style={{ fontSize: 14 }}>{f}</span></div>)}</div>}
     <div className="card stack sm"><b>Usage on {plan.name}</b>{usage.map(([l, n, max]) => {

@@ -16,7 +16,7 @@ import type { Employee, Role } from '../data/schema.ts';
 import { humanError } from '../data/remoteDocs.ts';
 import { bps, idr } from '../domain/money.ts';
 import { Avatar, Badge, Field, Icon, Numpad, Seg, Status, dateShort, toast, useNow } from '../ui/kit.tsx';
-import { PPN_BPS, TRIAL_DAYS, billed, perMonth, planOf, type PlanId } from './public/plans.ts';
+import { PPN_BPS, TRIAL_DAYS, canTrial, billed, perMonth, planOf, type PlanId } from './public/plans.ts';
 import { PairDevice, ProductImporter } from './public/states-kit.tsx';
 import { usePlans } from './public/landing-ui.tsx';
 
@@ -371,7 +371,7 @@ function ChoosePlan() {
   const { db, go } = useApp();
   const [flow, setFlow] = useFlow();
   const [sel, setSel] = useState<PlanId>(flow.plan ?? 'pro'), [yearly, setYearly] = useState(!!flow.yearly), { plans, of } = usePlans();
-  const p = of(sel), end = Date.now() + TRIAL_DAYS * 864e5;
+  const p = of(sel), end = Date.now() + TRIAL_DAYS * 864e5, trial = canTrial(db.tenant) && sel !== 'free' && sel !== 'enterprise';
   const owner = db.employees.find(e => e.role === 'owner')!.id;
   const start = (trial: boolean) => {
     setFlow({ plan: sel, yearly, trial });
@@ -383,9 +383,9 @@ function ChoosePlan() {
     <Head h="Choose a plan" sub="All plans include QRIS, cash and card. Change or cancel anytime." />
     <Seg value={yearly ? 'y' : 'm'} onChange={v => setYearly(v === 'y')} label="Billing" options={[['m', 'Monthly'], ['y', 'Yearly · save 17%']]} />
     <Choices value={sel} onChange={setSel} items={plans.map(x => [x.id, x.name + (x.popular ? ' · popular' : ''), x.blurb, x.monthly == null ? 'Contact sales' : x.monthly === 0 ? 'IDR 0' : idr(perMonth(x, yearly)!) + '/mo'] as [PlanId, string, string, string])} />
-    {sel !== 'free' && sel !== 'enterprise' && <Note><Icon name="calendar" /><span>Trial ends {dateShort(end)}. We’ll remind you 3 days before. Pay by QRIS, VA or card, no card needed now.</span></Note>}
-    <button className="btn btn-primary btn-lg" onClick={() => start(sel !== 'free')}>{sel === 'free' ? 'Start free' : sel === 'enterprise' ? 'Contact sales' : `Start ${TRIAL_DAYS}-day ${p.name} trial`}</button>
-    {sel !== 'free' && sel !== 'enterprise' && <button className="btn btn-lg" onClick={() => start(false)}>Pay now instead</button>}
+    {trial && <Note><Icon name="calendar" /><span>Trial ends {dateShort(end)}. We’ll remind you 3 days before. Pay by QRIS, VA or card, no card needed now.</span></Note>}
+    <button className="btn btn-primary btn-lg" onClick={() => start(trial || sel === 'enterprise')}>{sel === 'free' ? 'Start free' : sel === 'enterprise' ? 'Contact sales' : trial ? `Start ${TRIAL_DAYS}-day ${p.name} trial` : `Continue to payment · ${p.name}`}</button>
+    {trial && <button className="btn btn-lg" onClick={() => start(false)}>Pay now instead</button>}
     <div className="row between"><Link href={A + OB[3]} className="btn btn-ghost btn-sm"><Icon name="arrow-left" size={16} />Back</Link><span className="faint" style={{ fontSize: 13 }}>Current plan: {planOf(db.tenant.plan).name}</span></div>
   </div>;
 }

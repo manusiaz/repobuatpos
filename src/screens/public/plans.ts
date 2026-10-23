@@ -16,6 +16,8 @@ export const priceKey = (plan: string) => `/admin/plans-and-pricing:price-${plan
 /** The plans at the prices BorNiz set; PLANS holds the defaults. */
 export const priced = (over: Record<string, unknown>): Plan[] => PLANS.map(p => p.monthly && Number(over[p.id]) > 0 ? { ...p, monthly: Number(over[p.id]) } : p);
 export const TRIAL_DAYS = 14;
+/** The trial is used once, by a business still on Free (bn_start_trial, BN074). */
+export const canTrial = (t: DB['tenant']) => t.plan === 'free' && !t.trialUntil;
 export const PPN_BPS = 1100;
 
 /** Yearly = 2 months free, shown as a monthly equivalent. */
