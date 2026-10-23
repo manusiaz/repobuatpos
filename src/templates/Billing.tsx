@@ -22,8 +22,9 @@ export function Billing() {
   const [error, setError] = useState('');
   useEffect(() => {
     if (!REMOTE) return;
+    setRows(null); setError('');
     void import('../data/backend.ts').then(s => s.myInvoices(remoteInfo().tenant?.id ?? '', ownStaffToken(user.id))).then(setRows, e => setError((e as Error).message));
-  }, []);
+  }, [user.id]); // who is at the device decides (a PIN switch refetches)
   const plan = planOf(db.tenant.plan);
   return <div className="stack lg">
     <PageHead sub="What BorNiz bills this business. Invoices come from your plan and outlets; nobody here creates or edits one." />

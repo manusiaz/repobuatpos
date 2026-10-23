@@ -51,10 +51,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ op: str
       if (MINE[name]) {
         if (!uid) throw new HttpError(401, 'Sign in first');
         if (!UUID.test(String(b.p_tenant))) throw new HttpError(400, 'Bad tenant id');
-        const [roles, recordKind] = MINE[name], role = await call('bn_acting_role', { p_tenant: b.p_tenant, p_staff: b.p_staff ?? null }, uid); // the PIN session on this device, else the account
-        if (!roles.includes(String(role))) throw new HttpError(403, recordKind === 'invoice' ? 'BN078 Only the owner sees BorNiz invoices' : 'BN084 Only the owner or a manager contacts BorNiz support');
+        const [roles, recordKind] = MINE[name], acting = await call('bn_acting_role', { p_tenant: b.p_tenant, p_staff: b.p_staff ?? null }, uid) as { role?: string; name?: string; ended?: boolean } | null;
+        if (acting?.ended) throw new HttpError(401, 'BN082 Your session ended. Sign in with your PIN again.');
+        if (!roles.includes(String(acting?.role))) throw new HttpError(403, recordKind === 'invoice' ? 'BN078 Only the owner sees BorNiz invoices' : 'BN084 Only the owner or a manager contacts BorNiz support');
         return out(name === 'bn_open_ticket'
-          ? await rpc('bn_server_open_ticket', { p_tenant: b.p_tenant, p_user: uid, p_subject: String(b.p_subject ?? ''), p_body: String(b.p_body ?? ''), p_priority: String(b.p_priority ?? 'normal') }, null)
+          ? await rpc('bn_server_open_ticket', { p_tenant: b.p_tenant, p_user: uid, p_subject: String(b.p_subject ?? ''), p_body: String(b.p_body ?? ''), p_priority: String(b.p_priority ?? 'normal'), p_by: acting?.name ?? null }, null)
           : await rpc('bn_server_records_of', { p_tenant: b.p_tenant, p_kind: recordKind }, null));
       }
       // support access runs in the business's own database: BorNiz staff are checked here, on the platform, first

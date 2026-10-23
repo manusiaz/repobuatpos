@@ -69,6 +69,14 @@ assert.equal(r.error, null, 'manager of a moved business opens a ticket: ' + JSO
 assert.equal((await src.query("select data->>'c' c from private.platform_records where kind = 'ticket' and id = $1", [r.data])).rows[0]?.c, 'normal', 'on the platform, never urgent');
 assert.equal((await api('rpc/bn_my_tickets', { p_tenant: T }, mgrSession)).data?.length, 1);
 assert.match((await api('rpc/bn_my_invoices', { p_tenant: T }, mgrSession)).error?.message ?? '', /^BN078/, 'invoices are the owner\'s');
+// at a device: a cashier's PIN session on the manager's browser is a cashier; the manager's own PIN session names them;
+// an ended one asks for the PIN again (all in the moved business's database)
+const pin = async (employee, role, mins) => (await dst.query("insert into private.staff_sessions (tenant_id, user_id, employee_id, role, expires_at) values ($1, $2, $3, $4, now() + make_interval(mins => $5)) returning token", [T, mgr, employee, role, mins])).rows[0].token;
+await dst.query("insert into public.docs (tenant_id, coll, id, data) values ($1, 'employees', 'rina', '{\"id\":\"rina\",\"name\":\"Rina\",\"role\":\"cashier\",\"active\":true}'), ($1, 'employees', 'andi', '{\"id\":\"andi\",\"name\":\"Andi\",\"role\":\"manager\",\"active\":true}') on conflict do nothing", [T]);
+assert.match((await api('rpc/bn_open_ticket', { p_tenant: T, p_subject: 'Hi', p_body: 'From the register', p_staff: await pin('rina', 'cashier', 60) }, mgrSession)).error?.message ?? '', /^BN084/, 'the cashier at the device is a cashier');
+r = await api('rpc/bn_open_ticket', { p_tenant: T, p_subject: 'Drawer stuck', p_body: 'Cash drawer at register 2', p_staff: await pin('andi', 'manager', 60) }, mgrSession);
+assert.equal((await src.query("select data->>'by' b from private.platform_records where kind = 'ticket' and id = $1", [r.data])).rows[0]?.b, 'Andi', 'the ticket names who sent it');
+assert.match((await api('rpc/bn_my_tickets', { p_tenant: T, p_staff: await pin('andi', 'manager', -5) }, mgrSession)).error?.message ?? '', /^BN082/, 'an ended PIN session asks for the PIN again');
 const stranger = await newSession((await src.query("insert into auth.users (email) values ('stranger@contoh.id') returning id")).rows[0].id);
 assert.match((await api('rpc/bn_open_ticket', { p_tenant: T, p_subject: 'Hello', p_body: 'Hello there' }, stranger)).error?.message ?? '', /^BN084/);
 

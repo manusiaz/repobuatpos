@@ -2,7 +2,7 @@
 -- Who may open or read them is checked by the API in the business's own database (cells-api.mjs).
 \set ON_ERROR_STOP 1
 begin;
-insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000d1', 'owner@kopitiket.id');
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000d1', 'owner@kopitiket.id'), ('00000000-0000-0000-0000-0000000000d4', 'other@contoh.id');
 delete from private.secrets where name = 'server'; insert into private.secrets values ('server', 'ticket-secret');
 create function pg_temp.expect(sql text, code text) returns void language plpgsql as $$
 begin execute sql; raise exception 'expected % but it passed: %', code, sql;
@@ -27,16 +27,26 @@ select pg_temp.open('Ticket ' || g, 'Details ' || g, 'normal') from generate_ser
 select pg_temp.expect($$ select pg_temp.open('One more', 'Details', 'normal') $$, 'BN086');
 do $$ begin assert (select count(*) from private.platform_audit where action = 'ticket.opened' and tenant_id = (select id from t)) = 10, 'every ticket audited'; end $$;
 
--- who is acting (bn_acting_role, asked by the API in the business's database): the account, or the staff member signed
--- in by PIN on this device; a session that isn't this account's answers nothing
-insert into private.staff_sessions (token, tenant_id, user_id, employee_id, role, expires_at)
-  values ('00000000-0000-0000-0000-0000000000e9', (select id from t), '00000000-0000-0000-0000-0000000000d1', 'rina', 'cashier', now() + interval '1 hour');
+-- who is acting (bn_acting_role, asked by the API in the business's database): the account; or the staff member signed in
+-- by PIN on this device, active, with the role their record has now; an ended session or a removed employee = sign in again
+insert into public.docs (tenant_id, coll, id, data) values ((select id from t), 'employees', 'rina', '{"id":"rina","name":"Rina","role":"cashier","active":true}'),
+  ((select id from t), 'employees', 'andi', '{"id":"andi","name":"Andi","role":"cashier","active":true}'), ((select id from t), 'employees', 'tono', '{"id":"tono","name":"Tono","role":"cashier","active":false}');
+insert into private.staff_sessions (token, tenant_id, user_id, employee_id, role, expires_at) values
+  ('00000000-0000-0000-0000-0000000000e9', (select id from t), '00000000-0000-0000-0000-0000000000d1', 'rina', 'cashier', now() + interval '1 hour'),
+  ('00000000-0000-0000-0000-0000000000ea', (select id from t), '00000000-0000-0000-0000-0000000000d1', 'andi', 'manager', now() + interval '1 hour'),
+  ('00000000-0000-0000-0000-0000000000eb', (select id from t), '00000000-0000-0000-0000-0000000000d1', 'rina', 'cashier', now() - interval '1 hour'),
+  ('00000000-0000-0000-0000-0000000000ec', (select id from t), '00000000-0000-0000-0000-0000000000d1', 'tono', 'cashier', now() + interval '1 hour');
 set local role authenticated;
 do $$ begin
-  assert public.bn_acting_role((select id from t)) = 'owner', 'the account';
-  assert public.bn_acting_role((select id from t), '00000000-0000-0000-0000-0000000000e9') = 'cashier', 'a cashier on the owner''s browser is a cashier';
-  assert public.bn_acting_role((select id from t), gen_random_uuid()) is null, 'an unknown session is nobody';
+  assert public.bn_acting_role((select id from t)) = '{"role": "owner"}', 'the account';
+  assert public.bn_acting_role((select id from t), '00000000-0000-0000-0000-0000000000e9') = '{"role": "cashier", "name": "Rina"}', 'a cashier on the owner''s browser is a cashier';
+  assert public.bn_acting_role((select id from t), '00000000-0000-0000-0000-0000000000ea')->>'role' = 'cashier', 'a demotion counts at once';
+  assert public.bn_acting_role((select id from t), '00000000-0000-0000-0000-0000000000eb') = '{"ended": true}', 'an ended session (no grace for live calls)';
+  assert public.bn_acting_role((select id from t), '00000000-0000-0000-0000-0000000000ec') = '{"ended": true}', 'an employee no longer active';
+  assert public.bn_acting_role((select id from t), gen_random_uuid()) = '{"ended": true}', 'an unknown session';
 end $$;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000d4', true);
+do $$ begin assert public.bn_acting_role((select id from t)) is null, 'not a member'; end $$;
 reset role;
 select 'tickets hold' as result;
 rollback;

@@ -2,7 +2,7 @@
 // every open device and the worker. Below Pro the defaults run and the studio's changes wait (TOOL_PLAN). Quiet
 // hours and marketing consent are the outbox's (dispatch.ts); each send has a fixed id, so a second device adds nothing.
 import type { Customer, DB, Message } from '../schema.ts';
-import { toolValue } from '../../system/tools.ts';
+import { TOOL_DEFAULTS, toolValue } from '../../system/tools.ts';
 
 const HOUR = 36e5, DAY = 864e5;
 export const AUTOMATIONS = ['a_thanks', 'a_feedback', 'a_winback', 'a_bday'] as const;
@@ -14,9 +14,9 @@ const setting = (v: Record<string, unknown>, k: string, def: number, min: number
   const x = v[k] === '' || v[k] == null ? NaN : Number(v[k]);
   return Number.isFinite(x) ? Math.max(min, Math.min(x, max)) : def;
 };
-export const winbackDays = (v: Record<string, unknown>) => setting(v, 'days', 30, 14, WINBACK_MAX_DAYS);
+export const winbackDays = (v: Record<string, unknown>) => setting(v, 'days', TOOL_DEFAULTS.a_winback.days, 14, WINBACK_MAX_DAYS);
 /** Days before the birthday the treat goes out (studio range 0–14). */
-export const birthdayDays = (v: Record<string, unknown>) => setting(v, 'days', 7, 0, 14);
+export const birthdayDays = (v: Record<string, unknown>) => setting(v, 'days', TOOL_DEFAULTS.a_bday.days, 0, 14);
 /** The next birthday on or after the day before, this year's or next year's (3 January is due in late December). */
 export function nextBirthday(birthday: string, now: number): number | null {
   const y = new Date(now).getFullYear();

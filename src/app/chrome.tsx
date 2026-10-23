@@ -109,7 +109,7 @@ function Support() {
   const { user } = useApp();
   const [mine, setMine] = useState<(Rec & { m?: string })[] | null>(null), [f, setF] = useState({ a: '', m: '', c: 'normal' as 'normal' | 'high' }), [busy, setBusy] = useState(false);
   const load = () => myTickets(user.id).then(setMine, () => setMine([]));
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { setMine(null); void load(); }, [user.id]); // who is at the device decides
   const send = async () => {
     setBusy(true); const no = await openSupportTicket(f.a, f.m, f.c, user.id); setBusy(false);
     if (no) return toast(no);
