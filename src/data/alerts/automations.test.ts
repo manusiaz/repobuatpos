@@ -52,3 +52,8 @@ test('a win-back published at 0 days waits the 14-day minimum; a birthday that i
   db.customers[0].birthday = '03/41';
   assert.deepEqual(send(db, T0).filter(s => s.startsWith('birthday')), []);
 });
+test('a blank or missing wait means the default, whichever way it is stored', async () => {
+  const { winbackDays, birthdayDays } = await import('./automations.ts');
+  assert.deepEqual([winbackDays({ days: '' }), winbackDays({}), winbackDays({ days: 'x' }), winbackDays({ days: 90 }), winbackDays({ days: 0 })], [30, 30, 30, 30, 14]);
+  assert.deepEqual([birthdayDays({ days: '' }), birthdayDays({}), birthdayDays({ days: 3 })], [7, 7, 3]);
+});

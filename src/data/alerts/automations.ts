@@ -9,7 +9,14 @@ export const AUTOMATIONS = ['a_thanks', 'a_feedback', 'a_winback', 'a_bday'] as 
 /** Win-back wait the studio offers (14–30 days: devices and the worker load 35 days of orders, so a longer wait would
  *  never see the last visit). The sender, the studio audience and its text all use this value. */
 export const WINBACK_MAX_DAYS = 30;
-export const winbackDays = (v: Record<string, unknown>) => { const d = Number(v.days); return Number.isFinite(d) ? Math.max(14, Math.min(d, WINBACK_MAX_DAYS)) : WINBACK_MAX_DAYS; };
+/** A published number setting inside the studio's range; blank, missing or not a number is the default (one meaning for "unset"). */
+const setting = (v: Record<string, unknown>, k: string, def: number, min: number, max: number) => {
+  const x = v[k] === '' || v[k] == null ? NaN : Number(v[k]);
+  return Number.isFinite(x) ? Math.max(min, Math.min(x, max)) : def;
+};
+export const winbackDays = (v: Record<string, unknown>) => setting(v, 'days', 30, 14, WINBACK_MAX_DAYS);
+/** Days before the birthday the treat goes out (studio range 0–14). */
+export const birthdayDays = (v: Record<string, unknown>) => setting(v, 'days', 7, 0, 14);
 /** The next birthday on or after the day before, this year's or next year's (3 January is due in late December). */
 export function nextBirthday(birthday: string, now: number): number | null {
   const y = new Date(now).getFullYear();
@@ -27,7 +34,7 @@ function moments(db: DB, now: number, id: (typeof AUTOMATIONS)[number], v: Recor
   return db.customers.flatMap(c => {
     if (!c.birthday) return [];
     const b = nextBirthday(c.birthday, now);
-    return b !== null && due(now, b, -n('days') * DAY, DAY) ? [{ key: c.id + '|' + new Date(b).getFullYear(), customerId: c.id }] : [];
+    return b !== null && due(now, b, -birthdayDays(v) * DAY, DAY) ? [{ key: c.id + '|' + new Date(b).getFullYear(), customerId: c.id }] : [];
   });
 }
 // only guests who opted in (catalog: "opted-in"); the studio narrows it further

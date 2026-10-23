@@ -98,8 +98,9 @@ export const adminSupportState = (tenant: string) => ok<SupportState>('bn_admin_
 export const adminSupportDocs = (tenant: string) => ok<{ coll: string; id: string; data: Record<string, unknown> }[]>('bn_admin_support_docs', { p_tenant: tenant });
 export const adminSupportEnd = (tenant: string, id: string) => ok('bn_admin_support_end', { p_tenant: tenant, p_id: id });
 /** Support tickets a business opens (owner / manager) and reads back; they land in the console's Support tickets. */
-export const openTicket = (tenant: string, subject: string, body: string, priority: string) => ok<string>('bn_open_ticket', { p_tenant: tenant, p_subject: subject, p_body: body, p_priority: priority });
-export const myTickets = (tenant: string) => ok<{ id: string; a: string; b: string; c: string; d: string; e: string; at: number; m?: string }[]>('bn_my_tickets', { p_tenant: tenant });
+export const openTicket = (tenant: string, subject: string, body: string, priority: string, staff: string | null) => ok<string>('bn_open_ticket', { p_tenant: tenant, p_subject: subject, p_body: body, p_priority: priority, p_staff: staff });
+export const myTickets = (tenant: string, staff: string | null) => ok<{ id: string; a: string; b: string; c: string; d: string; e: string; at: number; m?: string }[]>('bn_my_tickets', { p_tenant: tenant, p_staff: staff });
+export const myInvoices = (tenant: string, staff: string | null) => ok<(import('./schema.ts').Rec & { n?: string })[]>('bn_my_invoices', { p_tenant: tenant, p_staff: staff });
 /** The owner starts the trial of a paid plan, once (sign-up). */
 export const startTrial = (tenant: string, plan: string) => ok<{ plan: string; trialUntil: number }>('bn_start_trial', { p_tenant: tenant, p_plan: plan });
 /** Shared register: owner / manager get a one-time code, the tablet re-signs in anonymously and joins with it (no owner rights). */

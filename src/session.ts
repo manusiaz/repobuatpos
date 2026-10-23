@@ -26,9 +26,8 @@ const nextHere = () => (/^\/account(\/|$)/.test(location.pathname) ? '' : '?next
 const granted = new Map<string, number>();
 const GUEST: SessionUser = { id: 'guest', role: 'customer', outletId: 'sen' };
 
-/** A tablet the team shares (a device account, or a tab an owner turned into a shared register): people on it sign in
- *  by PIN, the account isn't theirs, so account things (BorNiz tickets and invoices) wait for their own sign-in. */
-export function isSharedDevice() {
+/** A tablet the team shares (a device account, or a tab an owner turned into a shared register): people on it sign in by PIN. */
+function isSharedDevice() {
   if (!REMOTE) return false;
   let shared = remoteInfo().member?.role === 'device'; try { shared ||= localStorage.getItem(SHARED) === '1'; } catch { /* blocked */ }
   return shared;

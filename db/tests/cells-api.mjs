@@ -70,7 +70,7 @@ assert.equal((await src.query("select data->>'c' c from private.platform_records
 assert.equal((await api('rpc/bn_my_tickets', { p_tenant: T }, mgrSession)).data?.length, 1);
 assert.match((await api('rpc/bn_my_invoices', { p_tenant: T }, mgrSession)).error?.message ?? '', /^BN078/, 'invoices are the owner\'s');
 const stranger = await newSession((await src.query("insert into auth.users (email) values ('stranger@contoh.id') returning id")).rows[0].id);
-assert.match((await api('rpc/bn_open_ticket', { p_tenant: T, p_subject: 'Hello', p_body: 'Hello there' }, stranger)).error?.message ?? '', /^BN080/);
+assert.match((await api('rpc/bn_open_ticket', { p_tenant: T, p_subject: 'Hello', p_body: 'Hello there' }, stranger)).error?.message ?? '', /^BN084/);
 
 console.log('cells api holds');
 await src.end(); await dst.end(); process.exit(0);

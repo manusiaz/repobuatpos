@@ -6,6 +6,7 @@ import { commit, snapshot, uid } from '../store.ts';
 import type { DB, Rec } from '../schema.ts';
 import { requestApproval } from '../actions.ts';
 import { REMOTE } from '../remote.ts';
+import { ownStaffToken } from '../staff.ts';
 import { PLANS } from '../../screens/public/plans.ts';
 import { toast } from '../../ui/kit.tsx';
 
@@ -175,14 +176,14 @@ export async function openSupportTicket(subject: string, body: string, priority:
   if (subject.trim().length < 3 || body.trim().length < 3) return 'Say what happened';
   if (REMOTE) {
     const s = await import('../backend.ts'), { remoteInfo } = await import('../remoteStore.ts');
-    try { await s.openTicket(remoteInfo().tenant?.id ?? '', subject.trim(), body.trim(), priority); return null; } catch (e) { return (e as Error).message.replace(/^BN\d+\s*/, ''); }
+    try { await s.openTicket(remoteInfo().tenant?.id ?? '', subject.trim(), body.trim(), priority, ownStaffToken(by)); return null; } catch (e) { return (e as Error).message.replace(/^BN\d+\s*/, ''); }
   }
   commit('ticket.opened', by, d => { (d.records.ticket ??= []).unshift({ id: uid('TK-'), a: subject.trim(), b: d.tenant.id, c: priority, d: 'open', e: '', at: Date.now(), m: body.trim(), by } as Rec); }, subject.trim());
   return null;
 }
 /** The business's own tickets and where they stand. */
-export async function myTickets(): Promise<(Rec & { m?: string })[]> {
+export async function myTickets(by: string): Promise<(Rec & { m?: string })[]> {
   if (!REMOTE) { const d = snapshot(); return (d.records.ticket ?? []).filter(r => r.b === d.tenant.id); }
   const s = await import('../backend.ts'), { remoteInfo } = await import('../remoteStore.ts');
-  return s.myTickets(remoteInfo().tenant?.id ?? '');
+  return s.myTickets(remoteInfo().tenant?.id ?? '', ownStaffToken(by));
 }

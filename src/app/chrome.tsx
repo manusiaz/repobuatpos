@@ -10,7 +10,7 @@ import { Icon, Sheet, ago, Avatar, Badge, Field, Seg, toast } from '../ui/kit.ts
 import { myTickets, openSupportTicket } from '../data/actions/admin.ts';
 import type { Rec } from '../data/schema.ts';
 import { markRead } from '../data/actions.ts';
-import { isSharedDevice, setSession } from '../session.ts';
+import { setSession } from '../session.ts';
 import { DEMO_HERE, setDemo } from '../data/remote.ts';
 import { industryHides } from '../system/tools.ts';
 import { useApp } from './context.tsx';
@@ -96,8 +96,7 @@ export function Help() {
         {tasks.map(([when, title, list]) => <section key={when} className="stack sm"><span className="cap">{when} · {title}</span>
           {list.map(([t, app]) => { const s = SURFACE_OF[app]; return <div key={t} className="row between" style={{ borderTop: '1px solid var(--border)', paddingTop: 8 }}><span style={{ fontSize: 14 }}>{t}</span>{s ? <Link className="btn btn-sm" href={surfaceHome(s)} onClick={() => setOpen(false)}>Show me</Link> : <span className="faint" style={{ fontSize: 12 }}>{app}</span>}</div>; })}
         </section>)}
-        {(user.role === 'owner' || user.role === 'manager') && (isSharedDevice()
-          ? <p className="muted" style={{ fontSize: 14 }}>To contact BorNiz support, sign in as the owner or a manager on a phone or laptop. A shared register can't.</p> : <Support />)}
+        {(user.role === 'owner' || user.role === 'manager') && <Support />}
         <section className="stack sm"><span className="cap">Rules everyone follows</span>{(catalog.rules as unknown as [string, string, string, [string, string][]][]).slice(0, 6).map(([t, , where, rs]) => <details key={t}><summary style={{ cursor: 'pointer', fontWeight: 600 }}>{t} <span className="faint" style={{ fontWeight: 400 }}>· {where}</span></summary><ul style={{ margin: '6px 0', paddingLeft: 18, fontSize: 14 }}>{rs.map(([m, x]) => <li key={x}><b>{m}</b> {x}</li>)}</ul></details>)}</section>
       </div>
     </Sheet>
@@ -109,7 +108,7 @@ export function Help() {
 function Support() {
   const { user } = useApp();
   const [mine, setMine] = useState<(Rec & { m?: string })[] | null>(null), [f, setF] = useState({ a: '', m: '', c: 'normal' as 'normal' | 'high' }), [busy, setBusy] = useState(false);
-  const load = () => myTickets().then(setMine, () => setMine([]));
+  const load = () => myTickets(user.id).then(setMine, () => setMine([]));
   useEffect(() => { void load(); }, []);
   const send = async () => {
     setBusy(true); const no = await openSupportTicket(f.a, f.m, f.c, user.id); setBusy(false);

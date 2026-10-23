@@ -8,4 +8,6 @@ const write = (t: Tokens) => { try { sessionStorage.setItem(KEY, JSON.stringify(
 export function setStaffToken(employeeId: string, token: string) { const t = read(); t.by[employeeId] = token; t.last = token; write(t); }
 /** The acting person's token; an approver deciding on someone else's register writes under the signed-in person's session. */
 export const staffToken = (employeeId: string): string | null => { const t = read(); return t.by[employeeId] ?? t.last; };
+/** This person's own PIN session on this device, if they signed in by PIN (none: they act as the account). */
+export const ownStaffToken = (employeeId: string): string | null => read().by[employeeId] ?? null;
 export function clearStaffTokens() { const t = read(); try { sessionStorage.removeItem(KEY); } catch { /* blocked */ } return Object.values(t.by); }
