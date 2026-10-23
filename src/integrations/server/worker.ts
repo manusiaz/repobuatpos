@@ -67,11 +67,12 @@ async function save(t: Tenant, before: DB, after: DB, stored: Map<string, unknow
   return ops.length;
 }
 
+const issued = new Set<string>(); // invoices this process already handed to the platform
 export async function runTenant(t: Tenant, now = Date.now(), prices: Record<string, unknown> = {}) {
   let { db, stored } = await load(t);
-  // BorNiz billing: this month's invoice, once (the platform keeps one per business and month)
+  // BorNiz billing: this month's invoice, once (the platform keeps one per id); a billing error never stops the run
   const inv = invoiceFor(t, db.outlets.length, prices, now);
-  if (inv) await rpc('bn_server_invoice', { p_tenant: t.id, p_id: inv.id, p_data: inv });
+  if (inv && !issued.has(inv.id)) await rpc('bn_server_invoice', { p_tenant: t.id, p_id: inv.id, p_data: inv }).then(() => issued.add(inv.id), e => console.error('[worker] billing', t.slug, (e as Error).message));
   // gateway settlement first, one order per write: a device finishing the same order first is not an error
   const open = new Set(db.orders.filter(o => finalizeNeed(db, o.id)).map(o => o.id));
   for (const p of db.payments) {

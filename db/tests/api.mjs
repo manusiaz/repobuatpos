@@ -6,7 +6,7 @@ const require = createRequire(import.meta.url);
 
 process.env.NEXT_PUBLIC_BORNIZ_ROOT_DOMAIN = 'bornis.id';
 const { POST, GET } = await import('../../app/api/bn/[...op]/route.ts');
-const { totp } = await import('../../src/integrations/server/session.ts');
+const { totp, newSession } = await import('../../src/integrations/server/session.ts');
 const { pool } = await import('../../src/integrations/server/db.ts');
 
 const jar = { a: '', b: '' };
@@ -59,6 +59,8 @@ const sha = t => require('node:crypto').createHash('sha256').update(t).digest('h
 await pool().query("update auth.sessions set created_at = now() - interval '1 hour' where token_hash = $1", [sha(jar.a)]);
 assert.equal((await api('a', 'auth/update', { password: 'dicuri123' })).status, 401, 'an old cookie cannot change the password');
 assert.equal((await api('a', 'auth/mfa/unenroll', { factorId: f.id })).status, 400, 'an old cookie cannot turn 2FA off');
+jar.r = await newSession((await pool().query("select id from auth.users where email = 'owner@kopia.id'")).rows[0].id); // what a reset link opens: no code passed
+assert.equal((await api('r', 'auth/mfa/enroll')).status, 401, 'a session without the code cannot add its own authenticator');
 assert.deepEqual((await api('a', 'auth/mfa/list')).data.totp.map(x => x.status), ['verified']);
 assert.equal(r.error, null);
 assert.deepEqual((await api('a', 'auth/mfa/list')).data.totp.map(x => x.status), ['verified']);

@@ -131,6 +131,9 @@ export function totp(secret: string, at = Date.now()): string {
 }
 export const totpOk = (secret: string, code: string) => [-1, 0, 1].some(w => totp(secret, Date.now() + w * 30e3) === code.replace(/\s/g, ''));
 export async function mfaEnroll(user: User) {
+  // a session that never passed the account's working code (a reset link, an old cookie) can't add its own authenticator
+  if (!user.mfa && (await db().query('select 1 from auth.mfa_factors where user_id = $1 and verified', [user.id])).rowCount)
+    throw new HttpError(401, 'Sign in with your current authenticator code before adding another.');
   const secret = b32(randomBytes(20));
   const r = await db().query('insert into auth.mfa_factors (user_id, secret) values ($1, $2) returning id', [user.id, secret]);
   const uri = `otpauth://totp/BorNiz:${encodeURIComponent(user.email ?? user.id)}?secret=${secret}&issuer=BorNiz`;

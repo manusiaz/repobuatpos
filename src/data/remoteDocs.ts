@@ -1,7 +1,7 @@
 // Pure mapping between the app DB and the document store (public.docs: tenant, coll, id, data, t, open).
 // No browser or network here: the remote adapter (remoteStore.ts) and the Node tests share it.
 import type { DB } from './schema.ts';
-import { seed } from './seed.ts';
+import { plainTheme, seed } from './seed.ts';
 
 type Any = Record<string, any>;
 export interface Op { op: 'put' | 'del'; coll: string; id: string; data?: unknown; t?: number | null; open?: boolean; expect?: Record<string, unknown>; fresh?: boolean }
@@ -235,7 +235,7 @@ let blank: DB | null = null;
 export function blankDB(): DB {
   if (blank) return blank;
   const s = emptyDB(seed());
-  return blank = { ...s, tenant: { ...s.tenant, id: '', name: '', plan: 'free' }, theme: { ...s.theme, name: '' }, staffBrand: { ...s.staffBrand, workspace: '' } };
+  return blank = { ...s, tenant: { ...s.tenant, id: '', name: '', plan: 'free' }, theme: plainTheme(s.theme, ''), staffBrand: { ...s.staffBrand, workspace: '' } };
 }
 /** A business as a signed-in device (remoteStore) and the automation worker see it: its documents inside the history
  *  window, plus stock and beans from before it as opening rows. */

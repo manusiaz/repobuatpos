@@ -17,8 +17,8 @@ function moments(db: DB, now: number, id: (typeof AUTOMATIONS)[number], v: Recor
   if (id === 'a_winback') return db.customers.flatMap(c => { const t = lastVisit(db, c.id); return t && due(now, t, n('days') * DAY, DAY) ? [{ key: c.id + '|' + t, customerId: c.id }] : []; });
   return db.customers.flatMap(c => {
     if (!c.birthday) return [];
-    const y = new Date(now).getFullYear(), b = new Date(c.birthday); b.setFullYear(y);
-    return due(now, b.getTime(), -n('days') * DAY, DAY) ? [{ key: c.id + '|' + y, customerId: c.id }] : [];
+    const y = new Date(now).getFullYear(); // this year's birthday or next year's: a 3 January one is due in late December
+    return [y, y + 1].flatMap(yr => { const b = new Date(c.birthday!); b.setFullYear(yr); return due(now, b.getTime(), -n('days') * DAY, DAY) ? [{ key: c.id + '|' + yr, customerId: c.id }] : []; });
   });
 }
 // only guests who opted in (catalog: "opted-in"); the studio narrows it further

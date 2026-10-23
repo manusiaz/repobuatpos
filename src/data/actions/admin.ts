@@ -58,7 +58,8 @@ export function ensurePlatform() {
   const releases = [rel('4.12.0', 'rolling', 'Kitchen lanes for delivery orders, busy mode', 40, 1), rel('4.11.2', 'shipped', 'QRIS expiry fix, receipt logo sizing', 100, 6), rel('4.11.0', 'shipped', 'Opname with photos, two-person sign-off', 100, 15), rel('4.13.0', 'scheduled', 'Split bill on the guest’s phone', 0, -7)];
   const dom = (host: string, tenant: string, status: string, checkedHoursAgo: number): Rec => ({ id: uid('dm'), a: host, b: tenant, c: status, d: 'borniz-verify=' + uid().slice(0, 10), e: String(now - checkedHoursAgo * 3600e3), at: now - 20 * DAY });
   const domains = [dom('order.kopibiru.id', d0.tenant.id, 'verified', 30), dom('menu.baragrill.co.id', 'baragrill', 'pending', 2), dom('pasarrasa.com', 'pasarrasa', 'failed', 5)];
-  commit('platform.seeded', 'system', d => { Object.assign(d.records, { tenant: tenants, invoice: invoices, ticket: tickets, flag: flags, release: releases, domain: domains }); });
+  // a ticket the business already sent stays (the demo's samples join it)
+  commit('platform.seeded', 'system', d => { Object.assign(d.records, { tenant: tenants, invoice: invoices, ticket: [...(d.records.ticket ?? []), ...tickets], flag: flags, release: releases, domain: domains }); });
 }
 
 /** Live: the real businesses from the platform registry, the console's own records (invoices, tickets, flags, releases,

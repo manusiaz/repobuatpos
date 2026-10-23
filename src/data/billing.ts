@@ -11,6 +11,6 @@ export const billMonth = (t: number) => new Date(t + 7 * 3600e3).toISOString().s
 export function invoiceFor(t: { id: string; plan: string; trial?: boolean }, outlets: number, prices: Record<string, unknown>, now: number): (Rec & { n: string }) | null {
   const p = priced(prices).find(x => x.id === t.plan);
   if (!p?.monthly || t.trial || t.plan === 'enterprise') return null;
-  const qty = Math.max(1, outlets), sub = p.monthly * qty, m = billMonth(now);
+  const qty = Math.max(1, Math.min(outlets, p.outlets)), sub = p.monthly * qty, m = billMonth(now); // as Checkout charges: outlets kept after a downgrade are not billed
   return { id: `inv-${t.id}-${m}`, a: t.id, b: m, c: String(sub + Math.round((sub * PPN_BPS) / 10000)), d: 'unpaid', e: '', at: now, n: `${p.name} × ${qty} ${qty > 1 ? 'outlets' : 'outlet'}` };
 }

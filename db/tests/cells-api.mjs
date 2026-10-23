@@ -58,5 +58,19 @@ const list = await rpc('bn_server_tenants', {});
 assert.ok(list.some(t => t.slug === 'kopibiru' && t.cell === 'kb'));
 await runTenant(list.find(t => t.slug === 'kopibiru'));
 
+// a manager invited after the move exists only in the business's own database: support tickets still work for them
+// (the API asks that database who they are), a stranger is refused, and BorNiz invoices stay owner-only
+const mgr = (await src.query("insert into auth.users (email) values ('manager-after-move@kopibiru.id') returning id")).rows[0].id;
+await dst.query('insert into auth.users (id, email) values ($1, $2) on conflict do nothing', [mgr, 'manager-after-move@kopibiru.id']);
+await dst.query("insert into public.members (tenant_id, user_id, employee_id, role) values ($1, $2, 'andi', 'manager')", [T, mgr]);
+const mgrSession = await newSession(mgr);
+r = await api('rpc/bn_open_ticket', { p_tenant: T, p_subject: 'Printer offline', p_body: 'Kitchen printer at Senayan', p_priority: 'urgent' }, mgrSession);
+assert.equal(r.error, null, 'manager of a moved business opens a ticket: ' + JSON.stringify(r.error));
+assert.equal((await src.query("select data->>'c' c from private.platform_records where kind = 'ticket' and id = $1", [r.data])).rows[0]?.c, 'normal', 'on the platform, never urgent');
+assert.equal((await api('rpc/bn_my_tickets', { p_tenant: T }, mgrSession)).data?.length, 1);
+assert.match((await api('rpc/bn_my_invoices', { p_tenant: T }, mgrSession)).error?.message ?? '', /^BN078/, 'invoices are the owner\'s');
+const stranger = await newSession((await src.query("insert into auth.users (email) values ('stranger@contoh.id') returning id")).rows[0].id);
+assert.match((await api('rpc/bn_open_ticket', { p_tenant: T, p_subject: 'Hello', p_body: 'Hello there' }, stranger)).error?.message ?? '', /^BN080/);
+
 console.log('cells api holds');
 await src.end(); await dst.end(); process.exit(0);

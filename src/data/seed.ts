@@ -42,6 +42,9 @@ const KOPI_BIRU_DESIGN = {
   dc: { idleHead: 'Payday week: 20% off all coffee' },
   mc: { prog: 'Biru Rewards' },
 };
+/** A theme's colors and fonts without the demo's Menu Studio words: what a business that isn't the demo starts from. */
+export const plainTheme = ({ p, acc, ink, paper, font, banner, img }: DB['theme'], name: string): DB['theme'] => ({ name, p, acc, ink, paper, font, banner, img });
+
 export function seed(now = Date.now()): DB {
   const today = new Date(now); today.setHours(0, 0, 0, 0);
   const t0 = today.getTime();

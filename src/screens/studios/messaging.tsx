@@ -147,9 +147,9 @@ export const quietOf = (db: DB) => { const s = toolValue(db, 'optin'); return { 
 interface Auto { id: string; name: string; icon: string; tpl: string; trigger: string; desc: string; audience: (db: DB, v: V) => DB['customers'] }
 export const AUTOS: Auto[] = [
   { id: 'a_thanks', name: 'Post-visit thank-you', icon: 'heart-handshake', tpl: 'thanks_visit', trigger: 'Payment completed', desc: 'Thanks the guest on WhatsApp (or email) a set time after they pay.', audience: (db, v) => db.customers.filter(c => { const t = lastVisit(db, c.id); return t && Date.now() - t < (Number(v.delay) + 24) * 3600e3; }) },
-  { id: 'a_feedback', name: 'Feedback request & review link', icon: 'star', tpl: 'feedback_request', trigger: 'Rating received', desc: 'Happy guests (4–5★) get your Google review link; unhappy guests (1–2★) go to the manager instead.', audience: (db, v) => db.customers.filter(c => db.reviews.some(r => r.customerId === c.id && r.stars >= Number(v.min))) },
+  { id: 'a_feedback', name: 'Feedback request & review link', icon: 'star', tpl: 'feedback_request', trigger: 'Rating received', desc: 'Thanks guests who rated you well and asks them for a review. Low ratings already alert the manager (Bad review).', audience: (db, v) => db.customers.filter(c => db.reviews.some(r => r.customerId === c.id && r.stars >= Number(v.min))) },
   { id: 'a_winback', name: 'Win-back', icon: 'rotate-ccw', tpl: 'winback_30d', trigger: 'No visit in N days', desc: 'Invites regulars back when they haven’t visited for a while, with a voucher.', audience: (db, v) => db.customers.filter(c => { const t = lastVisit(db, c.id); return t > 0 && Date.now() - t > Number(v.days) * DAY; }) },
-  { id: 'a_bday', name: 'Birthday & points expiry', icon: 'cake', tpl: 'birthday', trigger: 'Birthday window or points expiring', desc: 'Birthday treat before the birthday, and a nudge before beans expire.', audience: (db, v) => db.customers.filter(c => { if (!c.birthday) return false; const b = new Date(c.birthday), n = new Date(); b.setFullYear(n.getFullYear()); const d = (b.getTime() - n.getTime()) / DAY; return d >= 0 && d <= Number(v.days); }) },
+  { id: 'a_bday', name: 'Birthday & points expiry', icon: 'cake', tpl: 'birthday', trigger: 'Birthday window', desc: 'Birthday treat before the birthday. The beans-expiry nudge goes out 14 days before expiry (Points expiring alert).', audience: (db, v) => db.customers.filter(c => { if (!c.birthday) return false; const b = new Date(c.birthday), n = new Date(); b.setFullYear(n.getFullYear()); const d = (b.getTime() - n.getTime()) / DAY; return d >= 0 && d <= Number(v.days); }) },
 ];
 const AUTO_DEF = TOOL_DEFAULTS as unknown as Record<string, V>;
 function autoStats(db: DB, tpl: string, windowDays = 7) {
@@ -169,10 +169,8 @@ function AutoPreview({ v, x, a }: PP & { a: Auto }) {
   const t = templates(x.db).find(t => t.id === v.tpl) ?? templates(x.db)[0];
   const s = autoStats(x.db, v.tpl), q = quietOf(x.db);
   const aud = a.audience(x.db, v);
-  const wait = a.id === 'a_thanks' || a.id === 'a_feedback' ? (v.delay ? `${v.delay} h after ${a.id === 'a_thanks' ? 'payment' : 'the rating'}` : 'Send immediately') : a.id === 'a_winback' ? `${v.days} days since last paid order` : `${v.days} days before birthday · beans ${v.expiry} days before expiry`;
+  const wait = a.id === 'a_thanks' || a.id === 'a_feedback' ? (v.delay ? `${v.delay} h after ${a.id === 'a_thanks' ? 'payment' : 'the rating'}` : 'Send immediately') : a.id === 'a_winback' ? `${v.days} days since last paid order` : `${v.days} days before the birthday`;
   const nodes: [string, string, string, string][] = [['zap', 'Trigger', a.trigger, 'accent'], ['clock', 'Wait', wait + (t.cat === 'MARKETING' && q.on ? ` · quiet hours ${q.from}–${q.to}` : ''), 'warning'], ['filter', 'Condition', COND[v.cond] + (t.cat === 'MARKETING' ? ' · opted in' : ''), 'info'], ['send', 'Send', `${CH[v.ch]} · “${t.name}”`, 'success']];
-  if (v.fallback && v.ch === 'wa') nodes.push(['mail', 'If WhatsApp fails', 'Send the same message by email', 'violet']);
-  if (a.id === 'a_feedback' && v.recover) nodes.push(['shield-alert', '1–2★', 'Alert the outlet manager for service recovery', 'danger']);
   return <Stage>
     <div className="row wrap" style={{ gap: 24, justifyContent: 'center', alignItems: 'flex-start', width: '100%' }}>
       <div className="stack" style={{ alignItems: 'center' }}><Badge tone={v.on ? 'success' : 'neutral'} dot>{v.on ? 'On' : 'Off'}</Badge><FlowNodes nodes={nodes} /></div>
@@ -196,9 +194,8 @@ function autoTool(a: Auto): Tool {
   return { id: a.id, group: 'MESSAGING & AUTOMATION', name: 'Automation: ' + a.name.toLowerCase().replace(/^./, c => c.toUpperCase()), icon: a.icon, desc: a.desc, def: AUTO_DEF[a.id],
     Preview: p => <AutoPreview {...p} a={a} />,
     fields: (v, x) => [F.toggle('Automation on', 'on'),
-      ...(a.id === 'a_thanks' ? [F.range('Wait after payment', 'delay', 0, 48, 1, ' h')] : a.id === 'a_feedback' ? [F.range('Wait after visit', 'delay', 0, 24, 1, ' h'), F.seg('Send review link from', 'min', [[4, '4★'], [5, '5★ only']]), F.text('Review link', 'link'), F.toggle('1–2★ alerts the manager instead', 'recover')] : a.id === 'a_winback' ? [F.range('Not visited for', 'days', 14, 90, 1, ' days')] : [F.range('Birthday message', 'days', 0, 14, 1, ' days before'), F.range('Points expiry nudge', 'expiry', 3, 30, 1, ' days before')]),
-      F.seg('Only if', 'cond', [['all', 'Everyone'], ['member', 'Members'], ['first', 'First visit'], ['phone', 'Has phone']]), F.seg('Send via', 'ch', [['wa', 'WhatsApp'], ['email', 'Email'], ['both', 'Both']]), F.select('Template', 'tpl', tplOpts(x)),
-      F.toggle('Fall back to email if WhatsApp fails', 'fallback'), F.toggle('Max 1 message per guest per day', 'cap'),
+      ...(a.id === 'a_thanks' ? [F.range('Wait after payment', 'delay', 0, 48, 1, ' h')] : a.id === 'a_feedback' ? [F.range('Wait after visit', 'delay', 0, 24, 1, ' h'), F.seg('Send review link from', 'min', [[4, '4★'], [5, '5★ only']])] : a.id === 'a_winback' ? [F.range('Not visited for', 'days', 14, 30, 1, ' days')] : [F.range('Birthday message', 'days', 0, 14, 1, ' days before')]),
+      F.seg('Only if', 'cond', [['all', 'Everyone'], ['member', 'Members'], ['first', 'First visit'], ['phone', 'Has phone']]), F.seg('Send via', 'ch', [['wa', 'WhatsApp'], ['email', 'Email'], ['both', 'Both']]), F.select('Template', 'tpl', tplOpts(x)), F.toggle('Max 1 message per guest per day', 'cap'),
       F.node(<button className="btn btn-block" onClick={() => runNow(a, v, x)}><Icon name="play" size={18} />Run now for matching guests</button>),
       F.note('WABA charges per conversation. Utility messages within 24 h of a visit cost less than marketing.', 'warn')] };
 }

@@ -37,3 +37,7 @@ test('win-back and birthday send once, on their day, when switched on', () => {
   assert.deepEqual(send(db, T0 + 32 * D), []);
   assert.deepEqual(send(db, T0 + 60e3).filter(s => s.startsWith('birthday')), ['birthday>c1@wa'], '7 days before the birthday (default)');
 });
+test('a birthday early in January is sent in late December', () => {
+  const db = shop('pro'); db.customers[0].birthday = '1990-01-03';
+  assert.deepEqual(send(db, Date.UTC(2026, 11, 27, 5)).filter(s => s.startsWith('birthday')), ['birthday>c1@wa']);
+});

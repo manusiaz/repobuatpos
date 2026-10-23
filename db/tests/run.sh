@@ -18,6 +18,7 @@ echo "$out" | grep -E 'hold'
 node --experimental-strip-types db/tests/gateway.mjs 2>/dev/null | grep hold
 node --experimental-strip-types db/tests/staff-actions.mjs 2>/dev/null | grep hold
 node db/tests/beans-race.mjs 2>/dev/null | grep hold
+node db/tests/plan-race.mjs 2>/dev/null | grep hold
 sh db/tests/move.sh | grep -E hold
 node --experimental-strip-types db/tests/cells-api.mjs 2>/dev/null | grep hold
 DATABASE_URL="$URL/bn_test" node --experimental-strip-types db/tests/live-load.mjs 2>/dev/null | grep hold

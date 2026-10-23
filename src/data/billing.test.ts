@@ -13,3 +13,6 @@ test('never billed: Free, a running trial, Enterprise (per contract)', () => {
   for (const t of [{ id: 'a', plan: 'free' }, { id: 'b', plan: 'pro', trial: true }, { id: 'c', plan: 'enterprise' }]) assert.equal(invoiceFor(t, 2, {}, NOV1), null);
   assert.equal(billMonth(NOV1 - 3600e3), '2026-10', '31 Oct 23:30 WIB is still October');
 });
+test('outlets kept after a downgrade are not billed (as Checkout charges)', () => {
+  assert.equal(invoiceFor({ id: 't1', plan: 'basic' }, 3, {}, NOV1)!.n, 'Basic × 1 outlet');
+});

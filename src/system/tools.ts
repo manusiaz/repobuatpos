@@ -17,10 +17,10 @@ const DAY = 864e5;
 
 export const TOOL_DEFAULTS = {
   // automations (Studios › Messaging & automation), run by src/data/alerts/automations.ts
-  a_thanks: { on: true, delay: 1, cond: 'all', ch: 'wa', tpl: 'thanks_visit', fallback: true, cap: true },
-  a_feedback: { on: true, delay: 2, cond: 'member', ch: 'wa', tpl: 'feedback_request', min: 4, link: '', recover: true, fallback: false, cap: true },
-  a_winback: { on: false, days: 30, cond: 'member', ch: 'wa', tpl: 'winback_30d', fallback: true, cap: true },
-  a_bday: { on: true, days: 7, expiry: 14, cond: 'all', ch: 'wa', tpl: 'birthday', fallback: true, cap: true },
+  a_thanks: { on: true, delay: 1, cond: 'all', ch: 'wa', tpl: 'thanks_visit', cap: true },
+  a_feedback: { on: true, delay: 2, cond: 'member', ch: 'wa', tpl: 'feedback_request', min: 4, cap: true },
+  a_winback: { on: false, days: 30, cond: 'member', ch: 'wa', tpl: 'winback_30d', cap: true },
+  a_bday: { on: true, days: 7, cond: 'all', ch: 'wa', tpl: 'birthday', cap: true },
   wait: { step: 'auto', prog: 'steps', eta: true, greet: 'Sit back, {name}. We’re brewing.', p_upsell: true, p_loyal: true, p_wifi: true, p_music: true, p_game: false, p_story: true, p_promo: true, p_ig: false, p_ad: false, adby: 'Susu Segar Lembang' },
   ready: { head: 'Selamat menikmati, {name}!', sub: 'Pesanan {order} siap di counter.', where: 'pickup', c_page: true, c_push: true, c_wa: true, c_disp: true, c_vibe: true, cta: 'rate', confetti: true, later: 'Terima kasih sudah mampir. Sampai jumpa lagi!' },
   push: { title: 'Your order is ready', body: 'Pick it up at the counter. Selamat menikmati!', img: false, link: 'order', when: 'now' },

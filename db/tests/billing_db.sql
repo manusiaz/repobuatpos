@@ -1,4 +1,4 @@
--- BorNiz billing on the platform (20261023000000_borniz_billing.sql): one invoice per business and month, only the owner reads them.
+-- BorNiz billing on the platform (20261023000000_borniz_billing.sql): one invoice per business and month.
 \set ON_ERROR_STOP 1
 begin;
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000b1', 'owner@kopitagih.id'), ('00000000-0000-0000-0000-0000000000b2', 'kasir@kopitagih.id');
@@ -25,11 +25,8 @@ end $$;
 select pg_temp.expect($$ select public.bn_server_invoice('billing-secret', gen_random_uuid(), (select d->>'id' from inv), (select d from inv)) $$, 'BN079');
 select pg_temp.expect($$ select public.bn_server_invoice('wrong', (select id from t), 'x', '{}') $$, 'BN016');
 
--- the owner reads them; anyone else is refused
-set local role authenticated;
-do $$ begin assert public.bn_my_invoices((select id from t))->0->>'n' = 'Pro × 3 outlets', 'owner sees the invoice'; end $$;
-select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b2', true);
-select pg_temp.expect($$ select public.bn_my_invoices((select id from t)) $$, 'BN078');
-reset role;
+-- the API reads a business's own invoices after its database said the caller is the owner (cells-api.mjs)
+do $$ begin assert public.bn_server_records_of('billing-secret', (select id from t), 'invoice')->0->>'n' = 'Pro × 3 outlets', 'the business''s invoice'; end $$;
+select pg_temp.expect($$ select public.bn_server_records_of('billing-secret', (select id from t), 'secret') $$, 'BN083');
 select 'billing holds' as result;
 rollback;

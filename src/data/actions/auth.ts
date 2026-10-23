@@ -5,7 +5,7 @@ import { commit, snapshot, uid } from '../store.ts';
 import type { DB, Role } from '../schema.ts';
 import { REMOTE } from '../remote.ts';
 import { toast } from '../../ui/kit.tsx';
-import { seed } from '../seed.ts';
+import { plainTheme, seed } from '../seed.ts';
 import { verifyPin } from '../actions.ts';
 import { planBlock } from '../../screens/public/plans.ts';
 import { remoteInfo, remoteReady, remoteRestart } from '../remoteStore.ts';
@@ -136,8 +136,7 @@ export function starterData(p: NewBusiness, slug: string): DB {
   }
   const e = emptyDB(s), outlet = { ...s.outlets[0], id: 'main', name: p.outlet || 'Main outlet', city: '', tables: 10 };
   const slot = () => ({ pic: '', crew: [] as string[] });
-  const { p: pc, acc, ink, paper, font, banner, img } = s.theme; // the demo's colors, none of its words
-  return { ...e, tenant: { ...s.tenant, id: slug, name: p.name, plan: 'free' }, theme: { name: p.name, p: pc, acc, ink, paper, font, banner, img }, staffBrand: { ...s.staffBrand, workspace: p.name },
+  return { ...e, tenant: { ...s.tenant, id: slug, name: p.name, plan: 'free' }, theme: plainTheme(s.theme, p.name), staffBrand: { ...s.staffBrand, workspace: p.name },
     outlets: [outlet], categories: s.categories, modifierGroups: s.modifierGroups, device: { ...s.device, outletId: 'main' },
     employees: [{ id: 'owner', name: p.owner, role: 'owner', outlets: ['main'], pin: p.pin, approvalPin: p.approvalPin, phone: p.phone, color: '#FF6A00', active: true, wage: 0 }],
     roster: Array.from({ length: 7 }, (_, day) => ({ outletId: 'main', day, slots: { pagi: slot(), siang: slot(), malam: slot() } })) };

@@ -2,7 +2,8 @@
 // receipts, no "20% off" promo it never ran on its customer display, no @kopibiru.id on its menu.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { seed } from './seed.ts';
+import { plainTheme, seed } from './seed.ts';
+import { blankDB } from './remoteDocs.ts';
 import { menuDesign } from './actions/studio.ts';
 import { receiptDoc } from '../devices/receipt.ts';
 import { toText } from '../devices/layout.ts';
@@ -10,8 +11,8 @@ import type { DB } from './schema.ts';
 
 const DEMO = /kopi ?biru|0812-3456-7890|20% off|Gayo|Asia Afrika/i;
 test('a new business shows none of the demo business on its menu, display or receipts', () => {
-  const db = seed() as DB, { p, acc, ink, paper, font, banner, img } = db.theme;
-  db.theme = { name: 'Warung Sari', p, acc, ink, paper, font, banner, img }; // what starterData gives a new business
+  const db = seed() as DB;
+  db.theme = plainTheme(db.theme, 'Warung Sari'); // what starterData gives a new business
   db.tenant.name = 'Warung Sari';
   const d = menuDesign(db);
   assert.doesNotMatch(JSON.stringify(d), DEMO);
@@ -43,4 +44,9 @@ test('a business without its own records gets no alert from the demo samples (ba
   fresh.records = {};
   assert.deepEqual(fired(fresh), []);
   assert.ok(fired(demo).length > 0, 'the demo still shows them: ' + fired(demo).join(', '));
+});
+
+test('a business without its own theme document starts plain too (the shape every device fills in)', () => {
+  const d = menuDesign({ ...blankDB(), tenant: { ...blankDB().tenant, name: 'Warung Sari' } } as DB);
+  assert.doesNotMatch(JSON.stringify(d), DEMO);
 });
