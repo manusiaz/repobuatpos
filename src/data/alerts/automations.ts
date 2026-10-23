@@ -6,12 +6,14 @@ import { toolValue } from '../../system/tools.ts';
 
 const HOUR = 36e5, DAY = 864e5;
 export const AUTOMATIONS = ['a_thanks', 'a_feedback', 'a_winback', 'a_bday'] as const;
-/** Longest win-back wait that still sees the last visit (devices and the worker load 35 days of orders). */
+/** Win-back wait the studio offers (14–30 days: devices and the worker load 35 days of orders, so a longer wait would
+ *  never see the last visit). The sender, the studio audience and its text all use this value. */
 export const WINBACK_MAX_DAYS = 30;
+export const winbackDays = (v: Record<string, unknown>) => { const d = Number(v.days); return Number.isFinite(d) ? Math.max(14, Math.min(d, WINBACK_MAX_DAYS)) : WINBACK_MAX_DAYS; };
 /** The next birthday on or after the day before, this year's or next year's (3 January is due in late December). */
-export function nextBirthday(birthday: string, now: number) {
+export function nextBirthday(birthday: string, now: number): number | null {
   const y = new Date(now).getFullYear();
-  return [y, y + 1].map(yr => { const b = new Date(birthday); b.setFullYear(yr); return b.getTime(); }).find(t => t >= now - DAY)!;
+  return [y, y + 1].map(yr => { const b = new Date(birthday); b.setFullYear(yr); return b.getTime(); }).find(t => t >= now - DAY) ?? null; // null: not a date
 }
 export const lastVisit = (db: DB, customerId: string) => db.orders.filter(o => o.customerId === customerId && o.status === 'paid').reduce((a, o) => Math.max(a, o.paidAt ?? o.createdAt), 0);
 
@@ -21,11 +23,11 @@ function moments(db: DB, now: number, id: (typeof AUTOMATIONS)[number], v: Recor
   const n = (k: string) => Number(v[k]) || 0;
   if (id === 'a_thanks') return db.orders.filter(o => o.customerId && o.paidAt && due(now, o.paidAt, n('delay') * HOUR, 15 * 60e3)).map(o => ({ key: o.id, customerId: o.customerId, orderId: o.id }));
   if (id === 'a_feedback') return db.reviews.filter(r => r.stars >= n('min') && due(now, r.at, n('delay') * HOUR, 15 * 60e3)).map(r => ({ key: r.id, customerId: r.customerId, orderId: r.orderId ?? undefined }));
-  if (id === 'a_winback') return db.customers.flatMap(c => { const t = lastVisit(db, c.id); return t && due(now, t, Math.min(n('days'), WINBACK_MAX_DAYS) * DAY, DAY) ? [{ key: c.id + '|' + t, customerId: c.id }] : []; });
+  if (id === 'a_winback') return db.customers.flatMap(c => { const t = lastVisit(db, c.id); return t && due(now, t, winbackDays(v) * DAY, DAY) ? [{ key: c.id + '|' + t, customerId: c.id }] : []; });
   return db.customers.flatMap(c => {
     if (!c.birthday) return [];
     const b = nextBirthday(c.birthday, now);
-    return due(now, b, -n('days') * DAY, DAY) ? [{ key: c.id + '|' + new Date(b).getFullYear(), customerId: c.id }] : [];
+    return b !== null && due(now, b, -n('days') * DAY, DAY) ? [{ key: c.id + '|' + new Date(b).getFullYear(), customerId: c.id }] : [];
   });
 }
 // only guests who opted in (catalog: "opted-in"); the studio narrows it further

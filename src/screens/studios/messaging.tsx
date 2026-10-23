@@ -10,7 +10,7 @@ import { Badge, Empty, Icon, Kpi, Seg, Status, Toggle, ago, dateShort, hhmm, toa
 import { LineChart } from '../../ui/Chart.tsx';
 import { IntegrationsPanel } from '../../integrations/Panel.tsx';
 import { toolValue, TOOL_DEFAULTS } from '../../system/tools.ts';
-import { lastVisit, nextBirthday, WINBACK_MAX_DAYS } from '../../data/alerts/automations.ts';
+import { lastVisit, nextBirthday, winbackDays, WINBACK_MAX_DAYS } from '../../data/alerts/automations.ts';
 import { BASE, fromRec, templates, VARS, type Cat, type Tpl } from '../../domain/messages.ts';
 export { templates, VARS, type Tpl } from '../../domain/messages.ts';
 import { Caption, CopyRow, F, fillVars, orderVars, outletName, pct, Phone, Stage, type Ctx, type PP, type Tool, type V } from './core.tsx';
@@ -148,8 +148,8 @@ interface Auto { id: string; name: string; icon: string; tpl: string; trigger: s
 export const AUTOS: Auto[] = [
   { id: 'a_thanks', name: 'Post-visit thank-you', icon: 'heart-handshake', tpl: 'thanks_visit', trigger: 'Payment completed', desc: 'Thanks the guest on WhatsApp (or email) a set time after they pay.', audience: (db, v) => db.customers.filter(c => { const t = lastVisit(db, c.id); return t && Date.now() - t < (Number(v.delay) + 24) * 3600e3; }) },
   { id: 'a_feedback', name: 'Feedback request & review link', icon: 'star', tpl: 'feedback_request', trigger: 'Rating received', desc: 'Thanks guests who rated you well and asks them for a review. Low ratings already alert the manager (Bad review).', audience: (db, v) => db.customers.filter(c => db.reviews.some(r => r.customerId === c.id && r.stars >= Number(v.min))) },
-  { id: 'a_winback', name: 'Win-back', icon: 'rotate-ccw', tpl: 'winback_30d', trigger: 'No visit in N days', desc: 'Invites regulars back when they haven’t visited for a while, with a voucher.', audience: (db, v) => db.customers.filter(c => { const t = lastVisit(db, c.id); return t > 0 && Date.now() - t > Number(v.days) * DAY; }) },
-  { id: 'a_bday', name: 'Birthday & points expiry', icon: 'cake', tpl: 'birthday', trigger: 'Birthday window', desc: 'Birthday treat before the birthday. The beans-expiry nudge goes out 14 days before expiry (Points expiring alert).', audience: (db, v) => db.customers.filter(c => { if (!c.birthday) return false; const d = (nextBirthday(c.birthday, Date.now()) - Date.now()) / DAY; return d >= 0 && d <= Number(v.days); }) },
+  { id: 'a_winback', name: 'Win-back', icon: 'rotate-ccw', tpl: 'winback_30d', trigger: 'No visit in N days', desc: 'Invites regulars back when they haven’t visited for a while, with a voucher.', audience: (db, v) => db.customers.filter(c => { const t = lastVisit(db, c.id); return t > 0 && Date.now() - t > winbackDays(v) * DAY; }) },
+  { id: 'a_bday', name: 'Birthday & points expiry', icon: 'cake', tpl: 'birthday', trigger: 'Birthday window', desc: 'Birthday treat before the birthday. The beans-expiry nudge goes out 14 days before expiry (Points expiring alert).', audience: (db, v) => db.customers.filter(c => { if (!c.birthday) return false; const b = nextBirthday(c.birthday, Date.now()), d = b === null ? -1 : (b - Date.now()) / DAY; return d >= 0 && d <= Number(v.days); }) },
 ];
 const AUTO_DEF = TOOL_DEFAULTS as unknown as Record<string, V>;
 function autoStats(db: DB, tpl: string, windowDays = 7) {
@@ -169,7 +169,7 @@ function AutoPreview({ v, x, a }: PP & { a: Auto }) {
   const t = templates(x.db).find(t => t.id === v.tpl) ?? templates(x.db)[0];
   const s = autoStats(x.db, v.tpl), q = quietOf(x.db);
   const aud = a.audience(x.db, v);
-  const wait = a.id === 'a_thanks' || a.id === 'a_feedback' ? (v.delay ? `${v.delay} h after ${a.id === 'a_thanks' ? 'payment' : 'the rating'}` : 'Send immediately') : a.id === 'a_winback' ? `${v.days} days since last paid order` : `${v.days} days before the birthday`;
+  const wait = a.id === 'a_thanks' || a.id === 'a_feedback' ? (v.delay ? `${v.delay} h after ${a.id === 'a_thanks' ? 'payment' : 'the rating'}` : 'Send immediately') : a.id === 'a_winback' ? `${winbackDays(v)} days since last paid order` : `${v.days} days before the birthday`;
   const nodes: [string, string, string, string][] = [['zap', 'Trigger', a.trigger, 'accent'], ['clock', 'Wait', wait + (t.cat === 'MARKETING' && q.on ? ` · quiet hours ${q.from}–${q.to}` : ''), 'warning'], ['filter', 'Condition', COND[v.cond] + (t.cat === 'MARKETING' ? ' · opted in' : ''), 'info'], ['send', 'Send', `${CH[v.ch]} · “${t.name}”`, 'success']];
   return <Stage>
     <div className="row wrap" style={{ gap: 24, justifyContent: 'center', alignItems: 'flex-start', width: '100%' }}>

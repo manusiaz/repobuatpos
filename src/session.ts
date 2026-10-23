@@ -26,13 +26,20 @@ const nextHere = () => (/^\/account(\/|$)/.test(location.pathname) ? '' : '?next
 const granted = new Map<string, number>();
 const GUEST: SessionUser = { id: 'guest', role: 'customer', outletId: 'sen' };
 
+/** A tablet the team shares (a device account, or a tab an owner turned into a shared register): people on it sign in
+ *  by PIN, the account isn't theirs, so account things (BorNiz tickets and invoices) wait for their own sign-in. */
+export function isSharedDevice() {
+  if (!REMOTE) return false;
+  let shared = remoteInfo().member?.role === 'device'; try { shared ||= localStorage.getItem(SHARED) === '1'; } catch { /* blocked */ }
+  return shared;
+}
 function remoteDefault(surface: Surface): SessionUser | null {
   const { mode, member, admin } = remoteInfo();
   if (mode === 'boot') return null;
   if (surface === 'admin' && admin && mode !== 'member') return { id: 'admin', role: 'admin', outletId: '' }; // BorNiz staff account (no business of its own)
   const d = remoteSnapshot(), out = d.device.outletId || d.outlets[0]?.id || '';
   if (mode === 'member' && member) {
-    let shared = member.role === 'device'; try { shared ||= localStorage.getItem(SHARED) === '1'; } catch { /* blocked */ }
+    const shared = isSharedDevice();
     if (shared && surface === 'display') return { ...GUEST, outletId: out }; // the customer display faces guests: no staff sign-in
     if (shared && !PUBLIC.includes(surface)) return null;
     const e = d.employees.find(x => x.id === member.employeeId);

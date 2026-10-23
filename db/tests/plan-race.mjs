@@ -1,5 +1,5 @@
-// Two tablets add a register at the same moment on Free (room for one): only one gets it (plan_rules takes a lock per
-// business and kind before it counts, 20261023040000_borniz_locks.sql).
+// Two tablets add a register at the same moment on Free (room for one): only one gets it (plan_rules takes one lock per
+// business before it counts, outlets and devices alike, 20261023040000_borniz_locks.sql).
 import assert from 'node:assert/strict';
 import pg from 'pg';
 

@@ -45,3 +45,10 @@ test('a win-back published above what the data window sees still fires at the lo
   const db = shop('pro', { a_winback: { on: true, days: 60, cond: 'all', ch: 'wa', tpl: 'winback_30d', cap: true } });
   assert.deepEqual(send(db, T0 + 30 * D + H), ['winback_30d>c1@wa']);
 });
+test('a win-back published at 0 days waits the 14-day minimum; a birthday that is not a date sends nothing', () => {
+  const db = shop('pro', { a_winback: { on: true, days: 0, cond: 'all', ch: 'wa', tpl: 'winback_30d', cap: true } });
+  assert.deepEqual(send(db, T0 + D + H).filter(s => s.startsWith('winback')), [], 'not the day after a visit');
+  assert.deepEqual(send(db, T0 + 14 * D + H).filter(s => s.startsWith('winback')), ['winback_30d>c1@wa']);
+  db.customers[0].birthday = '03/41';
+  assert.deepEqual(send(db, T0).filter(s => s.startsWith('birthday')), []);
+});
