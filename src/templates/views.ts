@@ -31,26 +31,27 @@ const orderRows = (c: Ctx, f: (o: DB['orders'][0]) => boolean = () => true) => c
   .map(o => ({ id: o.id, no: o.no, outlet: outletName(c.db, o.outletId), channel: o.source, status: o.status, at: o.createdAt, total: o.total, cashier: empName(c.db, o.cashierId), customer: custName(c.db, o.customerId), discount: o.discount, items: o.lines.reduce((a, l) => a + l.qty, 0) }));
 
 /** Generic rows for objects that don't have a table yet. Columns follow the Back Office prototype vocabulary. */
-export const GENERIC: Record<string, { heads: [string, string, string, string, string]; rows: string[][] }> = {
-  expense: { heads: ['Expense', 'Outlet', 'Status', 'Date', 'Amount'], rows: [['Rent October', 'Senayan', 'Booked', '01 Oct', '45000000'], ['Electricity', 'Kemang', 'Booked', '05 Oct', '6200000'], ['Ice supply', 'Senayan', 'Pending', '09 Oct', '850000'], ['Pest control', 'BSD', 'Draft', '10 Oct', '1200000']] },
-  budget: { heads: ['Line', 'Outlet', 'Status', 'Period', 'Amount'], rows: [['Sales target', 'Senayan', 'Approved', 'Oct 2026', '420000000'], ['Sales target', 'Kemang', 'Approved', 'Oct 2026', '310000000'], ['Marketing budget', 'All outlets', 'Pending', 'Q4 2026', '25000000']] },
-  asset: { heads: ['Asset / request', 'Outlet', 'Status', 'Date', 'Value'], rows: [['La Marzocco Linea PB', 'Senayan', 'Active', 'Jan 2025', '185000000'], ['Mahlkönig E80 grinder', 'Kemang', 'Active', 'Mar 2025', '62000000'], ['Chiller repair', 'BSD', 'Pending', '08 Oct', '3400000'], ['6 tables + 24 chairs terrace', 'Senayan', 'Pending', '10 Oct', '18600000']] },
-  reward: { heads: ['Reward', 'Outlet', 'Status', 'Updated', 'Beans'], rows: [['Free Americano', 'All outlets', 'Active', 'Sep', '250'], ['Croissant Almond', 'All outlets', 'Active', 'Sep', '320'], ['Tumbler Kopi Biru', 'All outlets', 'Active', 'Aug', '1200'], ['Birthday cake slice', 'All outlets', 'Draft', 'Oct', '0']] },
-  broadcast: { heads: ['Broadcast', 'Outlet', 'Status', 'Scheduled', 'Audience'], rows: [['Payday promo 25 Oct', 'All outlets', 'Scheduled', '25 Oct 10:00', '1840'], ['New menu: Pandan Latte', 'All outlets', 'Sent', '02 Oct', '2210'], ['Kemang reopening', 'Kemang', 'Draft', '—', '640']] },
-  transfer: { heads: ['Transfer', 'Outlet', 'Status', 'Date', 'Value'], rows: [['Oat milk 1L × 12 · Senayan → Kemang', 'Kemang', 'Sent', '10 Oct', '360000'], ['Croissant × 40 · BSD → Senayan', 'Senayan', 'Received', '08 Oct', '360000']] },
-  batch: { heads: ['Batch', 'Outlet', 'Status', 'Expires', 'Qty'], rows: [['Fresh milk · LOT 2410-A', 'Senayan', 'OK', '14 Oct', '48'], ['Fresh milk · LOT 2409-C', 'Kemang', 'Expiring', '11 Oct', '6'], ['Croissant frozen · LOT 88', 'BSD', 'OK', '30 Nov', '120']] },
-  leave: { heads: ['Request', 'Outlet', 'Status', 'Dates', 'Days'], rows: [['Rina · annual leave', 'Senayan', 'Waiting', '20–22 Oct', '3'], ['Tono · swap with Wulan', 'Senayan', 'Waiting', '15 Oct', '1'], ['Dimas · overtime', 'Senayan', 'Approved', '09 Oct', '0.5']] },
-  service: { heads: ['Item', 'Outlet', 'Status', 'Updated', 'Number'], rows: [['Queue A', 'Senayan', 'Open', 'now', 'A-042'], ['Courier · Joko', 'Senayan', 'On delivery', '12 min', 'D-08'], ['Laundry #L-221', 'Kemang', 'Ready', '1 h', 'L-221']] },
-  billing: { heads: ['Invoice', 'Outlet', 'Status', 'Date', 'Amount'], rows: [['BorNiz Pro · Oct 2026 · 3 outlets', 'All outlets', 'Paid', '01 Oct', '1047000'], ['WhatsApp credits top-up', 'All outlets', 'Paid', '03 Oct', '500000'], ['BorNiz Pro · Sep 2026', 'All outlets', 'Paid', '01 Sep', '1047000']] },
-  busy: { heads: ['Pause / busy', 'Outlet', 'Status', 'When', 'Minutes'], rows: [['GoFood busy mode · lunch rush', 'Senayan', 'Ended', 'Today 12:10', '20'], ['GrabFood paused · gas leak check', 'Kemang', 'Ended', 'Yesterday', '45']] },
-  catops: { heads: ['Item', 'Outlet', 'Status', 'Updated', 'Code'], rows: [] },
-  incident: { heads: ['Incident', 'Outlet', 'Status', 'When', 'Value'], rows: [['Broken glass · bar', 'Senayan', 'Logged', 'Today 13:20', '45000'], ['Complaint · cold croissant · comp', 'Senayan', 'Comped', 'Today 11:05', '32000']] },
+/** Columns for objects that don't have a table yet (Back Office prototype vocabulary). Their rows are the business's own
+ *  records; the demo's sample rows live in seed.ts, so a real business never sees or alerts on them. */
+export const GENERIC: Record<string, [string, string, string, string, string]> = {
+  expense: ['Expense', 'Outlet', 'Status', 'Date', 'Amount'],
+  budget: ['Line', 'Outlet', 'Status', 'Period', 'Amount'],
+  asset: ['Asset / request', 'Outlet', 'Status', 'Date', 'Value'],
+  reward: ['Reward', 'Outlet', 'Status', 'Updated', 'Beans'],
+  broadcast: ['Broadcast', 'Outlet', 'Status', 'Scheduled', 'Audience'],
+  transfer: ['Transfer', 'Outlet', 'Status', 'Date', 'Value'],
+  batch: ['Batch', 'Outlet', 'Status', 'Expires', 'Qty'],
+  leave: ['Request', 'Outlet', 'Status', 'Dates', 'Days'],
+  service: ['Item', 'Outlet', 'Status', 'Updated', 'Number'],
+  billing: ['Invoice', 'Outlet', 'Status', 'Date', 'Amount'],
+  busy: ['Pause / busy', 'Outlet', 'Status', 'When', 'Minutes'],
+  catops: ['Item', 'Outlet', 'Status', 'Updated', 'Code'],
+  incident: ['Incident', 'Outlet', 'Status', 'When', 'Value'],
 };
-export const genericRows = (key: string): Rec[] => (GENERIC[key]?.rows ?? []).map((r, i) => ({ id: key + i, a: r[0], b: r[1], c: r[2], d: r[3], e: r[4], at: Date.now() - i * DAY }));
 const generic = (key: string, kinds: [ColKind?, ColKind?, ColKind?, ColKind?, ColKind?] = []): View => {
-  const h = GENERIC[key].heads;
+  const h = GENERIC[key];
   return { rec: key, status: 'c', cols: h.map((l, i) => ({ k: 'abcde'[i], l, f: kinds[i] ?? (i === 2 ? 'status' : i === 4 && /amount|value/i.test(l) ? 'money' : 'text') })),
-    rows: c => (c.db.records[key] ?? genericRows(key)).filter(r => c.all || r.b === 'All outlets' || r.b === outletName(c.db, c.outletId)).map(r => ({ ...r, e: /amount|value/i.test(h[4]) ? Number(r.e) : r.e })),
+    rows: c => (c.db.records[key] ?? []).filter(r => c.all || r.b === 'All outlets' || r.b === outletName(c.db, c.outletId)).map(r => ({ ...r, e: /amount|value/i.test(h[4]) ? Number(r.e) : r.e })),
     form: h.map((l, i) => ({ k: 'abcde'[i], l, type: i === 4 && /amount|value/i.test(l) ? 'money' as const : 'text' as const, req: i === 0 })) };
 };
 

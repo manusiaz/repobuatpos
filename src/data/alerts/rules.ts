@@ -6,7 +6,6 @@ import { levels } from '../../domain/stock.ts';
 import { TIERS, balance, tierOf } from '../../domain/loyalty.ts';
 import { SHIFTS } from '../../domain/shift.ts';
 import { idr } from '../../domain/money.ts';
-import { genericRows } from '../../templates/views.ts';
 import { ACCEPT_WINDOW_MS, CHANNELS, channelState, fireAt, isScheduled } from '../actions/online.ts';
 
 export type Level = 'info' | 'warn' | 'high';
@@ -44,7 +43,7 @@ export interface Ix {
   t0: number; rday: number; date: string; tenant: string;
   outletId: (idOrName: string) => string | null; name: (outletId: string | null) => string;
   opens: (o: string) => number; closes: (o: string) => number; open: (o: string, at?: number) => boolean;
-  events: Audit[]; rec: (k: string) => Rec[]; gen: (k: string) => Rec[];
+  events: Audit[]; rec: (k: string) => Rec[];
   lv: (o: string) => Map<string, number>; cust: Map<string, Customer>; emp: (id: string) => string;
   byCustomer: () => Map<string, Order[]>; clockIn: (empId: string, outletId: string, since: number) => boolean;
   roster: (o: string) => DB['roster'][0] | undefined; slotWin: (o: string, s: Slot) => [number, number] | null;
@@ -62,7 +61,7 @@ export function index(db: DB, now: number): Ix {
     name: o => (o && out.get(o)?.name) || 'all outlets',
     opens, closes, open: (o, at = now) => at >= opens(o) && at < closes(o),
     events: db.audit.filter(a => a.at > now - EVENT_WINDOW && a.at <= now),
-    rec: k => db.records[k] ?? [], gen: k => db.records[k] ?? genericRows(k),
+    rec: k => db.records[k] ?? [],
     lv: o => once('lv' + o, () => levels(db.movements, o)),
     cust: new Map(db.customers.map(c => [c.id, c])),
     emp: id => db.employees.find(e => e.id === id)?.name ?? id,
@@ -110,10 +109,10 @@ export const RULES: Rule[] = [
   })),
   R('Batch expiring', 'state', '/owner/inventory/batches-and-expiry', (db, now, ix) => {
     const days = Number(db.settings['/owner/inventory/batches-and-expiry:expiring-days'] ?? 3);
-    return ix.gen('batch').filter(r => { const t = when(r.d, now); return t >= ix.t0 && t <= ix.t0 + days * DAY && num(r.e) > 0 && !has(/waste|written|recall/i, r.c); })
+    return ix.rec('batch').filter(r => { const t = when(r.d, now); return t >= ix.t0 && t <= ix.t0 + days * DAY && num(r.e) > 0 && !has(/waste|written|recall/i, r.c); })
       .map(r => ({ key: r.id + '|' + r.d, outletId: ix.outletId(r.b), text: `${r.a} at ${r.b} expires ${r.d} · ${r.e} left · use first (FEFO)` }));
   }),
-  R('Batch expired', 'state', '/owner/inventory/batches-and-expiry', (_db, now, ix) => ix.gen('batch').filter(r => when(r.d, now) < ix.t0 && num(r.e) > 0 && !has(/waste|written|recall/i, r.c))
+  R('Batch expired', 'state', '/owner/inventory/batches-and-expiry', (_db, now, ix) => ix.rec('batch').filter(r => when(r.d, now) < ix.t0 && num(r.e) > 0 && !has(/waste|written|recall/i, r.c))
     .map(r => ({ key: r.id + '|' + r.d, outletId: ix.outletId(r.b), text: `${r.a} at ${r.b} expired ${r.d} with ${r.e} left · write off as waste with photo` }))),
   R('Waste above normal', 'state', '/owner/inventory/waste-damaged-goods', (db, _now, ix) => {
     const cost = new Map(db.stockItems.map(s => [s.id, s.unitCost])), today = new Map<string, number>(), past = new Map<string, number>();
@@ -125,7 +124,7 @@ export const RULES: Rule[] = [
     return db.outlets.filter(o => ix.open(o.id) && !db.opnames.some(x => x.outletId === o.id && now - x.at < every))
       .map(o => ({ key: `${o.id}|${ix.date}`, outletId: o.id, text: `Stock count due at ${o.name} this shift · last count over ${every / DAY} days ago` }));
   }),
-  R('Transfer incoming', 'state', '/owner/inventory/stock-transfer-between-outlets', (_db, _now, ix) => ix.gen('transfer').filter(r => /^sent$/i.test(r.c) && ix.outletId(r.b))
+  R('Transfer incoming', 'state', '/owner/inventory/stock-transfer-between-outlets', (_db, _now, ix) => ix.rec('transfer').filter(r => /^sent$/i.test(r.c) && ix.outletId(r.b))
     .map(r => ({ key: r.id, outletId: ix.outletId(r.b), text: `${r.a} on the way to ${r.b} · receive and confirm quantities` }))),
   R('PO overdue', 'state', '/owner/inventory/purchase-orders', (db, now) => db.pos.filter(p => (p.status === 'sent' || p.status === 'partial') && p.due < now)
     .map(p => ({ key: p.id, outletId: p.outletId, text: `${p.no} · ${db.suppliers.find(s => s.id === p.supplierId)?.name ?? 'supplier'} past its delivery date ${ymd(p.due)} · call supplier or cancel` }))),
@@ -361,8 +360,8 @@ export const RULES: Rule[] = [
     ...ix.rec('payout').filter(r => now - r.at < 3 * DAY).map(r => ({ key: r.id + '|' + r.c, outletId: ix.outletId(r.b), text: `Payout ${r.a} ${idr(num(r.e))} ${/fail/i.test(r.c) ? 'failed' : 'received'}`, level: (/fail/i.test(r.c) ? 'high' : 'info') as Level })),
     ...db.integrations.filter(i => i.kind === 'bank' && i.status === 'error').map(i => ({ key: `${i.id}|${i.lastError}`, outletId: i.outletId, text: `Payout failed · ${i.name}: ${i.lastError}`, level: 'high' as Level }))]),
   R('Expense over budget', 'state', '/owner/finance/budget-and-sales-forecast', (_db, now, ix) => {
-    const month = ym(now), exp = ix.gen('expense').filter(e => ym(Number.isFinite(when(e.d, now)) ? when(e.d, now) : e.at) === month);
-    return ix.gen('budget').filter(b => !/target/i.test(b.a) && num(b.e) > 0).flatMap(b => {
+    const month = ym(now), exp = ix.rec('expense').filter(e => ym(Number.isFinite(when(e.d, now)) ? when(e.d, now) : e.at) === month);
+    return ix.rec('budget').filter(b => !/target/i.test(b.a) && num(b.e) > 0).flatMap(b => {
       const word = b.a.replace(/budget/i, '').trim().toLowerCase(), spent = exp.filter(e => (b.b === 'All outlets' || e.b === b.b) && (!word || word === 'expense' || e.a.toLowerCase().includes(word))).reduce((a, e) => a + num(e.e), 0);
       return spent > .9 * num(b.e) ? [{ key: `${b.id}|${month}`, outletId: ix.outletId(b.b), text: `${b.a} at ${b.b}: ${idr(spent)} of ${idr(num(b.e))} spent this month` }] : [];
     });
@@ -425,7 +424,7 @@ export const RULES: Rule[] = [
     .map(a => ({ key: a.id, outletId: a.outletId ?? null, text: `${ix.emp(a.actor)} tried to change a locked element · ${a.subject}` }))),
   R('Royalty report ready', 'state', '/owner/finance/franchise-royalties', (_db, _now, ix) => ix.rec('royalty').filter(r => /ready/i.test(r.c)).map(r => ({ key: r.id, outletId: ix.outletId(r.a), text: `Royalty report ${r.b} for ${r.a} ready · ${idr(num(r.e))}` }))),
   R('Royalty unpaid', 'state', '/owner/finance/franchise-royalties', (_db, now, ix) => ix.rec('royalty').filter(r => /unpaid|ready|sent/i.test(r.c) && now > when(r.d, now) + 7 * DAY).map(r => ({ key: r.id + '|unpaid', outletId: ix.outletId(r.a), text: `${r.a} royalty ${r.b} ${idr(num(r.e))} unpaid 7 days after ${r.d}` }))),
-  R('Stock transfer not received', 'state', '/owner/inventory/stock-transfer-between-outlets', (_db, now, ix) => ix.gen('transfer').filter(r => /^sent$/i.test(r.c) && now - r.at > DAY)
+  R('Stock transfer not received', 'state', '/owner/inventory/stock-transfer-between-outlets', (_db, now, ix) => ix.rec('transfer').filter(r => /^sent$/i.test(r.c) && now - r.at > DAY)
     .map(r => ({ key: r.id, outletId: ix.outletId(r.b), text: `${r.a} sent ${Math.floor((now - r.at) / HOUR)} h ago, not confirmed by ${r.b}` }))),
   R('Price differs from HQ', 'state', '/owner/catalog/price-lists-per-outlet-and-channel', (db, _now, ix) => db.outletProducts.filter(x => x.localPrice != null).flatMap(x => {
     const p = db.products.find(y => y.id === x.productId);
@@ -434,8 +433,8 @@ export const RULES: Rule[] = [
   // ── Assets & maintenance ──
   R('Equipment service due', 'state', '/owner/finance/assets-and-equipment', (_db, now, ix) => ix.rec('maintenance').filter(r => !/done/i.test(r.c) && when(r.d, now) <= now).map(r => ({ key: r.id + '|' + r.d, outletId: ix.outletId(r.b), text: `${r.a} at ${r.b} service due ${r.d}` }))),
   R('Repair cost high', 'state', '/owner/finance/assets-and-equipment', (_db, now, ix) => {
-    const year = new Date(now).getFullYear(), rows = [...ix.gen('asset'), ...ix.gen('expense')], repairs = rows.filter(r => /repair|service|servis/i.test(r.a) && new Date(r.at).getFullYear() === year);
-    return ix.gen('asset').filter(a => !/repair|service/i.test(a.a) && num(a.e) > 0).flatMap(a => {
+    const year = new Date(now).getFullYear(), rows = [...ix.rec('asset'), ...ix.rec('expense')], repairs = rows.filter(r => /repair|service|servis/i.test(r.a) && new Date(r.at).getFullYear() === year);
+    return ix.rec('asset').filter(a => !/repair|service/i.test(a.a) && num(a.e) > 0).flatMap(a => {
       const w = a.a.split(/\s+/)[0].toLowerCase(), cost = repairs.filter(r => r.a.toLowerCase().includes(w)).reduce((s, r) => s + num(r.e), 0);
       return cost > .3 * num(a.e) ? [{ key: `${a.id}|${year}|${cost}`, outletId: ix.outletId(a.b), text: `${a.a}: repairs ${idr(cost)} this year · over 30% of its value ${idr(num(a.e))}` }] : [];
     });
@@ -444,7 +443,7 @@ export const RULES: Rule[] = [
   R('Gas / water / power bill spike', 'state', '/owner/finance/expenses', (_db, now, ix) => {
     const cat = (a: string) => /listrik|electric|power|pln/i.test(a) ? 'power' : /gas|lpg/i.test(a) ? 'gas' : /water|air|pdam/i.test(a) ? 'water' : '';
     const sums = new Map<string, Map<string, number>>();
-    for (const e of ix.gen('expense')) { const c = cat(e.a); if (!c) continue; const t = when(e.d, now), m = ym(Number.isFinite(t) ? t : e.at), k = c + '|' + e.b; const x = sums.get(k) ?? new Map(); x.set(m, (x.get(m) ?? 0) + num(e.e)); sums.set(k, x); }
+    for (const e of ix.rec('expense')) { const c = cat(e.a); if (!c) continue; const t = when(e.d, now), m = ym(Number.isFinite(t) ? t : e.at), k = c + '|' + e.b; const x = sums.get(k) ?? new Map(); x.set(m, (x.get(m) ?? 0) + num(e.e)); sums.set(k, x); }
     const cur = ym(now);
     return [...sums].flatMap(([k, ms]) => { const prev = [...ms].filter(([m]) => m < cur).map(([, v]) => v), avg = prev.length ? prev.reduce((a, v) => a + v, 0) / prev.length : 0, v = ms.get(cur) ?? 0;
       return avg > 0 && v > 1.4 * avg ? [{ key: `${k}|${cur}`, outletId: ix.outletId(k.split('|')[1]), text: `${k.split('|')[0]} bill ${k.split('|')[1]} ${idr(v)} · +${Math.round((v / avg - 1) * 100)}% vs average` }] : []; });
@@ -457,9 +456,9 @@ export const RULES: Rule[] = [
   })),
   R('Service running over', 'state', '/owner/outlets/bookings-and-schedule', (_db, now, ix) => ix.rec('booking').filter(r => /in service/i.test(r.c) && now > when(r.d, now) + (num(r.c.match(/\d+/)?.[0]) || 60) * MIN + 15 * MIN
     && ix.rec('booking').some(n => n.b === r.b && /book/i.test(n.c) && when(n.d, now) <= now)).map(r => ({ key: r.id, outletId: ix.outletId(r.b), text: `${r.a} running over · next guest waiting` }))),
-  R('Laundry ready for pickup', 'state', '/owner/outlets/laundry-order-tracking', (_db, _now, ix) => [...ix.rec('laundry'), ...ix.gen('service').filter(r => /laundry/i.test(r.a))].filter(r => /ready/i.test(r.c) && phoneIn(`${r.a} ${r.e}`))
+  R('Laundry ready for pickup', 'state', '/owner/outlets/laundry-order-tracking', (_db, _now, ix) => [...ix.rec('laundry'), ...ix.rec('service').filter(r => /laundry/i.test(r.a))].filter(r => /ready/i.test(r.c) && phoneIn(`${r.a} ${r.e}`))
     .map(r => ({ key: r.id, outletId: ix.outletId(r.b), text: `${r.a} ready for pickup`, msg: { template: 'laundry_ready', to: phoneIn(`${r.a} ${r.e}`), customerId: null } }))),
-  R('Laundry not picked up', 'state', '/owner/outlets/laundry-order-tracking', (_db, now, ix) => [...ix.rec('laundry'), ...ix.gen('service').filter(r => /laundry/i.test(r.a))].filter(r => /ready/i.test(r.c) && now - r.at > 7 * DAY)
+  R('Laundry not picked up', 'state', '/owner/outlets/laundry-order-tracking', (_db, now, ix) => [...ix.rec('laundry'), ...ix.rec('service').filter(r => /laundry/i.test(r.a))].filter(r => /ready/i.test(r.c) && now - r.at > 7 * DAY)
     .map(r => { const to = phoneIn(`${r.a} ${r.e}`); return { key: r.id, outletId: ix.outletId(r.b), text: `${r.a} ready over 7 days, not picked up`, msg: to ? { template: 'laundry_reminder', to, customerId: null } : undefined }; })),
   R('Deposit not paid', 'state', '/owner/outlets/bookings-and-schedule', (_db, now, ix) => ix.rec('booking').filter(r => /deposit/i.test(r.c) && !/paid/i.test(r.c) && when(r.d, now) > now && when(r.d, now) - now <= 2 * HOUR)
     .map(r => { const to = phoneIn(r.a); return { key: r.id, outletId: ix.outletId(r.b), text: `${r.a} at ${hhmm(when(r.d, now))}: deposit not paid`, msg: to ? { template: 'deposit_reminder', to, customerId: null } : undefined }; })),
@@ -490,7 +489,7 @@ export const RULES: Rule[] = [
   R('Device clock wrong', 'external', '/manager/devices/registers-and-devices-status', (db, now, ix) => db.devices.filter(d => d.lastSeen - now > 5 * MIN).map(d => ({ key: `${d.id}|${ix.date}`, outletId: d.outletId, text: `${d.name} clock is ${Math.round((d.lastSeen - now) / MIN)} min ahead · fix the device time` }))),
   R('Storage almost full', 'external', '/manager/devices/registers-and-devices-status', (db, _now, ix) => ix.rec('device_health').filter(r => r.e !== '' && num(r.e) < 500).map(r => ({ key: `${r.a}|${ix.date}`, outletId: db.devices.find(d => d.id === r.a)?.outletId ?? ix.outletId(r.b), text: `${db.devices.find(d => d.id === r.a)?.name ?? r.a}: ${num(r.e)} MB free` }))),
   // ── Marketing & messaging ──
-  R('Campaign sent', 'state', '/owner/customers/broadcast', (_db, now, ix) => ix.gen('broadcast').filter(r => /sent/i.test(r.c) && now - r.at < 3 * DAY).map(r => ({ key: r.id, outletId: ix.outletId(r.b), text: `${r.a} sent to ${r.e} people` }))),
+  R('Campaign sent', 'state', '/owner/customers/broadcast', (_db, now, ix) => ix.rec('broadcast').filter(r => /sent/i.test(r.c) && now - r.at < 3 * DAY).map(r => ({ key: r.id, outletId: ix.outletId(r.b), text: `${r.a} sent to ${r.e} people` }))),
   R('WA template rejected', 'external', '/owner/messaging-and-automation/message-templates', tplRejected),
   R('WA credits low', 'external', '/owner/messaging-and-automation/messaging-credits-and-cost', (db, now, ix) => {
     const tops = ix.rec('credit_topup'); if (!tops.length) return [];
@@ -501,7 +500,7 @@ export const RULES: Rule[] = [
   }),
   R('WA number quality dropped', 'external', '/owner/messaging-and-automation/whatsapp-business-connection-and-number-verification', db => db.integrations.filter(i => i.kind === 'whatsapp' && /yellow|red|medium|low/i.test(String(i.config.quality ?? '')))
     .map(i => ({ key: `${i.id}|${i.config.quality}`, outletId: i.outletId, text: `WhatsApp number quality is ${i.config.quality} · pause marketing sends` }))),
-  R('Many unsubscribes', 'state', '/owner/messaging-and-automation/opt-in-and-consent', (db, _now, ix) => ix.gen('broadcast').filter(r => /sent/i.test(r.c) && num(r.e) > 0).flatMap(r => {
+  R('Many unsubscribes', 'state', '/owner/messaging-and-automation/opt-in-and-consent', (db, _now, ix) => ix.rec('broadcast').filter(r => /sent/i.test(r.c) && num(r.e) > 0).flatMap(r => {
     const n = db.audit.filter(a => /opt(ed)?_out$/.test(a.action) && a.at >= r.at && a.at < r.at + 2 * DAY).length;
     return n / num(r.e) > .02 ? [{ key: r.id, outletId: ix.outletId(r.b), text: `${n} unsubscribed after “${r.a}” (${(n / num(r.e) * 100).toFixed(1)}%)` }] : [];
   })),
@@ -530,7 +529,7 @@ export const RULES: Rule[] = [
   }),
   R('Incident reported', 'event', '/pic/floor/incident-log', (_db, _now, ix) => ix.events.filter(a => a.action === 'incident.logged' || a.action === 'incident.saved').map(a => ({ key: a.id, outletId: a.outletId ?? null, text: `${a.subject} logged by ${ix.emp(a.actor)}` }))),
   R('Halal / supplier certificate expiring', 'state', '/owner/inventory/suppliers', (_db, now, ix) => ix.rec('certificate').filter(r => { const t = when(r.d, now); return t >= ix.t0 && t - now <= 30 * DAY; }).map(r => ({ key: r.id + '|' + r.d, outletId: ix.outletId(r.b), text: `${r.a} certificate ends ${r.d}` }))),
-  R('Recall from supplier', 'external', '/owner/inventory/batches-and-expiry', (_db, _now, ix) => [...ix.rec('recall'), ...ix.gen('batch').filter(r => /recall/i.test(r.c))].map(r => ({ key: r.id, outletId: ix.outletId(r.b), text: `Recall: ${r.a}${r.b ? ' at ' + r.b : ''} · stop using it, set aside` }))),
+  R('Recall from supplier', 'external', '/owner/inventory/batches-and-expiry', (_db, _now, ix) => [...ix.rec('recall'), ...ix.rec('batch').filter(r => /recall/i.test(r.c))].map(r => ({ key: r.id, outletId: ix.outletId(r.b), text: `Recall: ${r.a}${r.b ? ' at ' + r.b : ''} · stop using it, set aside` }))),
   // ── HR ──
   R('Contract ending', 'state', '/owner/team/employees', (db, now, ix) => ix.rec('contract').filter(r => { const t = when(r.d, now); return t >= ix.t0 && t - now <= 30 * DAY; })
     .map(r => { const e = db.employees.find(x => x.id === r.a || x.name === r.a); return { key: r.id + '|' + r.d, outletId: e?.outlets[0] ?? null, text: `${e?.name ?? r.a} contract ends ${r.d}` }; })),

@@ -34,3 +34,13 @@ test('a dark theme never puts its light text on white cards', async () => {
   assert.ok(contrast(d.ink, surface) >= 4.5, `${d.ink} on ${surface}`);
   assert.equal((themeVars(menuDesign(seed() as DB)) as Record<string, string>)['--bn-surface'], '#FFFFFF', 'light themes keep white cards');
 });
+
+test('a business without its own records gets no alert from the demo samples (batches, transfers, budgets, assets)', async () => {
+  const { planAlerts } = await import('./alerts/index.ts');
+  const SAMPLE = ['Batch expiring', 'Batch expired', 'Transfer incoming', 'Stock transfer not received', 'Expense over budget', 'Equipment service due', 'Repair cost high', 'Gas / water / power bill spike', 'Laundry ready for pickup'];
+  const fired = (db: DB) => planAlerts(db, Date.now()).map(p => p.alert).filter(a => SAMPLE.includes(a));
+  const demo = seed() as DB, fresh = seed() as DB;
+  fresh.records = {};
+  assert.deepEqual(fired(fresh), []);
+  assert.ok(fired(demo).length > 0, 'the demo still shows them: ' + fired(demo).join(', '));
+});

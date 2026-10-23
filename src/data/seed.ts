@@ -12,6 +12,24 @@ export function rng(seed: number) {
 const P = (id: string, name: string, price: number, cat: string, hue: number, mods: string[] = [], cost = 0.32): Product =>
   ({ id, name, categoryId: cat, basePrice: price, scope: 'global', ownerOutletId: null, status: 'live', hue, sku: 'KB-' + id.slice(1).padStart(3, '0'), desc: '', modifierGroupIds: mods, cost: Math.round(price * cost) });
 
+/** The demo's records for objects without their own table (columns in templates/views.ts GENERIC); a new business has none. */
+const DEMO_ROWS: Record<string, string[][]> = {
+  expense: [['Rent October', 'Senayan', 'Booked', '01 Oct', '45000000'], ['Electricity', 'Kemang', 'Booked', '05 Oct', '6200000'], ['Ice supply', 'Senayan', 'Pending', '09 Oct', '850000'], ['Pest control', 'BSD', 'Draft', '10 Oct', '1200000']],
+  budget: [['Sales target', 'Senayan', 'Approved', 'Oct 2026', '420000000'], ['Sales target', 'Kemang', 'Approved', 'Oct 2026', '310000000'], ['Marketing budget', 'All outlets', 'Pending', 'Q4 2026', '25000000']],
+  asset: [['La Marzocco Linea PB', 'Senayan', 'Active', 'Jan 2025', '185000000'], ['Mahlkönig E80 grinder', 'Kemang', 'Active', 'Mar 2025', '62000000'], ['Chiller repair', 'BSD', 'Pending', '08 Oct', '3400000'], ['6 tables + 24 chairs terrace', 'Senayan', 'Pending', '10 Oct', '18600000']],
+  reward: [['Free Americano', 'All outlets', 'Active', 'Sep', '250'], ['Croissant Almond', 'All outlets', 'Active', 'Sep', '320'], ['Tumbler Kopi Biru', 'All outlets', 'Active', 'Aug', '1200'], ['Birthday cake slice', 'All outlets', 'Draft', 'Oct', '0']],
+  broadcast: [['Payday promo 25 Oct', 'All outlets', 'Scheduled', '25 Oct 10:00', '1840'], ['New menu: Pandan Latte', 'All outlets', 'Sent', '02 Oct', '2210'], ['Kemang reopening', 'Kemang', 'Draft', '—', '640']],
+  transfer: [['Oat milk 1L × 12 · Senayan → Kemang', 'Kemang', 'Sent', '10 Oct', '360000'], ['Croissant × 40 · BSD → Senayan', 'Senayan', 'Received', '08 Oct', '360000']],
+  batch: [['Fresh milk · LOT 2410-A', 'Senayan', 'OK', '14 Oct', '48'], ['Fresh milk · LOT 2409-C', 'Kemang', 'Expiring', '11 Oct', '6'], ['Croissant frozen · LOT 88', 'BSD', 'OK', '30 Nov', '120']],
+  leave: [['Rina · annual leave', 'Senayan', 'Waiting', '20–22 Oct', '3'], ['Tono · swap with Wulan', 'Senayan', 'Waiting', '15 Oct', '1'], ['Dimas · overtime', 'Senayan', 'Approved', '09 Oct', '0.5']],
+  service: [['Queue A', 'Senayan', 'Open', 'now', 'A-042'], ['Courier · Joko', 'Senayan', 'On delivery', '12 min', 'D-08'], ['Laundry #L-221', 'Kemang', 'Ready', '1 h', 'L-221']],
+  billing: [['BorNiz Pro · Oct 2026 · 3 outlets', 'All outlets', 'Paid', '01 Oct', '1047000'], ['WhatsApp credits top-up', 'All outlets', 'Paid', '03 Oct', '500000'], ['BorNiz Pro · Sep 2026', 'All outlets', 'Paid', '01 Sep', '1047000']],
+  busy: [['GoFood busy mode · lunch rush', 'Senayan', 'Ended', 'Today 12:10', '20'], ['GrabFood paused · gas leak check', 'Kemang', 'Ended', 'Yesterday', '45']],
+  incident: [['Broken glass · bar', 'Senayan', 'Logged', 'Today 13:20', '45000'], ['Complaint · cold croissant · comp', 'Senayan', 'Comped', 'Today 11:05', '32000']],
+};
+const demoRecords = (now: number): DB['records'] => Object.fromEntries(Object.entries(DEMO_ROWS).map(([k, rs]) =>
+  [k, rs.map((r, i) => ({ id: k + i, a: r[0], b: r[1], c: r[2], d: r[3], e: r[4], at: now - i * 864e5 }))]));
+
 /** The demo's own Menu Studio words (a new business starts from defaultDesign, which has none of them). */
 const KOPI_BIRU_DESIGN = {
   tagline: 'Coffee & slow mornings',
@@ -153,7 +171,7 @@ export function seed(now = Date.now()): DB {
     ],
     theme: { name: 'Kopi Biru', p: '#1F4FD8', acc: '#F2B544', ink: '#14213D', paper: '#F7F4EE', font: 'space', banner: 'g1', img: '', ...KOPI_BIRU_DESIGN },
     staffBrand: { accent: '#FF6A00', logo: '', workspace: 'Kopi Biru', density: 'comfy' },
-    versions: [], perms: {}, records: {}, settings: {}, counters: { order: 2049, po: 149 },
+    versions: [], perms: {}, records: demoRecords(now), settings: {}, counters: { order: 2049, po: 149 },
     device: { outletId: 'sen', online: true, queue: [], paired: {} },
   };
 }

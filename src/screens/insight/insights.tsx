@@ -10,7 +10,6 @@ import { idr, idrShort } from '../../domain/money.ts';
 import type { DB } from '../../data/schema.ts';
 import { KIND_LABEL, RULES, needsReorder, recommend, type Kind, type Recommendation, type Severity } from '../../domain/recommend.ts';
 import { FORECAST, LEAD_NOTE, dailyActuals, salesForecast, stockRunway, type Runway } from '../../domain/forecast.ts';
-import { genericRows } from '../../templates/views.ts';
 import { PageHead } from '../../templates/common.tsx';
 import { DAY, delta, pct, startOfDay, summary } from './metrics.ts';
 import { useQuery } from './query.ts';
@@ -110,7 +109,7 @@ const num = (s: unknown) => Number(String(s ?? '').replace(/[^\d.-]/g, '')) || 0
 /** This month's "Sales target" budget lines per outlet (Budget records, read only here). */
 function salesTargets(db: DB, now: number) {
   const d = new Date(now), m = new Map<string, number>();
-  for (const r of db.records.budget ?? genericRows('budget')) {
+  for (const r of db.records.budget ?? []) {
     const p = new Date(Date.parse('1 ' + r.d));
     const o = db.outlets.find(x => x.name === r.b);
     if (o && /sales target/i.test(r.a) && p.getFullYear() === d.getFullYear() && p.getMonth() === d.getMonth()) m.set(o.id, (m.get(o.id) ?? 0) + num(r.e));

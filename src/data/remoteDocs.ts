@@ -173,6 +173,7 @@ export function emptyDB(shape: DB): DB {
 export function fromDocs(shape: DB, docs: Doc[], hint: Hint = {}): DB {
   const d = applyDocs(emptyDB(shape), docs, hint) as unknown as Any;
   for (const c of [...Object.keys(ASC), ...Object.keys(DESC)]) d[c] = [...d[c]].sort(byTime(c));
+  for (const k of Object.keys(d.records)) d.records[k] = [...d.records[k]].sort((a: Any, b: Any) => b.at - a.at); // newest first, like the store keeps them
   for (const c of ORDERED) d[c] = byHint(c, d[c], hint[c]);
   return d as unknown as DB;
 }
