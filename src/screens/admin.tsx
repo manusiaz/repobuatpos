@@ -278,6 +278,12 @@ function Invoices({ db }: { db: DB }) {
   </>;
 }
 
+/** The signed-in BorNiz staff member's email (tickets are assigned to them). */
+function useStaffEmail() {
+  const [email, setEmail] = useState(REMOTE ? '' : 'admin@bornis.id (demo)');
+  useEffect(() => { if (REMOTE) void import('../data/backend.ts').then(s => s.sb().auth.getUser()).then(r => setEmail(r.data.user?.email ?? '')); }, []);
+  return email;
+}
 // ── Support ───────────────────────────────────────────────────────────────────────────────
 function Tickets({ db }: { db: DB }) {
   const [q, setQ] = useQuery({ k: '', f: 'open' });
@@ -285,7 +291,7 @@ function Tickets({ db }: { db: DB }) {
   const RANK: Record<string, number> = { urgent: 0, high: 1, normal: 2, low: 3 };
   const all = (db.records.ticket ?? []).slice().sort((a, b) => RANK[a.c] - RANK[b.c] || b.at - a.at), rows = all.filter(k => q.f === 'all' || (q.f === 'open' ? k.d !== 'solved' : k.d === q.f));
   const sel = all.find(k => k.id === q.k), t = sel && tenants(db).find(x => x.id === sel.b);
-  const ME = 'ops@bornis.id';
+  const ME = useStaffEmail(), msg = sel as (Rec & { m?: string; by?: string }) | undefined;
   return <>
     <Seg label="Status" value={q.f} onChange={f => setQ({ f })} options={[['open', 'Open'], ['waiting', 'Waiting on tenant'], ['solved', 'Solved'], ['all', 'All']]} />
     <Split table={rows.length ? <div className="scroll-x"><table className="table"><thead><tr><th>Ticket</th><th>Subject</th><th>Tenant</th><th>Priority</th><th>Status</th><th>Age</th></tr></thead>
@@ -295,10 +301,11 @@ function Tickets({ db }: { db: DB }) {
       detail={!sel || !t ? <Empty icon="mouse-pointer-click" title="Select a ticket" /> : <>
         <div className="row between"><Mono>{sel.id}</Mono><St s={sel.d} /></div>
         <h3>{sel.a}</h3>
-        <Dl rows={[['Tenant', <Link key="t" href={`${DETAIL}?t=${t.id}`}>{t.name}</Link>], ['Plan', planName(t.plan)], ['Priority', human(sel.c)], ['Assignee', sel.e || 'Unassigned'], ['Opened', `${dateShort(sel.at)} ${hhmm(sel.at)}`]]} />
+        {msg?.m && <p style={{ whiteSpace: 'pre-wrap', fontSize: 14 }}>{msg.m}</p>}
+        <Dl rows={[['Tenant', <Link key="t" href={`${DETAIL}?t=${t.id}`}>{t.name}</Link>], ['Plan', planName(t.plan)], ['Priority', human(sel.c)], ['Assignee', sel.e || 'Unassigned'], ['Opened', `${dateShort(sel.at)} ${hhmm(sel.at)}${msg?.by ? ' · ' + msg.by : ''}`]]} />
         <div className="sunken stack sm"><span className="cap">Support access</span><AccessState db={db} tenant={t} /></div>
         <div className="stack sm">
-          {sel.e !== ME && <button className="btn" onClick={() => patchRecord('ticket', sel.id, { e: ME }, 'ticket.assigned')}>Assign to me</button>}
+          {ME && sel.e !== ME && <button className="btn" onClick={() => patchRecord('ticket', sel.id, { e: ME }, 'ticket.assigned')}>Assign to me</button>}
           {['none', 'expired', 'denied', 'ended'].includes(accessOf(db, t.id).state) && sel.d !== 'solved' && <button className="btn btn-primary" onClick={() => setAccess(true)}>Request support access</button>}
           {sel.c !== 'urgent' && sel.d !== 'solved' && <button className="btn btn-danger" onClick={() => patchRecord('ticket', sel.id, { c: 'urgent' }, 'ticket.escalated')}>Escalate to urgent</button>}
           <button className="btn" onClick={() => { patchRecord('ticket', sel.id, { d: sel.d === 'solved' ? 'open' : 'solved' }, sel.d === 'solved' ? 'ticket.reopened' : 'ticket.solved'); toast(sel.d === 'solved' ? 'Reopened' : 'Marked solved'); }}>{sel.d === 'solved' ? 'Reopen' : 'Mark solved'}</button>

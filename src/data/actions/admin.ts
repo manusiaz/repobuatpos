@@ -167,3 +167,21 @@ export function endSupportAccess(approvalOrRecordId: string, tenantId?: string) 
     if (r) r.d = 'ended'; else l.unshift({ id: approvalOrRecordId, a: '', b: '', c: '', d: 'ended', e: '', at: Date.now() });
   }, approvalOrRecordId);
 }
+
+/** Help › Contact BorNiz support: a business (owner / manager) opens a ticket; BorNiz staff see it in Support tickets.
+ *  Returns why not, or null. */
+export async function openSupportTicket(subject: string, body: string, priority: 'normal' | 'high', by: string): Promise<string | null> {
+  if (subject.trim().length < 3 || body.trim().length < 3) return 'Say what happened';
+  if (REMOTE) {
+    const s = await import('../backend.ts'), { remoteInfo } = await import('../remoteStore.ts');
+    try { await s.openTicket(remoteInfo().tenant?.id ?? '', subject.trim(), body.trim(), priority); return null; } catch (e) { return (e as Error).message.replace(/^BN\d+\s*/, ''); }
+  }
+  commit('ticket.opened', by, d => { (d.records.ticket ??= []).unshift({ id: uid('TK-'), a: subject.trim(), b: d.tenant.id, c: priority, d: 'open', e: '', at: Date.now(), m: body.trim(), by } as Rec); }, subject.trim());
+  return null;
+}
+/** The business's own tickets and where they stand. */
+export async function myTickets(): Promise<(Rec & { m?: string })[]> {
+  if (!REMOTE) { const d = snapshot(); return (d.records.ticket ?? []).filter(r => r.b === d.tenant.id); }
+  const s = await import('../backend.ts'), { remoteInfo } = await import('../remoteStore.ts');
+  return s.myTickets(remoteInfo().tenant?.id ?? '');
+}

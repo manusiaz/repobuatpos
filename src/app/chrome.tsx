@@ -6,7 +6,9 @@ import catalog from '../system/catalog.json' with { type: 'json' };
 import { PAGES, PROTOTYPE, surfaceHome, type Surface } from '../system/registry.ts';
 import { canOpen, canReach } from '../system/access.ts';
 import { homeOf } from '../system/pagemap.ts';
-import { Icon, Sheet, ago, Avatar, Badge } from '../ui/kit.tsx';
+import { Icon, Sheet, ago, Avatar, Badge, Field, Seg, toast } from '../ui/kit.tsx';
+import { myTickets, openSupportTicket } from '../data/actions/admin.ts';
+import type { Rec } from '../data/schema.ts';
 import { markRead } from '../data/actions.ts';
 import { setSession } from '../session.ts';
 import { DEMO_HERE, setDemo } from '../data/remote.ts';
@@ -94,10 +96,33 @@ export function Help() {
         {tasks.map(([when, title, list]) => <section key={when} className="stack sm"><span className="cap">{when} · {title}</span>
           {list.map(([t, app]) => { const s = SURFACE_OF[app]; return <div key={t} className="row between" style={{ borderTop: '1px solid var(--border)', paddingTop: 8 }}><span style={{ fontSize: 14 }}>{t}</span>{s ? <Link className="btn btn-sm" href={surfaceHome(s)} onClick={() => setOpen(false)}>Show me</Link> : <span className="faint" style={{ fontSize: 12 }}>{app}</span>}</div>; })}
         </section>)}
+        {(user.role === 'owner' || user.role === 'manager') && <Support />}
         <section className="stack sm"><span className="cap">Rules everyone follows</span>{(catalog.rules as unknown as [string, string, string, [string, string][]][]).slice(0, 6).map(([t, , where, rs]) => <details key={t}><summary style={{ cursor: 'pointer', fontWeight: 600 }}>{t} <span className="faint" style={{ fontWeight: 400 }}>· {where}</span></summary><ul style={{ margin: '6px 0', paddingLeft: 18, fontSize: 14 }}>{rs.map(([m, x]) => <li key={x}><b>{m}</b> {x}</li>)}</ul></details>)}</section>
       </div>
     </Sheet>
   </>;
+}
+
+/** Help › Contact BorNiz support (owner / manager): the ticket lands in the console's Support tickets; replies come back
+ *  as its status here. */
+function Support() {
+  const { user } = useApp();
+  const [mine, setMine] = useState<(Rec & { m?: string })[] | null>(null), [f, setF] = useState({ a: '', m: '', c: 'normal' as 'normal' | 'high' }), [busy, setBusy] = useState(false);
+  const load = () => myTickets().then(setMine, () => setMine([]));
+  useEffect(() => { void load(); }, []);
+  const send = async () => {
+    setBusy(true); const no = await openSupportTicket(f.a, f.m, f.c, user.id); setBusy(false);
+    if (no) return toast(no);
+    toast('Sent to BorNiz support'); setF({ a: '', m: '', c: 'normal' }); void load();
+  };
+  return <section className="stack sm"><span className="cap">Contact BorNiz support</span>
+    <Field label="Subject"><input className="input" maxLength={120} value={f.a} onChange={e => setF({ ...f, a: e.target.value })} placeholder="What is wrong, in a few words" /></Field>
+    <Field label="What happened"><textarea className="input" rows={4} maxLength={4000} value={f.m} onChange={e => setF({ ...f, m: e.target.value })} placeholder="Where, when, and what you expected" /></Field>
+    <Seg label="Priority" value={f.c} onChange={c => setF({ ...f, c })} options={[['normal', 'Normal'], ['high', 'Sales are blocked']]} />
+    <button className="btn btn-primary" style={{ alignSelf: 'flex-start' }} disabled={busy || f.a.trim().length < 3 || f.m.trim().length < 3} onClick={send}>Send to support</button>
+    {mine?.map(t => <div key={t.id} className="row between" style={{ borderTop: '1px solid var(--border)', paddingTop: 8 }}><span className="stack" style={{ gap: 0 }}><b style={{ fontSize: 14 }}>{t.a}</b><span className="faint" style={{ fontSize: 12 }}>{t.id} · {ago(t.at)}</span></span>
+      <Badge tone={t.d === 'solved' ? 'success' : t.d === 'waiting' ? 'warning' : 'info'} dot>{t.d === 'waiting' ? 'Waiting on you' : t.d === 'solved' ? 'Solved' : 'Open'}</Badge></div>)}
+  </section>;
 }
 
 /** Apps, help, alerts and user for full-screen device apps (POS, KDS, PIC, waiter, online). Sits in each app's own
