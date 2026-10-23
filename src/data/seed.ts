@@ -23,7 +23,6 @@ const DEMO_ROWS: Record<string, string[][]> = {
   batch: [['Fresh milk · LOT 2410-A', 'Senayan', 'OK', '14 Oct', '48'], ['Fresh milk · LOT 2409-C', 'Kemang', 'Expiring', '11 Oct', '6'], ['Croissant frozen · LOT 88', 'BSD', 'OK', '30 Nov', '120']],
   leave: [['Rina · annual leave', 'Senayan', 'Waiting', '20–22 Oct', '3'], ['Tono · swap with Wulan', 'Senayan', 'Waiting', '15 Oct', '1'], ['Dimas · overtime', 'Senayan', 'Approved', '09 Oct', '0.5']],
   service: [['Queue A', 'Senayan', 'Open', 'now', 'A-042'], ['Courier · Joko', 'Senayan', 'On delivery', '12 min', 'D-08'], ['Laundry #L-221', 'Kemang', 'Ready', '1 h', 'L-221']],
-  billing: [['BorNiz Pro · Oct 2026 · 3 outlets', 'All outlets', 'Paid', '01 Oct', '1047000'], ['WhatsApp credits top-up', 'All outlets', 'Paid', '03 Oct', '500000'], ['BorNiz Pro · Sep 2026', 'All outlets', 'Paid', '01 Sep', '1047000']],
   busy: [['GoFood busy mode · lunch rush', 'Senayan', 'Ended', 'Today 12:10', '20'], ['GrabFood paused · gas leak check', 'Kemang', 'Ended', 'Yesterday', '45']],
   incident: [['Broken glass · bar', 'Senayan', 'Logged', 'Today 13:20', '45000'], ['Complaint · cold croissant · comp', 'Senayan', 'Comped', 'Today 11:05', '32000']],
 };

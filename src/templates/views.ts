@@ -43,7 +43,6 @@ export const GENERIC: Record<string, [string, string, string, string, string]> =
   batch: ['Batch', 'Outlet', 'Status', 'Expires', 'Qty'],
   leave: ['Request', 'Outlet', 'Status', 'Dates', 'Days'],
   service: ['Item', 'Outlet', 'Status', 'Updated', 'Number'],
-  billing: ['Invoice', 'Outlet', 'Status', 'Date', 'Amount'],
   busy: ['Pause / busy', 'Outlet', 'Status', 'When', 'Minutes'],
   catops: ['Item', 'Outlet', 'Status', 'Updated', 'Code'],
   incident: ['Incident', 'Outlet', 'Status', 'When', 'Value'],
@@ -136,7 +135,7 @@ export const VIEWS: Record<string, View> = {
   approvals: { cols: [{ k: 'title', l: 'Request' }, { k: 'outlet', l: 'Outlet' }, { k: 'who', l: 'Requested by' }, { k: 'level', l: 'Decides' }, { k: 'status', l: 'Status', f: 'status' }, { k: 'at', l: 'Time', f: 'time' }, { k: 'amount', l: 'Amount', f: 'money' }], status: 'status', rows: c => approvalRows(c) },
   expense: generic('expense'), budget: generic('budget'), asset: generic('asset'), reward: generic('reward', ['text', 'text', 'status', 'text', 'num']), broadcast: generic('broadcast', ['text', 'text', 'status', 'text', 'num']),
   transfer: generic('transfer'), batch: generic('batch'), leave: generic('leave', ['text', 'text', 'status', 'text', 'num']), service: generic('service', ['text', 'text', 'status', 'text', 'mono']),
-  billing: generic('billing'), busy: generic('busy', ['text', 'text', 'status', 'text', 'num']), incident: generic('incident'),
+  busy: generic('busy', ['text', 'text', 'status', 'text', 'num']), incident: generic('incident'),
   catops: { cols: [{ k: 'name', l: 'Product' }, { k: 'sku', l: 'SKU / barcode', f: 'mono' }, { k: 'unit', l: 'Unit' }, { k: 'price', l: 'Price', f: 'money' }], rows: c => c.db.products.map(p => ({ id: p.id, name: p.name, sku: p.sku + ' · 899' + p.sku.replace(/\D/g, '').padStart(10, '0'), unit: 'pcs', price: p.basePrice })) },
 };
 /** The page decides which view: its authority object, refined by page name where one object spans several tables. */

@@ -26,7 +26,7 @@ export function Billing() {
   }, []);
   const plan = planOf(db.tenant.plan);
   return <div className="stack lg">
-    <PageHead />
+    <PageHead sub="What BorNiz bills this business. Invoices come from your plan and outlets; nobody here creates or edits one." />
     <section className="card row between wrap">
       <span className="stack sm" style={{ gap: 2 }}><b style={{ fontSize: 18 }}>{plan.name}</b>
         <span className="muted" style={{ fontSize: 14 }}>{db.outlets.length} {db.outlets.length === 1 ? 'outlet' : 'outlets'} · {plan.monthly ? 'billed on the 1st of each month, PPN 11% included' : plan.monthly === 0 ? 'free, never billed' : 'priced per contract'}</span></span>

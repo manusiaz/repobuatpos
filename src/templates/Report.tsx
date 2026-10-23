@@ -32,7 +32,7 @@ function dimOf(n: string): Dim {
 export default function Report() {
   const { page } = useApp();
   if (page.object === 'payroll' && /commission/i.test(page.name)) return <><List readOnly /><CommissionRules /></>;
-  if (page.path === '/owner/account/subscription-billing') return <Billing />;
+  if (page.path === '/owner/account/subscription-billing' || page.path === '/owner/account/invoices') return <Billing />;
   if (!isAnalytic(page.name)) return <List readOnly />;
   return <Analytic />;
 }
