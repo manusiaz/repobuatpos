@@ -9,6 +9,7 @@ import { homeOf } from '../system/pagemap.ts';
 import { Icon, Sheet, ago, Avatar, Badge, Field, Seg, toast } from '../ui/kit.tsx';
 import { myTickets, openSupportTicket } from '../data/actions/admin.ts';
 import type { Rec } from '../data/schema.ts';
+import { humanError } from '../data/remoteDocs.ts';
 import { markRead } from '../data/actions.ts';
 import { setSession } from '../session.ts';
 import { DEMO_HERE, setDemo } from '../data/remote.ts';
@@ -108,8 +109,10 @@ export function Help() {
 function Support() {
   const { user } = useApp();
   const [mine, setMine] = useState<(Rec & { m?: string })[] | null>(null), [f, setF] = useState({ a: '', m: '', c: 'normal' as 'normal' | 'high' }), [busy, setBusy] = useState(false);
-  const load = () => myTickets(user.id).then(setMine, () => setMine([]));
-  useEffect(() => { setMine(null); void load(); }, [user.id]); // who is at the device decides
+  const [why, setWhy] = useState('');
+  const load = (live = { on: true }) => myTickets(user.id).then(t => { if (live.on) { setMine(t); setWhy(''); } },
+    e => { if (live.on) { setMine([]); setWhy(humanError((e as Error).message).text); } });
+  useEffect(() => { const live = { on: true }; setMine(null); void load(live); return () => { live.on = false; }; }, [user.id]); // who is at the device decides; a slower answer for the last person is dropped
   const send = async () => {
     setBusy(true); const no = await openSupportTicket(f.a, f.m, f.c, user.id); setBusy(false);
     if (no) return toast(no);
@@ -120,6 +123,7 @@ function Support() {
     <Field label="What happened"><textarea className="input" rows={4} maxLength={4000} value={f.m} onChange={e => setF({ ...f, m: e.target.value })} placeholder="Where, when, and what you expected" /></Field>
     <Seg label="Priority" value={f.c} onChange={c => setF({ ...f, c })} options={[['normal', 'Normal'], ['high', 'Sales are blocked']]} />
     <button className="btn btn-primary" style={{ alignSelf: 'flex-start' }} disabled={busy || f.a.trim().length < 3 || f.m.trim().length < 3} onClick={send}>Send to support</button>
+    {why && <p className="muted" style={{ fontSize: 14 }}>{why}</p>}
     {mine?.map(t => <div key={t.id} className="row between" style={{ borderTop: '1px solid var(--border)', paddingTop: 8 }}><span className="stack" style={{ gap: 0 }}><b style={{ fontSize: 14 }}>{t.a}</b><span className="faint" style={{ fontSize: 12 }}>{t.id} · {ago(t.at)}</span></span>
       <Badge tone={t.d === 'solved' ? 'success' : t.d === 'waiting' ? 'warning' : 'info'} dot>{t.d === 'waiting' ? 'Waiting on you' : t.d === 'solved' ? 'Solved' : 'Open'}</Badge></div>)}
   </section>;

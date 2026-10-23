@@ -57,3 +57,10 @@ test('a blank or missing wait means the default, whichever way it is stored', as
   assert.deepEqual([winbackDays({ days: '' }), winbackDays({}), winbackDays({ days: 'x' }), winbackDays({ days: 90 }), winbackDays({ days: 0 })], [30, 30, 30, 30, 14]);
   assert.deepEqual([birthdayDays({ days: '' }), birthdayDays({}), birthdayDays({ days: 3 })], [7, 7, 3]);
 });
+test('a feedback request with its threshold cleared still waits for a good rating', () => {
+  const db = shop('pro', { a_feedback: { on: true, delay: 0, min: '', cond: 'all', ch: 'wa', tpl: 'feedback_request', cap: true } });
+  db.reviews = [{ id: 'rv1', outletId: 'sen', customerId: 'c1', name: 'Dewi', stars: 1, text: '', at: T0, reply: null, orderId: 'o1' }];
+  assert.deepEqual(send(db, T0 + 60e3).filter(s => s.startsWith('feedback')), [], 'not after a 1-star review');
+  db.reviews[0].stars = 5;
+  assert.deepEqual(send(db, T0 + 60e3).filter(s => s.startsWith('feedback')), ['feedback_request>c1@wa']);
+});

@@ -7,6 +7,7 @@ delete from private.secrets where name = 'server'; insert into private.secrets v
 create function pg_temp.expect(sql text, code text) returns void language plpgsql as $$
 begin execute sql; raise exception 'expected % but it passed: %', code, sql;
 exception when others then if sqlerrm not like code || '%' then raise exception 'expected %, got: %', code, sqlerrm; end if; end $$;
+grant execute on function pg_temp.expect(text, text) to authenticated;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000d1', true);
 create temp table t as select public.bn_bootstrap('Kopi Tiket', 'kopitiket', 'budi') as id;
@@ -38,13 +39,16 @@ insert into private.staff_sessions (token, tenant_id, user_id, employee_id, role
   ('00000000-0000-0000-0000-0000000000ec', (select id from t), '00000000-0000-0000-0000-0000000000d1', 'tono', 'cashier', now() + interval '1 hour');
 set local role authenticated;
 do $$ begin
-  assert public.bn_acting_role((select id from t)) = '{"role": "owner"}', 'the account';
-  assert public.bn_acting_role((select id from t), '00000000-0000-0000-0000-0000000000e9') = '{"role": "cashier", "name": "Rina"}', 'a cashier on the owner''s browser is a cashier';
+  assert public.bn_acting_role((select id from t))->>'role' = 'owner', 'the account';
+  assert (select r->>'role' = 'cashier' and r->>'name' = 'Rina' and r->>'email' = 'owner@kopitiket.id' from public.bn_acting_role((select id from t), '00000000-0000-0000-0000-0000000000e9') r), 'a cashier on the owner''s browser is a cashier';
   assert public.bn_acting_role((select id from t), '00000000-0000-0000-0000-0000000000ea')->>'role' = 'cashier', 'a demotion counts at once';
   assert public.bn_acting_role((select id from t), '00000000-0000-0000-0000-0000000000eb') = '{"ended": true}', 'an ended session (no grace for live calls)';
   assert public.bn_acting_role((select id from t), '00000000-0000-0000-0000-0000000000ec') = '{"ended": true}', 'an employee no longer active';
   assert public.bn_acting_role((select id from t), gen_random_uuid()) = '{"ended": true}', 'an unknown session';
 end $$;
+-- writes ask the same question: Andi, demoted to cashier while signed in as a manager, writes as a cashier now
+select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"outlets","id":"x","data":{"id":"x","name":"X"}}]'::jsonb, 'x', 'andi', null, null, null, '00000000-0000-0000-0000-0000000000ea') $$, 'BN054');
+select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"outlets","id":"x","data":{"id":"x","name":"X"}}]'::jsonb, 'x', 'tono', null, null, null, '00000000-0000-0000-0000-0000000000ec') $$, 'BN082');
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000d4', true);
 do $$ begin assert public.bn_acting_role((select id from t)) is null, 'not a member'; end $$;
 reset role;

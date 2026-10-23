@@ -9,11 +9,6 @@ export const AUTOMATIONS = ['a_thanks', 'a_feedback', 'a_winback', 'a_bday'] as 
 /** Win-back wait the studio offers (14–30 days: devices and the worker load 35 days of orders, so a longer wait would
  *  never see the last visit). The sender, the studio audience and its text all use this value. */
 export const WINBACK_MAX_DAYS = 30;
-/** A published number setting inside the studio's range; blank, missing or not a number is the default (one meaning for "unset"). */
-const setting = (v: Record<string, unknown>, k: string, def: number, min: number, max: number) => {
-  const x = v[k] === '' || v[k] == null ? NaN : Number(v[k]);
-  return Number.isFinite(x) ? Math.max(min, Math.min(x, max)) : def;
-};
 export const winbackDays = (v: Record<string, unknown>) => setting(v, 'days', TOOL_DEFAULTS.a_winback.days, 14, WINBACK_MAX_DAYS);
 /** Days before the birthday the treat goes out (studio range 0–14). */
 export const birthdayDays = (v: Record<string, unknown>) => setting(v, 'days', TOOL_DEFAULTS.a_bday.days, 0, 14);
@@ -24,12 +19,16 @@ export function nextBirthday(birthday: string, now: number): number | null {
 }
 export const lastVisit = (db: DB, customerId: string) => db.orders.filter(o => o.customerId === customerId && o.status === 'paid').reduce((a, o) => Math.max(a, o.paidAt ?? o.createdAt), 0);
 
+/** A published number setting inside the studio's range; blank, missing or not a number is the default (one meaning for "unset"). */
+const setting = (v: Record<string, unknown>, k: string, def: number, min: number, max: number) => {
+  const x = v[k] === '' || v[k] == null ? NaN : Number(v[k]);
+  return Number.isFinite(x) ? Math.max(min, Math.min(x, max)) : def;
+};
 /** Each send is due once: after its moment plus the wait, inside a window the sweep (every minute) can't miss. */
 const due = (now: number, at: number, wait: number, window: number) => now >= at + wait && now < at + wait + window;
 function moments(db: DB, now: number, id: (typeof AUTOMATIONS)[number], v: Record<string, unknown>): { key: string; customerId: string | null; orderId?: string }[] {
-  const n = (k: string) => Number(v[k]) || 0;
-  if (id === 'a_thanks') return db.orders.filter(o => o.customerId && o.paidAt && due(now, o.paidAt, n('delay') * HOUR, 15 * 60e3)).map(o => ({ key: o.id, customerId: o.customerId, orderId: o.id }));
-  if (id === 'a_feedback') return db.reviews.filter(r => r.stars >= n('min') && due(now, r.at, n('delay') * HOUR, 15 * 60e3)).map(r => ({ key: r.id, customerId: r.customerId, orderId: r.orderId ?? undefined }));
+  if (id === 'a_thanks') return db.orders.filter(o => o.customerId && o.paidAt && due(now, o.paidAt, setting(v, 'delay', TOOL_DEFAULTS.a_thanks.delay, 0, 48) * HOUR, 15 * 60e3)).map(o => ({ key: o.id, customerId: o.customerId, orderId: o.id }));
+  if (id === 'a_feedback') return db.reviews.filter(r => r.stars >= setting(v, 'min', TOOL_DEFAULTS.a_feedback.min, 1, 5) && due(now, r.at, setting(v, 'delay', TOOL_DEFAULTS.a_feedback.delay, 0, 24) * HOUR, 15 * 60e3)).map(r => ({ key: r.id, customerId: r.customerId, orderId: r.orderId ?? undefined }));
   if (id === 'a_winback') return db.customers.flatMap(c => { const t = lastVisit(db, c.id); return t && due(now, t, winbackDays(v) * DAY, DAY) ? [{ key: c.id + '|' + t, customerId: c.id }] : []; });
   return db.customers.flatMap(c => {
     if (!c.birthday) return [];

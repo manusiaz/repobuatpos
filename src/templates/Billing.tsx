@@ -9,6 +9,7 @@ import { idr } from '../domain/money.ts';
 import { REMOTE } from '../data/remote.ts';
 import { remoteInfo } from '../data/remoteStore.ts';
 import { ownStaffToken } from '../data/staff.ts';
+import { humanError } from '../data/remoteDocs.ts';
 import { planOf } from '../screens/public/plans.ts';
 import type { Rec } from '../data/schema.ts';
 import { PageHead } from './common.tsx';
@@ -22,8 +23,10 @@ export function Billing() {
   const [error, setError] = useState('');
   useEffect(() => {
     if (!REMOTE) return;
-    setRows(null); setError('');
-    void import('../data/backend.ts').then(s => s.myInvoices(remoteInfo().tenant?.id ?? '', ownStaffToken(user.id))).then(setRows, e => setError((e as Error).message));
+    let live = true; setRows(null); setError('');
+    void import('../data/backend.ts').then(s => s.myInvoices(remoteInfo().tenant?.id ?? '', ownStaffToken(user.id)))
+      .then(r => { if (live) setRows(r); }, e => { if (live) setError(humanError((e as Error).message).text); });
+    return () => { live = false; }; // a slower answer for the last person at the device is dropped
   }, [user.id]); // who is at the device decides (a PIN switch refetches)
   const plan = planOf(db.tenant.plan);
   return <div className="stack lg">
