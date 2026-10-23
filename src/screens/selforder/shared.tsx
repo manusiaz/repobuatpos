@@ -17,6 +17,7 @@ import { guestCall } from '../../data/actions/selforder.ts';
 import type { DB, Order } from '../../data/schema.ts';
 import { groupsOf, hours, LINE, MUTED, SURFACE, unit, unpaid, useLang, useLocal, type MenuItem } from '../guest/kit.tsx';
 import { findTable, tableNo, tableParam } from '../../domain/tables.ts';
+import { has } from '../public/plans.ts';
 export { tableNo };
 
 const PATHS: Record<string, string> = Object.fromEntries(pagesOf('selforder').map(p => [p.slug, p.path]));
@@ -51,7 +52,7 @@ export function useGuest() {
   const me = db.customers.find(c => c.id === meId) ?? null;
   const out = db.outlets.find(o => o.id === outletId)!;
   const now = useNow(15000);
-  const hrs = hours(out, now);
+  const hrs = hours(out, now), selfOrder = has(db.tenant.plan, 'selforder'); // below Pro the QR menu is for browsing (the server refuses the order, BN087)
   const recent = db.orders.filter(o => o.outletId === outletId && o.source === 'qr' && o.table === table && o.status !== 'voided' && Date.now() - o.createdAt < TWO_H).sort((a, b) => b.createdAt - a.createdAt);
   const cart = recent.find(unpaid) ?? null;               // the table's open bill
   const latest = recent.find(o => o.lines.some(l => l.fired)) ?? null; // the order the kitchen knows about
@@ -61,7 +62,7 @@ export function useGuest() {
   const ab = abVariant(db, guestId ?? '', now);
   const ensureCart = () => { const id = cart?.id ?? newOrder(outletId, 'guest', 'qr', { table, type: 'dine', customerId: meId, ...(ab ? { ab } : {}) });
     if (!mine.includes(id)) setMine([...mine.slice(-9), id]); return id; };
-  return { db, outletId, go, sp, ref, table, L, t: L.t, me, setMe, out, hrs, canOrder: hrs.open && !hrs.paused && !!onPlan, onPlan, online: db.device.online, recent, cart, latest, ensureCart, now, ab, moved, elsewhere };
+  return { db, outletId, go, sp, ref, table, L, t: L.t, me, setMe, out, hrs, canOrder: hrs.open && !hrs.paused && !!onPlan && selfOrder, selfOrder, onPlan, online: db.device.online, recent, cart, latest, ensureCart, now, ab, moved, elsewhere };
 }
 export type G = ReturnType<typeof useGuest>;
 
@@ -125,7 +126,8 @@ export function Totals({ db, o, tip = 0, me }: { db: DB; o: Order; tip?: number;
 /** Closed / paused / offline notices shown above the menu. */
 export function Notices({ g }: { g: G }) {
   const n: [string, string, ReactNode][] = [];
-  if (g.hrs.paused) n.push(['circle-pause', 'Ordering is paused right now', 'Ask the staff, or browse the menu.']);
+  if (!g.selfOrder) n.push(['concierge-bell', 'Order with the staff', 'Browse the menu here, then order at the counter or with your waiter.']);
+  else if (g.hrs.paused) n.push(['circle-pause', 'Ordering is paused right now', 'Ask the staff, or browse the menu.']);
   else if (!g.hrs.open) n.push(['moon', `Closed · ${g.hrs.text}`, <a key="b" href={so('online-booking')} onClick={e => { e.preventDefault(); g.go(so('online-booking')); }}>Book a table</a>]);
   if (!g.onPlan) n.push(['circle-alert', `${g.t('Table')} ${tableNo(g.table)} ${g.t('is not on this outlet’s floor plan')}`, g.t('Ask a staff member for the right table QR code.')]);
   if (!g.online) n.push(['wifi-off', 'You’re offline', 'Your cart is kept. QRIS needs internet.']);

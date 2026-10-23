@@ -26,11 +26,26 @@ export const billed = (p: Plan, yearly: boolean) => p.monthly == null ? null : y
 export const FEATURE_PLAN: [string, PlanId][] = [
   ['QRIS, cash, card & e-wallet', 'free'], ['Digital receipts by WhatsApp', 'free'], ['Basic sales reports', 'free'], ['Offline mode', 'free'],
   ['Loyalty, beans & vouchers', 'basic'], ['Inventory & recipes', 'basic'], ['Customer display', 'basic'], ['Up to 3 registers', 'basic'],
-  ['Kitchen display', 'pro'], ['QR self-order & kiosk', 'pro'], ['Menu, Brand & page studios', 'pro'], ['Shifts, payroll & approvals', 'pro'], ['WhatsApp Business automations', 'pro'], ['Up to 3 outlets', 'pro'],
+  ['Kitchen display', 'pro'], ['QR self-order & kiosk', 'pro'], ['Menu, Brand & page studios', 'pro'], ['Shifts & payroll', 'pro'], ['WhatsApp Business automations', 'pro'], ['Up to 3 outlets', 'pro'],
   ['Franchise brand lock & royalties', 'enterprise'], ['API, webhooks & SSO', 'enterprise'], ['Unlimited outlets', 'enterprise'], ['Dedicated success manager', 'enterprise'],
 ];
 const RANK: Record<PlanId, number> = { free: 0, basic: 1, pro: 2, enterprise: 3 };
 export const includes = (have: PlanId, need: PlanId) => RANK[have] >= RANK[need];
+
+/** Pricing-table lines that lock real behaviour (spec lg-gate): their pages show the upgrade wall over the page, read-only,
+ *  and what they do elsewhere stops below the plan (beans and stock at payment, ordering from the QR menu: BN087 on the
+ *  server). Approvals are on every plan: voids, refunds and discounts need them. */
+export const FEATURE = { loyalty: 'Loyalty, beans & vouchers', inventory: 'Inventory & recipes', selforder: 'QR self-order & kiosk', shifts: 'Shifts & payroll' } as const;
+export type Feature = keyof typeof FEATURE;
+export const has = (have: PlanId, f: Feature) => includes(have, FEATURE_PLAN.find(([l]) => l === FEATURE[f])![1]);
+const PAGES: [RegExp, Feature][] = [
+  [/^\/(owner|manager)\/inventory\/|^\/owner\/catalog\/recipes-and-cogs$|^\/owner\/reports\/inventory-movement-report$|^\/manager\/(same-as-owner\/inventory-pos-and-suppliers|create\/stock-adjustment-and-waste-entry|operations\/stock-opname-and-stock-requests)$|^\/pic\/floor\/(stock-request-to-manager|stock-opname)$/, 'inventory'],
+  [/^\/owner\/customers\/(loyalty-program|points-adjustment|rewards-catalog|membership-and-gift-cards)$|loyalty-rules-and-rewards-catalog$|^\/manager\/same-as-owner\/customers-and-loyalty-rules$/, 'loyalty'],
+  [/^\/owner\/team\/(shifts-and-schedules|payroll-and-commission|commission-rules)$|^\/manager\/shifts\/(shift-templates|weekly-roster-builder-and-coverage|assign-pic-per-shift|publish-roster-to-whatsapp|swap-and-no-show-requests)$|^\/manager\/(waiting-for-owner\/payroll-approval|same-as-owner\/team-roster-and-pic|team\/schedules-and-attendance)$/, 'shifts'],
+  [/^\/kiosk(\/|$)/, 'selforder'],
+];
+/** The locked feature a page belongs to on this plan, else null. */
+export const pageLock = (have: PlanId, path: string): Feature | null => { const f = PAGES.find(([r]) => r.test(path))?.[1]; return f && !has(have, f) ? f : null; };
 
 /** Room left on the plan for one more outlet or device: null, or why not (the server refuses the same with BN076,
  *  db/migrations/20261021000000_borniz_plan_rules.sql). What a business already has keeps working after a downgrade. */

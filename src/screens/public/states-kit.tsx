@@ -10,6 +10,7 @@ import { setSession } from '../../session.ts';
 import { decide, requestApproval, stockEntry, setSetting } from '../../data/actions.ts';
 import { queueOffline, syncQueue, setDeviceStatus } from '../../data/actions/states.ts';
 import { addRegister, issuePairCode, pairDevice, pairExpiry } from '../../data/actions/auth.ts';
+import { askForPlan } from '../../data/actions/business.ts';
 import type { Employee, Role } from '../../data/schema.ts';
 import { levelRequired, type Level, type RequestType } from '../../domain/approval.ts';
 import { level as stockLevel } from '../../domain/stock.ts';
@@ -321,7 +322,7 @@ export function DeviceNotPaired() {
 }
 
 export function UpgradeWall({ need }: { need?: string }) {
-  const { db } = useApp();
+  const { db, user } = useApp();
   const have = db.tenant.plan, plan = planOf(have);
   const locked = FEATURE_PLAN.filter(([, p]) => !includes(have, p));
   const feature = (need && FEATURE_PLAN.find(([f]) => f === need)) || locked[0];
@@ -330,7 +331,7 @@ export function UpgradeWall({ need }: { need?: string }) {
   const next = feature ? planOf(feature[1]) : null;
   return <div className="stack" style={{ maxWidth: 720, width: '100%', margin: '0 auto' }}>
     {next ? <StatePanel kind="Blocked" icon="lock" kicker={`You’re on ${plan.name}`} title={`${feature![0]} is on ${next.name}`}
-      actions={<>{next.id === 'enterprise' ? <Link className="btn btn-primary btn-lg" href="/contact-sales-book-a-demo">Contact sales</Link> : <Link className="btn btn-primary btn-lg" href="/account/choose-plan">Try {next.name} free for 14 days</Link>}<Link className="btn btn-lg" href="/pricing">Compare plans</Link></>}
+      actions={<>{user.role !== 'owner' ? <button className="btn btn-primary btn-lg" onClick={() => { askForPlan(feature![0], user.id); toast('The owner is told'); }}>Ask the owner</button> : next.id === 'enterprise' ? <Link className="btn btn-primary btn-lg" href="/contact-sales-book-a-demo">Contact sales</Link> : <Link className="btn btn-primary btn-lg" href="/account/choose-plan">Try {next.name} free for 14 days</Link>}<Link className="btn btn-lg" href="/pricing">Compare plans</Link></>}
       meta="No card needed for the trial. Your data stays if you go back.">
       Here’s what you’d get with {next.name}:
     </StatePanel> : <StatePanel kind="Success" icon="crown" title={`You’re on ${plan.name}`}>Every feature is included. Talk to your success manager for more outlets.</StatePanel>}

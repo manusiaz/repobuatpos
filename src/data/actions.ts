@@ -19,6 +19,7 @@ import { escalationOn, payOn, photoRequired, type PayId } from '../system/settin
 import alertsCatalog from '../system/alerts.json' with { type: 'json' };
 import { perm } from '../system/perms.ts';
 import { toolValue } from '../system/tools.ts';
+import { has } from '../screens/public/plans.ts';
 
 const now = () => Date.now();
 const emp = (d: DB, id: string) => d.employees.find(e => e.id === id);
@@ -234,7 +235,7 @@ export function settleIfDone(d: DB, o: Order, by: string) {
   o.lines.forEach(l => { if (l.flashPrice == null) return; const f = d.promos.find(p => p.kind === 'flash' && p.value === l.flashPrice && p.productIds?.includes(l.productId)); if (f) f.used = (f.used ?? 0) + l.qty; });
   // order.paid → Inventory (recipe deduction), Loyalty (earn), Notifications (thank-you automation)
   // Stock moves at payment; a product that can no longer make one portion is "Out of stock" (sold out on QR + kiosk), else "Low stock" under par.
-  const used = deductForSale(d.recipes, o.lines, o.outletId, o.id, by), before = levels(d.movements, o.outletId);
+  const used = has(d.tenant.plan, 'inventory') ? deductForSale(d.recipes, o.lines, o.outletId, o.id, by) : [], before = levels(d.movements, o.outletId);
   d.movements.push(...used);
   const after = levels(d.movements, o.outletId), at = outletOf(d, o.outletId).name;
   const gone = d.products.filter(p => p.status === 'live' && portionsLeft(d.recipes, before, p.id) >= 1 && portionsLeft(d.recipes, after, p.id) < 1);
@@ -244,7 +245,7 @@ export function settleIfDone(d: DB, o: Order, by: string) {
     if (hit.length) notify(d, 'Out of stock', 'high', ['pic', 'manager', 'kitchen'], o.outletId, `${item.name} ran out at ${at} (${Math.max(0, lvl).toFixed(2)} ${item.unit}) · ${hit.join(', ')} sold out on the QR menu and kiosk until stock is received or recounted`, '/owner/inventory/low-stock-alerts-and-reorder-rules');
     else if (lvl < item.par && was >= item.par) notify(d, 'Low stock', 'warn', ['pic', 'manager'], o.outletId, `${item.name} below par at ${at} (${lvl.toFixed(1)} ${item.unit})`, '/owner/inventory/low-stock-alerts-and-reorder-rules');
   }
-  if (o.customerId) {
+  if (o.customerId && has(d.tenant.plan, 'loyalty')) {
     const tier = tierOf(d.ledger, o.customerId);
     const pts = earn(o.subtotal - o.discount, tier);
     if (pts > 0) d.ledger.push({ customerId: o.customerId, points: pts, reason: 'Order ' + o.no, orderId: o.id, at: now() });
@@ -365,7 +366,7 @@ function applyDecision(d: DB, r: Approval) {
       const lineIds = pl.lineIds as string[] | undefined;
       const done = new Set(d.refunds.filter(x => x.orderId === o.id && x.toStock && x.approvalId !== r.id).flatMap(x => x.lineIds ?? o.lines.map(l => l.id)));
       const lines = (lineIds?.length ? o.lines.filter(l => lineIds.includes(l.id)) : paidBack >= o.total ? o.lines : []).filter(l => !done.has(l.id));
-      if (pl.toStock && lines.length) {
+      if (pl.toStock && lines.length && has(d.tenant.plan, 'inventory')) {
         const mine = d.refunds.find(x => x.approvalId === r.id); if (mine) mine.lineIds = lines.map(l => l.id);
         d.movements.push(...deductForSale(d.recipes, lines, o.outletId, o.id, r.decidedBy ?? '').map(m => ({ ...m, qty: -m.qty, type: 'refund_return' as const })));
       }
@@ -559,11 +560,12 @@ export function addCustomer(name: string, phone: string, by: string, optIn = tru
   const k = phoneKey(phone), found = k.length >= 9 ? snapshot().customers.find(c => phoneKey(c.phone) === k) : undefined;
   if (found) return found.id;
   const id = uid('c');
-  commit('customer.created', by, d => { d.customers.push({ id, name, phone, email: '', joinedAt: now(), optIn, credit: 0, deposit: 0 }); d.ledger.push({ customerId: id, points: 50, reason: 'Welcome beans', at: now() }); }, name);
+  commit('customer.created', by, d => { d.customers.push({ id, name, phone, email: '', joinedAt: now(), optIn, credit: 0, deposit: 0 }); if (has(d.tenant.plan, 'loyalty')) d.ledger.push({ customerId: id, points: 50, reason: 'Welcome beans', at: now() }); }, name);
   return id;
 }
 export function redeem(customerId: string, cost: number, reward: string, by: string): string | null {
   if (!Number.isInteger(cost) || cost <= 0) return 'A reward costs a whole number of beans';
+  if (!has(snapshot().tenant.plan, 'loyalty')) return 'Beans are on the Basic plan';
   if (!canRedeem(snapshot().ledger, customerId, cost)) return 'Not enough beans';
   commit('points.redeemed', by, d => { d.ledger.push({ customerId, points: -cost, reason: 'Redeem · ' + reward, at: now() }); }, reward);
   return null;
@@ -575,7 +577,7 @@ export function rateOrder(orderId: string, stars: number, text = '') {
     d.reviews.unshift({ id: uid('rv'), outletId: o.outletId, customerId: o.customerId, name: d.customers.find(c => c.id === o.customerId)?.name.split(' ')[0] ?? 'Guest', stars, text, at: now(), reply: null, orderId });
     // the beans the feedback page promises (Menu Studio), once per order, to the member who ordered
     const beans = feedbackBeans(d);
-    if (beans > 0 && o.customerId && !d.ledger.some(l => l.orderId === o.id && l.reason === 'Feedback')) d.ledger.push({ customerId: o.customerId, points: beans, reason: 'Feedback', orderId: o.id, at: now() });
+    if (beans > 0 && o.customerId && has(d.tenant.plan, 'loyalty') && !d.ledger.some(l => l.orderId === o.id && l.reason === 'Feedback')) d.ledger.push({ customerId: o.customerId, points: beans, reason: 'Feedback', orderId: o.id, at: now() });
   }, orderId);
 }
 

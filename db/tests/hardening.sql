@@ -11,6 +11,7 @@ grant execute on function pg_temp.expect(text, text), pg_temp.as_user(text) to a
 set local role authenticated;
 select pg_temp.as_user('00000000-0000-0000-0000-0000000000f1');
 create temp table t as select public.bn_bootstrap('Kopi Aman', 'kopiaman', 'budi') as id;
+reset role; update public.tenants set plan = 'pro' where id = (select id from t); set local role authenticated; -- QR and kiosk orders are on Pro (BN087)
 grant select on t to anon, authenticated;
 select public.bn_write((select id from t), '[
   {"op":"put","coll":"outlets","id":"sen","data":{"id":"sen","name":"Senayan","serviceBps":500,"taxBps":1000,"taxInclusive":false}},

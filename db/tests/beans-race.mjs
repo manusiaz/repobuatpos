@@ -11,6 +11,7 @@ const owner = (await a.query("insert into auth.users (email) values ('race@kopi.
 const begin = async c => { await c.query('begin'); await c.query("select set_config('request.jwt.claim.sub', $1, true)", [owner]); await c.query('set local role authenticated'); };
 await begin(a);
 const T = (await a.query("select public.bn_bootstrap('Kopi Race', 'kopi-race', 'budi') r")).rows[0].r;
+await a.query('reset role'); await a.query("update public.tenants set plan = 'pro' where id = $1", [T]); await a.query('set local role authenticated'); // QR orders are on Pro (BN087)
 const write = (c, ops) => c.query("select public.bn_write($1, $2, 'test', 'budi') r", [T, JSON.stringify(ops)]);
 await write(a, [
   { op: 'put', coll: 'customers', id: 'c1', data: { id: 'c1', name: 'Dewi', phone: '0811', joinedAt: 1, credit: 0, deposit: 0 } },

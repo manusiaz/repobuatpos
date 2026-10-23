@@ -20,6 +20,8 @@ import { BackOfficeShell, PublicShell } from './Shells.tsx';
 import { useOffline } from './offline.ts';
 import { Loading, Toaster, Icon } from '../ui/kit.tsx';
 import Link from '../ui/Link.tsx';
+import { UpgradeWall } from '../screens/public/states-kit.tsx';
+import { FEATURE, pageLock } from '../screens/public/plans.ts';
 
 const L = (f: () => Promise<{ default: ComponentType }>) => dynamic(f, { ssr: false, loading: () => <div style={{ padding: 24 }}><Loading /></div> });
 const SURFACES: Record<Surface, ComponentType> = {
@@ -68,7 +70,8 @@ export default function App({ path }: { path: string }) {
   const rt = roleTheme(ctx.db, ctx.user.role); // Studios: theme per role (accent, density, dark)
   const Surface = SURFACES[page.surface];
   const allowed = canOpen(ctx.user.role, page);
-  const body = <>{!GUEST[page.surface] && page.surface !== 'admin' && <PlatformBanner />}{allowed ? <Surface /> : <Denied />}</>;
+  const lock = pageLock(ctx.db.tenant.plan, page.path); // a feature above this plan: the upgrade card over the page, read-only (spec lg-gate)
+  const body = <>{!GUEST[page.surface] && page.surface !== 'admin' && <PlatformBanner />}{!allowed ? <Denied /> : lock ? <div className="stack lg" style={{ padding: 16 }}><UpgradeWall need={FEATURE[lock]} /><fieldset disabled style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}><Surface /></fieldset></div> : <Surface />}</>;
   return <Ctx.Provider value={ctx}>
     <div data-theme={DARK[page.surface] || (rt?.dark && !GUEST[page.surface]) ? 'dark' : undefined} data-role={ctx.user.role} style={{ minHeight: '100dvh', background: 'var(--bg-canvas)', color: 'var(--fg-1)', ...(GUEST[page.surface] ? {} : rt?.style) }}>
       {page.shell === 'backoffice' || page.shell === 'admin' ? <BackOfficeShell>{body}</BackOfficeShell> : page.shell === 'public' ? <PublicShell>{body}</PublicShell> : body}

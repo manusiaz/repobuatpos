@@ -98,8 +98,8 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | page:/owner/outlets/tables-and-floor-plan | reads | fn:tablesOf | src/screens/floor.tsx:26 |
 | page:/owner/outlets/tables-and-floor-plan | renders | comp:FloorGrid | src/screens/floor.tsx:64 |
 | page:/owner/outlets/tables-and-floor-plan | routes-to | page:/owner/outlets/table-qr-generator | src/screens/floor.tsx (Link "Print table QR codes") |
-| fn:saveFloor | writes | table:outlets | src/data/actions/business.ts:29 |
-| fn:saveFloor | reads | fn:tableNames | src/data/actions/business.ts:27 |
+| fn:saveFloor | writes | table:outlets | src/data/actions/business.ts:35 |
+| fn:saveFloor | reads | fn:tableNames | src/data/actions/business.ts:33 |
 | fn:tableNames | reads | fn:tablesOf | src/domain/tables.ts:15 |
 | fn:tablesOf | reads | table:outlets | src/domain/tables.ts (floor / tables) |
 | page:/pos/selling/table-picker | reads | fn:tablesOf | src/screens/pos/OrderSheets.tsx:95 |
@@ -110,8 +110,8 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | page:/manager create booking | reads | fn:tableNames | src/screens/manager/create.tsx:73 |
 | fn:bookTable | reads | fn:tablesOf | src/data/actions/selforder.ts:45 |
 | page:/owner/outlets/table-qr-generator | reads | fn:tableNames | src/screens/menu.tsx:328 |
-| page:/order (QR menu) | calls | fn:findTable | src/screens/selforder/shared.tsx:42 (QR lama → meja yang di-rename; tak dikenal → tidak bisa pesan) |
-| page:/order (QR menu) | calls | fn:tableParam | src/screens/selforder/shared.tsx:42 |
+| page:/order (QR menu) | calls | fn:findTable | src/screens/selforder/shared.tsx:43 (QR lama → meja yang di-rename; tak dikenal → tidak bisa pesan) |
+| page:/order (QR menu) | calls | fn:tableParam | src/screens/selforder/shared.tsx:43 |
 | page:/owner/outlets/outlets | routes-to | page:/owner/outlets/tables-and-floor-plan | src/templates/settingsPages.tsx:187 |
 | table:outlets | guarded-by | policy:staff_rules | db/migrations/20261016000000_borniz_staff_sessions.sql (BN054 list) |
 | page:/owner/outlets/tables-and-floor-plan | renders | comp:Field | src/screens/floor.tsx (Name / Seats / Area) |
@@ -119,20 +119,20 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | page:/waiter | reads | fn:holdsTable | src/screens/waiter.tsx:42 |
 | page:/manager | reads | fn:holdsTable | src/screens/manager.tsx:209 |
 | page:/owner/outlets/tables-and-floor-plan | reads | fn:holdsTable | src/screens/floor.tsx:36 |
-| fn:saveFloor | reads | fn:holdsTable | src/data/actions/business.ts:25 |
+| fn:saveFloor | reads | fn:holdsTable | src/data/actions/business.ts:31 |
 | page:/pos/selling/move-table | calls | fn:moveTable | src/screens/pos/OrderSheets.tsx:332 |
 | page:/pos/selling/move-table | calls | fn:printTickets | src/screens/pos/OrderSheets.tsx:334 |
-| fn:moveTable | writes | table:orders | src/data/actions.ts:53 (findOrder → d.orders; movedFrom di :103) |
-| fn:moveTable | calls | fn:notify | src/data/actions.ts:104 (notify 'Table moved') |
-| fn:notify | writes | table:notices | src/data/actions.ts:40 |
-| fn:voidItem | calls | fn:notify | src/data/actions.ts:112 (notify 'Item voided') |
-| fn:voidItem | writes | table:orders | src/data/actions.ts:53 (findOrder → d.orders; o.stopped di :110 = slip VOID print agent) |
-| page:/pos/selling/register-order | calls | fn:voidItem | src/screens/pos/Register.tsx:107 |
-| page:/pos/selling/register-order | calls | fn:voidSlip | src/screens/pos/Register.tsx:107 |
+| fn:moveTable | writes | table:orders | src/data/actions.ts:54 (findOrder → d.orders; movedFrom di :104) |
+| fn:moveTable | calls | fn:notify | src/data/actions.ts:105 (notify 'Table moved') |
+| fn:notify | writes | table:notices | src/data/actions.ts:41 |
+| fn:voidItem | calls | fn:notify | src/data/actions.ts:113 (notify 'Item voided') |
+| fn:voidItem | writes | table:orders | src/data/actions.ts:54 (findOrder → d.orders; o.stopped di :111 = slip VOID print agent) |
+| page:/pos/selling/register-order | calls | fn:voidItem | src/screens/pos/Register.tsx:108 |
+| page:/pos/selling/register-order | calls | fn:voidSlip | src/screens/pos/Register.tsx:108 |
 | fn:printAgent | calls | fn:printTickets | src/devices/agent.ts:33 (VOID slip from o.stopped / voided bill) |
 | page:/kds | reads | table:notices | src/screens/kds.tsx:72 |
 | page:/kds | reads | table:orders | src/screens/kitchen/model.ts:22 (activeTickets; tiket menampilkan movedFrom) |
-| page:/order status | reads | table:orders | src/screens/selforder/shared.tsx:44 (pesanan milik HP ini; movedFrom → ikut pindah) |
+| page:/order status | reads | table:orders | src/screens/selforder/shared.tsx:45 (pesanan milik HP ini; movedFrom → ikut pindah) |
 | fn:findTable | reads | fn:tablesOf | src/domain/tables.ts:54 |
 | page:/display | calls | fn:tableNo | src/screens/display.tsx:185 |
 | page:/owner/outlets/table-qr-generator | calls | fn:publicUrl | src/system/hosts.ts:139 (linkTo → publicUrl, dipanggil tableUrl) |
@@ -247,6 +247,7 @@ graph LR
 | 2026-10-23 | template:feedback_request | Tombol "Write a review" tanpa URL: lapisan pesan belum mengirim URL tombol WABA, jadi link review tidak bisa diisi | open (butuh dukungan tombol URL di send.ts) |
 | 2026-10-23 | fn:mfaEnroll | Review: sesi dari link reset (tanpa kode) bisa mendaftarkan authenticator sendiri lalu lolos 2FA konsol (BN077) | fixed (akun yang sudah punya faktor hanya menambah dari sesi yang lulus kode; tes api.mjs gagal tanpa fix) |
 | 2026-10-23 | fn:blankDB | Review: bentuk kosong setiap bisnis memakai seed().theme yang kini memuat kata-kata demo → bisnis tanpa dokumen tema menampilkan promo/WiFi Kopi Biru (fix sebelumnya hanya di starterData) | fixed (satu `plainTheme` untuk keduanya; tes new-business.test.ts) |
+| 2026-10-23 | policy:feature_rules | Tabel harga menjanjikan loyalty/inventory di Basic, QR self-order/kiosk + shift/payroll di Pro, tapi Free memakai semuanya (penjualan Free tetap memberi beans & memotong stok; QR menu Free menerima pesanan) | fixed (`pageLock` + UpgradeWall di atas halaman read-only `<fieldset disabled>`; `has()` di settleIfDone/addCustomer/redeem/rateOrder/refund; QR menu jadi browse-only; BN087 `docs_feature_rules`; tes plan_rules.sql (lama: 'expected BN087 but it passed') + plan-limits.test.ts (lama: Free dapat beans)) |
 | 2026-10-23 | policy:plan_rules | Review: dua tambah register bersamaan sama-sama lolos batas Free (count tanpa lock) | fixed (advisory lock per bisnis + jenis; tes plan-race.mjs: lama 'both passed', baru BN076) |
 | 2026-10-23 | api:/api/bn | Review: tiket & invoice dicek di member platform, padahal bisnis pindahan menambah member di database-nya sendiri → manager baru ditolak | fixed (API bertanya ke database bisnis, lalu fungsi server di platform; tes cells-api.mjs) |
 | 2026-10-23 | src/data/billing.ts | Review: outlet sisa downgrade ikut ditagih (Checkout tidak); error billing menghentikan seluruh run worker bisnis itu + tulis platform tiap menit | fixed (dibatasi seperti Checkout; error dicatat, run lanjut; sekali per proses). Tagihan tahunan belum ada (open) |
@@ -339,7 +340,7 @@ graph LR
 | Tanggal | Keputusan | Alasan | Node terdampak |
 |---|---|---|---|
 | 2026-10-22 | Teks staf minimal 12px (token caption), bukan 13px | Design Notes menulis 13px, tapi token DS `--text-caption` (spec/tokens/typography.css) dan prototipe sendiri memakai 12px; Design Notes diselaraskan ke token | doc:spec, app/globals.css |
-| 2026-10-22 | Fitur di tabel harga (loyalty, inventory, self-order, shift) belum dikunci | Spec hanya menegakkan outlet / register / KDS (bn-alerts.js "Plan limit reached"); mematikan fitur yang sedang dipakai merchant Free = keputusan harga owner | policy:plan_rules |
+| 2026-10-23 | Fitur di tabel harga dikunci sesuai spec lg-gate (menggantikan keputusan 2026-10-22 "belum dikunci", owner: "lakuin aja yang menurut lu bener") | Spec lg-gate: tidak ada yang disembunyikan, halaman tampil dengan kartu upgrade (non-owner: "Ask the owner" → alert Plan limit reached), turun plan = data read-only. Loyalty & inventory di Basic, QR self-order & kiosk + shift & payroll di Pro; approval di semua plan (void/refund/diskon butuh approval), baris tabel jadi "Shifts & payroll". Server menolak pesanan QR/kiosk baru di bawah Pro (BN087); beans & stok saat bayar berhenti di bawah Basic di semua penulis (device + worker, `has()`), tanpa menolak batch penjualan (POS tetap jual, antrean offline tidak hilang) | fn:pageLock, fn:has, policy:feature_rules, page:/kiosk, page:/ (QR menu), fn:settleIfDone |
 | 2026-10-19 | Domain merchant diaktifkan operator (deploy/add-domain.sh), bukan routing dinamis dari DB | Halaman statis (618) + env yang di-bake saat build; satu VPS, merchant enterprise jarang: script lebih sederhana dan benar daripada cookie/edge config | fn:publicUrl, config:deploy |
 | 2026-10-19 | Worker otomasi = proses Node terpisah (systemd), bukan di dalam Next | Next mengompilasi instrumentation sebagai Server Component yang menolak modul ber-hook; proses terpisah memakai kode yang sama tanpa build | fn:dbMigrate, config:deploy |
 | 2026-10-18 | Satu VPS = dua salinan: live `/srv/borniz` + DB `borniz`, dev `/srv/borniz-dev` + DB `borniz_dev` (PostgreSQL yang sama), user `borniz`; dev lewat SSH tunnel :3001 | Owner mau develop langsung di VPS; develop di folder/DB live = setiap edit langsung kena pelanggan dan migrasi setengah jadi merusak data asli | config:deploy, fn:dbMigrate |

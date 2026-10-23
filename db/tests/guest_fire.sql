@@ -9,6 +9,7 @@ grant execute on function pg_temp.expect(text, text) to anon;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000a1', true);
 create temp table t as select public.bn_bootstrap('Warung Fire', 'warung-fire', 'sri') as id;
+reset role; update public.tenants set plan = 'pro' where id = (select id from t); set local role authenticated; -- QR and kiosk orders are on Pro (BN087)
 grant select on t to anon;
 select public.bn_write((select id from t), '[
   {"op":"put","coll":"outlets","id":"o1","data":{"id":"o1","name":"Pusat","serviceBps":0,"taxBps":0,"taxInclusive":false}},

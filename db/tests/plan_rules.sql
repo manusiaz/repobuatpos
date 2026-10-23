@@ -1,4 +1,5 @@
 -- The plan on the server (20261021000000_borniz_plan_rules.sql): adding beyond the plan is refused, what a business has keeps working.
+-- QR and kiosk orders only on Pro (20261023080000_borniz_feature_rules.sql).
 \set ON_ERROR_STOP 1
 begin;
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000e1', 'owner@kopiplan.id');
@@ -18,11 +19,14 @@ select pg_temp.expect($$ select pg_temp.w('[{"op":"put","coll":"devices","id":"r
 select pg_temp.expect($$ select pg_temp.w('[{"op":"put","coll":"devices","id":"k1","data":{"id":"k1","outletId":"sen","kind":"kds"}}]') $$, 'BN076 Free: no kitchen display');
 select pg_temp.expect($$ select pg_temp.w('[{"op":"put","coll":"devices","id":"c1","data":{"id":"c1","outletId":"sen","kind":"display"}}]') $$, 'BN076 Free: no customer display');
 select pg_temp.expect($$ select pg_temp.w('[{"op":"put","coll":"devices","id":"r1","data":{"id":"r1","outletId":"sen","kind":"kds"}}]') $$, 'BN076 Free: no kitchen display'); -- not by turning a register into one
+select pg_temp.expect($$ select pg_temp.w('[{"op":"put","coll":"orders","id":"q0","data":{"id":"q0","no":"#q0","source":"qr","status":"open","outletId":"sen","lines":[],"subtotal":0,"discount":0,"total":0}}]') $$, 'BN087 Ordering from the QR menu and kiosk is on Pro'); -- not from a register either
+select pg_temp.w('[{"op":"put","coll":"orders","id":"w1","data":{"id":"w1","no":"#w1","source":"pos","status":"open","outletId":"sen","lines":[],"subtotal":0,"discount":0,"total":0}}]'); -- the register sells on every plan
 select pg_temp.w('[{"op":"put","coll":"devices","id":"p1","data":{"id":"p1","outletId":"sen","kind":"printer"}},{"op":"put","coll":"outlets","id":"sen","data":{"id":"sen","name":"Senayan Baru"}},{"op":"put","coll":"devices","id":"r1","data":{"id":"r1","outletId":"sen","kind":"pos","name":"Kasir depan"}}]');
 
 -- 2. a Pro trial: three outlets, kitchen display, registers per outlet
 select public.bn_start_trial((select id from public.tenants where slug = 'kopiplan'), 'pro');
 select pg_temp.w('[{"op":"put","coll":"outlets","id":"kmg","data":{"id":"kmg"}},{"op":"put","coll":"outlets","id":"bsd","data":{"id":"bsd"}},{"op":"put","coll":"devices","id":"k1","data":{"id":"k1","outletId":"sen","kind":"kds"}},{"op":"put","coll":"devices","id":"r2","data":{"id":"r2","outletId":"kmg","kind":"pos"}}]');
+select pg_temp.w('[{"op":"put","coll":"orders","id":"q1","data":{"id":"q1","no":"#q1","source":"qr","status":"open","outletId":"sen","lines":[],"subtotal":0,"discount":0,"total":0}}]'); -- QR self-order on Pro
 select pg_temp.expect($$ select pg_temp.w('[{"op":"put","coll":"outlets","id":"pik","data":{"id":"pik"}}]') $$, 'BN076 Pro: up to 3 outlets');
 
 -- 3. the trial ends unpaid: Free again; the three outlets and the kitchen display keep working, nothing new is added
@@ -32,6 +36,8 @@ set local role authenticated;
 select pg_temp.w('[{"op":"put","coll":"outlets","id":"kmg","data":{"id":"kmg","name":"Kemang"}},{"op":"put","coll":"devices","id":"k1","data":{"id":"k1","outletId":"sen","kind":"kds","name":"Bar"}}]');
 select pg_temp.expect($$ select pg_temp.w('[{"op":"put","coll":"devices","id":"r3","data":{"id":"r3","outletId":"bsd","kind":"pos"}}]') $$, 'BN076 Free: up to 1 register');
 select pg_temp.expect($$ select pg_temp.w('[{"op":"put","coll":"devices","id":"r2","data":{"id":"r2","outletId":"sen","kind":"pos"}}]') $$, 'BN076 Free: up to 1 register'); -- moving one onto a full outlet
+select pg_temp.w('[{"op":"put","coll":"orders","id":"q1","data":{"id":"q1","no":"#q1","source":"qr","status":"paying","outletId":"sen","lines":[],"subtotal":0,"discount":0,"total":0}}]'); -- the QR order from the trial is still served and paid
+select pg_temp.expect($$ select pg_temp.w('[{"op":"put","coll":"orders","id":"q2","data":{"id":"q2","no":"#q2","source":"qr","status":"open","outletId":"sen","lines":[],"subtotal":0,"discount":0,"total":0}}]') $$, 'BN087'); -- a new one is not
 
 -- 4. Enterprise: no limit
 reset role;

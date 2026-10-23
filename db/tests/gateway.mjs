@@ -16,7 +16,7 @@ const c = await db.connect();
 await c.query("select set_config('request.jwt.claim.sub', $1, false)", [u]);
 await c.query('set role authenticated');
 const T = (await c.query("select public.bn_bootstrap('Kopi Worker', 'kopi-worker', 'budi') id")).rows[0].id;
-await c.query('reset role'); c.release();
+await c.query('reset role'); await c.query("update public.tenants set plan = 'pro' where id = $1", [T]); c.release(); // QR orders are on Pro (BN087)
 
 const at = Date.now() - 60e3, order = id => ({ id, no: id.toUpperCase(), source: 'qr', type: 'dine', status: 'paying', outletId: 'main', sessionId: null, table: null, customerId: 'c1', lines: [{ id: 'l1', productId: 'p1', name: 'Kopi', qty: 1, unitPrice: 10000, mods: [], status: 'new' }], discountPct: 0, promoIds: ['pr1'], guests: 1,
   subtotal: 10000, discount: 0, service: 0, tax: 0, total: 10000, createdAt: at, paidAt: null, cashierId: null, idemKey: id });

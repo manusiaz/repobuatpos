@@ -33,3 +33,27 @@ test('a studio tool published above the plan is ignored by every reader, without
   assert.equal(toolPublished(at('basic'), 'fonts'), undefined);
   assert.equal(toolValue(at('pro'), 'coupon').offer, 'Gratis kopi');
 });
+
+test('a feature above the plan: its pages are walled, and a sale on Free earns no beans and moves no stock', async () => {
+  const { pageLock } = await import('../screens/public/plans.ts');
+  const { seed } = await import('./seed.ts');
+  const { settleIfDone } = await import('./actions.ts');
+  assert.equal(pageLock('free', '/owner/inventory/stock-opname'), 'inventory');
+  assert.equal(pageLock('basic', '/owner/inventory/stock-opname'), null);
+  assert.equal(pageLock('free', '/owner/customers/loyalty-program'), 'loyalty');
+  assert.equal(pageLock('basic', '/manager/shifts/weekly-roster-builder-and-coverage'), 'shifts');
+  assert.equal(pageLock('basic', '/manager/shifts/drawer-sessions-and-cash-close-per-shift'), null, 'closing the drawer is on every plan');
+  assert.equal(pageLock('basic', '/kiosk/kiosk-menu-and-cart'), 'selforder');
+  assert.equal(pageLock('free', '/pic/approvals/approval-queue'), null, 'approvals are on every plan');
+  const sale = (plan: 'free' | 'basic') => {
+    const d = seed(); d.tenant.plan = plan;
+    const r = d.recipes[0], p = d.products.find(x => x.id === r.productId)!, c = d.customers[0], at = Date.now();
+    const o = { ...d.orders[0], id: 'o-plan', no: '#P1', status: 'paying', paidAt: null, customerId: c.id, discount: 0, promoIds: [], subtotal: 50_000, total: 50_000,
+      lines: [{ id: 'l1', productId: p.id, name: p.name, qty: 1, unitPrice: 50_000, mods: [], discountPct: 0, fired: true, kds: 'done' }] } as unknown as typeof d.orders[0];
+    d.orders.push(o); d.payments.push({ id: 'pay-plan', orderId: o.id, method: 'cash', amount: 50_000, status: 'settled', at } as unknown as typeof d.payments[0]);
+    const moves = d.movements.length; settleIfDone(d, o, 'rina');
+    return { paid: o.status, beans: d.ledger.some(l => l.orderId === o.id), stock: d.movements.length > moves };
+  };
+  assert.deepEqual(sale('free'), { paid: 'paid', beans: false, stock: false });
+  assert.deepEqual(sale('basic'), { paid: 'paid', beans: true, stock: true });
+});
