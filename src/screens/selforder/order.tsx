@@ -11,6 +11,7 @@ import { balance, tierOf, TIERS } from '../../domain/loyalty.ts';
 import { usable } from '../../domain/promo.ts';
 import { addLine, applyVoucher, cancelPayment, patchOrder, sendToKitchen, setQty, startPayment } from '../../data/actions.ts';
 import { findOrJoin, guestCall, orderPlaced, setOptIn } from '../../data/actions/selforder.ts';
+import { has } from '../public/plans.ts';
 import { menuDesign } from '../../data/actions/studio.ts';
 import { payOn } from '../../system/settings.ts';
 import { groupsOf, LINE, missingGroup, mmss, modsFrom, modsText, MUTED, OptionPicker, progress, QR, SURFACE, TINT, unit, useMenu, Wordmark, type Sel } from '../guest/kit.tsx';
@@ -39,12 +40,12 @@ export function Landing({ g }: { g: G }) {
       </div>
     </div>
     <div className="stack" style={{ padding: '20px 16px calc(24px + env(safe-area-inset-bottom))', gap: 12 }}>
-      <span style={{ fontSize: 15, color: MUTED }}>Order and pay from your phone. No app, no sign-up.</span>
-      <button className="btn btn-primary btn-block" style={{ height: 58, fontSize: 17, borderRadius: 18 }} onClick={() => g.go(so('menu-home'))}>{t('Start order')}<Icon name="arrow-right" /></button>
+      <span style={{ fontSize: 15, color: MUTED }}>{g.selfOrder ? 'Order and pay from your phone. No app, no sign-up.' : 'Browse the menu here, then order with the staff.'}</span>
+      <button className="btn btn-primary btn-block" style={{ height: 58, fontSize: 17, borderRadius: 18 }} onClick={() => g.go(so('menu-home'))}>{g.selfOrder ? t('Start order') : 'See the menu'}<Icon name="arrow-right" /></button>
       {g.latest && <button className="btn btn-block" style={{ height: 52, borderRadius: 16 }} onClick={() => g.go(so('order-status'))}><Icon name="chef-hat" />{t('Track my order')} · {g.latest.no}</button>}
       <div className="row" style={{ justifyContent: 'center', gap: 16, fontSize: 14 }}>
         <a href={so('language-picker')} onClick={e => { e.preventDefault(); g.go(so('language-picker')); }}>{guestLanguages(db, g.L.lang).langs.map(k => LANG_NAMES[k]?.[0] ?? k).join(' · ')}</a>
-        <a href={so('member-card-and-points')} onClick={e => { e.preventDefault(); g.go(so('member-card-and-points')); }}>{db.tenant.name} Rewards</a>
+        {has(db.tenant.plan, 'loyalty') && <a href={so('member-card-and-points')} onClick={e => { e.preventDefault(); g.go(so('member-card-and-points')); }}>{db.tenant.name} Rewards</a>}
       </div>
     </div>
   </div>;
@@ -68,6 +69,7 @@ export function Language({ g }: { g: G }) {
 function Member({ g }: { g: G }) {
   const { db, me, t } = g;
   const go = () => g.go(so('member-card-and-points'));
+  if (!has(db.tenant.plan, 'loyalty')) return null; // no beans below Basic: no promise of them
   if (!me) return <button onClick={go} style={{ margin: '12px 14px 0', padding: '12px 14px', borderRadius: 20, background: SURFACE, border: `1px solid ${LINE}`, display: 'flex', alignItems: 'center', gap: 12, color: 'var(--bn-ink)', cursor: 'pointer', textAlign: 'left', width: 'calc(100% - 28px)' }}>
     <span style={{ width: 42, height: 42, borderRadius: 99, background: 'var(--bn-acc)', display: 'grid', placeItems: 'center' }}><Icon name="star" /></span>
     <span className="stack grow" style={{ gap: 2 }}><b style={{ fontSize: 15 }}>Join {db.tenant.name} Rewards</b><span style={{ fontSize: 12, color: MUTED }}>1 bean per IDR 1,000 · 50 welcome beans</span></span>
@@ -216,7 +218,7 @@ export function Item({ g }: { g: G }) {
         <button className="btn btn-ghost icon-btn" aria-label="More" onClick={() => setQ(q + 1)}><Icon name="plus" /></button>
       </div>
       <button className="btn btn-primary grow" style={{ height: 58, fontSize: 16, borderRadius: 16 }} disabled={blocked || !!miss} onClick={add}>
-        {it.sold ? t('Sold out') : !g.canOrder ? 'Ordering closed' : paying ? 'Payment in progress' : miss ? `Choose ${miss.name.toLowerCase()}` : `${t('Add')} · ${idr(each * q)}`}</button>
+        {it.sold ? t('Sold out') : !g.canOrder ? (g.selfOrder ? 'Ordering closed' : 'Order with the staff') : paying ? 'Payment in progress' : miss ? `Choose ${miss.name.toLowerCase()}` : `${t('Add')} · ${idr(each * q)}`}</button>
     </div>
   </div>;
 }
@@ -335,7 +337,7 @@ export function Checkout({ g }: { g: G }) {
     </div>
     <div style={{ position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: 0, width: 'min(520px,100vw)', padding: '12px 14px calc(14px + env(safe-area-inset-bottom))', background: 'var(--bn-paper)', borderTop: `1px solid ${LINE}`, zIndex: 20 }}>
       <button className="btn btn-primary btn-block" style={{ height: 58, fontSize: 16, borderRadius: 16 }} disabled={busy || !g.canOrder || (pay === 'cashier' && !hasNew)} onClick={place}>
-        {!g.canOrder ? 'Ordering closed' : pay === 'cashier' ? (hasNew ? t('Send order to kitchen') : 'Pay at the counter') : `Pay ${idr(due + tip)}`}</button>
+        {!g.canOrder ? (g.selfOrder ? 'Ordering closed' : 'Order with the staff') : pay === 'cashier' ? (hasNew ? t('Send order to kitchen') : 'Pay at the counter') : `Pay ${idr(due + tip)}`}</button>
     </div>
   </div>;
 }
