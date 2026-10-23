@@ -4,7 +4,8 @@
 // It is the same code as the devices (store commit on the server, src/data/store.ts onServerDB), with the same dedupe ids and
 // outbox keys, so it is safe next to open devices. Every document it changes carries its old content as a precondition: a
 // device that changed it in the meantime wins and the worker tries again next minute. One worker per database (advisory lock).
-import { pool, rpc } from './db.ts';
+import { call, pool, rpc } from './db.ts';
+import { invoiceFor } from '../../data/billing.ts';
 import { HttpError } from './http.ts';
 import { secretsOf } from './store.ts';
 import { sendMessage } from './messaging/send.ts';
@@ -19,7 +20,7 @@ import { escalateDue, watchKitchen } from '../../data/actions.ts';
 import { sweepAlerts } from '../../data/alerts/index.ts';
 import { render, tick, type Result, type Transport } from '../../data/actions/dispatch.ts';
 
-type Tenant = { id: string; slug: string; name: string; plan: string };
+type Tenant = { id: string; slug: string; name: string; plan: string; trial?: boolean };
 const LOCK = 'borniz-worker', EVERY = 60e3, GATEWAY = ['qris', 'va', 'ewallet'];
 
 /** A refused request is not retried by the outbox (same split as the browser transport). */
@@ -66,8 +67,11 @@ async function save(t: Tenant, before: DB, after: DB, stored: Map<string, unknow
   return ops.length;
 }
 
-export async function runTenant(t: Tenant, now = Date.now()) {
+export async function runTenant(t: Tenant, now = Date.now(), prices: Record<string, unknown> = {}) {
   let { db, stored } = await load(t);
+  // BorNiz billing: this month's invoice, once (the platform keeps one per business and month)
+  const inv = invoiceFor(t, db.outlets.length, prices, now);
+  if (inv) await rpc('bn_server_invoice', { p_tenant: t.id, p_id: inv.id, p_data: inv });
   // gateway settlement first, one order per write: a device finishing the same order first is not an error
   const open = new Set(db.orders.filter(o => finalizeNeed(db, o.id)).map(o => o.id));
   for (const p of db.payments) {
@@ -94,8 +98,9 @@ async function pass() {
   try {
     if (!c || !(await c.query('select pg_try_advisory_lock(hashtext($1)) ok', [LOCK])).rows[0].ok) return; // another process runs it
     try {
+      const prices = (await call('bn_public_prices', {}).catch(() => ({}))) as Record<string, unknown>;
       for (const t of await rpc<Tenant[]>('bn_server_tenants', {})) {
-        const n = await runTenant(t).catch(e => { console.error('[worker]', t.slug, (e as Error).message); return 0; });
+        const n = await runTenant(t, Date.now(), prices).catch(e => { console.error('[worker]', t.slug, (e as Error).message); return 0; });
         if (n) console.log('[worker]', t.slug, n, 'change(s)');
       }
     } finally { await c.query('select pg_advisory_unlock(hashtext($1))', [LOCK]); }
