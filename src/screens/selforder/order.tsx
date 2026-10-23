@@ -186,7 +186,7 @@ export function Item({ g }: { g: G }) {
   const groups = groupsOf(db, it.p), miss = missingGroup(groups, sel), mods = modsFrom(groups, sel);
   const each = unit(it) + mods.reduce((a, m) => a + m.price, 0);
   const paying = g.cart?.status === 'paying';
-  const blocked = it.sold || !g.canOrder || paying;
+  const blocked = it.sold || !g.canAdd || paying;
   const add = () => {
     if (miss) return;
     addLine(g.ensureCart(), it.p.id, mods, q, note.trim(), 'guest');
@@ -218,7 +218,7 @@ export function Item({ g }: { g: G }) {
         <button className="btn btn-ghost icon-btn" aria-label="More" onClick={() => setQ(q + 1)}><Icon name="plus" /></button>
       </div>
       <button className="btn btn-primary grow" style={{ height: 58, fontSize: 16, borderRadius: 16 }} disabled={blocked || !!miss} onClick={add}>
-        {it.sold ? t('Sold out') : !g.canOrder ? (g.selfOrder ? 'Ordering closed' : 'Order with the staff') : paying ? 'Payment in progress' : miss ? `Choose ${miss.name.toLowerCase()}` : `${t('Add')} · ${idr(each * q)}`}</button>
+        {it.sold ? t('Sold out') : !g.canAdd ? (g.selfOrder ? 'Ordering closed' : 'Order with the staff') : paying ? 'Payment in progress' : miss ? `Choose ${miss.name.toLowerCase()}` : `${t('Add')} · ${idr(each * q)}`}</button>
     </div>
   </div>;
 }
@@ -251,7 +251,7 @@ export function Cart({ g }: { g: G }) {
         {sent.map(l => <div key={l.id} className="row between" style={{ fontSize: 14 }}><span>{l.qty}× {l.name}</span><span style={{ color: MUTED }}>{l.kds === 'done' ? 'Ready' : l.kds === 'cooking' ? 'Preparing' : 'Received'}</span></div>)}
       </div>}
       {ups.length > 0 && <><b style={{ fontSize: 16 }}>{t('People also add')}</b>
-        <div className="row" style={{ gap: 10, overflowX: 'auto', scrollbarWidth: 'none' }}>{ups.map(i => <button key={i.p.id} disabled={!g.canOrder} onClick={() => { addLine(cart.id, i.p.id, [], 1, '', 'guest'); toast('Added ' + i.p.name); }} style={{ flex: 'none', width: 140, padding: 8, borderRadius: 16, border: 0, background: SURFACE, textAlign: 'left', cursor: 'pointer', color: 'var(--bn-ink)' }}>
+        <div className="row" style={{ gap: 10, overflowX: 'auto', scrollbarWidth: 'none' }}>{ups.map(i => <button key={i.p.id} disabled={!g.canAdd} onClick={() => { addLine(cart.id, i.p.id, [], 1, '', 'guest'); toast('Added ' + i.p.name); }} style={{ flex: 'none', width: 140, padding: 8, borderRadius: 16, border: 0, background: SURFACE, textAlign: 'left', cursor: 'pointer', color: 'var(--bn-ink)' }}>
           <span style={{ display: 'block', height: 80, borderRadius: 12, background: productImage(i.p), marginBottom: 6 }} /><b style={{ fontSize: 13 }}>{i.p.name}</b><br /><span style={{ fontSize: 13, color: MUTED }}>+ {idr(unit(i))}</span></button>)}</div></>}
       {studioValue(db, 'checkout-flow-fields').notes && <div className="field"><label htmlFor="knote">Note for the kitchen <span className="faint">(optional)</span></label>
         <textarea id="knote" className="input" rows={2} value={note} onChange={e => setNote(e.target.value)} onBlur={() => note !== (cart.note ?? '') && patchOrder(cart.id, { note }, 'guest')} placeholder="Allergies, no ice…" style={{ minHeight: 64 }} /></div>}
@@ -260,7 +260,7 @@ export function Cart({ g }: { g: G }) {
     <div style={{ position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: 0, width: 'min(520px,100vw)', padding: '12px 14px calc(14px + env(safe-area-inset-bottom))', background: 'var(--bn-paper)', borderTop: `1px solid ${LINE}`, zIndex: 20 }}>
       <button className="btn btn-primary btn-block" style={{ height: 58, fontSize: 16, borderRadius: 16 }} disabled={!g.canOrder || !lines.length && settledOf(db, cart) >= cart.total}
         onClick={() => { if (note !== (cart.note ?? '')) patchOrder(cart.id, { note }, 'guest'); g.go(billSplit(db, cart.id).shares.length ? so('checkout-and-payment', { split: '1' }) : so(cart.status === 'paying' ? 'qris-payment' : 'checkout-and-payment')); }}>
-        {!g.canOrder ? (!g.selfOrder ? 'Order with the staff' : !g.onPlan ? 'Table not on the floor plan' : g.hrs.paused ? 'Ordering paused' : 'Closed · ' + g.hrs.text) : lines.length ? `${t('Checkout')} · ${idr(cart.total)}` : `Pay the bill · ${idr(cart.total - settledOf(db, cart))}`}</button>
+        {!g.canOrder ? (!g.onPlan ? 'Table not on the floor plan' : g.hrs.paused ? 'Ordering paused' : 'Closed · ' + g.hrs.text) : lines.length ? `${t('Checkout')} · ${idr(cart.total)}` : `Pay the bill · ${idr(cart.total - settledOf(db, cart))}`}</button>
     </div>
   </div>;
 }
@@ -337,7 +337,7 @@ export function Checkout({ g }: { g: G }) {
     </div>
     <div style={{ position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: 0, width: 'min(520px,100vw)', padding: '12px 14px calc(14px + env(safe-area-inset-bottom))', background: 'var(--bn-paper)', borderTop: `1px solid ${LINE}`, zIndex: 20 }}>
       <button className="btn btn-primary btn-block" style={{ height: 58, fontSize: 16, borderRadius: 16 }} disabled={busy || !g.canOrder || (pay === 'cashier' && !hasNew)} onClick={place}>
-        {!g.canOrder ? (g.selfOrder ? 'Ordering closed' : 'Order with the staff') : pay === 'cashier' ? (hasNew ? t('Send order to kitchen') : 'Pay at the counter') : `Pay ${idr(due + tip)}`}</button>
+        {!g.canOrder ? 'Ordering closed' : pay === 'cashier' ? (hasNew ? t('Send order to kitchen') : 'Pay at the counter') : `Pay ${idr(due + tip)}`}</button>
     </div>
   </div>;
 }
@@ -416,7 +416,7 @@ export function Status({ g }: { g: G }) {
       {g.recent.filter(o => o.id !== latest.id && o.lines.some(l => l.fired)).length > 0 && <span style={{ fontSize: 13, color: MUTED }}>Earlier at this table: {g.recent.filter(o => o.id !== latest.id && o.lines.some(l => l.fired)).map(o => o.no).join(', ')}</span>}
       <div className="row" style={{ gap: 10 }}>
         <button className="btn grow" style={{ height: 52, borderRadius: 16 }} onClick={() => g.go(so('call-waiter-request-bill'))}><Icon name="hand" />{t('Call waiter')}</button>
-        <button className="btn btn-primary grow" style={{ height: 52, borderRadius: 16 }} disabled={!g.canOrder} onClick={() => g.go(so('add-more-to-existing-order'))}><Icon name="plus" />{t('Order more')}</button>
+        <button className="btn btn-primary grow" style={{ height: 52, borderRadius: 16 }} disabled={!g.canAdd} onClick={() => g.go(so('add-more-to-existing-order'))}><Icon name="plus" />{t('Order more')}</button>
       </div>
     </div>
   </div>;

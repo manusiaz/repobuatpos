@@ -6,6 +6,7 @@ import type { DB, Message, Notice, Role } from '../schema.ts';
 import { RULES, SERVICE, index, type Fire, type Level, type Rule } from './rules.ts';
 import { staffWhatsApp } from './staff.ts';
 import { AUTOMATIONS, automationMessages } from './automations.ts';
+import { pageLock } from '../../screens/public/plans.ts';
 
 export { RULES, SERVICE };
 type Row = [string, string, Record<string, number>, string, string, ...string[]];
@@ -35,7 +36,7 @@ export function planAlerts(db: DB, at = Date.now(), rules: Rule[] = RULES): Plan
   const ix = index(db, at), seen = new Set<string>([...db.notices.map(n => n.id), ...db.messages.map(m => m.id), ...(db.records[LOG] ?? []).map(r => r.id)]), out: Planned[] = [];
   for (const r of rules) {
     const meta = CATALOG.get(r.alert);
-    if (!meta || !alertOn(db, r.alert)) continue;
+    if (!meta || !alertOn(db, r.alert) || pageLock(db.tenant.plan, r.href)) continue; // a feature above the plan raises nothing
     let fires: Fire[];
     try { fires = r.check(db, at, ix); } catch { continue; } // one broken rule never stops the others
     for (const f of fires) {

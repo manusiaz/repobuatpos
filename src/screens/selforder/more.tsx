@@ -64,7 +64,7 @@ export function ComboCard({ g }: { g: G }) {
     <span style={{ height: 40, padding: '0 14px', borderRadius: 99, background: 'var(--bn-acc)', color: 'var(--bn-ink)', fontSize: 13, fontWeight: 800, display: 'grid', placeItems: 'center', flex: 'none' }}>Build</span></button></div>;
 }
 export function ComboPage({ g }: { g: G }) {
-  const blocked = !g.canOrder ? (g.selfOrder ? 'Ordering closed' : 'Order with the staff') : g.cart?.status === 'paying' ? 'Payment in progress' : undefined;
+  const blocked = !g.canAdd ? (g.selfOrder ? 'Ordering closed' : 'Order with the staff') : g.cart?.status === 'paying' ? 'Payment in progress' : undefined;
   return <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column' }}>
     <ComboBuilder db={g.db} outletId={g.outletId} disabled={blocked} onClose={() => back(g.go, so('menu-home'))} onAdd={picks => {
       try { addCombo(g.ensureCart(), comboOf(g.db), picks, 'guest'); toast(`Added ${comboOf(g.db).name}`); g.go(so('menu-home')); } catch (e) { toast((e as Error).message); }

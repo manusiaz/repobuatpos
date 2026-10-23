@@ -366,7 +366,7 @@ function applyDecision(d: DB, r: Approval) {
       const lineIds = pl.lineIds as string[] | undefined;
       const done = new Set(d.refunds.filter(x => x.orderId === o.id && x.toStock && x.approvalId !== r.id).flatMap(x => x.lineIds ?? o.lines.map(l => l.id)));
       const lines = (lineIds?.length ? o.lines.filter(l => lineIds.includes(l.id)) : paidBack >= o.total ? o.lines : []).filter(l => !done.has(l.id));
-      if (pl.toStock && lines.length && has(d.tenant.plan, 'inventory')) {
+      if (pl.toStock && lines.length && d.movements.some(m => m.sourceId === o.id && m.type === 'sale')) { // only what the sale took (none below Basic)
         const mine = d.refunds.find(x => x.approvalId === r.id); if (mine) mine.lineIds = lines.map(l => l.id);
         d.movements.push(...deductForSale(d.recipes, lines, o.outletId, o.id, r.decidedBy ?? '').map(m => ({ ...m, qty: -m.qty, type: 'refund_return' as const })));
       }
@@ -565,7 +565,6 @@ export function addCustomer(name: string, phone: string, by: string, optIn = tru
 }
 export function redeem(customerId: string, cost: number, reward: string, by: string): string | null {
   if (!Number.isInteger(cost) || cost <= 0) return 'A reward costs a whole number of beans';
-  if (!has(snapshot().tenant.plan, 'loyalty')) return 'Beans are on the Basic plan';
   if (!canRedeem(snapshot().ledger, customerId, cost)) return 'Not enough beans';
   commit('points.redeemed', by, d => { d.ledger.push({ customerId, points: -cost, reason: 'Redeem · ' + reward, at: now() }); }, reward);
   return null;

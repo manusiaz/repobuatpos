@@ -71,7 +71,9 @@ export default function App({ path }: { path: string }) {
   const Surface = SURFACES[page.surface];
   const allowed = canOpen(ctx.user.role, page);
   const lock = pageLock(ctx.db.tenant.plan, page.path); // a feature above this plan: the upgrade card over the page, read-only (spec lg-gate)
-  const body = <>{!GUEST[page.surface] && page.surface !== 'admin' && <PlatformBanner />}{!allowed ? <Denied /> : lock ? <div className="stack lg" style={{ padding: 16 }}><UpgradeWall need={FEATURE[lock]} /><fieldset disabled style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}><Surface /></fieldset></div> : <Surface />}</>;
+  const body = <>{!GUEST[page.surface] && page.surface !== 'admin' && <PlatformBanner />}{!allowed ? <Denied /> : !lock ? <Surface />
+    : GUEST[page.surface] ? <div className="empty" style={{ minHeight: '70dvh', justifyContent: 'center' }}><Icon name="concierge-bell" size={40} /><h2 style={{ color: 'var(--fg-1)' }}>Please order at the counter</h2></div> // guests never see the plan
+    : <div className="stack lg" style={{ padding: 16 }}><UpgradeWall need={FEATURE[lock]} /><div inert><Surface /></div></div>}</>;
   return <Ctx.Provider value={ctx}>
     <div data-theme={DARK[page.surface] || (rt?.dark && !GUEST[page.surface]) ? 'dark' : undefined} data-role={ctx.user.role} style={{ minHeight: '100dvh', background: 'var(--bg-canvas)', color: 'var(--fg-1)', ...(GUEST[page.surface] ? {} : rt?.style) }}>
       {page.shell === 'backoffice' || page.shell === 'admin' ? <BackOfficeShell>{body}</BackOfficeShell> : page.shell === 'public' ? <PublicShell>{body}</PublicShell> : body}

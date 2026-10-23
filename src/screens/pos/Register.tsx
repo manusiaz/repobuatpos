@@ -120,7 +120,7 @@ export function Cart({ compact }: { compact?: boolean }) {
         {(cur?.type ?? 'dine') === 'dine' && <button className="btn btn-sm" onClick={() => go(P('guest-count-and-service-charge'))}><Icon name="users" size={16} />{cur?.guests ?? 1} pax</button>}
         <button className="btn btn-sm grow" onClick={() => go(P('customer-lookup-and-points'))} style={cust ? { background: 'var(--accent-soft)', borderColor: 'var(--accent)', justifyContent: 'flex-start' } : { justifyContent: 'flex-start' }}>
           <Icon name={cust ? 'user-check' : 'user-plus'} size={16} />
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{cust ? cust.name + (has(db.tenant.plan, 'loyalty') ? ` · ${tierOf(db.ledger, cust.id).name} · ${balance(db.ledger, cust.id).toLocaleString('en-US')} beans` : '') : 'Add customer'}</span></button>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{cust ? cust.name + (has(db.tenant.plan, 'loyalty') || balance(db.ledger, cust.id) > 0 ? ` · ${tierOf(db.ledger, cust.id).name} · ${balance(db.ledger, cust.id).toLocaleString('en-US')} beans` : '') : 'Add customer'}</span></button>
       </div>
       {waiting.map(a => <div key={a.id} className="banner b-warning" style={{ padding: '8px 12px' }}><Icon name="hourglass" size={18} /><span className="grow">{a.title} · waiting for {a.level.toUpperCase()}</span>
         <button className="btn btn-sm" onClick={() => flow.resume(a.id, a.title, a.level)}>Enter PIN</button></div>)}

@@ -16,7 +16,9 @@ export function saveBusiness(name: string, profile: BusinessProfile, by: string)
 
 /** Upgrade wall, not the owner: "Ask the owner" tells them (spec lg-gate). */
 export function askForPlan(feature: string, by: string) {
-  commit('plan.asked', by, d => notify(d, 'Plan limit reached', 'info', ['owner'], null, `${d.employees.find(e => e.id === by)?.name ?? 'A manager'} asked for ${feature} · upgrade in Subscription`, '/owner/account/subscription-billing'), feature);
+  const d0 = snapshot(), text = `${d0.employees.find(e => e.id === by)?.name ?? 'A manager'} asked for ${feature} · upgrade in Subscription`;
+  if (d0.notices.some(n => n.text === text && Date.now() - n.at < 864e5)) return; // once a day is enough
+  commit('plan.asked', by, d => notify(d, 'Plan limit reached', 'info', ['owner'], null, text, '/owner/account/subscription-billing'), feature);
 }
 
 /** A new outlet sells the whole global menu at base price until the owner says otherwise. */

@@ -98,8 +98,8 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | page:/owner/outlets/tables-and-floor-plan | reads | fn:tablesOf | src/screens/floor.tsx:26 |
 | page:/owner/outlets/tables-and-floor-plan | renders | comp:FloorGrid | src/screens/floor.tsx:64 |
 | page:/owner/outlets/tables-and-floor-plan | routes-to | page:/owner/outlets/table-qr-generator | src/screens/floor.tsx (Link "Print table QR codes") |
-| fn:saveFloor | writes | table:outlets | src/data/actions/business.ts:35 |
-| fn:saveFloor | reads | fn:tableNames | src/data/actions/business.ts:33 |
+| fn:saveFloor | writes | table:outlets | src/data/actions/business.ts:37 |
+| fn:saveFloor | reads | fn:tableNames | src/data/actions/business.ts:35 |
 | fn:tableNames | reads | fn:tablesOf | src/domain/tables.ts:15 |
 | fn:tablesOf | reads | table:outlets | src/domain/tables.ts (floor / tables) |
 | page:/pos/selling/table-picker | reads | fn:tablesOf | src/screens/pos/OrderSheets.tsx:95 |
@@ -119,7 +119,7 @@ Arah: `A --tipe--> B` = A bergantung pada B. `?` = belum terverifikasi.
 | page:/waiter | reads | fn:holdsTable | src/screens/waiter.tsx:42 |
 | page:/manager | reads | fn:holdsTable | src/screens/manager.tsx:209 |
 | page:/owner/outlets/tables-and-floor-plan | reads | fn:holdsTable | src/screens/floor.tsx:36 |
-| fn:saveFloor | reads | fn:holdsTable | src/data/actions/business.ts:31 |
+| fn:saveFloor | reads | fn:holdsTable | src/data/actions/business.ts:33 |
 | page:/pos/selling/move-table | calls | fn:moveTable | src/screens/pos/OrderSheets.tsx:332 |
 | page:/pos/selling/move-table | calls | fn:printTickets | src/screens/pos/OrderSheets.tsx:334 |
 | fn:moveTable | writes | table:orders | src/data/actions.ts:54 (findOrder → d.orders; movedFrom di :104) |
@@ -247,7 +247,8 @@ graph LR
 | 2026-10-23 | template:feedback_request | Tombol "Write a review" tanpa URL: lapisan pesan belum mengirim URL tombol WABA, jadi link review tidak bisa diisi | open (butuh dukungan tombol URL di send.ts) |
 | 2026-10-23 | fn:mfaEnroll | Review: sesi dari link reset (tanpa kode) bisa mendaftarkan authenticator sendiri lalu lolos 2FA konsol (BN077) | fixed (akun yang sudah punya faktor hanya menambah dari sesi yang lulus kode; tes api.mjs gagal tanpa fix) |
 | 2026-10-23 | fn:blankDB | Review: bentuk kosong setiap bisnis memakai seed().theme yang kini memuat kata-kata demo → bisnis tanpa dokumen tema menampilkan promo/WiFi Kopi Biru (fix sebelumnya hanya di starterData) | fixed (satu `plainTheme` untuk keduanya; tes new-business.test.ts) |
-| 2026-10-23 | policy:feature_rules | Tabel harga menjanjikan loyalty/inventory di Basic, QR self-order/kiosk + shift/payroll di Pro, tapi Free memakai semuanya (penjualan Free tetap memberi beans & memotong stok; QR menu Free menerima pesanan) | fixed (`pageLock` + UpgradeWall di atas halaman read-only `<fieldset disabled>`; `has()` di settleIfDone/addCustomer/redeem/rateOrder/refund; QR menu jadi browse-only; BN087 `docs_feature_rules`; tes plan_rules.sql (lama: 'expected BN087 but it passed') + plan-limits.test.ts (lama: Free dapat beans)) |
+| 2026-10-23 | fn:pageLock | Review ronde 7 (kunci fitur): refund mengembalikan stok menurut plan sekarang, bukan apakah penjualan memotong stok (Free→Basic: stok bertambah); tamu tak bisa membayar bill QR yang sudah terbuka setelah trial habis; dinding upgrade + "Ask the owner" tampil ke tamu kiosk; alert fitur terkunci tetap menyala (roster, opname, low stock) ke halaman yang terkunci; `<fieldset disabled>` mematikan tombol Close sheet tapi baris `<tr onClick>` tetap membuka edit; beans yang sudah dimiliki tak bisa ditukar setelah turun plan; "Ask the owner" tanpa dedupe; trial demo bisa diulang | fixed (refund cek movement 'sale' order itu; `canAdd` vs `canOrder`; tamu dapat "Please order at the counter"; `planAlerts` melewati rule yang href-nya `pageLock`; `inert`; redeem tetap jalan, chip POS tampil bila ada saldo; dedupe 1 hari; setPlan demo mengisi trialUntil; tes plan-features.test.ts gagal di kode lama). Tidak diperbaiki: device dengan plan basi (tab dibuka saat trial) tetap memberi beans/stok sampai dimuat ulang; server sengaja tidak menolak batch penjualan (antrean offline POS tidak boleh hilang) |
+| 2026-10-23 | policy:feature_rules | Tabel harga menjanjikan loyalty/inventory di Basic, QR self-order/kiosk + shift/payroll di Pro, tapi Free memakai semuanya (penjualan Free tetap memberi beans & memotong stok; QR menu Free menerima pesanan) | fixed (`pageLock` + UpgradeWall di atas halaman read-only (`inert`); `has()` di settleIfDone/addCustomer/redeem/rateOrder/refund; QR menu jadi browse-only; BN087 `docs_feature_rules`; tes plan_rules.sql (lama: 'expected BN087 but it passed') + plan-limits.test.ts (lama: Free dapat beans)) |
 | 2026-10-23 | policy:plan_rules | Review: dua tambah register bersamaan sama-sama lolos batas Free (count tanpa lock) | fixed (advisory lock per bisnis + jenis; tes plan-race.mjs: lama 'both passed', baru BN076) |
 | 2026-10-23 | api:/api/bn | Review: tiket & invoice dicek di member platform, padahal bisnis pindahan menambah member di database-nya sendiri → manager baru ditolak | fixed (API bertanya ke database bisnis, lalu fungsi server di platform; tes cells-api.mjs) |
 | 2026-10-23 | src/data/billing.ts | Review: outlet sisa downgrade ikut ditagih (Checkout tidak); error billing menghentikan seluruh run worker bisnis itu + tulis platform tiap menit | fixed (dibatasi seperti Checkout; error dicatat, run lanjut; sekali per proses). Tagihan tahunan belum ada (open) |
