@@ -16,6 +16,7 @@ const pairKey = (deviceId: string) => 'pair:' + deviceId;
 
 export function setPlan(plan: DB['tenant']['plan'], by: string, note = '', trial = false) {
   // live: the plan is BorNiz's (tenants.plan); the owner may start the trial of a paid plan once, on the server
+  if (REMOTE && plan === 'free' && (snapshot().tenant.trialUntil ?? 0) > Date.now()) void import('../backend.ts').then(async s => { const m = await s.membership(); if (m) await s.endTrial(m.tenantId); }).then(() => remoteRestart()).catch(e => toast((e as Error).message));
   if (REMOTE && trial) void import('../backend.ts').then(async s => { const m = await s.membership(); if (m) await s.startTrial(m.tenantId, plan); }).then(() => remoteRestart()).catch(e => toast((e as Error).message));
   commit('plan.changed', by, d => {
     d.tenant.plan = plan;

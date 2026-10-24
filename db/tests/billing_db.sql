@@ -53,6 +53,14 @@ update private.platform_records set data = data || '{"d":"paid"}' where kind = '
 do $$ begin assert public.bn_server_billing_holds('billing-secret') @> jsonb_build_array(jsonb_build_object('id', (select id from t)::text, 'hold', false)), 'paid: released'; end $$;
 set local role authenticated;
 select public.bn_write((select id from t), '[{"op":"put","coll":"products","id":"p1","data":{"id":"p1","name":"Kopi","basePrice":20000}}]', 'product.saved', 'budi');
+-- the owner stops their own trial (bn_end_trial): Free at once, the trial stays used; nobody else can
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b2', true);
+select pg_temp.expect($$ select public.bn_end_trial((select id from t)) $$, 'BN044');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b1', true);
+select public.bn_end_trial((select id from t));
+select pg_temp.expect($$ select public.bn_end_trial((select id from t)) $$, 'BN074');
+select pg_temp.expect($$ select public.bn_start_trial((select id from t), 'pro') $$, 'BN074');
 reset role;
+do $$ begin assert (select public.bn_plan_now(plan, trial_until) from public.tenants where id = (select id from t)) = 'free', 'on Free'; end $$;
 select 'billing holds' as result;
 rollback;

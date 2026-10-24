@@ -96,9 +96,8 @@ const PLATFORM_KINDS = ['invoice', 'ticket', 'flag', 'release'];
 export async function setTenantPlan(tenantId: string, plan: DB['tenant']['plan'], by = ADMIN, cycle: 'monthly' | 'yearly' | null = null): Promise<boolean> {
   if (REMOTE) {
     try { await (await import('../backend.ts')).adminSetPlan(tenantId, plan, cycle); } catch (e) { toast('Plan not saved: ' + (e as Error).message); return false; }
-    void loadPlatform(); // the cycle's first month comes from the server
   }
-  setLocalPlan(tenantId, plan, by, REMOTE ? null : cycle);
+  setLocalPlan(tenantId, plan, by, cycle); // its first month comes from the server on the next load
   return true;
 }
 function setLocalPlan(tenantId: string, plan: DB['tenant']['plan'], by: string, cycle: 'monthly' | 'yearly' | null = null) {

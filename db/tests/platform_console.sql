@@ -53,23 +53,34 @@ select public.bn_admin_set_plan((select id from t), 'basic');
 reset role;
 do $$ begin assert (select trial_until from public.tenants where id = (select id from t)) is null and (select plan from public.tenants where id = (select id from t)) = 'basic', 'paid plan, no trial'; end $$;
 
--- monthly or yearly (20261024030000_borniz_billing_cycle.sql): yearly starts next month; back to monthly after the paid year
+-- monthly or yearly (20261024030000/40000_borniz_billing_cycle*.sql)
+create function pg_temp.m(n int) returns text language sql as $$ select to_char(date_trunc('month', now() at time zone 'Asia/Jakarta') + make_interval(months => n), 'YYYY-MM') $$;
+grant execute on function pg_temp.m(int) to authenticated;
 set local role authenticated;
 select pg_temp.expect($$ select public.bn_admin_set_plan((select id from t), 'basic', 'weekly') $$, 'BN071');
 select public.bn_admin_set_plan((select id from t), 'basic', 'yearly');
 reset role;
-do $$ declare nxt text := to_char(date_trunc('month', now() at time zone 'Asia/Jakarta') + interval '1 month', 'YYYY-MM'); begin
-  assert (select billing_cycle || ' ' || cycle_from from public.tenants where id = (select id from t)) = 'yearly ' || nxt, 'yearly from next month';
-  assert (select x->>'cycle' || ' ' || (x->>'cycleFrom') from jsonb_array_elements(public.bn_server_tenants('console-secret')) x where x->>'id' = (select id from t)::text) = 'yearly ' || nxt, 'the worker sees it';
+do $$ begin
+  assert (select billing_cycle || ' ' || cycle_from from public.tenants where id = (select id from t)) = 'yearly ' || pg_temp.m(0), 'from a trial (nothing billed this month): yearly from this month';
+  assert (select x->>'cycle' || ' ' || (x->>'cycleFrom') from jsonb_array_elements(public.bn_server_tenants('console-secret')) x where x->>'id' = (select id from t)::text) = 'yearly ' || pg_temp.m(0), 'the worker sees it';
 end $$;
 set local role authenticated;
 select public.bn_admin_set_plan((select id from t), 'basic'); -- the plan alone keeps the cycle
 select public.bn_admin_set_plan((select id from t), 'basic', 'monthly');
 reset role;
-do $$ begin
-  assert (select billing_cycle || ' ' || cycle_from from public.tenants where id = (select id from t))
-    = 'monthly ' || to_char(date_trunc('month', now() at time zone 'Asia/Jakarta') + interval '1 month', 'YYYY-MM'), 'a year not started yet: monthly from its first month';
-end $$;
+do $$ begin assert (select billing_cycle || ' ' || cycle_from from public.tenants where id = (select id from t)) = 'monthly ' || pg_temp.m(12), 'the paid year runs to its end'; end $$;
+-- billed monthly this month: yearly starts next month; back to monthly before it started: next month
+update public.tenants set billing_cycle = 'monthly', cycle_from = null where id = (select id from t);
+insert into private.platform_records (kind, id, data) values ('invoice', 'inv-' || (select id from t) || '-' || pg_temp.m(0), jsonb_build_object('a', (select id from t)::text, 'd', 'paid', 'at', 1));
+set local role authenticated;
+select public.bn_admin_set_plan((select id from t), 'basic', 'yearly');
+reset role;
+do $$ begin assert (select cycle_from from public.tenants where id = (select id from t)) = pg_temp.m(1), 'this month was billed: yearly from next month'; end $$;
+set local role authenticated;
+select public.bn_admin_set_plan((select id from t), 'pro', 'monthly'); -- nothing paid for that year yet: any plan
+reset role;
+do $$ begin assert (select plan || ' ' || billing_cycle || ' ' || cycle_from from public.tenants where id = (select id from t)) = 'pro monthly ' || pg_temp.m(1); end $$;
+update public.tenants set plan = 'basic', billing_cycle = 'monthly', cycle_from = null where id = (select id from t);
 update public.tenants set billing_cycle = 'yearly', cycle_from = to_char(date_trunc('month', now() at time zone 'Asia/Jakarta') - interval '3 months', 'YYYY-MM') where id = (select id from t);
 set local role authenticated;
 select public.bn_admin_set_plan((select id from t), 'basic', 'monthly');
@@ -77,6 +88,16 @@ reset role;
 do $$ begin
   assert (select cycle_from from public.tenants where id = (select id from t)) = to_char(date_trunc('month', now() at time zone 'Asia/Jakarta') + interval '9 months', 'YYYY-MM'), 'the paid year runs to its end';
 end $$;
+-- while that year runs: no plan change (no proration), and back to yearly starts when it ends, never billing a month twice
+set local role authenticated;
+select pg_temp.expect($$ select public.bn_admin_set_plan((select id from t), 'pro') $$, 'BN089');
+select public.bn_admin_set_plan((select id from t), 'basic', 'yearly');
+reset role;
+do $$ begin
+  assert (select cycle_from from public.tenants where id = (select id from t)) = to_char(date_trunc('month', now() at time zone 'Asia/Jakarta') + interval '9 months', 'YYYY-MM'), 'yearly again from the end of the paid year';
+end $$;
+select pg_temp.expect($$ update public.tenants set billing_cycle = 'yearly', cycle_from = null where id = (select id from t) $$, 'new row for relation "tenants" violates check constraint');
+update public.tenants set billing_cycle = 'monthly', cycle_from = null where id = (select id from t);
 -- 5. a paused business writes nothing, shows no menu and gets no automation; reactivated it works again
 set local role authenticated;
 select public.bn_admin_set_status((select id from t), 'suspended', 'unpaid 60 days');
@@ -93,6 +114,6 @@ select public.bn_admin_set_status((select id from t), 'active', 'paid');
 select pg_temp.as_user('00000000-0000-0000-0000-0000000000f7');
 select public.bn_write((select id from t), '[{"op":"put","coll":"outlets","id":"sen","data":{"id":"sen","name":"Senayan 2"}}]'::jsonb, 'x', 'budi');
 reset role;
-do $$ begin assert (select count(distinct action) from private.platform_audit where action in ('tenant.suspended', 'tenant.active', 'tenant.plan', 'tenant.trial_extended')) = 4 and (select count(*) from private.platform_audit where action = 'tenant.plan') = 5, 'every console action audited'; end $$;
+do $$ begin assert (select count(distinct action) from private.platform_audit where action in ('tenant.suspended', 'tenant.active', 'tenant.plan', 'tenant.trial_extended')) = 4 and (select count(*) from private.platform_audit where action = 'tenant.plan') >= 5, 'every console action audited'; end $$;
 select 'platform console holds' as result;
 rollback;

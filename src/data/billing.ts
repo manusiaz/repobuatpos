@@ -1,7 +1,7 @@
 // BorNiz billing (spec bn-authority: "BorNiz billing (plan × outlets)", automatic): this month's invoice for a business,
 // issued by the worker (db/migrations/20261023000000_borniz_billing.sql). Pure, so the worker and the tests share it.
 import type { DB, Rec } from './schema.ts';
-import { PPN_BPS, billed, priced } from '../screens/public/plans.ts';
+import { PPN_BPS, billed, priced, type Plan } from '../screens/public/plans.ts';
 
 /** An unpaid invoice (spec lg-gate): a reminder from day 7, the set-up read-only from day 14 (BN088); sales carry on. */
 export const REMIND_DAYS = 7, HOLD_DAYS = 14;
@@ -25,6 +25,7 @@ export const billMonth = (t: number) => new Date(t + 7 * 3600e3).toISOString().s
 
 const monthIx = (m: string) => Number(m.slice(0, 4)) * 12 + Number(m.slice(5, 7)) - 1;
 const monthOf = (i: number) => `${Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, '0')}`;
+export const monthAfter = (m: string) => monthOf(monthIx(m) + 1);
 
 /** One invoice per business on Basic / Pro, at the prices BorNiz set: each month, or (yearly, 2 months free) once per
  *  year from the month its cycle starts (tenants.cycle_from: a month already paid is never billed again). A trial and
@@ -32,9 +33,13 @@ const monthOf = (i: number) => `${Math.floor(i / 12)}-${String((i % 12) + 1).pad
 export function invoiceFor(t: { id: string; plan: string; trial?: boolean; cycle?: string; cycleFrom?: string | null }, outlets: number, prices: Record<string, unknown>, now: number): (Rec & { n: string }) | null {
   const p = priced(prices).find(x => x.id === t.plan), m = billMonth(now);
   if (!p?.monthly || t.trial || t.plan === 'enterprise' || (t.cycleFrom && m < t.cycleFrom)) return null;
-  const qty = Math.max(1, Math.min(outlets, p.outlets)), what = `${p.name} × ${qty} ${qty > 1 ? 'outlets' : 'outlet'}`; // as Checkout charges: outlets kept after a downgrade are not billed
-  const bill = (id: string, b: string, sub: number, n: string) => ({ id, a: t.id, b, c: String(sub + Math.round((sub * PPN_BPS) / 10000)), d: 'unpaid', e: '', at: now, n });
-  if (t.cycle !== 'yearly') return bill(`inv-${t.id}-${m}`, m, p.monthly * qty, what);
-  const from = monthIx(t.cycleFrom ?? m), k = monthIx(m) - from;
-  return k % 12 ? null : bill(`inv-${t.id}-${m}-y`, `${m} – ${monthOf(monthIx(m) + 11)}`, (billed(p, true) ?? 0) * qty, `${what} · yearly`);
+  const qty = billedOutlets(p, outlets), what = `${p.name} × ${qty} ${qty > 1 ? 'outlets' : 'outlet'}`;
+  const bill = (id: string, b: string, n: string) => ({ id, a: t.id, b, c: String(invoiceTotal(p, outlets, t.cycle === 'yearly')), d: 'unpaid', e: '', at: now, n });
+  if (t.cycle !== 'yearly') return bill(`inv-${t.id}-${m}`, m, what);
+  if (!t.cycleFrom) return null; // a yearly cycle always has its first month (tenants_yearly_has_start)
+  return (monthIx(m) - monthIx(t.cycleFrom)) % 12 ? null : bill(`inv-${t.id}-${m}-y`, `${m} – ${monthOf(monthIx(m) + 11)}`, `${what} · yearly`);
 }
+/** As Checkout charges: at least one outlet, never more than the plan allows (outlets kept after a downgrade are not billed). */
+export const billedOutlets = (p: Plan, outlets: number) => Math.max(1, Math.min(outlets, p.outlets));
+/** One invoice incl. PPN: a month, or a year at 10 months (the console quotes the same). */
+export const invoiceTotal = (p: Plan, outlets: number, yearly: boolean) => { const sub = (billed(p, yearly) ?? 0) * billedOutlets(p, outlets); return sub + Math.round((sub * PPN_BPS) / 10000); };

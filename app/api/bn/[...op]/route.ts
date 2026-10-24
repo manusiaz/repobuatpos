@@ -73,7 +73,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ op: str
       if (name === 'bn_admin_request_access' && typeof r === 'string' && await cellFor(String(b.p_tenant))) // a moved business: the request goes to its database
         await rpc('bn_server_support_request', { p_tenant: b.p_tenant, p_id: r, p_hours: b.p_hours, p_reason: b.p_reason, p_ticket: b.p_ticket ?? null });
       // a moved business keeps its own copy of plan, status and trial: the registry changed here, the business's database next
-      if (/^bn_(admin_set_(plan|status|trial)|start_trial)$/.test(name) && typeof b.p_tenant === 'string') {
+      if (/^bn_(admin_set_(plan|status|trial)|start_trial|end_trial)$/.test(name) && typeof b.p_tenant === 'string') {
         const row = await rpc<{ cell: string | null } & Record<string, unknown>>('bn_server_tenant_row', { p_tenant: b.p_tenant });
         if (row?.cell) await rpc('bn_server_tenant_sync', { p_tenant: b.p_tenant, p_row: row }, row.cell);
       }

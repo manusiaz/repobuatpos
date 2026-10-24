@@ -103,6 +103,8 @@ export const myTickets = (tenant: string, staff: string | null) => ok<{ id: stri
 export const myInvoices = (tenant: string, staff: string | null) => ok<(import('./schema.ts').Rec & { n?: string })[]>('bn_my_invoices', { p_tenant: tenant, p_staff: staff });
 /** The owner starts the trial of a paid plan, once (sign-up). */
 export const startTrial = (tenant: string, plan: string) => ok<{ plan: string; trialUntil: number }>('bn_start_trial', { p_tenant: tenant, p_plan: plan });
+/** The owner stops their own running trial: Free at once (bn_end_trial). */
+export const endTrial = (tenant: string) => ok<null>('bn_end_trial', { p_tenant: tenant });
 /** Shared register: owner / manager get a one-time code, the tablet re-signs in anonymously and joins with it (no owner rights). */
 export async function makeSharedRegister(tenant: string): Promise<string | null> {
   const c = await sb().rpc('bn_device_code', { p_tenant: tenant });

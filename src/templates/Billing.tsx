@@ -11,6 +11,7 @@ import { remoteInfo } from '../data/remoteStore.ts';
 import { ownStaffToken } from '../data/staff.ts';
 import { humanError } from '../data/remoteDocs.ts';
 import { planOf } from '../screens/public/plans.ts';
+import { monthAfter } from '../data/billing.ts';
 import type { Rec } from '../data/schema.ts';
 import { PageHead } from './common.tsx';
 
@@ -28,17 +29,17 @@ export function Billing() {
       .then(r => { if (live) setRows(r); }, e => { if (live) setError(humanError((e as Error).message).text); });
     return () => { live = false; }; // a slower answer for the last person at the device is dropped
   }, [user.id]); // who is at the device decides (a PIN switch refetches)
-  const plan = planOf(db.tenant.plan);
+  const plan = planOf(db.tenant.plan), yearly = !!rows?.[0]?.id.endsWith('-y'); // BorNiz sets the cycle; the latest invoice shows it
   return <div className="stack lg">
     <PageHead sub="What BorNiz bills this business. Invoices come from your plan and outlets; nobody here creates or edits one." />
     <section className="card row between wrap">
       <span className="stack sm" style={{ gap: 2 }}><b style={{ fontSize: 18 }}>{plan.name}</b>
-        <span className="muted" style={{ fontSize: 14 }}>{db.outlets.length} {db.outlets.length === 1 ? 'outlet' : 'outlets'} · {plan.monthly ? 'billed on the 1st of each month, PPN 11% included' : plan.monthly === 0 ? 'free, never billed' : 'priced per contract'}</span></span>
+        <span className="muted" style={{ fontSize: 14 }}>{db.outlets.length} {db.outlets.length === 1 ? 'outlet' : 'outlets'} · {plan.monthly ? (yearly ? `billed yearly (10 months for 12), the next invoice in ${monthAfter(rows![0].b.slice(-7))}, PPN 11% included` : 'billed on the 1st of each month, PPN 11% included') : plan.monthly === 0 ? 'free, never billed' : 'priced per contract'}</span></span>
       <Link className="btn" href="/account/choose-plan">Change plan</Link>
     </section>
     {error ? <Empty icon="circle-alert" title="Invoices could not load">{error}</Empty>
       : !rows ? <Loading />
-      : !rows.length ? <Empty icon="file-text" title="No invoices yet">Basic and Pro are billed on the 1st of each month. Free and trials are never billed.</Empty>
+      : !rows.length ? <Empty icon="file-text" title="No invoices yet">Basic and Pro are billed on the 1st of each month, or once a year when BorNiz set the plan yearly. Free and trials are never billed.</Empty>
       : <div className="scroll-x"><table className="table"><thead><tr><th>Month</th><th>Plan</th><th className="r">Amount</th><th>Status</th></tr></thead>
         <tbody>{rows.map(r => <tr key={r.id}><td>{r.b}</td><td>{r.n ?? '—'}</td><td className="r num">{idr(Number(r.c))}</td><td><Badge tone={TONE[r.d] ?? 'neutral'} dot>{r.d.replace('_', ' ')}</Badge></td></tr>)}</tbody></table></div>}
   </div>;

@@ -377,7 +377,7 @@ function ChoosePlan() {
   const start = (trial: boolean) => {
     setFlow({ plan: sel, yearly, trial });
     if (sel === 'enterprise') return go('/contact-sales-book-a-demo');
-    if ((sel === 'free' && !(REMOTE && db.tenant.plan !== 'free')) || trial) { setPlan(sel, owner, trial ? `${TRIAL_DAYS}-day trial` : '', trial); return go(A + 'plan-activated'); } // live, leaving a paid plan is asked of BorNiz (Checkout)
+    if ((sel === 'free' && !(REMOTE && db.tenant.plan !== 'free' && !((db.tenant.trialUntil ?? 0) > Date.now()))) || trial) { setPlan(sel, owner, trial ? `${TRIAL_DAYS}-day trial` : '', trial); return go(A + 'plan-activated'); } // live, leaving a paid plan is asked of BorNiz (Checkout)
     go(A + 'checkout-and-payment');
   };
   return <div className="stack">
@@ -417,9 +417,9 @@ function Checkout() {
   // Live: BorNiz sets the plan (tenants.plan, the console) and bills it; payment is by transfer until BorNiz has its own
   // gateway, so this page asks for the change instead of pretending to take money.
   if (REMOTE && !flow.trial && !(p.monthly === 0 && db.tenant.plan === 'free')) return <div className="stack">
-    <Head h="Ask BorNiz for this plan" sub={`${p.name} · ${yearly ? 'billed yearly (2 months free)' : 'billed monthly'}`} />
+    <Head h="Ask BorNiz for this plan" sub={p.monthly === 0 ? `${p.name} · nothing to pay` : `${p.name} · ${yearly ? 'billed yearly (2 months free)' : 'billed monthly'}`} />
     {summary}
-    <Note><Icon name="receipt-text" /><span>Nothing is charged here. BorNiz switches the plan, then the invoice appears in Owner › Account › Subscription billing; pay it by transfer.</span></Note>
+    <Note><Icon name="receipt-text" /><span>{p.monthly === 0 ? 'BorNiz moves the business to Free when what you paid for ends. Your data stays.' : 'Nothing is charged here. BorNiz switches the plan, then the invoice appears in Owner › Account › Subscription billing; pay it by transfer.'}</span></Note>
     {sent ? <Note tone="success"><Icon name="check" /><span>Request sent. BorNiz support answers it in Help › Contact BorNiz support.</span></Note>
       : <button className="btn btn-primary btn-lg" disabled={busy} onClick={async () => {
         setBusy(true);

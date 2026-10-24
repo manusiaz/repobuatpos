@@ -11,6 +11,8 @@ import { idr, idrShort } from '../domain/money.ts';
 import { uid } from '../data/store.ts';
 import { endSupportAccess, ensurePlatform, loadSupport, logAdmin, patchRecord, requestSupportAccess, saveAdminRecord, setPlatformSetting, setTenantPlan, type TenantMeta } from '../data/actions/admin.ts';
 import type { DB, Rec } from '../data/schema.ts';
+import { invoiceTotal } from '../data/billing.ts';
+import { priced } from './public/plans.ts';
 import { PLANS, STATUS_TONE, accessOf, churn, mrrHistory, planName, planPrice, priceKey, tenants, withTax, type Plan, type Tenant } from './admin/platform.ts';
 import { useQuery } from './insight/query.ts';
 import { REMOTE } from '../data/remote.ts';
@@ -178,18 +180,20 @@ function TenantDetailPage({ db }: { db: DB }) {
 }
 function PlanSheet({ db, t, plan, onClose }: { db: DB; t: Tenant; plan: Plan; onClose: () => void }) {
   const [custom, setCustom] = useState(String(t.meta.custom ?? '')), [cycle, setCycle] = useState<'monthly' | 'yearly'>(t.meta.cycle ?? 'monthly');
-  const next = plan === 'enterprise' ? Number(custom) || 0 : planPrice(db, plan) * t.outlets, same = plan === t.plan && cycle === (t.meta.cycle ?? 'monthly');
+  const paid = plan !== 'free' && plan !== 'enterprise', next = plan === 'enterprise' ? Number(custom) || 0 : planPrice(db, plan) * t.outlets;
+  const same = plan === t.plan && (!paid || cycle === (t.meta.cycle ?? 'monthly')) && !(plan === 'enterprise' && Number(custom) !== (t.meta.custom ?? 0));
+  const invoice = plan === 'enterprise' ? withTax(next) : invoiceTotal(priced({ [plan]: planPrice(db, plan) }).find(p => p.id === plan)!, t.outlets, cycle === 'yearly'); // what the worker bills
   const blocked = plan === 'free' && t.outlets > 1 ? `Free allows 1 outlet; ${t.name} has ${t.outlets}.` : '';
   return <Sheet open onClose={onClose} side="center" title={plan === t.plan ? `${planName(plan)}: billing` : `Change plan to ${planName(plan)}`} sub={`${t.name} · ${t.outlets} outlet${t.outlets > 1 ? 's' : ''}`}
     footer={<><button className="btn" onClick={onClose}>Cancel</button><button className="btn btn-primary" disabled={!!blocked || same || (plan === 'enterprise' && !next)} onClick={() => {
       if (plan === 'enterprise') patchRecord('tenant', t.id, { e: JSON.stringify({ ...t.meta, custom: next }) }, 'tenant.custom_price');
-      void setTenantPlan(t.id, plan, undefined, plan === 'free' || plan === 'enterprise' ? null : cycle).then(ok => ok && toast(`${t.name} is now on ${planName(plan)}, billed ${cycle}`)); onClose(); }}>Save</button></>}>
+      void setTenantPlan(t.id, plan, undefined, paid ? cycle : null).then(ok => ok && toast(`${t.name} is now on ${planName(plan)}${paid ? ', billed ' + cycle : ''}`)); onClose(); }}>Save</button></>}>
     <div className="stack">
       {blocked && <div className="banner b-danger"><Icon name="circle-alert" size={18} />{blocked}</div>}
       {plan === 'enterprise' && <Field label="Monthly price (excl. PPN)"><input className="input" inputMode="numeric" value={custom} onChange={e => setCustom(e.target.value.replace(/\D/g, ''))} /></Field>}
-      {plan !== 'free' && plan !== 'enterprise' && <Seg label="Billing" value={cycle} onChange={setCycle} options={[['monthly', 'Monthly'], ['yearly', 'Yearly · 2 months free']]} />}
-      <Dl rows={[['MRR now', idr(t.mrr)], ['MRR after', idr(next)], [cycle === 'yearly' ? 'Yearly invoice incl. PPN 11%' : 'Monthly invoice incl. PPN 11%', idr(withTax(cycle === 'yearly' && plan !== 'enterprise' ? next * 10 : next))]]} />
-      <p className="faint" style={{ fontSize: 13 }}>The worker issues it: monthly on the 1st, or yearly from next month (this month was billed monthly). A paid year runs to its end before monthly billing starts again. No proration.</p>
+      {paid && <Seg label="Billing" value={cycle} onChange={setCycle} options={[['monthly', 'Monthly'], ['yearly', 'Yearly · 2 months free']]} />}
+      <Dl rows={[['MRR now', idr(t.mrr)], ['MRR after', idr(next)], [paid && cycle === 'yearly' ? 'Yearly invoice incl. PPN 11%' : 'Monthly invoice incl. PPN 11%', idr(invoice)]]} />
+      <p className="faint" style={{ fontSize: 13 }}>The worker issues it: monthly on the 1st, or yearly from this month (next month if this month was billed). While a paid year runs the plan changes only at its renewal, and monthly billing starts again when it ends. No proration.</p>
     </div>
   </Sheet>;
 }
@@ -246,7 +250,7 @@ function Plans({ db }: { db: DB }) {
 }
 
 // ── Invoices ──────────────────────────────────────────────────────────────────────────────
-const invNo = (r: Rec) => `INV-${r.b.slice(2)}-${r.a.slice(0, 4).toUpperCase()}`;
+const invNo = (r: Rec) => `INV-${r.b.slice(2, 7)}${r.id.endsWith('-y') ? 'Y' : ''}-${r.a.slice(0, 4).toUpperCase()}`; // a yearly one: its first month + Y
 function InvoiceTable({ db, rows, sel, onSel }: { db: DB; rows: Rec[]; sel?: string; onSel?: (id: string) => void }) {
   return <div className="scroll-x"><table className="table"><thead><tr><th>Invoice</th><th>Tenant</th><th>Period</th><th className="r">Amount</th><th>Method</th><th>Status</th></tr></thead>
     <tbody>{rows.map(r => <tr key={r.id} className={onSel ? 'click' : undefined} tabIndex={onSel ? 0 : undefined} style={{ background: sel === r.id ? 'var(--role-soft)' : undefined }} onClick={() => onSel?.(r.id)} onKeyDown={e => e.key === 'Enter' && onSel?.(r.id)}>
