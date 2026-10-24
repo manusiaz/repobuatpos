@@ -304,8 +304,12 @@ test('Opname: a sale between starting the count and counting the item is not cou
   payCash(order, roundCash(o.total), o.total, 'tono');
   const shelf = lvl(out, r.stockItemId); // what is really on the shelf after the sale
   updateOpnameLine(id, r.stockItemId, { counted: shelf }, 'sari');
+  const again = newOrder(out, 'tono', 'pos', {}); addLine(again, r.productId, [], 1, '', 'tono'); // sold after the item was counted
+  const o2 = snapshot().orders.find(x => x.id === again)!; payCash(again, roundCash(o2.total), o2.total, 'tono');
+  updateOpnameLine(id, r.stockItemId, { counted: shelf }, 'sari'); // the screen saves every draft again on submit
   const ap = submitCount(id, 'sari')!;
   assert.equal(db().approvals.find(a => a.id === ap.id)!.amount, 0, 'counted what the system holds: no variance');
+  const now = lvl(out, r.stockItemId);
   assert.equal(decide(ap.id, 'andi', 'approved'), null);
-  assert.equal(lvl(out, r.stockItemId), shelf, 'the level is what was counted');
+  assert.equal(lvl(out, r.stockItemId), now, 'counted what was there: nothing posted, the later sale is not undone');
 });

@@ -5,7 +5,7 @@ import Link from '../../ui/Link.tsx';
 import type { Opname } from '../../data/schema.ts';
 import { requestApproval, startOpname, stockEntry, toggle86, updateOpnameLine } from '../../data/actions.ts';
 import { isCounted, logIncident, opnamePhoto, recountLine, resendCount, submitCount } from '../../data/actions/pic.ts';
-import { level as stockLevel, lineVariance, missingPhotos, opnameApprover, opnameVariance } from '../../domain/stock.ts';
+import { level as stockLevel, lineVariance, qty3, missingPhotos, opnameApprover, opnameVariance } from '../../domain/stock.ts';
 import { idr } from '../../domain/money.ts';
 import { usePin } from '../../ui/PinSheet.tsx';
 import { Badge, Empty, Field, Icon, Seg, Status, hhmm, human, toast, dateShort } from '../../ui/kit.tsx';
@@ -123,7 +123,7 @@ export function StockCount({ c }: { c: PicCtx }) {
       : <section className="card flat">
         <div className="scroll-x"><table className="table">
           <thead><tr><th>Item</th><th>Counted</th><th>System</th><th>Difference</th><th>Photo</th></tr></thead>
-          <tbody>{lines.map(l => { const it = db.stockItems.find(s => s.id === l.stockItemId)!; const d = isCounted(l) ? +(l.counted - l.systemQty).toFixed(2) : 0; const miss = need.includes(l);
+          <tbody>{lines.map(l => { const it = db.stockItems.find(s => s.id === l.stockItemId)!; const d = isCounted(l) ? qty3(l.counted - l.systemQty) : 0; const miss = need.includes(l);
             return <tr key={l.stockItemId} style={{ background: lock && d ? 'var(--warning-soft)' : undefined }}>
               <td><b>{it.name}</b><br /><span className="faint" style={{ fontSize: 12 }}>{it.unit} · {idr(it.unitCost)} / {it.unit}{l.recountOf ? ` · recount, first ${l.recountOf}` : ''}</span></td>
               <td>{!lock ? <input className="input" style={{ width: 110, height: 44 }} inputMode="decimal" placeholder="Count" aria-label={`Count of ${it.name}`}

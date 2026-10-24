@@ -8,7 +8,7 @@ import { lineTotal, orderTotals, QRIS_TTL_MS, type Method, type Source } from '.
 import { canDecide, levelRequired, twoKey, TWO_KEY, type Level, type RequestType, type Signer, PIN_TRIES, PIN_LOCK_MS } from '../domain/approval.ts';
 import { approvalRule, approvalWa } from '../system/tools.ts';
 import { balance, earn, reversal, tierOf, canRedeem } from '../domain/loyalty.ts';
-import { deductForSale, level as stockLevel, levels, portionsLeft, missingPhotos, opnameApprover, postOpname, type OpnameLine } from '../domain/stock.ts';
+import { deductForSale, level as stockLevel, levels, portionsLeft, missingPhotos, opnameApprover, postOpname, qty3, type OpnameLine } from '../domain/stock.ts';
 import { flashPrice, resolve } from '../domain/promo.ts';
 import { closeCheck, type ClockShot } from '../domain/shift.ts';
 import { comboPrices } from '../domain/split.ts';
@@ -495,16 +495,17 @@ export function setRosterSlot(outletId: string, day: number, slot: 'pagi' | 'sia
 export function startOpname(outletId: string, area: string, by: string) {
   const id = uid('op'); const d0 = snapshot();
   if (!mayDo(d0, by, 'Count stock (opname)', outletId)) return null;
+  const lv = levels(d0.movements, outletId);
   commit('opname.started', by, d => {
     d.opnames.unshift({ id, outletId, area, countedBy: by, approvedBy: null, status: 'counting', at: now(), requirePhotoAll: false,
-      lines: d0.stockItems.map(s => ({ stockItemId: s.id, systemQty: Math.round(stockLevel(d0.movements, outletId, s.id) * 1000) / 1000, counted: NaN, unitCost: s.unitCost })) });
+      lines: d0.stockItems.map(s => ({ stockItemId: s.id, systemQty: qty3(lv.get(s.id) ?? 0), counted: NaN, unitCost: s.unitCost })) });
   }, area, outletId);
   return id;
 }
 export function updateOpnameLine(opnameId: string, stockItemId: string, patch: Partial<OpnameLine>, by: string) {
-  commit('opname.counted', by, d => { const op = d.opnames.find(x => x.id === opnameId)!; if (op.status !== 'counting' && op.status !== 'recount') return; const l = op.lines.find(x => x.stockItemId === stockItemId)!; if (l.locked) return; Object.assign(l, patch);
+  commit('opname.counted', by, d => { const op = d.opnames.find(x => x.id === opnameId)!; if (op.status !== 'counting' && op.status !== 'recount') return; const l = op.lines.find(x => x.stockItemId === stockItemId)!; if (l.locked) return; const was = l.counted; Object.assign(l, patch);
     // the level the moment it is counted, not when the count started: a sale in between is not counted twice (the server sets the same)
-    if ('counted' in patch) l.systemQty = Math.round(stockLevel(d.movements, op.outletId, stockItemId) * 1000) / 1000; }, stockItemId);
+    if ('counted' in patch && !Object.is(patch.counted, was)) { l.systemQty = qty3(stockLevel(d.movements, op.outletId, stockItemId)); l.countedAt = now(); } }, stockItemId);
 }
 export function submitOpname(opnameId: string, by: string) {
   const op = snapshot().opnames.find(x => x.id === opnameId)!;

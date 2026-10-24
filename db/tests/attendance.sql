@@ -63,8 +63,8 @@ do $$ declare s text := 'server-secret-attendance'; r jsonb; begin
   assert (select data->>'kind' from public.docs where coll = 'clock' and data->>'employeeId' = 'rina' and data->>'noPhoto' like '%Fingerspot%' order by t desc limit 1) = 'out', 'Scan Keluar is a clock-out';
   -- Fingerspot sends ZKTeco's English labels too: Break Out starts a break, Break In / Kembali ends it, only Check Out leaves
   set local role anon;
-  r := public.bn_machine_clock(s, 'C2611851572E0C2D', pg_temp.at('[{"pin":"622","time":"D2 08:00","status":"Check In"},{"pin":"622","time":"D2 12:00","status":"Break Out"},
-    {"pin":"622","time":"D2 13:00","status":"Break In"},{"pin":"622","time":"D2 15:00","status":"Scan Istirahat"},{"pin":"622","time":"D2 15:20","status":"Kembali Istirahat"},
+  r := public.bn_machine_clock(s, 'C2611851572E0C2D', pg_temp.at('[{"pin":"622","time":"D2 08:00","status":"Check-In"},{"pin":"622","time":"D2 12:00","status":"Break Out"},
+    {"pin":"622","time":"D2 13:00","status":"Break-In"},{"pin":"622","time":"D2 15:00","status":"Scan Istirahat"},{"pin":"622","time":"D2 15:20","status":"Selesai Istirahat"},
     {"pin":"622","time":"D2 17:00","status":"Check Out"}]')::jsonb, 'k-secret');
   reset role;
   assert (select string_agg(data->>'kind', ',' order by t) from public.docs where coll = 'clock' and data->>'employeeId' = 'rina'

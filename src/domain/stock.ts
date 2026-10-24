@@ -26,7 +26,9 @@ export function deductForSale(recipe: RecipeLine[], lines: { productId: string; 
 }
 
 // Opname: blind count, locked after submit, approved by someone else, stock moves only when posted.
-export interface OpnameLine { stockItemId: string; systemQty: number; counted: number; unitCost: IDR; photo?: string; locked?: boolean; recountOf?: string }
+export interface OpnameLine { stockItemId: string; systemQty: number; counted: number; unitCost: IDR; photo?: string; locked?: boolean; recountOf?: string; /** when it was counted: the system qty is the level then */ countedAt?: number }
+/** Stock quantities keep three decimals (grams, millilitres), as the server does. */
+export const qty3 = (n: number) => Math.round(n * 1000) / 1000;
 export const lineVariance = (l: OpnameLine) => Math.round((l.counted - l.systemQty) * l.unitCost);
 export const opnameVariance = (lines: OpnameLine[]) => lines.reduce((a, l) => a + Math.abs(lineVariance(l)), 0);
 /** Each line with a difference needs a photo (or every line if the manager requires it). */

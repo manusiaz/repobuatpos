@@ -5,7 +5,7 @@ import { commit, snapshot, uid } from '../store.ts';
 import { closeSession, requestApproval } from '../actions.ts';
 import type { DB, Rec } from '../schema.ts';
 import { idr } from '../../domain/money.ts';
-import { level, opnameApprover, opnameVariance, type OpnameLine } from '../../domain/stock.ts';
+import { level, qty3, opnameApprover, opnameVariance, type OpnameLine } from '../../domain/stock.ts';
 
 const now = () => Date.now();
 /** One alert engine: recipients from the alert catalog (actions.ts notify). */
@@ -54,7 +54,7 @@ export function recountLine(opnameId: string, stockItemId: string, counted: numb
     const i = o.lines.findIndex(x => x.stockItemId === stockItemId); if (i < 0) return;
     const prev = o.lines[i], item = d.stockItems.find(s => s.id === stockItemId);
     o.lines[i] = { ...prev, counted, recountOf: String(prev.counted), locked: true, photo: counted === prev.counted ? prev.photo : undefined,
-      systemQty: counted === prev.counted ? prev.systemQty : Math.round(level(d.movements, o.outletId, stockItemId) * 1000) / 1000 }; // recounted now: the level now (the server sets the same)
+      ...(counted === prev.counted ? {} : { systemQty: qty3(level(d.movements, o.outletId, stockItemId)), countedAt: Date.now() }) }; // recounted now: the level now (the server sets the same)
     log(d, opnameId, `Recount ${item?.name}: ${prev.counted} → ${counted} ${item?.unit ?? ''} · ${name(d, by)} · first count kept`, by);
   }, stockItemId);
 }
