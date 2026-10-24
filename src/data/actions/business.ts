@@ -7,6 +7,7 @@ import { referral } from '../../system/settings.ts';
 import { referrerOf } from '../../system/studio.ts';
 import { planBlock } from '../../screens/public/plans.ts';
 import { notify } from '../actions.ts';
+import { REMOTE } from '../remote.ts';
 
 const now = () => Date.now();
 
@@ -14,11 +15,17 @@ export function saveBusiness(name: string, profile: BusinessProfile, by: string)
   commit('business.saved', by, d => { d.tenant.name = name.trim() || d.tenant.name; d.tenant.profile = profile; }, 'business');
 }
 
+/** Demo (no database): a trial that ran out is Free again, as bn_plan_now does on the server. */
+export function endTrialIfDue(at = Date.now()) {
+  const t = snapshot().tenant;
+  if (!REMOTE && t.trialUntil && t.trialUntil <= at && t.plan !== 'free') commit('plan.changed', 'system', d => { d.tenant.plan = 'free'; }, 'trial ended');
+}
 /** Upgrade wall, not the owner: "Ask the owner" tells them (spec lg-gate). */
-export function askForPlan(feature: string, by: string) {
+export function askForPlan(feature: string, by: string): boolean {
   const d0 = snapshot(), text = `${d0.employees.find(e => e.id === by)?.name ?? 'A manager'} asked for ${feature} · upgrade in Subscription`;
-  if (d0.notices.some(n => n.text === text && Date.now() - n.at < 864e5)) return; // once a day is enough
+  if (d0.audit.some(a => a.action === 'plan.asked' && a.actor === by && a.subject === feature && Date.now() - a.at < 864e5)) return false; // once a day
   commit('plan.asked', by, d => notify(d, 'Plan limit reached', 'info', ['owner'], null, text, '/owner/account/subscription-billing'), feature);
+  return true;
 }
 
 /** A new outlet sells the whole global menu at base price until the owner says otherwise. */

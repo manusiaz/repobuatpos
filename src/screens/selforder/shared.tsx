@@ -52,7 +52,7 @@ export function useGuest() {
   const me = db.customers.find(c => c.id === meId) ?? null;
   const out = db.outlets.find(o => o.id === outletId)!;
   const now = useNow(15000);
-  const hrs = hours(out, now), selfOrder = has(db.tenant.plan, 'selforder'); // below Pro the QR menu is for browsing (the server refuses a new order, BN087); a bill already open is still paid
+  const hrs = hours(out, now), selfOrder = has(db.tenant.plan, 'selforder'), canOrder = hrs.open && !hrs.paused && !!onPlan; // below Pro the QR menu is for browsing (the server refuses a new order, BN087); a bill already open is still paid
   const recent = db.orders.filter(o => o.outletId === outletId && o.source === 'qr' && o.table === table && o.status !== 'voided' && Date.now() - o.createdAt < TWO_H).sort((a, b) => b.createdAt - a.createdAt);
   const cart = recent.find(unpaid) ?? null;               // the table's open bill
   const latest = recent.find(o => o.lines.some(l => l.fired)) ?? null; // the order the kitchen knows about
@@ -62,7 +62,7 @@ export function useGuest() {
   const ab = abVariant(db, guestId ?? '', now);
   const ensureCart = () => { const id = cart?.id ?? newOrder(outletId, 'guest', 'qr', { table, type: 'dine', customerId: meId, ...(ab ? { ab } : {}) });
     if (!mine.includes(id)) setMine([...mine.slice(-9), id]); return id; };
-  return { db, outletId, go, sp, ref, table, L, t: L.t, me, setMe, out, hrs, canOrder: hrs.open && !hrs.paused && !!onPlan, canAdd: hrs.open && !hrs.paused && !!onPlan && selfOrder, selfOrder, onPlan, online: db.device.online, recent, cart, latest, ensureCart, now, ab, moved, elsewhere };
+  return { db, outletId, go, sp, ref, table, L, t: L.t, me, setMe, out, hrs, canOrder, canAdd: canOrder && selfOrder, selfOrder, onPlan, online: db.device.online, recent, cart, latest, ensureCart, now, ab, moved, elsewhere };
 }
 export type G = ReturnType<typeof useGuest>;
 

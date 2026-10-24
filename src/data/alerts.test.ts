@@ -103,13 +103,12 @@ test('guest messages go to the guest phone, never as staff notices, and skip wha
 });
 
 test('sweepAlerts writes every new alert in one commit and nothing on the next sweep', () => {
-  const before = snapshot().audit.length, at = Date.now();
+  const swept = () => snapshot().audit.filter(a => a.action === 'alerts.swept').length, before = swept(), at = Date.now();
   const n = sweepAlerts(at);
   assert.ok(n > 0);
-  const d = snapshot();
-  assert.equal(d.audit.length, before + 1);
-  assert.equal(d.audit[0].action, 'alerts.swept');
-  assert.ok(d.notices.some(x => x.id.startsWith('al_')));
+  assert.equal(swept(), before + 1); // automations due on the day (birthday, win-back) are their own commit
+  assert.ok(snapshot().notices.some(x => x.id.startsWith('al_')));
+  const all = snapshot().audit.length;
   assert.equal(sweepAlerts(at), 0, "same state never fires twice");
-  assert.equal(snapshot().audit.length, before + 1, 'no empty commits');
+  assert.equal(snapshot().audit.length, all, 'no empty commits');
 });

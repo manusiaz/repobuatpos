@@ -8,6 +8,7 @@ import { pageAt, type Page, type Surface } from '../system/registry.ts';
 import { canOpen } from '../system/access.ts';
 import { useDB } from '../data/store.ts';
 import { escalateDue, watchKitchen } from '../data/actions.ts';
+import { endTrialIfDue } from '../data/actions/business.ts';
 import { sweepAlerts } from '../data/alerts/index.ts';
 import { setMoneyStyle } from '../domain/money.ts';
 import { moneyFormat, roleTheme } from '../system/tools.ts';
@@ -59,7 +60,7 @@ export default function App({ path }: { path: string }) {
   const outletId = here(outlet) ? outlet! : [user?.outletId, db?.device.outletId, db?.outlets[0]?.id].find(here) ?? user?.outletId ?? '';
   useEffect(() => { if (db && user && outletId && outletId !== outlet) setOutlet(outletId); }, [db, user, outlet, outletId]);
   // staff alerts, escalations and late-kitchen checks run on staff devices only (a guest phone may not write them)
-  useEffect(() => { if (!staffDevice) return; const tick = () => { escalateDue(); watchKitchen(); sweepAlerts(); }; tick(); const t = setInterval(tick, 60e3); return () => clearInterval(t); }, [staffDevice]);
+  useEffect(() => { if (!staffDevice) return; const tick = () => { endTrialIfDue(); escalateDue(); watchKitchen(); sweepAlerts(); }; tick(); const t = setInterval(tick, 60e3); return () => clearInterval(t); }, [staffDevice]);
   const slug = db?.tenant.id; // the business slug (remote store) = its <slug>.bornis.id
   const go = useCallback((p: string) => { const away = leaveFor(p, slug); if (away) location.assign(away); else router.push(p); }, [router, slug]);
   // a business always has an outlet: none yet means its data is still arriving, and every business screen reads its outlet
@@ -72,8 +73,8 @@ export default function App({ path }: { path: string }) {
   const allowed = canOpen(ctx.user.role, page);
   const lock = pageLock(ctx.db.tenant.plan, page.path); // a feature above this plan: the upgrade card over the page, read-only (spec lg-gate)
   const body = <>{!GUEST[page.surface] && page.surface !== 'admin' && <PlatformBanner />}{!allowed ? <Denied /> : !lock ? <Surface />
-    : GUEST[page.surface] ? <div className="empty" style={{ minHeight: '70dvh', justifyContent: 'center' }}><Icon name="concierge-bell" size={40} /><h2 style={{ color: 'var(--fg-1)' }}>Please order at the counter</h2></div> // guests never see the plan
-    : <div className="stack lg" style={{ padding: 16 }}><UpgradeWall need={FEATURE[lock]} /><div inert><Surface /></div></div>}</>;
+    : ['customer', 'public'].includes(ctx.user.role) ? <div className="empty" style={{ minHeight: '70dvh', justifyContent: 'center' }}><Icon name="concierge-bell" size={40} /><h2 style={{ color: 'var(--fg-1)' }}>Please order at the counter</h2></div> // guests never see the plan
+    : <div className="stack lg" style={{ padding: 16 }}><UpgradeWall need={FEATURE[lock]} /><div inert style={{ contain: 'paint' }}><Surface /></div></div>}</>; // paint containment keeps a sheet's fixed scrim inside the page, under the wall
   return <Ctx.Provider value={ctx}>
     <div data-theme={DARK[page.surface] || (rt?.dark && !GUEST[page.surface]) ? 'dark' : undefined} data-role={ctx.user.role} style={{ minHeight: '100dvh', background: 'var(--bg-canvas)', color: 'var(--fg-1)', ...(GUEST[page.surface] ? {} : rt?.style) }}>
       {page.shell === 'backoffice' || page.shell === 'admin' ? <BackOfficeShell>{body}</BackOfficeShell> : page.shell === 'public' ? <PublicShell>{body}</PublicShell> : body}

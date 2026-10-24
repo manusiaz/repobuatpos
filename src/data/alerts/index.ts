@@ -14,6 +14,8 @@ type Row = [string, string, Record<string, number>, string, string, ...string[]]
 export const CATALOG = new Map((alertsCatalog.groups as [string, string, Row[]][]).flatMap(([group, , list]) => list.map(a => [a[0], {
   group, level: a[4] as Level, to: Object.keys(a[2]).filter(r => r !== 'guest') as Role[], guest: 'guest' in a[2],
 }] as const)));
+/** Food safety on stock already recorded speaks even when inventory is above the plan. */
+export const SAFETY_ALERTS = new Set(['Recall from supplier', 'Batch expired', 'Batch expiring']);
 export const SETTINGS_PAGE = '/owner/settings/settings-notifications';
 export const settingKey = (alert: string) => `${SETTINGS_PAGE}:al-${alert}`;
 export const alertOn = (db: Pick<DB, 'settings'>, alert: string) => db.settings[settingKey(alert)] !== false;
@@ -36,7 +38,7 @@ export function planAlerts(db: DB, at = Date.now(), rules: Rule[] = RULES): Plan
   const ix = index(db, at), seen = new Set<string>([...db.notices.map(n => n.id), ...db.messages.map(m => m.id), ...(db.records[LOG] ?? []).map(r => r.id)]), out: Planned[] = [];
   for (const r of rules) {
     const meta = CATALOG.get(r.alert);
-    if (!meta || !alertOn(db, r.alert) || pageLock(db.tenant.plan, r.href)) continue; // a feature above the plan raises nothing
+    if (!meta || !alertOn(db, r.alert) || (pageLock(db.tenant.plan, r.href) && !SAFETY_ALERTS.has(r.alert))) continue; // a feature above the plan raises nothing
     let fires: Fire[];
     try { fires = r.check(db, at, ix); } catch { continue; } // one broken rule never stops the others
     for (const f of fires) {

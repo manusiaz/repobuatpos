@@ -366,9 +366,15 @@ function applyDecision(d: DB, r: Approval) {
       const lineIds = pl.lineIds as string[] | undefined;
       const done = new Set(d.refunds.filter(x => x.orderId === o.id && x.toStock && x.approvalId !== r.id).flatMap(x => x.lineIds ?? o.lines.map(l => l.id)));
       const lines = (lineIds?.length ? o.lines.filter(l => lineIds.includes(l.id)) : paidBack >= o.total ? o.lines : []).filter(l => !done.has(l.id));
-      if (pl.toStock && lines.length && d.movements.some(m => m.sourceId === o.id && m.type === 'sale')) { // only what the sale took (none below Basic)
+      if (pl.toStock && lines.length && has(d.tenant.plan, 'inventory')) {
         const mine = d.refunds.find(x => x.approvalId === r.id); if (mine) mine.lineIds = lines.map(l => l.id);
-        d.movements.push(...deductForSale(d.recipes, lines, o.outletId, o.id, r.decidedBy ?? '').map(m => ({ ...m, qty: -m.qty, type: 'refund_return' as const })));
+        // never more of an item than this sale took and earlier refunds did not already put back (a recipe changed since, a Free sale)
+        const left = new Map<string, number>();
+        for (const m of d.movements) if (m.sourceId === o.id && (m.type === 'sale' || m.type === 'refund_return')) left.set(m.stockItemId, (left.get(m.stockItemId) ?? 0) - m.qty);
+        d.movements.push(...deductForSale(d.recipes, lines, o.outletId, o.id, r.decidedBy ?? '').flatMap(m => {
+          const qty = Math.min(-m.qty, left.get(m.stockItemId) ?? 0); left.set(m.stockItemId, (left.get(m.stockItemId) ?? 0) - qty);
+          return qty > 0 ? [{ ...m, qty, type: 'refund_return' as const }] : [];
+        }));
       }
       break;
     }

@@ -243,7 +243,7 @@ export function Cart({ g }: { g: G }) {
         <div className="row" style={{ gap: 2, background: 'var(--bg-sunken)', borderRadius: 14, padding: 2 }}>
           <button className="btn btn-ghost icon-btn" disabled={cart.status === 'paying'} aria-label={l.combo ? `Remove ${l.note}` : `Fewer ${l.name}`} onClick={() => setQty(cart.id, l.id, l.qty - 1, 'guest')}><Icon name={l.qty > 1 && !l.combo ? 'minus' : 'trash'} size={18} /></button>
           <b style={{ minWidth: 20, textAlign: 'center' }}>{l.qty}</b>
-          <button className="btn btn-ghost icon-btn" disabled={cart.status === 'paying' || !!l.combo} aria-label={`More ${l.name}`} onClick={() => setQty(cart.id, l.id, l.qty + 1, 'guest')}><Icon name="plus" size={18} /></button>
+          <button className="btn btn-ghost icon-btn" disabled={cart.status === 'paying' || !!l.combo || !g.canAdd} aria-label={`More ${l.name}`} onClick={() => setQty(cart.id, l.id, l.qty + 1, 'guest')}><Icon name="plus" size={18} /></button>
         </div>
       </div>)}
       {sent.length > 0 && <div style={{ ...card, background: 'var(--bg-sunken)' }} className="stack sm">
@@ -258,9 +258,9 @@ export function Cart({ g }: { g: G }) {
       <Totals db={db} o={cart} me={g.me} />
     </div>
     <div style={{ position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: 0, width: 'min(520px,100vw)', padding: '12px 14px calc(14px + env(safe-area-inset-bottom))', background: 'var(--bn-paper)', borderTop: `1px solid ${LINE}`, zIndex: 20 }}>
-      <button className="btn btn-primary btn-block" style={{ height: 58, fontSize: 16, borderRadius: 16 }} disabled={!g.canOrder || !lines.length && settledOf(db, cart) >= cart.total}
+      <button className="btn btn-primary btn-block" style={{ height: 58, fontSize: 16, borderRadius: 16 }} disabled={!(lines.length ? g.canAdd : g.canOrder) || !lines.length && settledOf(db, cart) >= cart.total}
         onClick={() => { if (note !== (cart.note ?? '')) patchOrder(cart.id, { note }, 'guest'); g.go(billSplit(db, cart.id).shares.length ? so('checkout-and-payment', { split: '1' }) : so(cart.status === 'paying' ? 'qris-payment' : 'checkout-and-payment')); }}>
-        {!g.canOrder ? (!g.onPlan ? 'Table not on the floor plan' : g.hrs.paused ? 'Ordering paused' : 'Closed · ' + g.hrs.text) : lines.length ? `${t('Checkout')} · ${idr(cart.total)}` : `Pay the bill · ${idr(cart.total - settledOf(db, cart))}`}</button>
+        {!g.canOrder ? (!g.onPlan ? 'Table not on the floor plan' : g.hrs.paused ? 'Ordering paused' : 'Closed · ' + g.hrs.text) : lines.length ? (g.selfOrder ? `${t('Checkout')} · ${idr(cart.total)}` : 'Order with the staff') : `Pay the bill · ${idr(cart.total - settledOf(db, cart))}`}</button>
     </div>
   </div>;
 }
@@ -336,8 +336,8 @@ export function Checkout({ g }: { g: G }) {
       {err && <div role="alert" className="banner" style={{ background: 'var(--danger-soft)', color: 'var(--danger-fg)' }}><Icon name="circle-alert" />{err}</div>}
     </div>
     <div style={{ position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: 0, width: 'min(520px,100vw)', padding: '12px 14px calc(14px + env(safe-area-inset-bottom))', background: 'var(--bn-paper)', borderTop: `1px solid ${LINE}`, zIndex: 20 }}>
-      <button className="btn btn-primary btn-block" style={{ height: 58, fontSize: 16, borderRadius: 16 }} disabled={busy || !g.canOrder || (pay === 'cashier' && !hasNew)} onClick={place}>
-        {!g.canOrder ? 'Ordering closed' : pay === 'cashier' ? (hasNew ? t('Send order to kitchen') : 'Pay at the counter') : `Pay ${idr(due + tip)}`}</button>
+      <button className="btn btn-primary btn-block" style={{ height: 58, fontSize: 16, borderRadius: 16 }} disabled={busy || !g.canOrder || (pay === 'cashier' && !hasNew) || (hasNew && !g.selfOrder)} onClick={place}>
+        {!g.canOrder ? 'Ordering closed' : hasNew && !g.selfOrder ? 'Order with the staff' : pay === 'cashier' ? (hasNew ? t('Send order to kitchen') : 'Pay at the counter') : `Pay ${idr(due + tip)}`}</button>
     </div>
   </div>;
 }
