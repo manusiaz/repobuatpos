@@ -409,7 +409,7 @@ function Checkout() {
   const left = Math.max(0, 300 - Math.floor((now - startAt) / 1000));
   if (free) return <div className="stack">
     <Head h="No payment needed" sub={p.monthly === 0 ? 'The Free plan stays free. No card, no trial end.' : `Your ${TRIAL_DAYS}-day ${p.name} trial needs no card.`} />
-    <button className="btn btn-primary btn-lg" onClick={() => { setPlan(p.id, owner, p.monthly === 0 ? '' : `${TRIAL_DAYS}-day trial`); go(A + 'plan-activated'); }}>Continue without paying</button>
+    <button className="btn btn-primary btn-lg" onClick={() => { if (p.monthly === 0) setPlan(p.id, owner); else if (canTrial(db.tenant)) setPlan(p.id, owner, `${TRIAL_DAYS}-day trial`, true); go(A + 'plan-activated'); }}>Continue without paying</button>
     <Link href={A + 'choose-plan'} className="btn btn-ghost">Change plan</Link>
   </div>;
   return <div className="stack">

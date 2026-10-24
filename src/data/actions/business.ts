@@ -18,12 +18,16 @@ export function saveBusiness(name: string, profile: BusinessProfile, by: string)
 /** Demo (no database): a trial that ran out is Free again, as bn_plan_now does on the server. */
 export function endTrialIfDue(at = Date.now()) {
   const t = snapshot().tenant;
-  if (!REMOTE && t.trialUntil && t.trialUntil <= at && t.plan !== 'free') commit('plan.changed', 'system', d => { d.tenant.plan = 'free'; }, 'trial ended');
+  if (!REMOTE && t.trialUntil && t.trialUntil <= at && t.plan !== 'free') commit('plan.changed', 'system', d => {
+    d.tenant.plan = 'free';
+    notify(d, 'Plan changed', 'info', ['owner'], null, 'Plan is now Free · the trial ended. Your data stays; upgrade to use it again.', '/owner/account/subscription-billing');
+  }, 'free');
 }
 /** Upgrade wall, not the owner: "Ask the owner" tells them (spec lg-gate). */
 export function askForPlan(feature: string, by: string): boolean {
   const d0 = snapshot(), text = `${d0.employees.find(e => e.id === by)?.name ?? 'A manager'} asked for ${feature} · upgrade in Subscription`;
-  if (d0.audit.some(a => a.action === 'plan.asked' && a.actor === by && a.subject === feature && Date.now() - a.at < 864e5)) return false; // once a day
+  const recent = (at: number) => Date.now() - at < 864e5; // once a day: this device's audit, or the notice every device has
+  if (d0.audit.some(a => a.action === 'plan.asked' && a.actor === by && a.subject === feature && recent(a.at)) || d0.notices.some(n => n.text === text && recent(n.at))) return false;
   commit('plan.asked', by, d => notify(d, 'Plan limit reached', 'info', ['owner'], null, text, '/owner/account/subscription-billing'), feature);
   return true;
 }

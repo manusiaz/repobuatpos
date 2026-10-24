@@ -19,7 +19,8 @@ export function setPlan(plan: DB['tenant']['plan'], by: string, note = '', trial
   if (REMOTE && trial) void import('../backend.ts').then(async s => { const m = await s.membership(); if (m) await s.startTrial(m.tenantId, plan); }).then(() => remoteRestart()).catch(e => toast((e as Error).message));
   commit('plan.changed', by, d => {
     d.tenant.plan = plan;
-    d.tenant.trialUntil = trial ? Date.now() + TRIAL_DAYS * 864e5 : null; // a trial is used once (bn_start_trial); a paid plan has none
+    // a trial is used once (bn_start_trial): Free keeps it as used, a paid plan has none (the console clears it)
+    d.tenant.trialUntil = trial ? Date.now() + TRIAL_DAYS * 864e5 : plan === 'free' ? d.tenant.trialUntil && Math.min(d.tenant.trialUntil, Date.now()) : null;
     d.notices.unshift({ id: uid('n'), alert: 'Plan changed', level: 'info', to: ['owner'], outletId: null, text: `Plan is now ${plan[0].toUpperCase() + plan.slice(1)}${note ? ' · ' + note : ''}`, href: '/owner/account/subscription-billing', at: Date.now(), read: false });
   }, plan);
 }
