@@ -61,6 +61,14 @@ do $$ declare s text := 'server-secret-attendance'; r jsonb; begin
   assert (r->>'saved')::int = 1, 'a Fingerspot label is read: ' || r::text;
   reset role;
   assert (select data->>'kind' from public.docs where coll = 'clock' and data->>'employeeId' = 'rina' and data->>'noPhoto' like '%Fingerspot%' order by t desc limit 1) = 'out', 'Scan Keluar is a clock-out';
+  -- Fingerspot sends ZKTeco's English labels too: Break Out starts a break, Break In / Kembali ends it, only Check Out leaves
+  set local role anon;
+  r := public.bn_machine_clock(s, 'C2611851572E0C2D', pg_temp.at('[{"pin":"622","time":"D2 08:00","status":"Check In"},{"pin":"622","time":"D2 12:00","status":"Break Out"},
+    {"pin":"622","time":"D2 13:00","status":"Break In"},{"pin":"622","time":"D2 15:00","status":"Scan Istirahat"},{"pin":"622","time":"D2 15:20","status":"Kembali Istirahat"},
+    {"pin":"622","time":"D2 17:00","status":"Check Out"}]')::jsonb, 'k-secret');
+  reset role;
+  assert (select string_agg(data->>'kind', ',' order by t) from public.docs where coll = 'clock' and data->>'employeeId' = 'rina'
+    and t between (extract(epoch from ((select d2 from day) || ' 08:00+07:00')::timestamptz) * 1000)::bigint and (extract(epoch from ((select d2 from day) || ' 17:00+07:00')::timestamptz) * 1000)::bigint) = 'in,break,in,break,in,out', 'labels read in the right order: ' || (select string_agg(data->>'kind' || '@' || (data->>'at'), ',' order by t) from public.docs where coll = 'clock' and data->>'employeeId' = 'rina');
   assert not exists (select 1 from public.docs where coll = 'clock' and data->>'employeeId' = 'lia'), 'a resigned employee is not clocked in';
   assert (select data->>'lastError' from public.docs where coll = 'integrations' and id = 'zk1') like '%date and time%', 'a wrong machine clock shows on the connection';
   -- the owner pins the machine to the outlet's internet address: a scan from anywhere else is refused
