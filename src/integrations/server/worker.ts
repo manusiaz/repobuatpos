@@ -20,7 +20,7 @@ import { escalateDue, watchKitchen } from '../../data/actions.ts';
 import { sweepAlerts } from '../../data/alerts/index.ts';
 import { render, tick, type Result, type Transport } from '../../data/actions/dispatch.ts';
 
-type Tenant = { id: string; slug: string; name: string; plan: string; cell?: string | null; trial?: boolean; unpaidSince?: number | null; hold?: boolean };
+type Tenant = { id: string; slug: string; name: string; plan: string; cell?: string | null; trial?: boolean; unpaidSince?: number | null; hold?: boolean; cycle?: string; cycleFrom?: string | null };
 const LOCK = 'borniz-worker', EVERY = 60e3, GATEWAY = ['qris', 'va', 'ewallet'];
 
 /** A refused request is not retried by the outbox (same split as the browser transport). */

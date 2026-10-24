@@ -124,7 +124,7 @@ function TenantSummary({ db, t }: { db: DB; t: Tenant }) {
   const acc = accessOf(db, t.id);
   return <>
     <div className="row between"><h3>{t.name}</h3><St s={t.status} /></div>
-    <Dl rows={[['Owner', <>{t.meta.owner}<br /><span className="faint mono">{t.meta.email}</span></>], ['Plan', `${planName(t.plan)} · ${t.outlets} outlet${t.outlets > 1 ? 's' : ''}`], ['MRR', idr(t.mrr)], ['Signed up', `${new Date(t.signedUp).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}${t.meta.source ? ' · ' + t.meta.source : ''}`], ['Support access', human(acc.state)]]} />
+    <Dl rows={[['Owner', <>{t.meta.owner}<br /><span className="faint mono">{t.meta.email}</span></>], ['Plan', `${planName(t.plan)} · ${t.outlets} outlet${t.outlets > 1 ? 's' : ''} · billed ${t.meta.cycle === 'yearly' ? 'yearly' : 'monthly'}${t.meta.cycleFrom ? ' from ' + t.meta.cycleFrom : ''}`], ['MRR', idr(t.mrr)], ['Signed up', `${new Date(t.signedUp).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}${t.meta.source ? ' · ' + t.meta.source : ''}`], ['Support access', human(acc.state)]]} />
     <Link href={`${DETAIL}?t=${t.id}`} className="btn btn-primary">Open tenant</Link>
   </>;
 }
@@ -153,7 +153,7 @@ function TenantDetailPage({ db }: { db: DB }) {
       <Kpi label="Signed up" value={new Date(t.signedUp).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })} delta={t.meta.source} />
     </section>
     <section className="card stack"><div className="row between"><h3>Plan</h3>{t.real && <span className="faint" style={{ fontSize: 12 }}>Changes apply to {t.name} right away</span>}</div>
-      <div className="grid" style={{ ['--min' as string]: '190px', gap: 10 }}>{PLANS.map(p => <button key={p.id} className="card tight stack sm" style={{ textAlign: 'left', cursor: 'pointer', borderColor: t.plan === p.id ? 'var(--role)' : undefined, boxShadow: t.plan === p.id ? '0 0 0 2px var(--role)' : undefined }} onClick={() => t.plan !== p.id && setPlan(p.id)} aria-pressed={t.plan === p.id}>
+      <div className="grid" style={{ ['--min' as string]: '190px', gap: 10 }}>{PLANS.map(p => <button key={p.id} className="card tight stack sm" style={{ textAlign: 'left', cursor: 'pointer', borderColor: t.plan === p.id ? 'var(--role)' : undefined, boxShadow: t.plan === p.id ? '0 0 0 2px var(--role)' : undefined }} onClick={() => setPlan(p.id)} aria-pressed={t.plan === p.id}>
         <div className="row between"><b>{p.name}</b>{t.plan === p.id && <Badge tone="violet">Current</Badge>}</div>
         <span className="num">{p.id === 'enterprise' ? (t.plan === 'enterprise' ? idr(t.meta.custom ?? 0) + ' / month' : 'Custom') : idr(planPrice(db, p.id)) + ' / outlet'}</span>
         <span className="muted" style={{ fontSize: 12 }}>{p.limits}</span></button>)}</div>
@@ -177,18 +177,19 @@ function TenantDetailPage({ db }: { db: DB }) {
   </>;
 }
 function PlanSheet({ db, t, plan, onClose }: { db: DB; t: Tenant; plan: Plan; onClose: () => void }) {
-  const [custom, setCustom] = useState(String(t.meta.custom ?? ''));
-  const next = plan === 'enterprise' ? Number(custom) || 0 : planPrice(db, plan) * t.outlets;
+  const [custom, setCustom] = useState(String(t.meta.custom ?? '')), [cycle, setCycle] = useState<'monthly' | 'yearly'>(t.meta.cycle ?? 'monthly');
+  const next = plan === 'enterprise' ? Number(custom) || 0 : planPrice(db, plan) * t.outlets, same = plan === t.plan && cycle === (t.meta.cycle ?? 'monthly');
   const blocked = plan === 'free' && t.outlets > 1 ? `Free allows 1 outlet; ${t.name} has ${t.outlets}.` : '';
-  return <Sheet open onClose={onClose} side="center" title={`Change plan to ${planName(plan)}`} sub={`${t.name} · ${t.outlets} outlet${t.outlets > 1 ? 's' : ''}`}
-    footer={<><button className="btn" onClick={onClose}>Cancel</button><button className="btn btn-primary" disabled={!!blocked || (plan === 'enterprise' && !next)} onClick={() => {
+  return <Sheet open onClose={onClose} side="center" title={plan === t.plan ? `${planName(plan)}: billing` : `Change plan to ${planName(plan)}`} sub={`${t.name} · ${t.outlets} outlet${t.outlets > 1 ? 's' : ''}`}
+    footer={<><button className="btn" onClick={onClose}>Cancel</button><button className="btn btn-primary" disabled={!!blocked || same || (plan === 'enterprise' && !next)} onClick={() => {
       if (plan === 'enterprise') patchRecord('tenant', t.id, { e: JSON.stringify({ ...t.meta, custom: next }) }, 'tenant.custom_price');
-      void setTenantPlan(t.id, plan).then(ok => ok && toast(`${t.name} is now on ${planName(plan)}`)); onClose(); }}>Change plan</button></>}>
+      void setTenantPlan(t.id, plan, undefined, plan === 'free' || plan === 'enterprise' ? null : cycle).then(ok => ok && toast(`${t.name} is now on ${planName(plan)}, billed ${cycle}`)); onClose(); }}>Save</button></>}>
     <div className="stack">
       {blocked && <div className="banner b-danger"><Icon name="circle-alert" size={18} />{blocked}</div>}
       {plan === 'enterprise' && <Field label="Monthly price (excl. PPN)"><input className="input" inputMode="numeric" value={custom} onChange={e => setCustom(e.target.value.replace(/\D/g, ''))} /></Field>}
-      <Dl rows={[['MRR now', idr(t.mrr)], ['MRR after', idr(next)], ['Next invoice incl. PPN 11%', idr(withTax(next))]]} />
-      <p className="faint" style={{ fontSize: 13 }}>Prorated on the next invoice. The tenant owner gets an email.</p>
+      {plan !== 'free' && plan !== 'enterprise' && <Seg label="Billing" value={cycle} onChange={setCycle} options={[['monthly', 'Monthly'], ['yearly', 'Yearly · 2 months free']]} />}
+      <Dl rows={[['MRR now', idr(t.mrr)], ['MRR after', idr(next)], [cycle === 'yearly' ? 'Yearly invoice incl. PPN 11%' : 'Monthly invoice incl. PPN 11%', idr(withTax(cycle === 'yearly' && plan !== 'enterprise' ? next * 10 : next))]]} />
+      <p className="faint" style={{ fontSize: 13 }}>The worker issues it: monthly on the 1st, or yearly from next month (this month was billed monthly). A paid year runs to its end before monthly billing starts again. No proration.</p>
     </div>
   </Sheet>;
 }

@@ -43,3 +43,16 @@ test('every object the hold makes read-only on screen is a real back-office page
   const objs = new Set(PAGES.filter(p => p.shell === 'backoffice').map(p => p.object));
   assert.deepEqual([...HELD_OBJECTS].filter(o => !objs.has(o)), []);
 });
+
+test('yearly: one invoice for 12 months at 10, from the month its cycle starts; a paid year is never billed again monthly', () => {
+  const t = (cycle: string, cycleFrom: string | null) => ({ id: 't1', plan: 'pro', cycle, cycleFrom });
+  const at = (m: string) => Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5, 7)) - 1, 2);
+  const y = invoiceFor(t('yearly', '2026-11'), 1, {}, at('2026-11'))!;
+  assert.deepEqual([y.id, y.b, y.c, y.n], ['inv-t1-2026-11-y', '2026-11 – 2027-10', String(3_490_000 + 383_900), 'Pro × 1 outlet · yearly']);
+  assert.equal(invoiceFor(t('yearly', '2026-11'), 1, {}, at('2026-10')), null, 'this month was billed monthly');
+  assert.equal(invoiceFor(t('yearly', '2026-11'), 1, {}, at('2027-03')), null);
+  assert.equal(invoiceFor(t('yearly', '2026-11'), 1, {}, at('2027-11'))!.id, 'inv-t1-2027-11-y');
+  assert.equal(invoiceFor(t('monthly', '2027-11'), 1, {}, at('2027-06')), null, 'back to monthly after the paid year');
+  assert.equal(invoiceFor(t('monthly', '2027-11'), 1, {}, at('2027-11'))!.id, 'inv-t1-2027-11');
+  assert.equal(invoiceFor(t('monthly', null), 1, {}, at('2026-11'))!.id, 'inv-t1-2026-11');
+});

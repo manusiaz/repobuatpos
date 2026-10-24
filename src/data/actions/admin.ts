@@ -15,7 +15,7 @@ const month = (t: number, back: number) => { const d = new Date(t); return new D
 const ym = (t: number) => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
 
 /** Tenant row: a name · b plan · c outlets · d status · e JSON meta · at signed up. */
-export interface TenantMeta { owner: string; email: string; city: string; custom?: number; wl?: boolean; appName?: string; theme?: string; churnedAt?: number; trialEnds?: number; source?: string; slug?: string; domain?: string }
+export interface TenantMeta { /** billed monthly or yearly from that month (tenants.billing_cycle / cycle_from) */ cycle?: 'monthly' | 'yearly'; cycleFrom?: string; owner: string; email: string; city: string; custom?: number; wl?: boolean; appName?: string; theme?: string; churnedAt?: number; trialEnds?: number; source?: string; slug?: string; domain?: string }
 export const PLAN_PRICE: Record<string, number> = Object.fromEntries(PLANS.map(p => [p.id, p.monthly ?? 0]));
 export const PPN_BPS = 1100;
 
@@ -74,7 +74,7 @@ async function loadPlatform() {
     const notes = new Map(recs.filter(r => r.kind === 'tenant').map(r => [r.id, r.data as Partial<TenantMeta>]));
     const rows = ts.map((t): Rec => ({ id: t.id, a: t.name, b: t.plan, c: String(t.outlets),
       d: t.status === 'suspended' ? 'suspended' : t.trialUntil && t.trialUntil > Date.now() ? 'trial' : 'active',
-      e: JSON.stringify({ ...notes.get(t.id), owner: t.owner ?? '', email: t.owner ?? '', city: t.city ?? '', slug: t.slug, domain: t.domain ?? '', ...(t.trialUntil ? { trialEnds: t.trialUntil } : {}) } satisfies TenantMeta), at: t.createdAt }));
+      e: JSON.stringify({ ...notes.get(t.id), owner: t.owner ?? '', email: t.owner ?? '', city: t.city ?? '', slug: t.slug, domain: t.domain ?? '', cycle: t.cycle ?? 'monthly', ...(t.cycleFrom ? { cycleFrom: t.cycleFrom } : {}), ...(t.trialUntil ? { trialEnds: t.trialUntil } : {}) } satisfies TenantMeta), at: t.createdAt }));
     const of = (k: string) => recs.filter(r => r.kind === k).map(r => r.data as unknown as Rec);
     commit('platform.loaded', ADMIN, d => {
       Object.assign(d.records, { tenant: rows, invoice: of('invoice'), ticket: of('ticket'), flag: of('flag'), release: of('release'), domain: [] });
@@ -93,16 +93,18 @@ const PLATFORM_KINDS = ['invoice', 'ticket', 'flag', 'release'];
 
 /** Plan change. For the real tenant it changes the tenant's plan everywhere in the product. */
 /** Resolves true once the plan is saved (live: on the server first). */
-export async function setTenantPlan(tenantId: string, plan: DB['tenant']['plan'], by = ADMIN): Promise<boolean> {
+export async function setTenantPlan(tenantId: string, plan: DB['tenant']['plan'], by = ADMIN, cycle: 'monthly' | 'yearly' | null = null): Promise<boolean> {
   if (REMOTE) {
-    try { await (await import('../backend.ts')).adminSetPlan(tenantId, plan); } catch (e) { toast('Plan not saved: ' + (e as Error).message); return false; }
+    try { await (await import('../backend.ts')).adminSetPlan(tenantId, plan, cycle); } catch (e) { toast('Plan not saved: ' + (e as Error).message); return false; }
+    void loadPlatform(); // the cycle's first month comes from the server
   }
-  setLocalPlan(tenantId, plan, by);
+  setLocalPlan(tenantId, plan, by, REMOTE ? null : cycle);
   return true;
 }
-function setLocalPlan(tenantId: string, plan: DB['tenant']['plan'], by: string) {
+function setLocalPlan(tenantId: string, plan: DB['tenant']['plan'], by: string, cycle: 'monthly' | 'yearly' | null = null) {
   commit('tenant.plan_changed', by, d => {
     const t = d.records.tenant?.find(x => x.id === tenantId); if (t) t.b = plan;
+    if (t && cycle) t.e = JSON.stringify({ ...JSON.parse(t.e || '{}'), cycle }); // demo: the server sets the cycle's first month live
     if (d.tenant.id === tenantId) d.tenant.plan = plan;
   }, `${tenantId} → ${plan}`);
 }

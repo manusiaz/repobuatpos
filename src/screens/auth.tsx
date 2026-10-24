@@ -11,6 +11,7 @@ import { RESERVED, config, isTenantSlug, onBusinessHost } from '../system/hosts.
 import { canReach, startFor } from '../system/access.ts';
 import { useQuery } from './insight/query.ts';
 import { DEMO_HERE, REMOTE, setDemo } from '../data/remote.ts';
+import { openSupportTicket } from '../data/actions/admin.ts';
 import { remoteInfo, remoteSnapshot } from '../data/remoteStore.ts';
 import type { Employee, Role } from '../data/schema.ts';
 import { humanError } from '../data/remoteDocs.ts';
@@ -376,7 +377,7 @@ function ChoosePlan() {
   const start = (trial: boolean) => {
     setFlow({ plan: sel, yearly, trial });
     if (sel === 'enterprise') return go('/contact-sales-book-a-demo');
-    if (sel === 'free' || trial) { setPlan(sel, owner, trial ? `${TRIAL_DAYS}-day trial` : '', trial); return go(A + 'plan-activated'); }
+    if ((sel === 'free' && !(REMOTE && db.tenant.plan !== 'free')) || trial) { setPlan(sel, owner, trial ? `${TRIAL_DAYS}-day trial` : '', trial); return go(A + 'plan-activated'); } // live, leaving a paid plan is asked of BorNiz (Checkout)
     go(A + 'checkout-and-payment');
   };
   return <div className="stack">
@@ -384,16 +385,17 @@ function ChoosePlan() {
     <Seg value={yearly ? 'y' : 'm'} onChange={v => setYearly(v === 'y')} label="Billing" options={[['m', 'Monthly'], ['y', 'Yearly · save 17%']]} />
     <Choices value={sel} onChange={setSel} items={plans.map(x => [x.id, x.name + (x.popular ? ' · popular' : ''), x.blurb, x.monthly == null ? 'Contact sales' : x.monthly === 0 ? 'IDR 0' : idr(perMonth(x, yearly)!) + '/mo'] as [PlanId, string, string, string])} />
     {trial && <Note><Icon name="calendar" /><span>Trial ends {dateShort(end)}. We’ll remind you 3 days before. Pay by QRIS, VA or card, no card needed now.</span></Note>}
-    <button className="btn btn-primary btn-lg" onClick={() => start(trial)}>{sel === 'free' ? 'Start free' : sel === 'enterprise' ? 'Contact sales' : trial ? `Start ${TRIAL_DAYS}-day ${p.name} trial` : `Continue to payment · ${p.name}`}</button>
+    <button className="btn btn-primary btn-lg" onClick={() => start(trial)}>{sel === 'free' ? 'Start free' : sel === 'enterprise' ? 'Contact sales' : trial ? `Start ${TRIAL_DAYS}-day ${p.name} trial` : REMOTE ? `Ask BorNiz for ${p.name}` : `Continue to payment · ${p.name}`}</button>
     {trial && <button className="btn btn-lg" onClick={() => start(false)}>Pay now instead</button>}
     <div className="row between"><Link href={A + OB[3]} className="btn btn-ghost btn-sm"><Icon name="arrow-left" size={16} />Back</Link><span className="faint" style={{ fontSize: 13 }}>Current plan: {planOf(db.tenant.plan).name}</span></div>
   </div>;
 }
 
 function Checkout() {
-  const { db, go } = useApp();
+  const { db, go, user } = useApp();
   const [flow] = useFlow();
   const [method, setMethod] = useState<'qris' | 'va' | 'card'>('qris'), [state, setState] = useState<'idle' | 'pending' | 'failed'>('idle');
+  const [sent, setSent] = useState(false), [busy, setBusy] = useState(false);
   const now = useNow(1000), [startAt, setStartAt] = useState(0);
   const p = usePlans().of(flow.plan ?? 'pro'), yearly = !!flow.yearly;
   const owner = db.employees.find(e => e.role === 'owner')!.id;
@@ -407,6 +409,26 @@ function Checkout() {
     return () => clearTimeout(t);
   }, [state]); // eslint-disable-line react-hooks/exhaustive-deps
   const left = Math.max(0, 300 - Math.floor((now - startAt) / 1000));
+  const summary = <div className="card stack sm" style={{ fontSize: 14 }}>
+    <div className="row between"><span>{p.name} × {qty} {qty === 1 ? 'outlet' : 'outlets'} · {yearly ? '12 months' : '1 month'}</span><span className="num">{idr(sub)}</span></div>
+    <div className="row between muted"><span>PPN 11%</span><span className="num">{idr(tax)}</span></div>
+    <div className="row between" style={{ borderTop: '1px solid var(--border)', paddingTop: 8 }}><b>Total</b><b className="num" style={{ fontSize: 20 }}>{idr(total)}</b></div>
+  </div>;
+  // Live: BorNiz sets the plan (tenants.plan, the console) and bills it; payment is by transfer until BorNiz has its own
+  // gateway, so this page asks for the change instead of pretending to take money.
+  if (REMOTE && !flow.trial && !(p.monthly === 0 && db.tenant.plan === 'free')) return <div className="stack">
+    <Head h="Ask BorNiz for this plan" sub={`${p.name} · ${yearly ? 'billed yearly (2 months free)' : 'billed monthly'}`} />
+    {summary}
+    <Note><Icon name="receipt-text" /><span>Nothing is charged here. BorNiz switches the plan, then the invoice appears in Owner › Account › Subscription billing; pay it by transfer.</span></Note>
+    {sent ? <Note tone="success"><Icon name="check" /><span>Request sent. BorNiz support answers it in Help › Contact BorNiz support.</span></Note>
+      : <button className="btn btn-primary btn-lg" disabled={busy} onClick={async () => {
+        setBusy(true);
+        const no = await openSupportTicket(`Plan: ${p.name}, ${yearly ? 'yearly' : 'monthly'}, ${qty} ${qty === 1 ? 'outlet' : 'outlets'}`,
+          `Please switch ${db.tenant.name} to ${p.name}, billed ${yearly ? 'yearly' : 'monthly'}: ${idr(total)} incl. PPN 11% per ${yearly ? 'year' : 'month'}.`, 'normal', user.id);
+        setBusy(false); if (no) toast(no); else setSent(true);
+      }}>Send the request</button>}
+    <Link href={A + 'choose-plan'} className="btn btn-ghost">Change plan</Link>
+  </div>;
   if (free) return <div className="stack">
     <Head h="No payment needed" sub={p.monthly === 0 ? 'The Free plan stays free. No card, no trial end.' : `Your ${TRIAL_DAYS}-day ${p.name} trial needs no card.`} />
     <button className="btn btn-primary btn-lg" onClick={() => { if (p.monthly === 0) setPlan(p.id, owner); else if (canTrial(db.tenant)) setPlan(p.id, owner, `${TRIAL_DAYS}-day trial`, true); go(A + 'plan-activated'); }}>Continue without paying</button>
@@ -414,11 +436,7 @@ function Checkout() {
   </div>;
   return <div className="stack">
     <Head h="Checkout" sub={`${p.name} · ${yearly ? 'billed yearly (2 months free)' : 'billed monthly'}`} />
-    <div className="card stack sm" style={{ fontSize: 14 }}>
-      <div className="row between"><span>{p.name} × {qty} {qty === 1 ? 'outlet' : 'outlets'} · {yearly ? '12 months' : '1 month'}</span><span className="num">{idr(sub)}</span></div>
-      <div className="row between muted"><span>PPN 11%</span><span className="num">{idr(tax)}</span></div>
-      <div className="row between" style={{ borderTop: '1px solid var(--border)', paddingTop: 8 }}><b>Total</b><b className="num" style={{ fontSize: 20 }}>{idr(total)}</b></div>
-    </div>
+    {summary}
     {state === 'pending' ? <div className="card stack" style={{ alignItems: 'center', textAlign: 'center' }} aria-live="polite">
       <Icon name={method === 'qris' ? 'qr-code' : method === 'va' ? 'landmark' : 'credit-card'} size={40} />
       <b>{method === 'qris' ? 'Scan with any bank or e-wallet app' : method === 'va' ? 'Pay to BCA virtual account' : 'Finish on the secure card page'}</b>
