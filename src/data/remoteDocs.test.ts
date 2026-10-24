@@ -125,3 +125,14 @@ test('history window: old orders drop out of it, customers never do', () => {
   assert.equal(c.t, null);
   assert.ok(ops.some(o => o.coll === 'orders' && typeof o.t === 'number'));
 });
+
+test('what BorNiz sets on a business (plan, trial, unpaid invoice, hold) never goes into its public _meta/tenant document', () => {
+  const a = clone(S), b = clone(S);
+  Object.assign(a.tenant, { plan: 'pro', unpaidSince: 5, hold: true });
+  Object.assign(b.tenant, { plan: 'pro', unpaidSince: 5, hold: true, name: 'Kopi Biru Baru' });
+  const op = diff(a, b).find(o => o.coll === '_meta' && o.id === 'tenant')!;
+  assert.equal((op.data as DB['tenant']).name, 'Kopi Biru Baru');
+  assert.deepEqual(['plan', 'unpaidSince', 'hold', 'status', 'trialUntil'].filter(k => k in (op.data as object)), []);
+  const live = applyDocs(a, [{ coll: '_meta', id: 'tenant', data: { ...b.tenant, plan: 'free', hold: false } }], {});
+  assert.deepEqual([live.tenant.name, live.tenant.plan, live.tenant.hold], ['Kopi Biru Baru', 'pro', true], 'an old stored copy never overrides the platform');
+});

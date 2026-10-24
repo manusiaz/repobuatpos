@@ -40,6 +40,11 @@ do $$ begin assert public.bn_unpaid_since((select id from t)) = 1, 'the owner''s
 select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"products","id":"p1","data":{"id":"p1","name":"Kopi","basePrice":20000}}]', 'product.saved', 'budi') $$, 'BN088');
 select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"promos","id":"pr1","data":{"id":"pr1","kind":"pct","value":10}}]', 'promo.saved', 'budi') $$, 'BN088');
 select public.bn_write((select id from t), '[{"op":"put","coll":"orders","id":"o1","data":{"id":"o1","no":"#1","source":"pos","status":"open","outletId":"sen","lines":[],"subtotal":0,"discount":0,"total":0}},{"op":"put","coll":"customers","id":"c1","data":{"id":"c1","name":"Dewi","phone":"0812"}}]', 'order.created', 'budi'); -- the register sells
+reset role; update public.tenants set billing_hold = false where id = (select id from t); set local role authenticated;
+select public.bn_write((select id from t), '[{"op":"put","coll":"promos","id":"pr2","data":{"id":"pr2","kind":"pct","value":10,"used":0}}]', 'promo.saved', 'budi');
+reset role; update public.tenants set billing_hold = true where id = (select id from t); set local role authenticated;
+select public.bn_write((select id from t), '[{"op":"put","coll":"promos","id":"pr2","data":{"id":"pr2","kind":"pct","value":10,"used":1}}]', 'order.paid', 'budi'); -- a voucher sale counts its use
+select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"del","coll":"promos","id":"pr2"}]', 'promo.deleted', 'budi') $$, 'BN088');
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b2', true);
 do $$ begin assert public.bn_unpaid_since((select id from t)) is null, 'not a member: nothing'; end $$;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b1', true);

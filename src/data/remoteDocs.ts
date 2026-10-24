@@ -21,6 +21,10 @@ const CONTENT: Record<string, string> = { movements: 'm', ledger: 'l' };
 export const ARRAYS = [...ORDERED, 'outletProducts', 'recipes', 'roster', ...Object.keys(ASC), ...Object.keys(DESC)];
 export const MAPS = ['settings', 'perms'];
 export const META = ['tenant', 'theme', 'staffBrand'] as const;
+/** Set by BorNiz on the platform (tenants): never stored in the business's _meta/tenant document, which guests can read. */
+const BORNIZ_OWNED = ['plan', 'status', 'trialUntil', 'unpaidSince', 'hold'];
+const merchantPart = (t: Any) => Object.fromEntries(Object.entries(t ?? {}).filter(([k]) => !BORNIZ_OWNED.includes(k)));
+const borniZPart = (t: Any) => Object.fromEntries(Object.entries(t ?? {}).filter(([k]) => BORNIZ_OWNED.includes(k)));
 /** Device-local in remote mode: never synced (counters come from bn_reserve blocks, audit from audit_log). */
 export const LOCAL = ['v', 'counters', 'device', 'audit'];
 const DONE = ['paid', 'voided', 'refunded', 'part_refunded'];
@@ -88,7 +92,7 @@ function arrDiff(c: string, a: Any[], b: Any[], ops: Op[]) {
 /** Everything one commit changed, as document upserts / deletes (one bn_write call). */
 export function diff(a: DB, b: DB): Op[] {
   const A = a as unknown as Any, B = b as unknown as Any, ops: Op[] = [];
-  for (const m of META) if (A[m] !== B[m] && js(A[m]) !== js(B[m])) ops.push(put('_meta', m, B[m]));
+  for (const m of META) if (A[m] !== B[m] && js(A[m]) !== js(B[m])) ops.push(put('_meta', m, m === 'tenant' ? merchantPart(B[m]) : B[m]));
   for (const c of ARRAYS) if (A[c] !== B[c] && js(A[c]) !== js(B[c])) arrDiff(c, A[c] ?? [], B[c] ?? [], ops);
   if (ORDERED.some(c => A[c] !== B[c] && js(keysOf(c, A[c] ?? [])) !== js(keysOf(c, B[c] ?? [])))) ops.push(put('_meta', 'order', hintOf(b)));
   for (const c of MAPS) {
@@ -127,7 +131,7 @@ export function applyDocs(db: DB, docs: Doc[], hint: Hint): DB {
     if (c === '_meta') {
       for (const d of list) {
         if (d.id === 'order') { if (d.data) { Object.assign(hint, d.data); reorder = true; } }
-        else if ((META as readonly string[]).includes(d.id) && d.data) out[d.id] = d.data;
+        else if ((META as readonly string[]).includes(d.id) && d.data) out[d.id] = d.id === 'tenant' ? { ...merchantPart(d.data), ...borniZPart(out.tenant) } : d.data;
       }
     } else if (MAPS.includes(c)) {
       const m = { ...(out[c] ?? {}) };

@@ -207,6 +207,18 @@ async function enterMember(m: Membership) {
   if (!base.outlets.some(o => o.id === device!.outletId) && base.outlets[0]) device.outletId = base.outlets[0].id;
   compose(); drain(); flush(); topUp();
   import('./remoteFinalize.ts').then(f => f.startFinalizer()).catch(() => {});
+  if (!billing) billing = setInterval(() => void followBorniz(), 5 * 60e3);
+}
+/** What BorNiz sets on the business (plan, trial end, an unpaid invoice, the hold) changes with no document: ask again. */
+let billing: ReturnType<typeof setInterval> | null = null;
+async function followBorniz() {
+  if (mode !== 'member' || !base || !tenant) return;
+  const { membership } = await lib(), m = await membership().catch(() => null);
+  if (!m || m.tenantId !== tenant.id) return;
+  const t = { plan: m.plan ?? 'free', status: m.status ?? 'active', trialUntil: m.trialUntil ?? null, unpaidSince: m.unpaidSince ?? null, hold: !!m.hold } as const;
+  member = m;
+  if ((Object.keys(t) as (keyof typeof t)[]).every(k => base!.tenant[k] === t[k])) return;
+  base = { ...base, tenant: { ...base.tenant, ...t } }; compose();
 }
 
 export function guestBase(snap: Any, slug: string, prev: DB | null): DB {

@@ -21,7 +21,9 @@ select public.bn_write((select id from t), '[
   {"op":"put","coll":"employees","id":"budi","data":{"id":"budi","name":"Budi","role":"owner"}},
   {"op":"put","coll":"employees","id":"maya","data":{"id":"maya","name":"Maya","role":"pic"}},
   {"op":"put","coll":"employees","id":"rina","data":{"id":"rina","name":"Rina","role":"cashier","outlets":["sen"],"wage":5000000}},
-  {"op":"put","coll":"orders","id":"o1","data":{"id":"o1","source":"pos","status":"open","outletId":"sen","lines":[{"id":"l1","productId":"p1","qty":1,"unitPrice":20000}],"total":20000}}
+  {"op":"put","coll":"orders","id":"o1","data":{"id":"o1","source":"pos","status":"open","outletId":"sen","lines":[{"id":"l1","productId":"p1","qty":1,"unitPrice":20000}],"total":20000}},
+  {"op":"put","coll":"promos","id":"pr1","data":{"id":"pr1","name":"Pagi","kind":"pct","value":10,"used":0}},
+  {"op":"put","coll":"integrations","id":"i1","data":{"id":"i1","kind":"printer","name":"Bar","status":"ok","lastOk":1,"lastError":null,"config":{"ip":"10.0.0.9"}}}
 ]'::jsonb, 'setup', 'budi');
 select public.bn_set_pins((select id from t), 'rina', '1234', null);
 select public.bn_set_pins((select id from t), 'maya', '5678', '135790');
@@ -45,6 +47,11 @@ select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put
 select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"approvals","id":"ap1","data":{"id":"ap1","type":"void","level":"cashier","status":"approved","requestedBy":"rina","decidedBy":"rina","subjectId":"o1","amount":5000000}}]', 'x', 'rina', null, null, null, (select v::uuid from v where k = 'rina')) $$, 'BN053');
 select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"refunds","id":"rf1","data":{"id":"rf1","orderId":"o1","paymentId":"x","amount":20000,"approvalId":null}}]', 'x', 'rina', null, null, null, (select v::uuid from v where k = 'rina')) $$, 'BN055');
 -- what a cashier does every day still works: sell, mark sold out, a 5% discount on her own level
+-- (a sale counts the voucher it used, the register reports its printer) but not a change to the promo or the printer itself
+select public.bn_write((select id from t), '[{"op":"put","coll":"promos","id":"pr1","data":{"id":"pr1","name":"Pagi","kind":"pct","value":10,"used":1}},
+  {"op":"put","coll":"integrations","id":"i1","data":{"id":"i1","kind":"printer","name":"Bar","status":"error","lastOk":1,"lastError":"Paper out","config":{"ip":"10.0.0.9"}}}]', 'order.paid', 'rina', null, null, null, (select v::uuid from v where k = 'rina'));
+select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"promos","id":"pr1","data":{"id":"pr1","name":"Pagi","kind":"pct","value":50,"used":1}}]', 'x', 'rina', null, null, null, (select v::uuid from v where k = 'rina')) $$, 'BN054');
+select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"integrations","id":"i1","data":{"id":"i1","kind":"printer","name":"Bar","status":"error","lastOk":1,"lastError":"Paper out","config":{"ip":"10.6.6.6"}}}]', 'x', 'rina', null, null, null, (select v::uuid from v where k = 'rina')) $$, 'BN054');
 select public.bn_write((select id from t), '[{"op":"put","coll":"outletProducts","id":"p1|sen","data":{"productId":"p1","outletId":"sen","localPrice":null,"is86":true}},
   {"op":"put","coll":"orders","id":"o2","data":{"id":"o2","source":"pos","status":"open","outletId":"sen","lines":[],"total":0}},
   {"op":"put","coll":"approvals","id":"ap2","data":{"id":"ap2","type":"discount","level":"cashier","pct":5,"status":"approved","requestedBy":"rina","decidedBy":"rina","subjectId":"o2"}}]', 'order.sold', 'someone-else', null, null, null, (select v::uuid from v where k = 'rina'));

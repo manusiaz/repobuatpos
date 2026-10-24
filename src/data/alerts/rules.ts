@@ -6,7 +6,7 @@ import { levels } from '../../domain/stock.ts';
 import { TIERS, balance, tierOf } from '../../domain/loyalty.ts';
 import { SHIFTS } from '../../domain/shift.ts';
 import { idr } from '../../domain/money.ts';
-import { HOLD_DAYS, REMIND_DAYS, unpaidSince } from '../billing.ts';
+import { HOLD_DAYS, REMIND_DAYS, billingStage, unpaidSince } from '../billing.ts';
 import { ACCEPT_WINDOW_MS, CHANNELS, channelState, fireAt, isScheduled } from '../actions/online.ts';
 
 export type Level = 'info' | 'warn' | 'high';
@@ -41,7 +41,7 @@ const has = (re: RegExp, ...s: (string | undefined)[]) => s.some(x => x && re.te
 
 /** Per-sweep indexes: built once, shared by every rule (the sweep runs every 60 s on every open device). */
 export interface Ix {
-  t0: number; rday: number; date: string; tenant: string;
+  t0: number; rday: number; date: string;
   outletId: (idOrName: string) => string | null; name: (outletId: string | null) => string;
   opens: (o: string) => number; closes: (o: string) => number; open: (o: string, at?: number) => boolean;
   events: Audit[]; rec: (k: string) => Rec[];
@@ -57,7 +57,7 @@ export function index(db: DB, now: number): Ix {
   const rday = (new Date(now).getDay() + 6) % 7;
   const ins = once('clock', () => { const m = new Map<string, number[]>(); for (const c of db.clock) if (c.kind === 'in') { const k = c.employeeId + '|' + c.outletId; m.set(k, [...(m.get(k) ?? []), c.at]); } return m; });
   return {
-    t0, rday, date: ymd(now), tenant: db.tenant.id,
+    t0, rday, date: ymd(now),
     outletId: s => out.has(s) ? s : byName.get(String(s).toLowerCase()) ?? null,
     name: o => (o && out.get(o)?.name) || 'all outlets',
     opens, closes, open: (o, at = now) => at >= opens(o) && at < closes(o),
@@ -295,9 +295,8 @@ export const RULES: Rule[] = [
     ...db.approvals.filter(a => a.type === 'perm' && a.status === 'waiting' && now - a.at < EVENT_WINDOW && /^Permissions/.test(a.title)).map(a => ({ key: a.id, outletId: a.outletId, text: `${ix.emp(a.requestedBy)} proposed: ${a.title}` }))]),
   R('New login on a new device', 'event', '/owner/account/profile-and-security', (_db, _now, ix) => ix.events.filter(a => /^(auth|login)\.new_device$/.test(a.action)).map(a => ({ key: a.id, outletId: a.outletId ?? null, text: `${ix.emp(a.actor)} signed in from a new device · ${a.subject}` }))),
   R('Invoice due / unpaid', 'state', '/owner/account/invoices', (db, now) => {
-    const since = unpaidSince(db); // the platform's answer (live) or this store's invoices (demo)
-    if (since == null || since > now) return [];
-    const stage = now >= since + HOLD_DAYS * DAY ? 'hold' : now >= since + REMIND_DAYS * DAY ? 'overdue' : 'due';
+    const stage = billingStage(db, now), since = unpaidSince(db) ?? 0; // the platform's answer (live) or this store's invoices (demo)
+    if (!stage) return [];
     return [{ key: `${since}|${stage}`, outletId: null, level: stage === 'hold' ? 'high' : undefined, text: stage === 'due' ? `BorNiz invoice issued ${ymd(since)} is due` : stage === 'overdue'
       ? `BorNiz invoice unpaid ${REMIND_DAYS} days · from day ${HOLD_DAYS} the set-up is read-only until it is paid; sales carry on` : `BorNiz invoice unpaid ${HOLD_DAYS} days · the set-up is read-only until it is paid; sales carry on` }];
   }),

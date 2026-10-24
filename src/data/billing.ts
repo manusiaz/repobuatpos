@@ -11,7 +11,12 @@ export function unpaidSince(db: Pick<DB, 'tenant' | 'records'>): number | null {
   const at = (db.records.invoice ?? []).filter(r => r.a === db.tenant.id && r.d !== 'paid' && r.d !== 'void').map(r => r.at);
   return at.length ? Math.min(...at) : null;
 }
-export const onHold = (db: Pick<DB, 'tenant' | 'records'>, now = Date.now()) => !!db.tenant.hold || (unpaidSince(db) ?? Infinity) <= now - HOLD_DAYS * 864e5;
+/** Where an unpaid invoice stands: the hold is the server's (tenants.billing_hold, set by the worker from day 14). */
+export function billingStage(db: Pick<DB, 'tenant' | 'records'>, now = Date.now()): 'due' | 'overdue' | 'hold' | null {
+  if (db.tenant.hold) return 'hold';
+  const since = unpaidSince(db);
+  return since == null || since > now ? null : now - since >= REMIND_DAYS * 864e5 ? 'overdue' : 'due';
+}
 
 /** The billing month in Indonesia (WIB), so the 1st at 00:30 bills the new month. */
 export const billMonth = (t: number) => new Date(t + 7 * 3600e3).toISOString().slice(0, 7);

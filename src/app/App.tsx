@@ -23,7 +23,7 @@ import { Loading, Toaster, Icon } from '../ui/kit.tsx';
 import Link from '../ui/Link.tsx';
 import { UpgradeWall } from '../screens/public/states-kit.tsx';
 import { FEATURE, pageLock } from '../screens/public/plans.ts';
-import { HOLD_DAYS, REMIND_DAYS, onHold, unpaidSince } from '../data/billing.ts';
+import { HOLD_DAYS, billingStage, unpaidSince } from '../data/billing.ts';
 
 const L = (f: () => Promise<{ default: ComponentType }>) => dynamic(f, { ssr: false, loading: () => <div style={{ padding: 24 }}><Loading /></div> });
 const SURFACES: Record<Surface, ComponentType> = {
@@ -91,9 +91,9 @@ function PlatformBanner() {
     const t = c?.db.tenant;
     if (!c || !t) return null;
     if (t.status === 'suspended') return <div className="banner b-danger" role="alert"><Icon name="circle-pause" size={18} />BorNiz paused this business: changes are not saved and the QR menu is off. Contact BorNiz support.</div>;
-    const boss = c.user.role === 'owner' || c.user.role === 'manager', since = unpaidSince(c.db);
-    if (boss && onHold(c.db)) return <div className="banner b-danger" role="alert"><Icon name="lock" size={18} />A BorNiz invoice is unpaid for {HOLD_DAYS} days: menu, prices and set-up are read-only until it is paid. Sales carry on. <Link href="/owner/account/subscription-billing">Subscription billing</Link></div>;
-    if (boss && since != null && Date.now() - since >= REMIND_DAYS * 864e5) return <div className="banner b-warning" role="status"><Icon name="receipt-text" size={18} />A BorNiz invoice is unpaid for {Math.floor((Date.now() - since) / 864e5)} days. From day {HOLD_DAYS} the set-up is read-only until it is paid. <Link href="/owner/account/subscription-billing">Subscription billing</Link></div>;
+    const boss = c.user.role === 'owner' || c.user.role === 'manager', stage = boss ? billingStage(c.db) : null, since = unpaidSince(c.db) ?? Date.now();
+    if (stage === 'hold') return <div className="banner b-danger" role="alert"><Icon name="lock" size={18} />A BorNiz invoice is unpaid for {HOLD_DAYS} days: menu, prices, promos, outlets and stock set-up are read-only until it is paid. Sales carry on. <Link href="/owner/account/subscription-billing">Subscription billing</Link></div>;
+    if (stage === 'overdue') return <div className="banner b-warning" role="status"><Icon name="receipt-text" size={18} />A BorNiz invoice is unpaid for {Math.floor((Date.now() - since) / 864e5)} days. From day {HOLD_DAYS} the set-up is read-only until it is paid. <Link href="/owner/account/subscription-billing">Subscription billing</Link></div>;
     if (t.trialUntil && t.trialUntil > Date.now() && boss)
       return <div className="banner b-info"><Icon name="calendar" size={18} />{t.plan[0].toUpperCase() + t.plan.slice(1)} trial until {new Date(t.trialUntil).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}. After that the business is on Free unless the plan is paid. <Link href="/owner/account/subscription-billing">Subscription</Link></div>;
     return null;
