@@ -36,3 +36,10 @@ test('an unpaid invoice: due, a reminder from day 7, the hold only as the server
   assert.equal(billingStage(at(15, { unpaidSince: null }), now), null, 'paid on the platform: local rows are not the truth');
   assert.equal(unpaidSince(at(15, { unpaidSince: null })), null);
 });
+
+test('every object the hold makes read-only on screen is a real back-office page object', async () => {
+  const { PAGES } = await import('../system/registry.ts');
+  const { HELD_OBJECTS } = await import('./billing.ts');
+  const objs = new Set(PAGES.filter(p => p.shell === 'backoffice').map(p => p.object));
+  assert.deepEqual([...HELD_OBJECTS].filter(o => !objs.has(o)), []);
+});

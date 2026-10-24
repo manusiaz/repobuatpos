@@ -119,7 +119,7 @@ async function flush() {
       const done = p;
       queue = queue.filter(x => x !== done);
       if (error && /BN050/.test(error.message)) { queue = [done, ...queue]; saveQueue(); moved(); break; } // kept: replays once in the new database
-      if (error) { const h = humanError(error.message); if (!done.quiet) toast(h.text); rejectSubs.forEach(f => f(done, h)); }
+      if (error) { const h = humanError(error.message); if (!done.quiet) toast(h.text); if (h.code === 'BN088') void followBorniz(); /* the hold began: show it now */ rejectSubs.forEach(f => f(done, h)); }
       else if (base) {
         // our own realtime echo (or a newer change) may already be in: only fill in what realtime has not delivered since sending
         base = applyDocs(base, opsToDocs(done.ops).filter(d => (lastRemote.get(d.coll + '/' + d.id) ?? 0) <= sent), hint);
@@ -207,16 +207,15 @@ async function enterMember(m: Membership) {
   if (!base.outlets.some(o => o.id === device!.outletId) && base.outlets[0]) device.outletId = base.outlets[0].id;
   compose(); drain(); flush(); topUp();
   import('./remoteFinalize.ts').then(f => f.startFinalizer()).catch(() => {});
-  if (!billing) billing = setInterval(() => void followBorniz(), 5 * 60e3);
+  timers.push(setInterval(() => void followBorniz(), 5 * 60e3));
 }
 /** What BorNiz sets on the business (plan, trial end, an unpaid invoice, the hold) changes with no document: ask again. */
-let billing: ReturnType<typeof setInterval> | null = null;
 async function followBorniz() {
   if (mode !== 'member' || !base || !tenant) return;
   const { membership } = await lib(), m = await membership().catch(() => null);
   if (!m || m.tenantId !== tenant.id) return;
   const t = { plan: m.plan ?? 'free', status: m.status ?? 'active', trialUntil: m.trialUntil ?? null, unpaidSince: m.unpaidSince ?? null, hold: !!m.hold } as const;
-  member = m;
+  member = m; ls.set('borniz-member:' + userId, m); // a reload offline starts from what is true now
   if ((Object.keys(t) as (keyof typeof t)[]).every(k => base!.tenant[k] === t[k])) return;
   base = { ...base, tenant: { ...base.tenant, ...t } }; compose();
 }

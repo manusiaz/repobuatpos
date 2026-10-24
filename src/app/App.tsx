@@ -23,7 +23,7 @@ import { Loading, Toaster, Icon } from '../ui/kit.tsx';
 import Link from '../ui/Link.tsx';
 import { UpgradeWall } from '../screens/public/states-kit.tsx';
 import { FEATURE, pageLock } from '../screens/public/plans.ts';
-import { HOLD_DAYS, billingStage, unpaidSince } from '../data/billing.ts';
+import { HELD_OBJECTS, HOLD_DAYS, billingStage, unpaidSince } from '../data/billing.ts';
 
 const L = (f: () => Promise<{ default: ComponentType }>) => dynamic(f, { ssr: false, loading: () => <div style={{ padding: 24 }}><Loading /></div> });
 const SURFACES: Record<Surface, ComponentType> = {
@@ -72,8 +72,10 @@ export default function App({ path }: { path: string }) {
   const rt = roleTheme(ctx.db, ctx.user.role); // Studios: theme per role (accent, density, dark)
   const Surface = SURFACES[page.surface];
   const allowed = canOpen(ctx.user.role, page);
+  const held = page.shell === 'backoffice' && ['edit', 'settings', 'studio'].includes(page.mode) && HELD_OBJECTS.has(page.object ?? '') && billingStage(ctx.db) === 'hold';
   const lock = pageLock(ctx.db.tenant.plan, page.path); // a feature above this plan: the upgrade card over the page, read-only (spec lg-gate)
-  const body = <>{!GUEST[page.surface] && page.surface !== 'admin' && <PlatformBanner />}{!allowed ? <Denied /> : !lock ? <Surface />
+  const body = <>{!GUEST[page.surface] && page.surface !== 'admin' && <PlatformBanner />}{!allowed ? <Denied /> : held ? <div className="stack lg" style={{ padding: 16 }}><div className="banner b-danger" role="status"><Icon name="lock" size={18} />Read-only until the BorNiz invoice is paid. Sales carry on.</div><div inert style={{ contain: 'paint' }}><Surface /></div></div>
+    : !lock ? <Surface />
     : GUEST[page.surface] ? <div className="empty" style={{ minHeight: '70dvh', justifyContent: 'center' }}><Icon name="concierge-bell" size={40} /><h2 style={{ color: 'var(--fg-1)' }}>Please order at the counter</h2>
       {(ctx.user.role === 'owner' || ctx.user.role === 'manager') && <Link href="/owner/account/subscription-billing">{FEATURE[lock]} is on Pro · Subscription</Link>}</div> // a guest screen: guests never see the plan
     : <div className="stack lg" style={{ padding: 16 }}><UpgradeWall need={FEATURE[lock]} /><div inert style={{ contain: 'paint' }}><Surface /></div></div>}</>; // paint containment keeps a sheet's fixed scrim inside the page, under the wall

@@ -11,6 +11,8 @@ export function unpaidSince(db: Pick<DB, 'tenant' | 'records'>): number | null {
   const at = (db.records.invoice ?? []).filter(r => r.a === db.tenant.id && r.d !== 'paid' && r.d !== 'void').map(r => r.at);
   return at.length ? Math.min(...at) : null;
 }
+/** Back-office pages whose saves the hold refuses (the collections in private.setup_change): read-only on screen too. */
+export const HELD_OBJECTS = new Set(['outlet', 'promo', 'product', 'price', 'recipe', 'catops', 'supplier']);
 /** Where an unpaid invoice stands: the hold is the server's (tenants.billing_hold, set by the worker from day 14). */
 export function billingStage(db: Pick<DB, 'tenant' | 'records'>, now = Date.now()): 'due' | 'overdue' | 'hold' | null {
   if (db.tenant.hold) return 'hold';
