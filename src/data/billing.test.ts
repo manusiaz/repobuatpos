@@ -16,3 +16,24 @@ test('never billed: Free, a running trial, Enterprise (per contract)', () => {
 test('outlets kept after a downgrade are not billed (as Checkout charges)', () => {
   assert.equal(invoiceFor({ id: 't1', plan: 'basic' }, 3, {}, NOV1)!.n, 'Basic × 1 outlet');
 });
+
+test('an unpaid invoice: due, a reminder from day 7, the set-up held from day 14; the platform answer wins over local rows', async () => {
+  const { RULES } = await import('./alerts/rules.ts');
+  const { index } = await import('./alerts/rules.ts');
+  const { unpaidSince, onHold } = await import('./billing.ts');
+  const { seed } = await import('./seed.ts');
+  const DAY = 864e5, now = Date.UTC(2026, 9, 24, 3), rule = RULES.find(r => r.alert === 'Invoice due / unpaid')!;
+  const at = (days: number, live?: { unpaidSince: number | null; hold?: boolean }) => {
+    const d = seed(now); d.records.invoice = [{ id: 'inv-x', a: d.tenant.id, b: '2026-10', c: '149000', d: 'unpaid', e: '', at: now - days * DAY }];
+    if (live) Object.assign(d.tenant, live);
+    return d;
+  };
+  const fire = (d: ReturnType<typeof seed>) => rule.check(d, now, index(d, now)).map(f => f.key.split('|')[1]);
+  assert.deepEqual(fire(at(1)), ['due']);
+  assert.deepEqual(fire(at(8)), ['overdue']);
+  assert.deepEqual(fire(at(15)), ['hold']);
+  assert.equal(onHold(at(8), now), false);
+  assert.equal(onHold(at(15), now), true);
+  assert.equal(unpaidSince(at(15, { unpaidSince: null })), null, 'paid on the platform: local rows are not the truth');
+  assert.equal(onHold(at(1, { unpaidSince: now - DAY, hold: true }), now), true, 'the server holds');
+});

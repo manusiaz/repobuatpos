@@ -185,7 +185,7 @@ async function loadMember(): Promise<DB> {
     const [op, au] = await Promise.all([sb().rpc('bn_opening', { p_tenant: tid, p_before: since }), sb().read<Any[]>('audit', { tenant: tid })]);
     if (op.error) throw op.error;
     hint = {};
-    const d = memberDB(docs, (op.data ?? {}) as { stock?: Any[]; beans?: Any[] }, since, hint, { slug: tenant!.slug, name: member?.name, plan: member?.plan, status: member?.status, trialUntil: member?.trialUntil }) as unknown as Any;
+    const d = memberDB(docs, (op.data ?? {}) as { stock?: Any[]; beans?: Any[] }, since, hint, { slug: tenant!.slug, name: member?.name, plan: member?.plan, status: member?.status, trialUntil: member?.trialUntil, unpaidSince: member?.unpaidSince, hold: member?.hold }) as unknown as Any;
     const local = audit.filter(a => a.id.startsWith('au'));
     audit = [...local, ...(au.data ?? []).map(r => ({ id: 'a' + r.id, actor: r.actor, action: r.action, subject: r.subject ?? '', at: Date.parse(r.at), outletId: r.outlet_id ?? undefined }))].slice(0, 800);
     return d as unknown as DB;

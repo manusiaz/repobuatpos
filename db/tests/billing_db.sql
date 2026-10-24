@@ -28,5 +28,26 @@ select pg_temp.expect($$ select public.bn_server_invoice('wrong', (select id fro
 -- the API reads a business's own invoices after its database said the caller is the owner (cells-api.mjs)
 do $$ begin assert public.bn_server_records_of('billing-secret', (select id from t), 'invoice')->0->>'n' = 'Pro × 3 outlets', 'the business''s invoice'; end $$;
 select pg_temp.expect($$ select public.bn_server_records_of('billing-secret', (select id from t), 'secret') $$, 'BN083');
+-- an invoice unpaid 14 days holds the set-up (20261024000000_borniz_billing_hold.sql); sales carry on; paying releases it
+do $$ declare ch jsonb := public.bn_server_billing_holds('billing-secret'); begin
+  assert ch @> jsonb_build_array(jsonb_build_object('id', (select id from t)::text, 'hold', true)), 'held: ' || ch;
+  assert not public.bn_server_billing_holds('billing-secret') @> jsonb_build_array(jsonb_build_object('id', (select id from t)::text)), 'a change is reported once';
+  assert (select x->>'hold' from jsonb_array_elements(public.bn_server_tenants('billing-secret')) x where x->>'slug' = 'kopitagih') = 'true', 'the worker sees the hold';
+  assert public.bn_server_tenant_row('billing-secret', (select id from t))->>'billing_hold' = 'true', 'a moved business gets it';
+end $$;
+set local role authenticated;
+do $$ begin assert public.bn_unpaid_since((select id from t)) = 1, 'the owner''s devices see since when'; end $$;
+select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"products","id":"p1","data":{"id":"p1","name":"Kopi","basePrice":20000}}]', 'product.saved', 'budi') $$, 'BN088');
+select pg_temp.expect($$ select public.bn_write((select id from t), '[{"op":"put","coll":"promos","id":"pr1","data":{"id":"pr1","kind":"pct","value":10}}]', 'promo.saved', 'budi') $$, 'BN088');
+select public.bn_write((select id from t), '[{"op":"put","coll":"orders","id":"o1","data":{"id":"o1","no":"#1","source":"pos","status":"open","outletId":"sen","lines":[],"subtotal":0,"discount":0,"total":0}},{"op":"put","coll":"customers","id":"c1","data":{"id":"c1","name":"Dewi","phone":"0812"}}]', 'order.created', 'budi'); -- the register sells
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b2', true);
+do $$ begin assert public.bn_unpaid_since((select id from t)) is null, 'not a member: nothing'; end $$;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000b1', true);
+reset role;
+update private.platform_records set data = data || '{"d":"paid"}' where kind = 'invoice' and data->>'a' = (select id from t)::text;
+do $$ begin assert public.bn_server_billing_holds('billing-secret') @> jsonb_build_array(jsonb_build_object('id', (select id from t)::text, 'hold', false)), 'paid: released'; end $$;
+set local role authenticated;
+select public.bn_write((select id from t), '[{"op":"put","coll":"products","id":"p1","data":{"id":"p1","name":"Kopi","basePrice":20000}}]', 'product.saved', 'budi');
+reset role;
 select 'billing holds' as result;
 rollback;

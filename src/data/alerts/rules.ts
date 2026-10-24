@@ -6,6 +6,7 @@ import { levels } from '../../domain/stock.ts';
 import { TIERS, balance, tierOf } from '../../domain/loyalty.ts';
 import { SHIFTS } from '../../domain/shift.ts';
 import { idr } from '../../domain/money.ts';
+import { HOLD_DAYS, REMIND_DAYS, unpaidSince } from '../billing.ts';
 import { ACCEPT_WINDOW_MS, CHANNELS, channelState, fireAt, isScheduled } from '../actions/online.ts';
 
 export type Level = 'info' | 'warn' | 'high';
@@ -293,10 +294,13 @@ export const RULES: Rule[] = [
     ...ix.events.filter(a => a.action === 'perms.changed' || a.action === 'locks.changed').map(a => ({ key: a.id, outletId: a.outletId ?? null, text: `${ix.emp(a.actor)} changed ${a.subject || 'the permission matrix'}` })),
     ...db.approvals.filter(a => a.type === 'perm' && a.status === 'waiting' && now - a.at < EVENT_WINDOW && /^Permissions/.test(a.title)).map(a => ({ key: a.id, outletId: a.outletId, text: `${ix.emp(a.requestedBy)} proposed: ${a.title}` }))]),
   R('New login on a new device', 'event', '/owner/account/profile-and-security', (_db, _now, ix) => ix.events.filter(a => /^(auth|login)\.new_device$/.test(a.action)).map(a => ({ key: a.id, outletId: a.outletId ?? null, text: `${ix.emp(a.actor)} signed in from a new device · ${a.subject}` }))),
-  R('Invoice due / unpaid', 'state', '/owner/account/invoices', (_db, now, ix) => ix.rec('invoice').filter(r => r.a === ix.tenant && r.d !== 'paid').flatMap(r => {
-    const stage = now >= r.at + 7 * DAY ? 'overdue' : now >= r.at ? 'due' : r.at - now <= 3 * DAY ? 'soon' : '';
-    return stage ? [{ key: `${r.id}|${stage}`, outletId: null, text: `BorNiz invoice ${r.b} ${idr(num(r.c))} ${stage === 'soon' ? 'due ' + ymd(r.at) : stage === 'due' ? 'due today' : 'unpaid 7 days'}` }] : [];
-  })),
+  R('Invoice due / unpaid', 'state', '/owner/account/invoices', (db, now) => {
+    const since = unpaidSince(db); // the platform's answer (live) or this store's invoices (demo)
+    if (since == null || since > now) return [];
+    const stage = now >= since + HOLD_DAYS * DAY ? 'hold' : now >= since + REMIND_DAYS * DAY ? 'overdue' : 'due';
+    return [{ key: `${since}|${stage}`, outletId: null, level: stage === 'hold' ? 'high' : undefined, text: stage === 'due' ? `BorNiz invoice issued ${ymd(since)} is due` : stage === 'overdue'
+      ? `BorNiz invoice unpaid ${REMIND_DAYS} days · from day ${HOLD_DAYS} the set-up is read-only until it is paid; sales carry on` : `BorNiz invoice unpaid ${HOLD_DAYS} days · the set-up is read-only until it is paid; sales carry on` }];
+  }),
   R('Plan limit reached', 'state', '/owner/account/subscription-billing', db => {
     const plan = db.tenant.plan, pos = (o: string) => db.devices.filter(d => d.outletId === o && d.kind === 'pos').length, hit: string[] = [];
     if (plan === 'free' && db.outlets.length > 1) hit.push(`${db.outlets.length} outlets (Free: 1)`);

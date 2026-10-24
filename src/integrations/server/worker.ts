@@ -20,7 +20,7 @@ import { escalateDue, watchKitchen } from '../../data/actions.ts';
 import { sweepAlerts } from '../../data/alerts/index.ts';
 import { render, tick, type Result, type Transport } from '../../data/actions/dispatch.ts';
 
-type Tenant = { id: string; slug: string; name: string; plan: string; trial?: boolean };
+type Tenant = { id: string; slug: string; name: string; plan: string; trial?: boolean; unpaidSince?: number | null; hold?: boolean };
 const LOCK = 'borniz-worker', EVERY = 60e3, GATEWAY = ['qris', 'va', 'ewallet'];
 
 /** A refused request is not retried by the outbox (same split as the browser transport). */
@@ -100,6 +100,9 @@ async function pass() {
     if (!c || !(await c.query('select pg_try_advisory_lock(hashtext($1)) ok', [LOCK])).rows[0].ok) return; // another process runs it
     try {
       const prices = (await call('bn_public_prices', {}).catch(() => ({}))) as Record<string, unknown>;
+      // an invoice unpaid 14 days holds the set-up (BN088); a moved business gets the change on its own database
+      for (const h of await rpc<{ id: string; cell: string | null }[]>('bn_server_billing_holds', {}).catch(e => { console.error('[worker] holds', (e as Error).message); return []; }))
+        if (h.cell) await rpc('bn_server_tenant_sync', { p_tenant: h.id, p_row: await rpc('bn_server_tenant_row', { p_tenant: h.id }) }, h.cell).catch(e => console.error('[worker] hold sync', h.id, (e as Error).message));
       for (const t of await rpc<Tenant[]>('bn_server_tenants', {})) {
         const n = await runTenant(t, Date.now(), prices).catch(e => { console.error('[worker]', t.slug, (e as Error).message); return 0; });
         if (n) console.log('[worker]', t.slug, n, 'change(s)');

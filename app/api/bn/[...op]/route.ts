@@ -82,7 +82,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ op: str
     if (kind === 'read') {
       const u = await auth.requireUser(req);
       if (name === 'members') return out((await as(u.id, null, c => c.query(`select m.tenant_id, m.employee_id, m.role, t.slug, t.name, public.bn_plan_now(t.plan, t.trial_until) plan, t.status,
-          (extract(epoch from t.trial_until) * 1000)::bigint trial_until
+          (extract(epoch from t.trial_until) * 1000)::bigint trial_until, public.bn_unpaid_since(t.id) unpaid_since, t.billing_hold hold
         from public.members m join public.tenants t on t.id = m.tenant_id where m.user_id = $1 order by t.created_at`, [u.id]))).rows);
       if (!UUID.test(String(b.tenant))) throw new HttpError(400, 'Bad tenant id');
       const cell = await cellFor(b.tenant);

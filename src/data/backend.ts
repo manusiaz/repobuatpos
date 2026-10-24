@@ -60,15 +60,15 @@ if (typeof location !== 'undefined' && location.hash.startsWith('#bn_reset=')) {
   recovering = api('auth/recover', { token }).then(r => { recovering = null; if (!r.error) emit('PASSWORD_RECOVERY', null); return r; });
 }
 
-export interface Membership { tenantId: string; slug: string; name: string; plan?: 'free' | 'basic' | 'pro' | 'enterprise'; status?: 'active' | 'suspended'; trialUntil?: number | null; employeeId: string; role: 'owner' | 'manager' | 'device' | 'admin' }
+export interface Membership { tenantId: string; slug: string; name: string; plan?: 'free' | 'basic' | 'pro' | 'enterprise'; status?: 'active' | 'suspended'; trialUntil?: number | null; unpaidSince?: number | null; hold?: boolean; employeeId: string; role: 'owner' | 'manager' | 'device' | 'admin' }
 const PICK = 'borniz-tenant';
 /** The signed-in account's business (the last one picked on this browser when it belongs to several). */
 export async function membership(): Promise<Membership | null> {
   const { data: u, error: ue } = await sb().auth.getUser();
   if (!u.user) { if (isAuthRetryableFetchError(ue)) throw ue; return null; } // no internet is not "signed out"
-  const { data, error } = await sb().read<{ tenant_id: string; employee_id: string; role: Membership['role']; slug: string; name: string; plan: Membership['plan']; status?: Membership['status']; trial_until?: number | null }[]>('members');
+  const { data, error } = await sb().read<{ tenant_id: string; employee_id: string; role: Membership['role']; slug: string; name: string; plan: Membership['plan']; status?: Membership['status']; trial_until?: number | null; unpaid_since?: number | null; hold?: boolean }[]>('members');
   if (error) throw error;
-  const rows = (data ?? []).map(r => ({ tenantId: r.tenant_id, slug: r.slug, name: r.name, plan: r.plan ?? 'free', status: r.status ?? 'active', trialUntil: r.trial_until ?? null, employeeId: r.employee_id, role: r.role }));
+  const rows = (data ?? []).map(r => ({ tenantId: r.tenant_id, slug: r.slug, name: r.name, plan: r.plan ?? 'free', status: r.status ?? 'active', trialUntil: r.trial_until ?? null, unpaidSince: r.unpaid_since == null ? null : Number(r.unpaid_since), hold: !!r.hold, employeeId: r.employee_id, role: r.role }));
   const { hostTenant, resolve, config } = await import('../system/hosts.ts');
   // the super admin console (admin. host or /admin) is no business: BorNiz staff who also belong to one still get it
   const r = resolve(location.host, location.pathname, config());
