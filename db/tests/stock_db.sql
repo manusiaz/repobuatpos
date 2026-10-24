@@ -49,19 +49,19 @@ select pg_temp.w('[{"op":"put","coll":"approvals","id":"w1","data":{"id":"w1","t
 select pg_temp.expect($$ select pg_temp.w('[{"op":"put","coll":"movements","id":"m4#2","data":{"outletId":"sen","stockItemId":"beans","qty":-2,"type":"waste","sourceId":"w1","by":"maya","at":2}}]', 'rina') $$, 'BN057');
 
 -- 3. opname: Maya counts blind and submits; the locked count can't change; Sari signs and the difference posts once
-select pg_temp.w('[{"op":"put","coll":"opnames","id":"op1","data":{"id":"op1","outletId":"sen","area":"Bar","countedBy":"maya","status":"counting","lines":[{"stockItemId":"beans","systemQty":10,"counted":null,"unitCost":1000},{"stockItemId":"milk","systemQty":4,"counted":null,"unitCost":500}]}}]', 'maya');
-select pg_temp.w('[{"op":"put","coll":"opnames","id":"op1","data":{"id":"op1","outletId":"sen","area":"Bar","countedBy":"maya","status":"counting","lines":[{"stockItemId":"beans","systemQty":10,"counted":12,"unitCost":1000},{"stockItemId":"milk","systemQty":4,"counted":null,"unitCost":500}]}}]', 'maya');
-select pg_temp.w('[{"op":"put","coll":"opnames","id":"op1","data":{"id":"op1","outletId":"sen","area":"Bar","countedBy":"maya","status":"locked","lines":[{"stockItemId":"beans","systemQty":10,"counted":12,"unitCost":1000,"locked":true}]}},
+select pg_temp.w('[{"op":"put","coll":"opnames","id":"op1","data":{"id":"op1","outletId":"sen","area":"Bar","countedBy":"maya","status":"counting","lines":[{"stockItemId":"beans","systemQty":-2,"counted":null,"unitCost":1000},{"stockItemId":"milk","systemQty":0,"counted":null,"unitCost":500}]}}]', 'maya');
+select pg_temp.w('[{"op":"put","coll":"opnames","id":"op1","data":{"id":"op1","outletId":"sen","area":"Bar","countedBy":"maya","status":"counting","lines":[{"stockItemId":"beans","systemQty":-2,"counted":12,"unitCost":1000},{"stockItemId":"milk","systemQty":0,"counted":null,"unitCost":500}]}}]', 'maya');
+select pg_temp.w('[{"op":"put","coll":"opnames","id":"op1","data":{"id":"op1","outletId":"sen","area":"Bar","countedBy":"maya","status":"locked","lines":[{"stockItemId":"beans","systemQty":-2,"counted":12,"unitCost":1000,"locked":true}]}},
   {"op":"put","coll":"approvals","id":"a1","data":{"id":"a1","type":"opname","level":"pic","status":"waiting","requestedBy":"maya","countedBy":"maya","outletId":"sen","subjectId":"op1","amount":2000}}]', 'maya');
-select pg_temp.expect($$ select pg_temp.w('[{"op":"put","coll":"opnames","id":"op1","data":{"id":"op1","outletId":"sen","area":"Bar","countedBy":"maya","status":"locked","lines":[{"stockItemId":"beans","systemQty":10,"counted":400,"unitCost":1000,"locked":true}]}}]', 'maya') $$, 'BN058');
+select pg_temp.expect($$ select pg_temp.w('[{"op":"put","coll":"opnames","id":"op1","data":{"id":"op1","outletId":"sen","area":"Bar","countedBy":"maya","status":"locked","lines":[{"stockItemId":"beans","systemQty":-2,"counted":400,"unitCost":1000,"locked":true}]}}]', 'maya') $$, 'BN058');
 -- a photo after the lock is fine (differences only show then)
-select pg_temp.w('[{"op":"put","coll":"opnames","id":"op1","data":{"id":"op1","outletId":"sen","area":"Bar","countedBy":"maya","status":"locked","lines":[{"stockItemId":"beans","systemQty":10,"counted":12,"unitCost":1000,"locked":true,"photo":"data:image/jpeg;base64,AA"}]}}]', 'maya');
+select pg_temp.w('[{"op":"put","coll":"opnames","id":"op1","data":{"id":"op1","outletId":"sen","area":"Bar","countedBy":"maya","status":"locked","lines":[{"stockItemId":"beans","systemQty":-2,"counted":12,"unitCost":1000,"locked":true,"photo":"data:image/jpeg;base64,AA"}]}}]', 'maya');
 select public.bn_check_approval_pin((select id from t), 'sari', '975310');
 select pg_temp.w('[{"op":"put","coll":"approvals","id":"a1","data":{"id":"a1","type":"opname","level":"pic","status":"approved","requestedBy":"maya","countedBy":"maya","decidedBy":"sari","outletId":"sen","subjectId":"op1","amount":2000}},
-  {"op":"put","coll":"opnames","id":"op1","data":{"id":"op1","outletId":"sen","area":"Bar","countedBy":"maya","approvedBy":"sari","status":"posted","lines":[{"stockItemId":"beans","systemQty":10,"counted":12,"unitCost":1000,"locked":true,"photo":"data:image/jpeg;base64,AA"}]}},
-  {"op":"put","coll":"movements","id":"m5","data":{"outletId":"sen","stockItemId":"beans","qty":2,"type":"opname_adjustment","sourceId":"op1","by":"sari","at":3}}]', 'maya');
+  {"op":"put","coll":"opnames","id":"op1","data":{"id":"op1","outletId":"sen","area":"Bar","countedBy":"maya","approvedBy":"sari","status":"posted","lines":[{"stockItemId":"beans","systemQty":-2,"counted":12,"unitCost":1000,"locked":true,"photo":"data:image/jpeg;base64,AA"}]}},
+  {"op":"put","coll":"movements","id":"m5","data":{"outletId":"sen","stockItemId":"beans","qty":14,"type":"opname_adjustment","sourceId":"op1","by":"sari","at":3}}]', 'maya');
 select pg_temp.expect($$ select pg_temp.w('[{"op":"put","coll":"movements","id":"m6","data":{"outletId":"sen","stockItemId":"milk","qty":-4,"type":"opname_adjustment","sourceId":"op1","by":"sari","at":3}}]', 'maya') $$, 'BN057');
-select pg_temp.expect($$ select pg_temp.w('[{"op":"put","coll":"movements","id":"m7","data":{"outletId":"sen","stockItemId":"beans","qty":2,"type":"opname_adjustment","sourceId":"op1","by":"sari","at":4}}]', 'maya') $$, 'BN057');
+select pg_temp.expect($$ select pg_temp.w('[{"op":"put","coll":"movements","id":"m7","data":{"outletId":"sen","stockItemId":"beans","qty":14,"type":"opname_adjustment","sourceId":"op1","by":"sari","at":4}}]', 'maya') $$, 'BN057');
 
 -- a recount only when the approver asks for it: Maya can't reopen her own locked count
 select pg_temp.w('[{"op":"put","coll":"opnames","id":"op2","data":{"id":"op2","outletId":"sen","area":"Gudang","countedBy":"maya","status":"locked","lines":[{"stockItemId":"milk","systemQty":4,"counted":1,"unitCost":500,"locked":true}]}},
@@ -81,7 +81,17 @@ select pg_temp.expect($$ select pg_temp.w('[{"op":"put","coll":"approvals","id":
 -- 4. goods come in against an approved PO only
 select pg_temp.w('[{"op":"put","coll":"movements","id":"m8","data":{"outletId":"sen","stockItemId":"beans","qty":5,"type":"receipt","sourceId":"po1","by":"maya","at":5}},
   {"op":"put","coll":"pos","id":"po1","data":{"id":"po1","outletId":"sen","status":"received","lines":[{"stockItemId":"beans","qty":5,"received":5}]}}]', 'maya');
+-- 5. the system qty is the server's, the moment the item is counted (20261024060000): a sale after the count started is not
+--    counted twice, and a device can't make a shortage disappear by sending its own system qty
+select pg_temp.w('[{"op":"put","coll":"opnames","id":"op3","data":{"id":"op3","outletId":"sen","area":"Bar","countedBy":"maya","status":"counting","lines":[{"stockItemId":"beans","systemQty":999,"counted":null,"unitCost":1000}]}}]', 'maya');
+select pg_temp.w('[{"op":"put","coll":"movements","id":"s1","data":{"outletId":"sen","stockItemId":"beans","qty":-3,"type":"sale","sourceId":"o9","by":"rina","at":6}}]', 'maya');
+select pg_temp.w('[{"op":"put","coll":"opnames","id":"op3","data":{"id":"op3","outletId":"sen","area":"Bar","countedBy":"maya","status":"counting","lines":[{"stockItemId":"beans","systemQty":10,"counted":10,"unitCost":1000}]}}]', 'maya');
+select pg_temp.w('[{"op":"put","coll":"opnames","id":"op3","data":{"id":"op3","outletId":"sen","area":"Bar","countedBy":"maya","status":"counting","lines":[{"stockItemId":"beans","systemQty":10,"counted":10,"unitCost":1000,"photo":"x"}]}}]', 'maya');
 reset role;
-do $$ begin assert (select sum((data->>'qty')::numeric) from public.docs where coll = 'movements') = 5, 'waste -2, opname +2, receipt +5'; end $$;
+do $$ begin
+  assert (select (data->'lines'->0->>'systemQty')::numeric from public.docs where coll = 'opnames' and id = 'op3') = 14, 'system qty = the level when counted (17 - 3), not the device''s: '
+    || (select data->'lines'->0->>'systemQty' from public.docs where coll = 'opnames' and id = 'op3');
+  assert (select sum((data->>'qty')::numeric) from public.docs where coll = 'movements') = 14, 'waste -2, opname +14 (counted 12 on a level of -2), receipt +5, sale -3';
+end $$;
 select 'stock on the server holds' as result;
 rollback;

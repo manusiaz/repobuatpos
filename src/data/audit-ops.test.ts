@@ -9,6 +9,7 @@ import {
   stockEntry, toggle86, updateOpnameLine, acceptOnline,
 } from './actions.ts';
 import { payCash } from './actions/pos.ts';
+import { roundCash } from '../domain/money.ts';
 import { submitCount, opnamePhoto, recountLine, resendCount } from './actions/pic.ts';
 import { bumpStation } from './actions/kds.ts';
 import { startFlash } from './actions/studio.ts';
@@ -293,4 +294,18 @@ test('A second round on a served table fires only the new lines', () => {
   sendToKitchen(id, 'joko');
   assert.equal(order(id).lines[0].firedAt, firstAt);
   assert.ok(order(id).lines.every(l => l.fired));
+});
+
+test('Opname: a sale between starting the count and counting the item is not counted twice', () => {
+  const r = snapshot().recipes.find(x => x.qty > 0)!, out = 'sen', id = startOpname(out, 'Bar', 'sari')!;
+  const order = newOrder(out, 'tono', 'pos', {});
+  addLine(order, r.productId, [], 2, '', 'tono');
+  const o = snapshot().orders.find(x => x.id === order)!;
+  payCash(order, roundCash(o.total), o.total, 'tono');
+  const shelf = lvl(out, r.stockItemId); // what is really on the shelf after the sale
+  updateOpnameLine(id, r.stockItemId, { counted: shelf }, 'sari');
+  const ap = submitCount(id, 'sari')!;
+  assert.equal(db().approvals.find(a => a.id === ap.id)!.amount, 0, 'counted what the system holds: no variance');
+  assert.equal(decide(ap.id, 'andi', 'approved'), null);
+  assert.equal(lvl(out, r.stockItemId), shelf, 'the level is what was counted');
 });

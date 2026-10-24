@@ -497,12 +497,14 @@ export function startOpname(outletId: string, area: string, by: string) {
   if (!mayDo(d0, by, 'Count stock (opname)', outletId)) return null;
   commit('opname.started', by, d => {
     d.opnames.unshift({ id, outletId, area, countedBy: by, approvedBy: null, status: 'counting', at: now(), requirePhotoAll: false,
-      lines: d0.stockItems.map(s => ({ stockItemId: s.id, systemQty: Math.round(stockLevel(d0.movements, outletId, s.id) * 100) / 100, counted: NaN, unitCost: s.unitCost })) });
+      lines: d0.stockItems.map(s => ({ stockItemId: s.id, systemQty: Math.round(stockLevel(d0.movements, outletId, s.id) * 1000) / 1000, counted: NaN, unitCost: s.unitCost })) });
   }, area, outletId);
   return id;
 }
 export function updateOpnameLine(opnameId: string, stockItemId: string, patch: Partial<OpnameLine>, by: string) {
-  commit('opname.counted', by, d => { const op = d.opnames.find(x => x.id === opnameId)!; if (op.status !== 'counting' && op.status !== 'recount') return; const l = op.lines.find(x => x.stockItemId === stockItemId)!; if (l.locked) return; Object.assign(l, patch); }, stockItemId);
+  commit('opname.counted', by, d => { const op = d.opnames.find(x => x.id === opnameId)!; if (op.status !== 'counting' && op.status !== 'recount') return; const l = op.lines.find(x => x.stockItemId === stockItemId)!; if (l.locked) return; Object.assign(l, patch);
+    // the level the moment it is counted, not when the count started: a sale in between is not counted twice (the server sets the same)
+    if ('counted' in patch) l.systemQty = Math.round(stockLevel(d.movements, op.outletId, stockItemId) * 1000) / 1000; }, stockItemId);
 }
 export function submitOpname(opnameId: string, by: string) {
   const op = snapshot().opnames.find(x => x.id === opnameId)!;
